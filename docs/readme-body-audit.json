@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
-  "manualVersion": "7.2.4",
-  "manualSourceSha256": "72705685eac476bd0265e28d4c678de61088ae1a45f2ecde13bf2c1ecbfa5bb7",
+  "pricingSourceSha256": "3cfe8000670412bd15255ce415a8c709663b57760dd4ca26a27362a151c9ba46",
+  "manualVersion": "7.2.5",
+  "manualSourceSha256": "076a86b6dafd6cfa82f746f5b340354041d364c0ba59ea3e2086618d3b54b1f8",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "53764e98f37288b9073c75d7ebd632d3e35088e3706cc873315288272a8cbc34"
+      "sha256": "9a7e4155e296ddf1805ce540d5708a06bf6db0852a243ef5696780819dd9b1e8"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "992a4f7b59d53110bf4db8494a33f322fa398f659d31b0c2b7f3a763b444249d"
+      "sha256": "d13c633df83f78a380820734a69288dabe96a26e85885063f8f7d1090e3595e2"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "aa2d339974f91456e9558937e456d5f17ee783b65eb2407e001f7df246936022"
+      "sha256": "c9756edf50a10db2e5e74910caff8931108b83fd7aeba7823249921336c359da"
     }
   ],
-  "readmeSha256": "fe88b60b5b4e98e34af376feccdfce01bada6030ae8cd84348d0ebe4fa94be58",
+  "readmeSha256": "47a68d0d23d8199aa98b0f8578c5c82ca8d2e9bcf26c3a6f38bf9f480ab90a4a",
   "readmeLanguageGaps": [],
-  "sourceTree": "461230fd16886c42533b556b5f0f6eb2a596ce60",
-  "publicTree": "8e0a154f32222f89d55c05e842bc6efe3bf29c89",
-  "packageSha256": "deb81bdc96668341d0714df07872d5567282733ab3c893d3c84cfc52aea658c9",
+  "sourceTree": "2211df194e0c2844f74e11e063b1b03c6d046aa5",
+  "publicTree": "41472d6b4ed3e8e7fb9852b7531929795e08bb26",
+  "packageSha256": "dd3004a9c40e9d0d201c7cd0afaf070331fe4270c07d3e9af56960934b65c4e0",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,20 +41,21 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-01T13:31:04.724Z",
-  "findings": "Documentation-only follow-up to the formally published v7.2.4 release pinned at e6fc73f. Reviewed the changed introduction, bilingual direction table and figure against prompts.js, composition-variety.js, documentary-source-fidelity.js, useMangaWorkflow.js and bounded image QA. All17 existing sections, practical instructions, rights and API cost conditions remain. Text distinguishes source fact/timeline fidelity from relationship-based acting and makes no persistent long-form emotional-memory, competitor-exclusivity or comparative-quality guarantee. Every new paragraph, table cell and visual label has English/Japanese pairing. Figure source references/arrows passed the current-source audit; full PNG and actual note620px/GitHub rendering were inspected. Narrow GitHub layout has no horizontal overflow; detailed labels can be opened at full size. Source/public/package/manual PDFs/release assets are unchanged from the formally verified release, so earlier2064 tests and normal real STEP1–4 API evidence remain applicable. This follow-up passed22 focused documentation/diagram tests and the strict pre-deploy source/security check; it adds no runtime/API calls and does not replace the v7.2.4 tag or distribution ZIP. OS clipboard byte readback and metadata-bearing browser image-save completion are not claimed.",
-  "manualFindings": "Rebuilt v7.2.4 Gemini12, OpenAI19 and full40-page PDFs in WSL. Visually inspected all71 pages in13 contact sheets, then the updated full-manual TOC and new diagnostic-log page32 individually. Checked A4 text bounds, current version/footer, page numbering, privacy/naming and links. Retention, origin separation, excluded payloads, storage-failure warning and handing JSON to an AI match source and real browser observations. Public PDFs exactly match the reviewed files; SHA256 values are recorded here. Final follow-up updated full-manual pages1 and32 for the manual button location, fixed range and portable guide. Both pages were inspected individually; the other38 full-manual pages are pixel-identical to the previously reviewed candidate. The other two PDFs are unchanged from the71-page review.",
+  "checkedAt": "2026-11-03T04:20:14.236Z",
+  "findings": "Compared all 17 README section bodies against the reviewed v7.2.4 baseline and the candidate diff. Sections outside the feature description, MiniMax downloads, FAQ and ChangeLog retain the baseline text. The updated feature section describes STEP1 name labels, full-name preference and rejection of ambiguous links. The MiniMax and FAQ links use the same validated workflow asset at the new tag. The revised source version and ChangeLog match the package, title and runtime version. Reviewed the two rendered workflow diagrams with v7.2.5 headings. Verified the STEP1 photo-add workflow and preservation of edited profiles in the normal browser with GPT-6 Luna. The linked public note returned HTTP 200 and still describes the earlier v7.2.4 release.",
+  "manualFindings": "Rebuilt Gemini 12 pages, OpenAI 19 pages and full manual 40 pages. Rendered every page and compared body pixels with the reviewed v7.2.4 PDFs. The Gemini cover and full-manual pages 5 and 18 were the only body changes, and were inspected individually. Full-manual page 5 explains name labels and ambiguous matches. The new v7.2.5 date/version footers were checked on the inspected pages and text-verified on all 71 pages. The generation gate passed A4 size, page count, bounds, link and privacy checks. Public PDFs are the reviewed bytes.",
   "pricingReview": {
-    "version": "7.2.4",
-    "sourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
-    "checkedAt": "2026-11-01T11:25:12.604Z",
+    "version": "7.2.5",
+    "sourceSha256": "3cfe8000670412bd15255ce415a8c709663b57760dd4ca26a27362a151c9ba46",
+    "checkedAt": "2026-11-03T04:20:14.236Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
       "https://developers.openai.com/api/docs/models/gpt-6-sol",
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst"
     ],
-    "findings": "Reopened both official pricing pages on2026-11-01 for this candidate. Standard short-context GPT-6 Astra10/50, Sol6.1 2/10, Terra6.1 1/5 and GPT-6 Luna .10/.50 USD per1M input/output match the app. Image2.5 image input8/output30, text input5 and cached image2/text1.25 match. Gemini3.8 Flash .75/3.75 through2026-12-31 and Nano Banana2.1 input1.50/text-thinking7.50/image30 with1K .0336 match. Batch/Flex50% discounts remain separate. Same-day earlier official review covers unchanged legacy rows. The pricing source hash is unchanged."
+    "findings": "Rechecked official Standard short-context text rates in USD per million tokens. Input/output: GPT-6 Astra 10/50, GPT-6.1 Sol 2/10, GPT-6.1 Terra 1/5, GPT-6 Sol 2/10, GPT-5.6 Sol 4/20, GPT-5.6 Terra 2/12, GPT-6 Luna .10/.50 and GPT-5.6 Luna .20/1.20. Image 2.5 Sunburst Standard text input 5/cached 1.25 and image input 8/cached 2/output 30. Gemini 3.8 Flash Standard .75/3.75 through 2026-12-31. Nano Banana 2.1 Standard input 1.50, text/thinking 7.50, image output 30 or .0336 per 1K image. The app rate values match. Batch prices were separated, and date labels were refreshed."
   }
 }

@@ -57,6 +57,52 @@ test('incremental analysis selects new and failed references but skips completed
   assert.deepEqual(refs.getReferenceImagesToAnalyze(['known'], [done]), []);
 });
 
+test('adding three labelled photo subjects to five edited characters retains profile ownership through rename and removal', () => {
+  const existingNames = ['アオ', 'ベニ', 'ミドリ', 'シロ', 'クロ'];
+  const previous = ['sheet-one', 'sheet-two'].map((image, index) => {
+    const names = index === 0 ? existingNames.slice(0, 2) : existingNames.slice(2);
+    return {image, analysisCompleted: true,
+      items: names.map(name => ({kind: 'character', name, description: '既存の人物資料'})),
+      castProfiles: Object.fromEntries(names.map(name => [name, `## ${name}\n元の設定`])),
+    };
+  });
+  const originalCast = refs.reconcileReferenceCast('', [], previous);
+  const editedCast = originalCast.replace('## アオ\n元の設定', '## アオ\n手編集した設定');
+  const newNames = ['長髪の男性', '金髪の男性', '眼鏡の男性'];
+  const response = {
+    castList: newNames.map(name => `## 仮名：${name}\n追加写真の人物設定`).join('\n\n'),
+    references: [{imageIndex: 1, items: newNames.map(name => ({
+      kind: 'character', name: `仮名：${name}`, description: '追加写真の視覚的特徴',
+    }))}],
+  };
+  const images = ['sheet-one', 'sheet-two', 'photo'];
+  const snapshot = structuredClone(previous);
+  const analysis = refs.parseReferenceAnalysis(JSON.stringify(response), ['photo'], editedCast);
+  const assets = refs.mergeReferenceAnalysis(previous, analysis, images);
+  const cast = refs.reconcileReferenceCast(editedCast, previous, assets);
+  assert.equal(cast, `${editedCast}\n\n${response.castList}`);
+  assert.deepEqual(previous, snapshot, 'completed references are not mutated');
+  assert.deepEqual(assets[2].items.map(item => item.name), newNames);
+  assert.deepEqual(Object.keys(assets[2].castProfiles), newNames);
+  assert.deepEqual(refs.getReferenceImagesToAnalyze(images, assets), []);
+
+  const renamed = refs.editReferenceAsset(cast, assets, 'photo', 0, 'name', '新しい名前');
+  assert.equal(renamed.error, '');
+  assert.match(renamed.castList, /## 仮名：新しい名前/);
+  assert.deepEqual(Object.keys(renamed.assets[2].castProfiles), ['新しい名前', ...newNames.slice(1)]);
+  const copied = refs.buildRecognitionEditorText(renamed.castList, renamed.assets, images);
+  const parsedCopy = refs.parseRecognitionEditorText(copied, images, null, renamed.assets);
+  assert.equal(parsedCopy.castList, renamed.castList);
+  assert.deepEqual(parsedCopy.assets[2].items.map(item => item.name), ['新しい名前', ...newNames.slice(1)]);
+  assert.deepEqual(parsedCopy.assets[2].castProfiles, renamed.assets[2].castProfiles);
+  assert.equal(parsedCopy.assets[2].analysisCompleted, true);
+  const headingEdit = refs.editReferenceCast(renamed.castList,
+    renamed.castList.replace('## 仮名：新しい名前', '## 仮名：見出しから改名'), renamed.assets);
+  assert.equal(headingEdit.error, '');
+  assert.equal(headingEdit.assets[2].items[0].name, '見出しから改名');
+  assert.equal(refs.reconcileReferenceCast(headingEdit.castList, headingEdit.assets, previous), editedCast);
+});
+
 test('number changes track image identity, panorama moves last, removed targets never become another material', () => {
   const before = ['a','b','panorama'], after = ['b','c','panorama'];
   const text = refs.remapReferenceNumbers('画像2を持つ。画像3を背景にする。画像1は使わない。台詞「画像2」', before, after);

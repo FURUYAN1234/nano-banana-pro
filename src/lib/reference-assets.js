@@ -1,4 +1,4 @@
-import { collectCastNameEntries } from './panel-utils.js';
+import { collectCastNameEntries, normalizeCastDisplayName } from './panel-utils.js';
 
 export const REFERENCE_KIND_LABELS = Object.freeze({
   character: '人物', background: '背景', prop: '小物', unknown: '未分類',
@@ -216,6 +216,7 @@ const field = (value, label, limit) => {
   if (typeof value !== 'string' || !value.trim() || value.length > limit) fail(label);
   return value.trim();
 };
+const castNameKey = value => value.normalize('NFKC').trim().toLowerCase();
 
 // The same STEP1 request supplies character profiles and a complete image manifest.
 // Original image bytes stay in memory; downstream text contains only visual data.
@@ -258,9 +259,14 @@ export function parseReferenceAnalysis(text, images, existingCast = '') {
       let name = field(item.name, '素材名が不正', 160);
       const description = field(item.description, '素材説明が不正', 1800);
       if (item.kind === 'character') {
-        const normalized = name.normalize('NFKC').trim().toLowerCase();
-        const exact = castEntries.filter(entry => entry.displayName.normalize('NFKC').trim().toLowerCase() === normalized);
-        const matches = exact.length ? exact : castEntries.filter(entry => entry.aliases.some(alias => alias.normalize('NFKC').trim().toLowerCase() === normalized));
+        const literalKey = castNameKey(name);
+        // 見出しと同じラベル・強調の処理を参照名にも適用する。正式名の一致を優先する。
+        const displayKey = castNameKey(normalizeCastDisplayName(name.normalize('NFKC').replace(/\*\*/g, '').trim()));
+        const literalMatches = castEntries.filter(entry => castNameKey(entry.displayName) === literalKey);
+        const exact = literalMatches.length ? literalMatches
+          : castEntries.filter(entry => castNameKey(entry.displayName) === displayKey);
+        const matches = exact.length ? exact : castEntries.filter(entry => entry.aliases.some(alias =>
+          [literalKey, displayKey].includes(castNameKey(alias))));
         if (matches.length !== 1) fail(`人物参照「${name}」とキャスト名が不一致または曖昧（見出し: ${names.join(' / ')}）`);
         name = matches[0].displayName;
         characterNames.add(name);

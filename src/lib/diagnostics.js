@@ -11,7 +11,7 @@ const eventLabels = Object.freeze({'session.start':'画面の起動', 'workflow.
   'runtime.error':'画面の実行時エラー', 'react.error':'画面描画のエラー', 'workflow.cancel':'利用者による中断'});
 const applicationSpec = Object.freeze({
   purpose:'参照画像を解析し、台本と描画指示を作成して漫画画像を生成するブラウザーアプリ。',
-  stages:[{operation:'step1',behavior:'参照画像の種類・人物・背景・小物を認識。人物名欄と人物設定の見出しは双方向で同期。資料の追加・削除は関連する設定と後続出力へ反映する。'},
+  stages:[{operation:'step1',behavior:'参照画像の種類・人物・背景・小物を認識。人物参照は見出しの正式名を優先し、仮名等の既知ラベル・強調表記を除いた名前や別名でも一意に照合する。曖昧な対応は解析エラーにする。人物名欄と人物設定の見出しは双方向で同期。資料の追加・削除は関連する設定と後続出力へ反映する。'},
     {operation:'step2',behavior:'解析済みの設定と題材から台本を構築。選択モードに応じたコマ数・人物・動作・カメラ・台詞を決める。'},
     {operation:'step3',behavior:'台本・資料・出力設定を描画指示へまとめる。台詞・話者・人物対応を保つ。'},
     {operation:'step4',behavior:'描画指示と参照画像から画像生成。通常の4コマと可変コマ形式があり、設定によって検査・修正が続く。追加生成や再試行には費用が発生し得る。'}],
@@ -31,6 +31,7 @@ const investigationGuide = Object.freeze({
     'api.responseはHTTPの受信、api.payloadはJSON本文のメタ情報、workflow.endのsettledはbusy状態の終了を示す。どれも生成内容・品質の合格を単独では証明しない。',
     'workflow.cancel、AbortError、CANCELLEDやcancelled分類は利用者の中断と区別する。失敗後に回復したか、後続処理や別のrunIdが始まったかも調べる。',
     '画面・通信・保存・生成内容・検査器を切り分ける。ソースがあれば同じ版のstack内ファイル名・行番号と共通処理を照合し、個別素材だけの例外修正を避ける。',
+    'REFERENCE_ANALYSIS_INVALIDは素材解析結果の対応検証で発生する。HTTP成功後にも起こり得る。ログのコードだけでは具体的な不一致を断定せず、画面の解析エラーと対象版の人物名・画像番号等の検証処理を照合する。',
     'ログにない本文・画像・実際の保存完了や、消えた古い記録は推測で補わない。必要な場合だけ再現手順・短い症状・対象版のソースや成果物を求める。'],
   responseFormat:['利用者向け：分かったことと次にできる操作を簡潔に示す。',
     '開発者向け：時刻・操作・runId/requestId・エラーコード・発生元などの根拠を示し、原因候補と確認方法、共通修正の範囲、正常例と異常例の再検証案を述べる。',

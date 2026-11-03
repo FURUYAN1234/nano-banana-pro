@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.2.4** / 現在のソース版: **v7.2.4**
+> Current source version: **v7.2.5** / 現在のソース版: **v7.2.5**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -318,6 +318,8 @@ While STEP1 recognises materials, the page ends at its progress log; results and
 
 Material changes rebuild per-image recognition and AI-derived cast from the remaining references. When the last reference for a person is removed, that person’s settings (including edits) are removed too. Replacement images are freshly analysed. Edits for retained people and manually added people stay intact; new or previously failed images are analysed without overwriting completed recognition. Re-selecting a failed image retries its recognition. Recognition names and descriptions are ordinary fields; no JSON editing is required. Character name fields and profile name headings synchronize in both directions, including other sheets for the same person. Empty or conflicting names remain editable and block copying until resolved. STEP2 reset retains STEP1 materials, including the panorama. / 素材の追加・削除後は、現在の画像から画像ごとの認識結果とAI由来の人物設定を組み直します。同じ人物の参照画像が1枚も残らなくなった場合は、手編集を含むその人物の設定も削除し、差し替え画像を新たに解析します。残る人物と手入力だけで追加した人物の編集は保持し、新規・前回失敗した素材を解析します。解析済みの背景・小物の説明を上書きしません。失敗した画像は同じ画像を選び直して再試行できます。認識結果は名前・説明の欄で編集でき、JSONの編集は不要です。人物名欄と人物設定の名前見出しは双方向に連動し、同じ人物の別シートにも反映します。名前を消して入力し直す間も対応を保持し、空欄や別人との同名は解消するまでコピーを止めます。STEP2からのやり直しでは360°背景を含むSTEP1の素材を残します。
 
+STEP1 matches character names using the same known labels, such as `仮名` and `Temporary Name`, as the profile headings. Full names take precedence over aliases. Multiple candidates or unsupported names stop analysis and retain the uploaded images and existing settings. / STEP1は「仮名」「暫定名」などの既知ラベルを含む人物名も、人物設定の見出しと照合します。正式名を別名より優先し、候補が複数ある場合や対応する名前がない場合は、追加画像と既存の設定を保持して解析エラーを表示します。
+
 Changing references or panorama participation invalidates dependent scenarios and prompts, and rejects results from earlier runs. Explicit unquoted image numbers in free input follow retained image identity; removed targets are marked, never redirected to another image. Review natural-language references where ambiguous. Web text and attachments already pasted elsewhere must be replaced with the rebuilt prompt and current numbered originals. An OFF panorama has no attachment number. / 素材の追加・削除・360°背景ON/OFF後は、シナリオ以降を作り直します。変更前の処理が遅れて完了しても採用しません。自由入力の「画像N」指定は残った画像に合わせて更新し、対象を外した指定は削除済み素材と表示して別の画像へ割り当てません。引用内の文章はそのまま残すため、曖昧な自然文の指定は確認してください。Webに貼付済みの文章・画像は、新しい指示文と現在の番号順へ差し替えてください。参照OFFの360°背景には添付番号を付けません。
 
 Image-generation text avoids repeating automatic appearance descriptions already available in the reference images and scenario. Material names, roles and manually edited descriptions remain in the attachment manifest. Repair requests explicitly map STEP1 material IDs to actual attachment positions, including the extra repair source. Image-edit drafts remain associated with their image during temporary panel hiding. Copy success appears only after the clipboard write succeeds. / 描画用の文章では、参照画像と台本にある自動認識の外見説明を重複させず、素材名・用途・手編集した説明を添付一覧に残します。修復元画像が先頭に入る場合も、STEP1素材番号と実際の添付位置を対応づけます。画像への追加指示の下書きは画像ごとに保持し、処理中の一時非表示で消えません。コピー完了はクリップボードへの書き込み成功後に表示します。
@@ -621,7 +623,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -677,7 +679,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.5 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.5 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -784,6 +786,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.2.5 (2026-11-03)
+- **[Fix & UX]** Fix STEP1 matching between labelled reference names and profile headings. Prefer full names and reject ambiguous matches. / STEP1で仮名等のラベル付き人物名を見出しと照合する処理を修正。正式名を優先し、複数候補への曖昧な対応は拒否します。
 
 ### v7.2.4 (2026-11-01)
 - **[Fix & UX]** Remove the redundant header model badge and add bounded diagnostic logs with JSON export for AI-assisted bug investigation. / 不要なヘッダーモデル表示を削除。AIの不具合調査用に期限・容量制限付きの動作ログとJSON保存を追加。

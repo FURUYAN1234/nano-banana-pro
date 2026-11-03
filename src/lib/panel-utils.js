@@ -13,7 +13,7 @@ const NON_CHARACTER_SECTION_RE = /^(?:#\s*)?(?:備考|補足|注記|メモ|参�
 const PANEL_HEADER_RE = /^\s*\[\s*[\d１-４一二三四]+\s*(?:コマ目|こま目)(?:\s*[:：\]])/i;
 const NO_DIALOGUE_LINE_RE = /^\s*(?:[-*]\s*)?(?:無言|(?:台詞|セリフ|せりふ)\s*[:：]?\s*(?:なし|無し)|(?:Dialogue\s*:\s*)?(?:none|no\s+dialogue|without\s+dialogue))\s*[。.!]?\s*$/i;
 
-const normalizeCastDisplayName = (value = '') =>
+export const normalizeCastDisplayName = (value = '') =>
   String(value)
     .replace(/\s*[:：]\s*$/, '')
     .replace(/^(?:仮名|暫定名|名前|キャラ名|人物名|Name|Temporary\s+Name)\s*[:：]\s*/i, '')

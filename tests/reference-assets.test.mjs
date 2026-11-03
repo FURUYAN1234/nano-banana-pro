@@ -133,6 +133,71 @@ test('an ambiguous shared alias cannot silently connect an image to the wrong pe
   assert.throws(() => parse(p), /素材解析/);
 });
 
+test('reference names accept the same name labels as character headings', () => {
+  for (const label of ['仮名', '暫定名', '名前', 'キャラ名', '人物名', 'Name', 'Temporary Name']) {
+    for (const colon of [':', '：']) {
+      const p = payload();
+      p.castList = p.castList.replace('1. アオ', `1. ${label}${colon}アオ`);
+      p.references[0].items[0].name = `${label}${colon}アオ`;
+      const result = parse(p);
+      assert.equal(result.assets[0].items[0].name, 'アオ', `${label}${colon}`);
+      assert.equal(result.castList, p.castList, 'profile text is preserved');
+    }
+  }
+});
+
+test('labelled Latin aliases and Markdown emphasis resolve with existing Unicode normalization', () => {
+  const p = payload();
+  p.castList = p.castList.replace('アオ', 'アオ（Ao）');
+  p.references[0].items[0].name = ' **Ｔｅｍｐｏｒａｒｙ Ｎａｍｅ：ＡＯ** ';
+  const result = parse(p);
+  assert.equal(result.assets[0].items[0].name, 'アオ（Ao）');
+});
+
+test('a labelled full name takes precedence over another character sharing its alias', () => {
+  const p = payload();
+  p.castList = '## アオ\n人物設定\n## 北 アオ\n別の人物設定';
+  p.references[0].items[0].name = '仮名：アオ';
+  p.references[3].items[0].name = '北 アオ';
+  assert.equal(parse(p).assets[0].items[0].name, 'アオ');
+});
+
+test('a literal full name wins before interpreting labels within that name', () => {
+  const p = payload();
+  p.castList = '## Name: Name: アオ\n人物設定\n## アオ\n別の人物設定';
+  for (const reference of p.references.slice(0, 3)) reference.items[0].name = 'Name: アオ';
+  p.references[3].items[0].name = 'アオ';
+  assert.equal(parse(p).assets[0].items[0].name, 'Name: アオ');
+});
+
+test('label removal cannot choose between shared aliases or duplicate canonical names', () => {
+  for (const ambiguousCast of [
+    '## 北 アオ\n人物設定\n## 南 アオ\n別の人物設定',
+    '## 仮名：アオ\n人物設定\n## 暫定名：アオ\n別の人物設定',
+    '## ＡＯ\n人物設定\n## ao\n別の人物設定',
+  ]) {
+    const p = payload();
+    p.castList = ambiguousCast;
+    p.references[0].items[0].name = ambiguousCast.includes('ＡＯ') ? '仮名：Ao' : '仮名：アオ';
+    assert.throws(() => parse(p), {code: 'REFERENCE_ANALYSIS_INVALID'});
+  }
+});
+
+test('unsupported labels, partial names and unrelated people remain invalid references', () => {
+  for (const name of ['通称：アオ', '仮名：ア', '仮名：架空の第三者', '仮名：']) {
+    const p = payload();
+    p.references[0].items[0].name = name;
+    assert.throws(() => parse(p), {code: 'REFERENCE_ANALYSIS_INVALID'}, name);
+  }
+});
+
+test('character label handling does not rewrite background, prop or unknown material names', () => {
+  const p = payload();
+  for (const reference of p.references.slice(4)) reference.items[0].name = `仮名：${reference.items[0].name}`;
+  const result = parse(p);
+  assert.deepEqual(result.assets.slice(4).map(asset => asset.items[0]), p.references.slice(4).map(ref => ref.items[0]));
+});
+
 test('scenario context keeps appearance, spatial cues and uncertain ownership as data', () => {
   const { assets } = parse(payload());
   const context = lib.buildReferenceAssetContext(assets, images);
