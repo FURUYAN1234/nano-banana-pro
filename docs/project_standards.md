@@ -146,3 +146,7 @@ NBP側のエージェントが他プロジェクトのファイルを直接編�
 - NBP のシナリオパーサー仕様（Step 2 で受け付けるタグ: `Topic`, `Logline`, `Location`, `Outfit`, `Punchline`, `Scenario`, `EMOTION`, `Camera` 等）が変更された場合でも、 **NBP側から story-maker への直接的な変更通知やファイル編集は不要** 。
 - story-maker 側のエージェントがデプロイ時に `C:\nano-banana-pro-main\src\App.jsx` を **読み取り専用で自動参照** し、パーサー仕様の変更を自律的に検知・追従する仕組みが既に構築されている。
 - NBP側の責務は、パーサー仕様を `docs/scenario_spec.md` に正確に記録・維持することのみである。
+
+### ローカル実API検証中の画面保持
+
+有料の実API検証は、ビルドが通った候補を `npm run preview -- --host 127.0.0.1 --port 5173 --strictPort` で起動して行う。HMR付き開発サーバー上で送信したままソースを変更しない。候補の更新・サーバー差し替え・画面再読み込みは処理終了と未保存状態の退避を確認してから行い、HTTP 200のヘッダーだけを画像取得完了の証拠にしない。

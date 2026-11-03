@@ -43,7 +43,7 @@ test('STEP4 omits the API-only reference supplement implementation note', () => 
 });
 
 test('complete-prompt guidance leads into the preview after STEP3 owns the thinking log', () => {
-  const guidanceIndex = step4PanelSource.indexOf('コピー・TXT保存と同じ全文です。');
+  const guidanceIndex = step4PanelSource.indexOf('この最終プロンプトを直接編集できます。');
   const promptEditorIndex = step4PanelSource.search(/<textarea\r?\n\s+id="final-prompt-editor"/);
 
   assert.doesNotMatch(step4PanelSource, /<ThinkingLog thought=\{assembleThought\}/);

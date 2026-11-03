@@ -15,14 +15,14 @@ test('final prompt setter is exposed to the prompt panel', () => {
   );
 });
 
-test('prompt body textarea can be edited directly', () => {
+test('the final prompt textarea can be edited directly', () => {
   assert.match(
     step4PanelSource,
-    /<textarea\s+id="prompt-body-editor"[\s\S]*?value=\{finalPrompt\}[\s\S]*?onChange=\{\(e\) => setFinalPrompt\(e\.target\.value\)\}/,
+    /<textarea\s+id="final-prompt-editor"[\s\S]*?value=\{finalPrompt\}[\s\S]*?onChange=\{\(e\) => setFinalPrompt\(e\.target\.value\)\}/,
   );
 
   const finalPromptTextarea = step4PanelSource.match(
-    /<textarea\s+id="prompt-body-editor"[\s\S]*?\/>/,
+    /<textarea\s+id="final-prompt-editor"[\s\S]*?\/>/,
   )?.[0] ?? '';
 
   assert.doesNotMatch(finalPromptTextarea, /\breadOnly\b/);
@@ -31,7 +31,7 @@ test('prompt body textarea can be edited directly', () => {
 test('prompt editor guidance explains that edits feed copy and image generation', () => {
   assert.match(
     step4PanelSource,
-    /編集内容は上の全文表示・コピー・画像生成に反映されます。/,
+    /編集した全文を、API画像生成・分割／全体コピー・全文TXT保存・Web版制作情報JSON保存にそのまま使います。/,
   );
   assert.doesNotMatch(
     step4PanelSource,

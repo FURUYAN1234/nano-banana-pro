@@ -1573,7 +1573,8 @@ try {
     assert.deepEqual(resolvePageWorkflow({experimentalEnabled:false,prompt:'normal four-panel prompt'}),{kind:'four-panel',count:4});
     assert.deepEqual(resolvePageWorkflow({experimentalEnabled:true,prepared,prompt,input}),{kind:'experimental-manga',count:6});
     assert.throws(()=>resolvePageWorkflow({experimentalEnabled:false,prompt}),/通常4コマ/);
-    assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared,prompt:prompt+' changed',input}),/変更/);
+    assert.deepEqual(resolvePageWorkflow({experimentalEnabled:true,prepared,prompt:prompt+'\n追加した演出。',input}),{kind:'experimental-manga',count:6});
+    assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared,prompt:'',input}),/空/);
     assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared,prompt,input:{...input,castList:'別の人'}}),/変更/);
     assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared,prompt,input:{...input,showWatermarks:!input.showWatermarks}}),/変更/);
   });

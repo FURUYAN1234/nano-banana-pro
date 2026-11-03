@@ -1020,6 +1020,7 @@ ${String(castList).slice(0, 8000)}
 
 `}
 Submitted final image prompt (complete submitted contract, including manual edits):
+This is the latest approved instruction. If it differs from the earlier scenario or cast description, the final prompt takes precedence. Do not flag an intentional edit as a defect or restore the superseded instruction.
 ${String(finalPrompt)}
 `.trim();
 };

@@ -36,13 +36,11 @@ for (const provider of ['openai', 'gemini']) for (const colorMode of ['color', '
     const prepare = body => ensureWebPromptTrailingNewline(append(body, plan));
     for (const body of ['台詞「そのまま。」\nCamera: high angle\n', '編集後の台詞「変更した本文。」\n']) {
       const expected = prepare(body);
-      const html = render({ finalPrompt: body, prepareWebCopyPrompt: prepare, selectedEngine: provider });
+      const html = render({ finalPrompt: expected, prepareWebCopyPrompt: text => text, selectedEngine: provider });
       const preview = field(html, 'final-prompt-editor');
       assert.equal(preview.text, escapeHtml(expected));
-      assert.match(preview.attributes, /readonly=""/i);
-      const editor = field(html, 'prompt-body-editor');
-      assert.equal(editor.text, escapeHtml(body));
-      assert.doesNotMatch(editor.attributes, /readonly/i);
+      assert.doesNotMatch(preview.attributes, /readonly/i);
+      assert.doesNotMatch(html, /id="prompt-body-editor"/);
       assert.equal(splitWebPromptForPaste(expected).join(''), expected);
       assert.equal(await new Blob([expected]).text(), expected);
       if (provider === 'openai') assert.equal(ensureWebPromptTrailingNewline(appendOpenAIReferencePrompt(body, plan)), expected);
@@ -51,13 +49,11 @@ for (const provider of ['openai', 'gemini']) for (const colorMode of ['color', '
   });
 }
 
-test('invalid preparation cannot silently display the incomplete body as the final prompt', () => {
+test('export validation cannot erase or hide the editable final text', () => {
   const body = '保持する編集内容';
   const html = render({ finalPrompt: body, prepareWebCopyPrompt: () => { throw new Error('参照設定を確認してください。'); } });
-  assert.equal(field(html, 'final-prompt-editor').text, '');
-  assert.equal(field(html, 'prompt-body-editor').text, body);
-  assert.match(html, /role="alert"/);
-  assert.match(html, /参照設定を確認してください。/);
+  assert.equal(field(html, 'final-prompt-editor').text, body);
+  assert.doesNotMatch(field(html, 'final-prompt-editor').attributes, /readonly/i);
 });
 
 test('empty prompt never exports a reference-only instruction', () => {
@@ -71,7 +67,7 @@ test('oversized exports remain fully visible and recoverable without weakening t
   const body = '本文。'.repeat(11000);
   const plan = buildOpenAIReferencePlan({ colorMode: 'monochrome' });
   const prepare = value => ensureWebPromptTrailingNewline(appendOpenAIWebReferencePrompt(value, plan));
-  const html = render({ finalPrompt: body, prepareWebCopyPrompt: prepare });
+  const html = render({ finalPrompt: prepare(body), prepareWebCopyPrompt: text => text });
   assert.equal(field(html, 'final-prompt-editor').text, escapeHtml(prepare(body)));
   assert.throws(() => appendOpenAIReferencePrompt(body, plan), /上限|32,000/);
 });

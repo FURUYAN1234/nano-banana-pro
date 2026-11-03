@@ -603,7 +603,28 @@ ${showWatermarks?`FOOTER ONLY, below the last panel: 両クレジットを一度
 }
 
 export function buildExperimentalReviewPrompt(plan, source, options={}) {
-  const {expectedCast,expectedDialogue}=validateExperimentalPlan(plan,source);
+  const prompt = buildExperimentalReviewPromptBase(plan, source, options);
+  if (!options.finalPrompt) return prompt;
+  let finalInstructions = options.finalPrompt;
+  for (const entry of [...plan.expectedDialogue].sort((a,b)=>b.text.length-a.text.length)) {
+    finalInstructions = finalInstructions.replaceAll(entry.text, `<speech-${entry.id}-withheld>`);
+  }
+  // Keep the deterministic lettering check, but derive its expectations from
+  // the edited document rather than restoring STEP2's title or UI settings.
+  const titleMatch = options.finalPrompt.match(/^Top title EXACTLY ("(?:\\.|[^"\\])*")/m);
+  const footerLine = options.finalPrompt.match(/^FOOTER ONLY[^\n]*/m)?.[0] || '';
+  const left = footerLine.match(/Bottom-left EXACTLY ("(?:\\.|[^"\\])*")/)?.[1];
+  const right = footerLine.match(/Bottom-right EXACTLY ("(?:\\.|[^"\\])*")/)?.[1];
+  const titleKnown = Boolean(titleMatch) || options.finalPrompt.includes('NO PAGE TITLE:');
+  const footerKnown = Boolean(left && right) || options.finalPrompt.includes('No watermark or footer text; leave footer blank.');
+  const pageTextContract = titleKnown && footerKnown
+    ? `Title required EXACTLY ${titleMatch?.[1] || 'null'}. Footer expected exact text: ${left && right ? JSON.stringify({left:JSON.parse(left),right:JSON.parse(right)}) : 'null'} (null means no footer).\n`
+    : '';
+  return prompt.replace(/Title required EXACTLY[\s\S]*$/, () => `${pageTextContract}FINAL USER-EDITED INSTRUCTIONS (authoritative for title, footer, story, actions, clothing and all requested content; expected speech withheld for independent transcription):\n${finalInstructions}\nUse these edited instructions, never an earlier scenario. Unreadable or ambiguous instructions remain uncertain. Return pass only with complete visual evidence; report grounded material defects and retain uncertainty for the rest.`);
+}
+
+function buildExperimentalReviewPromptBase(plan, source, options={}) {
+  const {expectedCast,expectedDialogue}=options.finalPrompt ? plan : validateExperimentalPlan(plan,source);
   // The enlarged-frame reader never receives the expected speech. Comparison
   // is deterministic afterwards, so a model cannot echo the answer as OCR.
   const blind=value=>{

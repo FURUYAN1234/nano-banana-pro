@@ -38,7 +38,8 @@ for (const isOpenAIEngine of [false,true]) for (const status of ['pass','warning
         style:'人物の顔も透明な水彩で描かれている',story:'右側の人物が窓を開いている',anatomy:'人物の腕は両肩から連続している'}]};
     const candidate={},progress=[],log=[],requests=[];
     const reviewContext=status==='pass'?undefined:{candidateLabel:status==='warning'?'以前の画像':'今回の画像'};
-    const scope={candidate,experimentalRepairIssues,experimentalPrepared:{plan:{count:6},source:{}},generationScenario:'scenario',
+    const scope={candidate,experimentalRepairIssues,experimentalPrepared:{plan:{count:6},source:{}},generationScenario:'scenario',candidatePrompt:'edited final',
+      resolveFinalPromptReviewContract:(prepared,prompt)=>{assert.equal(prompt,'edited final');return prepared;},
       experimentalInput:()=>({}),buildExperimentalReviewPrompt:()=>'',reviewExperimentalImage:async(input,request)=>{
         assert.equal(input.reviewContext,reviewContext,'the caller forwards optional candidate context without inventing a review deadline');
         assert.equal(input.useStructuredOutput,isOpenAIEngine,'only the OpenAI route receives strict structured-output options');

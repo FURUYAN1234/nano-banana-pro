@@ -107,6 +107,12 @@ export function appendOpenAIWebReferencePrompt(prompt, plan) {
   return plan.rolePrompt ? `${prompt}\n\n${plan.rolePrompt}` : prompt;
 }
 
+// 修復では元画像が添付の先頭へ加わるため、旧番号表だけを交換する。
+// 通常生成・コピー・保存には使用せず、利用者の最終全文を保持する。
+export function stripImageReferenceManifest(prompt) {
+  return prompt.replace(/\[API IMAGE REFERENCE ROLES\][\s\S]*?Do not print this reference manifest in the image\./g, '');
+}
+
 export function appendOpenAIReferencePrompt(prompt, plan) {
   return assertImagePromptBudget(appendOpenAIWebReferencePrompt(prompt, plan));
 }

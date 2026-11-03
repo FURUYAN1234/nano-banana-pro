@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.2.5** / 現在のソース版: **v7.2.5**
+> Current source version: **v7.2.6** / 現在のソース版: **v7.2.6**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -241,10 +241,10 @@ The application provides one continuous four-step workflow. / アプリは次の
 
 1. **Material recognition / 素材の認識:** Read character sheets, backgrounds and props, and extract their roles and traits. / 人物・背景・小物の参照画像から種類と特徴を抽出します。
 2. **Scenario / シナリオ:** With full-auto OFF, choose four panels or the experimental 5–8-panel mode before STEP2, then generate the scenario and optionally strengthen its direction. / フルオートOFFではSTEP2の前に「4コマ生成」か「5～8コマ生成」を選び、シナリオを生成します。必要に応じて演出を強化できます。
-3. **Prompt / プロンプト:** Build an image prompt and review the complete export text before generation. For normal four-panel edits, open 「本文を編集」; in experimental mode, change the source script or settings and rebuild STEP3. / 画像プロンプトを構築し、生成前にコピー対象の全文を確認します。通常4コマでは「本文を編集」を開いて変更でき、5～8コマ生成では元台本や設定を直してSTEP3を再実行します。
+3. **Prompt / プロンプト:** Build and directly edit the complete final prompt, including reference instructions, for both four-panel and 5–8-panel pages. / 4コマ・5～8コマとも、参照指示を含む最終プロンプトの全文を直接編集できます。
 4. **Image / 画像:** Generate through Google Gemini or OpenAI; automatic image repair ON adds one review and at most one material correction. / Google GeminiまたはOpenAIで画像を生成します。画像自動修正ONの場合は総合検査1回と重大な破綻の修正を最大1回行います。
 
-The read-only 「最終プロンプト」 field shows exactly the full-copy/TXT text, including reference-image instructions and the OpenAI monochrome finishing instruction when applicable. Selecting the displayed text or joining numbered copy parts preserves that same content. 「本文を編集」 retains the editable body separately; its changes update the full preview without duplicating automatic supplements. Invalid preparation shows an error rather than an incomplete final text. API length checks and provider-specific conversion or image-repair instructions remain unchanged. / 「最終プロンプト」は全文コピー・TXT保存と同じ文章を表示する閲覧欄です。参照画像の指示と、該当時のOpenAI白黒仕上げ指示も含み、表示全文の選択コピーと番号順の分割コピーで同じ内容を取り出せます。「本文を編集」の変更は全文表示へ反映され、自動付加部分は二重になりません。準備できない場合は不完全な全文を表示せず、エラーを示します。APIの文字数検査、プロバイダー別の変換、画像修正時の追加指示は従来どおりです。
+The editable final prompt is the single document used by ordinary API generation, full/split copy, TXT and Web companion JSON. STEP3 adds reference and rendering instructions before editing; sending or exporting does not append, trim or rewrite them. API size limits still apply. Image-repair requests separately replace the reference manifest to identify the repair source. / 最終プロンプトは一つの編集欄です。STEP3で参照・描画指示まで組み立て、編集後の全文を通常のAPI生成・全体／分割コピー・TXT・Web版制作情報JSONへそのまま渡します。送信・保存時に自動追記・削除・書き換えをしません。API文字数上限は維持します。画像修正の依頼だけは、修正元画像を識別する参照説明を別途組み立てます。
 
 ### Complete current feature map / 現行機能の全体像
 
@@ -257,7 +257,7 @@ The read-only 「最終プロンプト」 field shows exactly the full-copy/TXT 
 | Story-required guests / 物語上必要な新キャラ | A role character required by the script, such as a merchant or receptionist, is included in the per-panel cast count even without a reference sheet. If that person recurs, identity, adult age, clothing, props, position and action continuity stay fixed; the system must not clone, replace or silently omit the role. / 商店主や受付係など台本上必要な役職人物は、参照画像がなくても各コマの登場人数へ含めます。再登場時は同一人物として、成人年齢、服装、小道具、位置、動作の連続性を保ち、複製・別人化・理由のない省略を防ぎます。 |
 | Ending selection / 結末 | Automatic, Gag automatic, individual gag endings, Serious automatic, individual serious endings, Gag Documentary and Serious Documentary. Automatic choice is resolved once and carried into STEP3–4; an incompatible label returned by the text model cannot replace the resolved selection. / 全体おまかせ、ギャグ内おまかせ、個別ギャグ、シリアス内おまかせ、個別シリアス、ギャグ・ドキュメンタリー、シリアス・ドキュメンタリーを選べます。自動選択の結果はSTEP3～4へ固定して渡し、文章モデルが返した非互換のオチ名で上書きしません。 |
 | Scenario enhancement / シナリオ強化 | Independently select expression, body, effects, background, camera, dialogue and story-direction enhancement. Revert to the pre-enhancement scenario at any time. Documentary direction has a fact-preserving variant for both gag and serious modes. / 表情、身体、演出、背景、カメラ、セリフ、物語演出を個別選択でき、強化前へ戻せます。ドキュメンタリーではギャグ・シリアスの両方に事実保持型の演出を使います。 |
-| STEP3 prompt / プロンプト | Choose color or monochrome, build the provider-specific prompt, run a text-model consistency review, edit the final prompt in normal four-panel mode, and copy it for Web use. In experimental mode, change the source script or settings and rebuild STEP3 instead of directly editing the prepared prompt. Failed reviews retain the original prompt and show an incomplete-review warning with the actual model/HTTP reason. Input errors are distinguished from API failures. Changing or reverting the scenario cancels the old review and unlocks STEP3. As soon as the prompt is ready, save a privacy-safe companion JSON for manual Web generation; it does not wait for an API image. / カラー／白黒を選び、プロバイダー別プロンプトを構築し、文章モデルの整合性確認後にWeb用コピーができます。通常4コマでは完成指示文を直接編集でき、5～8コマ生成では元台本や設定を直してSTEP3を再実行します。精査失敗時は元の指示文を保持し、精査未完了と実際のモデル・HTTP状態・理由を表示します。入力不備とAPI障害は区別し、シナリオの変更・復元時は旧精査を中断してSTEP3を操作可能に戻します。最終プロンプト完成時点で、API画像を待たずにWeb手動生成用の安全化済み別添JSONを保存できます。 |
+| STEP3 prompt / プロンプト | Choose color/monochrome, assemble and review, then directly edit the full final prompt in either page mode. Copies, TXT, Web JSON and ordinary API generation use that edited document. / カラー／白黒を選び、組立・整合性確認後、両モードで参照指示を含む最終全文を直接編集できます。コピー・TXT・Web JSON・通常API生成は編集した全文を使います。 |
 | STEP4 image / 画像 | Generate in the app, choose available quality and size settings, stop subsequent automatic correction, or use the copied prompt manually on the provider's Web UI. API-generated PNG downloads automatically embed a separate API-image production record with the actual model and output hash. / アプリ内で生成し、利用可能な品質・サイズを選択し、後続の自動修正を停止できます。コピーしたプロンプトを公式Web画面で手動利用する経路もあります。API生成PNGには、実際のモデルと出力画像ハッシュを含むAPI画像専用の制作情報を自動保存します。 |
 | Review and history / 検査・履歴 | Automatic repair OFF skips image QA. ON inspects panel count, dialogue, balloon order and speaker tails, character identity, anatomy, camera, props, surface orientation and medium compliance in one request. It observes readable and partly readable text separately from expected dialogue; printed objects are not speech balloons. Coherent environmental text is allowed unless it materially changes the story. Missing evidence remains unverified. At most one correction addresses material defects; there is no second camera audit, reinspection or candidate-comparison API. Original and corrected images remain in each mode’s latest-ten history. / 自動修正OFFは画像検査なし。ONはコマ数、台詞、吹き出し順・尻尾、人物同一性、人体、カメラ、小道具、面の向き、画風を1回のAPIで総合検査します。画像の全文字・部分文字を台詞の期待値と区別して観察し、作中文字を吹き出しと混同しません。話を大きく変えない自然な環境文字は許容し、一覧漏れや根拠不足は未確認です。重大な破綻だけ最大1回修正し、独立した追加カメラ検査・再検査・候補比較APIは呼びません。各モードの履歴に元画像と修正画像を直近10件まで保持します。 |
 | Full-auto controls / フルオート | The workflow can advance through STEP2–4, show the current stage and countdown, and be stopped without clearing the already completed work. / STEP2～4を自動で進め、現在段階とカウントダウンを表示し、完了済みの内容を消さずに停止できます。 |
@@ -393,7 +393,7 @@ The documentary options are listed inside their respective Serious and Gag group
 
 STEP2 offers two source-faithful documentary choices. **Serious Documentary** keeps the character-sheet art style in every panel and turns only the ending into a serious manga conclusion. **Gag Documentary** keeps the source facts while turning only the ending into a gag-manga beat. / STEP2には原文忠実のドキュメンタリー選択肢が2つあります。**シリアス・ドキュメンタリー** は全コマでキャラクターシートと同じ絵柄を維持し、オチだけをシリアス漫画として締めます。**ギャグ・ドキュメンタリー** は原文の事実を守り、オチだけをギャグ漫画化します。
 
-Changing the ending mode clears the prior scenario, final prompt and current image, then requires STEP2 and STEP3 to be rebuilt. While Serious Documentary is selected, STEP3, Web copy and API generation reject a stale or manually edited prompt that lacks the all-panel reference-style lock or restores gag/chibi/proportion-switch directives. / 結末モードを変更すると、以前のシナリオ・最終プロンプト・現在画像を消去し、STEP2とSTEP3の再生成を求めます。シリアス・ドキュメンタリー選択中は、全コマ参照絵柄固定がない古い指示文や、ギャグ・ちび化・頭身変更指示を戻した編集済み指示文を、STEP3・Webコピー・API生成の各直前で拒否します。
+Changing the ending mode clears the prior scenario, final prompt and current image and requires rebuilding STEP2 and STEP3. STEP3 and automated policy revisions validate the selected ending contract. Subsequent manual edits to the final prompt remain authoritative for ordinary API generation and exports. / 結末設定を変更すると旧台本・指示文・画像をクリアし、STEP2・STEP3を再構築します。STEP3とAIによるポリシー修正文は選択した結末条件を検査します。その後の最終プロンプトの手編集は、通常API生成と各出力にそのまま反映します。
 
 Documentary source facts are extracted from arbitrary input and assigned to the story as an internal fact ledger. The ledger is excluded from speech bubbles and visible labels, rejects unsupported timeline substitutions, and is validated before prompt assembly. / ドキュメンタリーでは任意の入力本文から事実を抽出し、内部用の事実台帳として各コマへ割り当てます。台帳そのものは吹き出しや画像内ラベルへ出さず、原文にない時期への置換を拒否し、プロンプト構築前に原文忠実性を検査します。
 
@@ -623,7 +623,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -679,7 +679,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.5 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.5 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.6 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.6 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -786,6 +786,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.2.6 (2026-11-03)
+- **[Fix & UX]** Unified direct editing of the full final prompt across API, copy, TXT and JSON; native-page QA reads the edited document. / 最終プロンプトを全文直接編集へ統一。API・コピー・TXT・JSONへ同じ編集文を渡し、5～8コマの品質検査も編集後の内容を参照。
 
 ### v7.2.5 (2026-11-03)
 - **[Fix & UX]** Fix STEP1 matching between labelled reference names and profile headings. Prefer full names and reject ambiguous matches. / STEP1で仮名等のラベル付き人物名を見出しと照合する処理を修正。正式名を優先し、複数候補への曖昧な対応は拒否します。

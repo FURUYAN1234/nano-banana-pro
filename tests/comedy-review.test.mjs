@@ -237,8 +237,9 @@ test('STEP3 publishes and returns the reviewed candidate with no extra review UI
   const { readFile } = await import('node:fs/promises');
   const workflow = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
   const step = workflow.slice(workflow.indexOf('const assemblePrompt ='), workflow.indexOf('// [v3.04]'));
-  assert.ok(step.indexOf('await reviewComedyPrompt') < step.indexOf('setFinalPrompt(reviewed.prompt)'));
-  assert.match(step, /return reviewed.prompt/);
+  assert.ok(step.indexOf('await reviewComedyPrompt') < step.indexOf('prepareFinalPrompt(reviewed.prompt'));
+  assert.match(step, /setFinalPrompt\(completePrompt\)/);
+  assert.match(step, /return completePrompt/);
   assert.doesNotMatch(step, /if.*reviewed.warning.*return null/);
   const panel = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
   assert.doesNotMatch(panel, /WebPromptReview|ギャグを保ってAI精査/);

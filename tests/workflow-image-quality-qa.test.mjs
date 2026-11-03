@@ -36,7 +36,7 @@ test('a malformed primary QA report stops supplementary paid audits and keeps th
     let requests = 0;
     const requestOptions = [];
     const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
-      ...imageQualityQa, qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color',
+      ...imageQualityQa, qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color', generationColorMode: 'color',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => ['one', 'two', 'three', 'four'],
       buildImageQualityQaImageParts: () => [], buildImageQualityQaPrompt: () => 'primary',
@@ -63,7 +63,7 @@ test('the actual workflow rejects a second review request at the API boundary', 
   const callback = workflowSource.match(/const reviewImageCandidate = ([\s\S]+?);\r?\n\r?\n      const retainedImage/)[1];
   let calls=0;
   const context={experimentalPrepared:null,qualityMode:'single-image',generationScenario:'',castList:'',images:[],
-    isOpenAIEngine:true,colorMode:'color',inspectImageDimensions:async()=>({width:100,height:100}),getImageContentHash:async()=> 'hash',
+    isOpenAIEngine:true,colorMode:'color',generationColorMode:'color',inspectImageDimensions:async()=>({width:100,height:100}),getImageContentHash:async()=> 'hash',
     buildImageQualityQaImageParts:()=>[],buildImageQualityQaPrompt:()=> 'quality',statCallback:()=>{},
     callAI:async()=>{calls++;return {text:'{}'};},requestImageQualityQa:async({request})=>{
       await request('first',[]);await request('forbidden second',[]);throw Error('unreachable');
@@ -82,7 +82,7 @@ test('the actual workflow retains primary findings without supplementary hand or
       ...(missingHand ? [{ type: 'unverified', panel: 2, subject: 'actor', reason: 'Missing or incomplete per-actor visible-hand inventory' }] : []),
     ] };
     const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
-      qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color',
+      qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color', generationColorMode: 'color',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => ['one', 'two', 'three', 'four'],
       buildImageQualityQaImageParts: () => [0, 1, 2, 3, 4], buildImageQualityQaPrompt: () => 'primary',
@@ -119,7 +119,7 @@ test('native monochrome chroma findings survive every QA outcome without authori
     let inspected = 0, requests = 0;
     const progress = [];
     const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
-      qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'monochrome',
+      qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'monochrome', generationColorMode: 'monochrome',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'native-source-hash',
       inspectNativeMonochromeChroma: async value => {
         inspected++; assert.equal(value, 'data:image/png;base64,unchanged');
@@ -165,7 +165,7 @@ test('native chroma inspection is never invoked for color, Gemini or single-imag
   const callback = workflowSource.match(/const reviewImageCandidate = ([\s\S]+?);\r?\n\r?\n      const retainedImage/)[1];
   for (const [isOpenAIEngine, colorMode, qualityMode] of [[true, 'color', 'four-panel'], [false, 'monochrome', 'four-panel'],
     [false, 'color', 'four-panel'], [true, 'monochrome', 'single-image']]) {
-    const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts, isOpenAIEngine, colorMode, qualityMode, scenario: '', castList: '', images: [],
+    const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts, isOpenAIEngine, colorMode, generationColorMode:colorMode, qualityMode, scenario: '', castList: '', images: [],
       inspectNativeMonochromeChroma: () => assert.fail('non-target path must not inspect pixels'),
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => [], buildImageQualityQaImageParts: () => [], buildImageQualityQaPrompt: () => 'primary',
@@ -229,7 +229,7 @@ test('OpenAI generation binds initial references and the actual repair source', 
   assert.match(workflowSource, /backgroundImage:\s*bg360Image/);
   assert.match(workflowSource, /backgroundEnabled:\s*bg360Enabled/);
   assert.match(workflowSource, /originalCandidate:\s*repairSource/);
-  assert.match(workflowSource, /appendOpenAIReferencePrompt\(applyOpenAIImageEngineWatermark\(prompt, openAIImageQuality\), referencePlan\)/);
+  assert.match(workflowSource, /repair\s*\? appendOpenAIReferencePrompt\(stripImageReferenceManifest\(prompt\), referencePlan\)\s*: assertImagePromptBudget\(prompt\)/);
   assert.match(workflowSource, /imageInputs:\s*referencePlan\.imageInputs/);
   assert.match(workflowSource, /sourceCandidate = originalCandidate/);
   assert.match(workflowSource, /repairSource:\s*isOpenAIEngine\s*\?\s*sourceCandidate\s*:\s*null/);

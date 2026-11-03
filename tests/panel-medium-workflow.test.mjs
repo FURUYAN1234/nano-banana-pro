@@ -7,6 +7,7 @@ import * as references from '../src/lib/openai-image-references.js';
 import { applyOpenAIImageEngineWatermark, resolveOpenAIImageOption } from '../src/lib/openai-image-settings.js';
 import { ensureWebPromptTrailingNewline } from '../src/lib/web-prompt-chunks.js';
 import { selectPanelMediumStyles } from '../src/lib/panel-medium-reference.js';
+import { assertImagePromptBudget } from '../src/lib/image-prompt-budget.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
@@ -54,7 +55,9 @@ function setup(overrides = {}) {
   const plans = [];
   const images = [image('first character'), image('second character')];
   const context = {
-    ...references, applyOpenAIImageEngineWatermark, resolveOpenAIImageOption, ensureWebPromptTrailingNewline,
+    ...references, applyOpenAIImageEngineWatermark, resolveOpenAIImageOption, ensureWebPromptTrailingNewline, assertImagePromptBudget,
+    isExperimentalPage:()=>false, inferImageQualityMode:()=> 'single-image',
+    getCurrentPromptProviderFamily:()=> 'chatgpt', PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt'},
     getBuiltinPanelMediumReference: options => {
       assert.equal(typeof builtin.getBuiltinPanelMediumReference, 'function');
       return builtin.getBuiltinPanelMediumReference(options);
@@ -93,7 +96,7 @@ test('the four real planner expressions use the same builtin guide with complete
 
 test('each production planner uses its current scenario instead of a stale display scenario', () => {
   const planners = calls('buildOpenAIReferencePlan');
-  const scenarioNames = ['sourceScenario', 'currentScenario', 'scenario', 'generationScenario'];
+  const scenarioNames = ['sourceScenario', 'currentScenario', 'sourceScenario', 'generationScenario'];
   for (const [index, name] of scenarioNames.entries()) {
     const h = setup({ scenario: normal, sourceScenario: normal, currentScenario: normal, generationScenario: normal, [name]: mixed });
     const plan = evaluate(workflow, planners[index], h.context);
@@ -117,14 +120,14 @@ test('all four actual call sites exclude mono, custom style, source-style lock a
 
 test('actual Web callback and API callback send the same scoped guide without mutating authored prompt', async () => {
   const h = setup();
-  const prompt = 'Camera: 背後から望遠\nAction: 手紙を差し出す\nDialogue: 「受け取って。」';
+  const prompt = callback('prepareFinalPrompt', h.context)('Camera: 背後から望遠\nAction: 手紙を差し出す\nDialogue: 「受け取って。」');
   const copied = callback('prepareWebCopyPrompt', h.context)(prompt);
   const stoppedAtTransport = new Error('TEST_TRANSPORT_CAPTURE_NO_IMAGE_GENERATED');
   const sent = [];
   h.context.generateImageWithOpenAI = async (...args) => { sent.push(args); throw stoppedAtTransport; };
   await assert.rejects(callback('generateImageCandidate', h.context)(prompt), error => error === stoppedAtTransport);
   assert.equal(sent.length, 1);
-  assert.equal(sent[0][0] + '\n', copied);
+  assert.equal(sent[0][0], copied);
   assert.equal(sent[0][0].slice(0, prompt.length), prompt);
   assert.deepEqual(sent[0][2].imageInputs, h.plans[0].imageInputs);
   assert.equal(guideInputs(h.plans[0]).length, 1);
@@ -149,7 +152,7 @@ test('actual API callback rejects capacity overflow before transport and retains
 test('actual initial-image callback finishes monochrome manga before layout while color and single-image outputs bypass it', async () => {
   for (const [colorMode,qualityMode,expected] of [['color','four-panel',0],['monochrome','four-panel',1],['monochrome','experimental-manga',1],['monochrome','single-image',0]]) {
     let finishes=0;
-    const h=setup({colorMode,qualityMode,workflowSource:{},metadataSettings:{},referenceContext:{},
+    const h=setup({colorMode,generationColorMode:colorMode,qualityMode,workflowSource:{},metadataSettings:{},referenceContext:{},
       generateImageWithOpenAI:async()=>({base64Img:'YWJj',mimeType:'image/png'}),
       finalizeMonochromeCandidate:async(candidate,mode)=>{assert.equal(mode,'monochrome');finishes++;return {...candidate,base64Img:'ZGVm'};},
       normalizePageCandidate:async candidate=>candidate,formatPageLayoutStatus:()=>'',

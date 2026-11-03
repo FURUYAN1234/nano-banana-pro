@@ -13,23 +13,23 @@ test('web copy and API generation preserve the same prompt body and OpenAI refer
   );
   assert.match(
     workflowSource,
-    /const\s+editablePrompt\s*=\s*overridePrompt\s*\|\|\s*finalPrompt\s*;/,
+    /const\s+editablePrompt\s*=\s*overridePrompt\s*\?\?\s*finalPrompt\s*;/,
     'API generation must start from finalPrompt unless a policy retry supplies an explicit replacement'
   );
   assert.match(
     workflowSource,
     /generateImageCandidate\(\s*currentPrompt\s*\)/,
-    'initial API generation must send the approved prompt after engine-credit and color-contract preparation'
+    'initial API generation must send the edited final prompt'
   );
   assert.match(
     workflowSource,
-    /const apiPrompt = appendOpenAIReferencePrompt\(applyOpenAIImageEngineWatermark\(prompt, openAIImageQuality\), referencePlan\);[\s\S]*?generateImageWithOpenAI\(apiPrompt,/,
-    'OpenAI may synchronize the selected engine credit and append reference roles; content preservation is covered by watermark behavioral tests'
+    /const apiPrompt = repair\s*\? appendOpenAIReferencePrompt\(stripImageReferenceManifest\(prompt\), referencePlan\)\s*: assertImagePromptBudget\(prompt\);[\s\S]*?generateImageWithOpenAI\(apiPrompt,/,
+    'ordinary OpenAI generation preserves the complete final prompt'
   );
   assert.match(
     workflowSource,
-    /const apiPrompt = buildGeminiImageApiPrompt\(prompt, referencePlan\);[\s\S]*?generateImageWithImagen\(apiPrompt,/,
-    'Gemini may append reference roles without rewriting the approved body'
+    /const apiPrompt = repair \? buildGeminiImageApiPrompt\(stripImageReferenceManifest\(prompt\), referencePlan\) : prompt;[\s\S]*?generateImageWithImagen\(apiPrompt,/,
+    'ordinary Gemini generation preserves the complete final prompt'
   );
 });
 
@@ -74,6 +74,6 @@ test('prompt assembly only branches by Gemini-family vs ChatGPT-family, not Web 
     /\b(?:setWebPrompt|setApiPrompt|setPromptForWeb|setPromptForApi)\b/i,
     'workflow must not introduce separately editable Web/API prompt state'
   );
-  assert.match(workflowSource, /appendOpenAIReferencePrompt\(applyOpenAIImageEngineWatermark\(prompt, openAIImageQuality\), referencePlan\)/);
+  assert.match(workflowSource, /appendOpenAIWebReferencePrompt\(applyOpenAIImageEngineWatermark\(prompt, openAIImageQuality\)/);
   assert.doesNotMatch(workflowSource, /setFinalPrompt\(\s*apiPrompt\s*\)/);
 });

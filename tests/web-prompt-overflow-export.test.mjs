@@ -43,7 +43,7 @@ test('over-limit seven-panel Web prompt retains the exact text and count for spl
   assert.equal(longPrompt.length, 33540);
   const prepare = webPreparation();
   const text = prepare(longPrompt);
-  assert.equal(text, ensureWebPromptTrailingNewline(`${longPrompt}\n\n${plan.rolePrompt}`));
+  assert.equal(text, longPrompt);
   const chunks = splitWebPromptForPaste(text);
   assert.ok(chunks.length > 1);
   assert.ok(chunks.every(chunk => chunk.length <= 9500));
@@ -59,8 +59,9 @@ test('over-limit Web export retains the active medium reference and every author
   const mediumReference = getBuiltinPanelMediumReference({ scenario, colorMode: 'color', styleJson: null, punchlineType: 'Auto' });
   assert.ok(mediumReference);
   const guidePlan = references.buildOpenAIReferencePlan({ compact: true, characterImages: ['data:image/png;base64,YQ=='], mediumReference });
-  const text = webPreparation({ scenario })(longPrompt);
-  assert.equal(text, ensureWebPromptTrailingNewline(`${longPrompt}\n\n${guidePlan.rolePrompt}`));
+  const prepared = ensureWebPromptTrailingNewline(`${longPrompt}\n\n${guidePlan.rolePrompt}`);
+  const text = webPreparation({ scenario })(prepared);
+  assert.equal(text, prepared);
   assert.equal(splitWebPromptForPaste(text).join(''), text);
   assert.throws(() => references.appendOpenAIReferencePrompt(longPrompt, guidePlan), /32,000/);
 });
@@ -98,8 +99,8 @@ test('over-limit metadata export retains safe full text and existing credential 
   assert.equal(metadata.privacy.raw_reference_images_included, false);
 });
 
-test('Web overflow recovery still rejects stale experimental plans, reference errors and invalid normal render options', () => {
-  assert.throws(() => webPreparation({ referenceEditorError: '素材の認識を修正してください。' })(longPrompt), /素材の認識/);
-  assert.throws(() => webPreparation({ resolvePageWorkflow: () => { throw new Error('元台本が変更されています。'); } })(longPrompt), /元台本/);
-  assert.throws(() => webPreparation({ experimentalEnabled: false, assertRenderOptions: () => { throw new Error('表示設定の不一致'); } })('four panels'), /表示設定/);
+test('export preserves edited work even when settings or references would prevent a new API request', () => {
+  assert.equal(webPreparation({ referenceEditorError: '素材の認識を修正してください。' })(longPrompt), longPrompt);
+  assert.equal(webPreparation({ resolvePageWorkflow: () => { throw new Error('元台本が変更されています。'); } })(longPrompt), longPrompt);
+  assert.equal(webPreparation({ experimentalEnabled: false, assertRenderOptions: () => { throw new Error('表示設定の不一致'); } })('four panels'), 'four panels');
 });

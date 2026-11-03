@@ -13,10 +13,11 @@ export function resolvePageWorkflow({ experimentalEnabled, prepared, prompt, inp
   }
   if (!prepared || prepared.source.scenario !== input.scenario || prepared.source.castList !== input.castList
     || (prepared.source.userDirection || '') !== (input.userDirection || '')
-    || prepared.source.colorMode !== input.colorMode || prepared.prompt !== prompt
+    || prepared.source.colorMode !== input.colorMode
     || prepared.prompt !== buildExperimentalImagePrompt(prepared.plan, readExperimentalSource(input), input)) {
     throw new Error('実験の元台本・設定・描画指示が変更されています。STEP3を作り直してください。');
   }
+  if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('最終プロンプトが空です。');
   return {kind:'experimental-manga',count:prepared.plan.count};
 }
 

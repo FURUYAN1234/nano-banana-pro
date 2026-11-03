@@ -97,7 +97,7 @@ try {
       promptAssemblyRunRef:{current:0},promptAssemblyAbortRef:{current:null},scenarioRunEpochRef:{current:0},copyFeedbackTimerRef:{current:null},lastPolicyErrorRef:{current:''},
       normalizeMangaColorMode:v=>v==='monochrome'?v:'color',assertImageInputBudget:()=>{},beginApiWork:()=>{},normalizePromptProviderFamily:v=>v,
       getCurrentPromptProviderFamily:()=> 'chatgpt',buildReferenceAssetContext:()=>input.referenceContext,summarizeExperimentalLayouts:m.summarizeExperimentalLayouts,
-      validateMangaScenario,formatMangaScenarioValidationIssue:()=> 'invalid',prepareExperimentalManga:m.prepareExperimentalManga,
+      validateMangaScenario,formatMangaScenarioValidationIssue:()=> 'invalid',prepareExperimentalManga:m.prepareExperimentalManga,prepareFinalPrompt:prompt=>prompt,
       showStatus:message=>{state.status=message;},translateApiError:error=>{state.lastError=error.message;return error.message;},requests:0,
       updateResolvedPunchlineType:value=>{state.resolvedPunchlineTypeRef.current=value;},
       callAI:async()=>{state.requests++;return {text:JSON.stringify(planFor({...input,scenario:state.scenario}))};}};

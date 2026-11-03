@@ -16,14 +16,15 @@ import { buildImageEditRequest } from '../lib/image-edit.js';
 import { readPanelStyleEditFrames, preparePanelStyleEdit, composePanelStyleEdit } from '../lib/panel-style-edit.js';
 import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
-import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
-import {buildGeminiReferencePlan, buildGeminiImageApiPrompt, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
-import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildWebReferencePlan, buildRecognitionEditorText, parseRecognitionEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers, editReferenceAsset, editReferenceCast } from '../lib/reference-assets.js';
+import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt, getOpenAIPromptBodyBudget, stripImageReferenceManifest} from '../lib/openai-image-references.js';
+import { assertImagePromptBudget } from '../lib/image-prompt-budget.js';
+import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
+import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildRecognitionEditorText, parseRecognitionEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers, editReferenceAsset, editReferenceCast } from '../lib/reference-assets.js';
 import { getImageInputBudget, assertImageInputBudget, planImageAddition } from '../lib/image-input-budget.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
 import { assembleMangaPromptWithRecovery } from '../lib/prompt-assembly-recovery.js';
-import { normalizeMangaColorMode, ensureMangaColorModeContract } from '../lib/manga-render-mode.js';
+import { normalizeMangaColorMode, ensureMangaColorModeContract, isMonochromePrompt } from '../lib/manga-render-mode.js';
 import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from '../lib/ending-mode-policy.js';
 import { assertPrintableDialogue } from '../lib/bubble-text.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from '../lib/web-prompt-chunks.js';
@@ -68,6 +69,7 @@ import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenA
 import { DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_SCENARIO_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS, OPENAI_VISION_MODEL_IDS } from '../lib/openai-model-routes.js';
 
 import { prepareExperimentalManga, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, experimentalRepairIssues, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
+import { resolveFinalPromptReviewContract } from '../lib/final-prompt-review-contract.js';
 import { resolvePageWorkflow } from '../lib/page-workflow.js';
 
 export default function useMangaWorkflow({ experimentalEnabled: requestedExperimentalEnabled = true, onAutoPageModeChange } = {}) {
@@ -1436,9 +1438,10 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         promptAssemblyRunRef.experimentalPrepared={...prepared,images:imagesRef.current,bg360Image,groupId:crypto.randomUUID()};
         promptAssemblyRunRef.completedRun=assemblyRun;
         promptAssemblyRunRef.completedScenario=prepared.source.scenario;
-        setFinalPrompt(prepared.prompt);
+        const completePrompt = prepareFinalPrompt(prepared.prompt, { sourceScenario: prepared.source.scenario, providerFamily: effectiveProviderFamily });
+        setFinalPrompt(completePrompt);
         setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}\nSTEP2のコマ数・順序・台詞を保持しました。`);
-        return prepared.prompt;
+        return completePrompt;
       }
       const activePunchlineType = resolvedPunchlineTypeRef.current || resolveScenarioEndingType(currentScenario, punchlineType);
       updateResolvedPunchlineType(activePunchlineType);
@@ -1514,14 +1517,15 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       promptAssemblyRunRef.completedRun = assemblyRun;
       promptAssemblyRunRef.completedScenario = assembled.scenario;
       if (assembled.repaired) setScenario(assembled.scenario);
-      setFinalPrompt(reviewed.prompt);
+      const completePrompt = prepareFinalPrompt(reviewed.prompt, { sourceScenario: assembled.scenario, providerFamily: effectiveProviderFamily });
+      setFinalPrompt(completePrompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒漫画原稿（墨線・白地・肌や素材と影に応じたトーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
       showStatus(reviewed.warning
         ? "指示文を構築しましたが、AI精査に警告があります。STEP3の理由を確認してください。"
         : "最終プロンプトの構築が完了しました。コピーまたはSTEP4の画像生成へ進めます。");
-      return reviewed.prompt; // [v2.79] フルオート連鎖用: 成功
+      return completePrompt; // 手動と全自動で同じ最終全文を渡す。
 
     } catch (error) {
       if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
@@ -1753,23 +1757,24 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const [isFixPromptCopied, setIsFixPromptCopied] = useState(false);
   const [isPolicyCopied, setIsPolicyCopied] = useState(false);
 
-  // Export the complete API-equivalent text without applying the API send limit.
-  // Validate again at copy time because the user may edit the text or references.
-  const prepareWebCopyPrompt = (prompt) => {
-    if (referenceEditorError) throw new Error(referenceEditorError);
-    if (isExperimentalPage()) resolvePageWorkflow({experimentalEnabled:isExperimentalPage(),prepared:promptAssemblyRunRef.experimentalPrepared,prompt,input:experimentalInput()});
-    if (!isExperimentalPage() && inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
-    return ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
+  // STEP3の確定時に一度だけ全文を組み立てる。以降の編集は出力時に書き換えない。
+  const prepareFinalPrompt = (prompt, { sourceScenario = scenario, providerFamily = getCurrentPromptProviderFamily() } = {}) => {
+    if (!isExperimentalPage() && inferImageQualityMode(prompt) === 'four-panel') prompt = ensureMangaColorModeContract(prompt, colorMode);
+    return ensureWebPromptTrailingNewline(providerFamily === PROMPT_PROVIDER_FAMILIES.CHATGPT
       ? appendOpenAIWebReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), buildOpenAIReferencePlan({ compact: true,
         characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
         referenceAssets: referenceAssetsRef.current,
         colorMode,
-        mediumReference: getBuiltinPanelMediumReference({scenario,colorMode,styleJson,punchlineType}),
+        mediumReference: getBuiltinPanelMediumReference({scenario:sourceScenario,colorMode,styleJson,punchlineType}),
       }))
-      : appendGeminiReferencePrompt(prompt, buildWebReferencePlan({ compact: true,
-        images, referenceAssets: referenceAssetsRef.current, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled, colorMode,
+      : buildGeminiImageApiPrompt(prompt, buildGeminiReferencePlan({ compact: true,
+        characterImages: images, referenceAssets: referenceAssetsRef.current, colorMode,
+        referenceImages: bg360Enabled && bg360Image ? [bg360Image] : [],
+        backgroundReferences: true, sharedBackground: true,
       })));
   };
+
+  const prepareWebCopyPrompt = (prompt) => prompt;
 
   let webCopyPartLengths = [];
   if (finalPrompt) {
@@ -1784,10 +1789,6 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     if (!finalPrompt) return;
     let copiedPrompt;
     try {
-      if (!isExperimentalPage()) {
-        assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
-        assertPrintableDialogue(finalPrompt);
-      }
       copiedPrompt = prepareWebCopyPrompt(finalPrompt);
     } catch (error) {
       showStatus(error.message);
@@ -2129,16 +2130,16 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   };
 
   // --- Step 4: Image Generation ---
-  const assertImageGenerationPrompt = (prompt, sourceScenario = scenario) => {
+  const assertImageGenerationPrompt = (prompt, sourceScenario = scenario, enforceAssemblySettings = true) => {
     if(isExperimentalPage()) {
       const prepared=promptAssemblyRunRef.experimentalPrepared;
       resolvePageWorkflow({experimentalEnabled:isExperimentalPage(),prepared,prompt,input:experimentalInput(sourceScenario)});
       if(prepared.images!==imagesRef.current||prepared.bg360Image!==bg360Image) throw new Error('参照素材が変わりました。STEP3を作り直してください。');
       return;
     }
-    assertPromptEndingModeConsistency({ prompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
+    if (enforceAssemblySettings) assertPromptEndingModeConsistency({ prompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
     assertPrintableDialogue(prompt);
-    if (inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
+    if (enforceAssemblySettings && inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
   };
 
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
@@ -2154,7 +2155,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     }
     beginApiWork('step4');
     setImageQualityNeedsRepair(false);
-    const editablePrompt = overridePrompt || finalPrompt;
+    const editablePrompt = overridePrompt ?? finalPrompt;
     const generationScenario = generationOptions.sourceScenario ?? scenario;
     const workflowSource = { promptAssemblyRun: promptAssemblyRunRef.completedRun, finalPrompt: editablePrompt };
     let pageContract;
@@ -2162,16 +2163,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     catch(error){showStatus(error.message);return false;}
     const qualityMode=pageContract.kind;
     const experimentalPrepared=qualityMode==='experimental-manga'?promptAssemblyRunRef.experimentalPrepared:null;
-    const enginePrompt = isOpenAIEngine && !generationOptions.reviewOnly
-      ? applyOpenAIImageEngineWatermark(editablePrompt, openAIImageQuality) : editablePrompt;
-    const currentPrompt = qualityMode === 'four-panel'
-      ? ensureMangaColorModeContract(enginePrompt, colorMode)
-      : enginePrompt;
+    const currentPrompt = editablePrompt;
+    const generationColorMode = isMonochromePrompt(currentPrompt) ? 'monochrome' : 'color';
     const metadataSettings = {
       scenario_source_key: findScenarioSourceKey(generationScenario, recentScenarioTextsRef.current),
       page_kind:qualityMode,panel_count:pageContract.count,
       punchline_type: punchlineType,
-      color_mode: colorMode,
+      color_mode: generationColorMode,
       ...readRenderOptions(currentPrompt),
       expression_enhancement: Boolean(enhanceExpressions),
       body_language_enhancement: Boolean(enhanceBodyLang),
@@ -2188,7 +2186,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     };
     if (isGeneratingImage || imageEditRunRef.current?.epoch === scenarioRunEpochRef.current || (!skipGuard && !currentPrompt)) return false;
     try {
-      assertImageGenerationPrompt(currentPrompt, generationScenario);
+      assertImageGenerationPrompt(currentPrompt, generationScenario, Boolean(generationOptions.policyAttempt));
     } catch (error) {
       showStatus(error.message);
       setGenLog(prev => [...prev, `[PROMPT VALIDATION ERROR] ${error.message}`]);
@@ -2208,8 +2206,6 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     const initialLogs = generationOptions.policyAttempt
       ? [`[POLICY AUTO-FIX] 画像再生成 ${generationOptions.policyAttempt}/${MAX_POLICY_RETRIES}`, "[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."]
       : ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
-    if (enginePrompt !== editablePrompt) initialLogs.push('[WATERMARK] 表記を現在の画像生成エンジン名へ同期しました。');
-    if (currentPrompt !== enginePrompt) initialLogs.push('[MODE] 選択中の白黒指定を、編集した描画指示に反映しました。');
     if (getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT) {
       initialLogs.push("[2.5/5] ✅ ChatGPT Engine: ChatGPT-family prompt structure locked.");
     } else {
@@ -2288,7 +2284,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             colorMode,
             mediumReference: getBuiltinPanelMediumReference({scenario:generationScenario,colorMode,styleJson,punchlineType}),
           });
-          const apiPrompt = appendOpenAIReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), referencePlan);
+          const apiPrompt = repair
+            ? appendOpenAIReferencePrompt(stripImageReferenceManifest(prompt), referencePlan)
+            : assertImagePromptBudget(prompt);
           metadataPrompt = apiPrompt;
           const roles = [
             ...Array(referencePlan.counts.original).fill('repair_source'),
@@ -2316,7 +2314,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             referenceImages: geminiReferenceImages,
             backgroundReferences: !Array.isArray(generationOptions.referenceImages),
           });
-          const apiPrompt = buildGeminiImageApiPrompt(prompt, referencePlan);
+          const apiPrompt = repair ? buildGeminiImageApiPrompt(stripImageReferenceManifest(prompt), referencePlan) : prompt;
           metadataPrompt = apiPrompt;
           metadataInputImages = referencePlan.referenceImages.map((dataUrl, index) => ({
             role: referencePlan.referenceRoles?.[index] || (index < images.length ? 'character_reference'
@@ -2336,8 +2334,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             finalPrompt: metadataPrompt, inputImages: metadataInputImages, settings: metadataSettings, referenceContext,
           },
         };
-        if (colorMode === 'monochrome' && qualityMode !== 'single-image') {
-          candidate = await finalizeMonochromeCandidate(candidate, colorMode);
+        if (generationColorMode === 'monochrome' && qualityMode !== 'single-image') {
+          candidate = await finalizeMonochromeCandidate(candidate, generationColorMode);
           if (candidate.monochromeNormalization) statCallback(`[白黒仕上げ] 色成分を除去しました。原寸・線・濃淡を保持（${candidate.monochromeNormalization.changedPixels}画素）。`);
         }
         if (qualityMode !== 'four-panel') return candidate;
@@ -2359,8 +2357,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         };
         if(experimentalPrepared) {
           progressPhase='品質検査';
-          const response=await reviewExperimentalImage({image:candidate,plan:experimentalPrepared.plan,
-            prompt:buildExperimentalReviewPrompt(experimentalPrepared.plan,experimentalPrepared.source,experimentalInput(generationScenario)),signal,reviewContext,useStructuredOutput:isOpenAIEngine,
+          const reviewContract=resolveFinalPromptReviewContract(experimentalPrepared,candidatePrompt);
+          const response=await reviewExperimentalImage({image:candidate,plan:reviewContract.plan,
+            prompt:buildExperimentalReviewPrompt(reviewContract.plan,reviewContract.source,{...experimentalInput(generationScenario),finalPrompt:candidatePrompt}),signal,reviewContext,useStructuredOutput:isOpenAIEngine,
             onPhaseProgress:message=>{
               if(signal?.aborted) return;
               progressPhase='総合検査（画像・台本・人物・文字・構図）';
@@ -2368,7 +2367,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             }},
             (prompt,attachments,signal,options)=>reviewRequest(prompt,attachments,null,msg=>statCallback(`[QUALITY QA] ${msg}`),{...options,signal,outputProfile:'image-quality-review'}));
           signal?.throwIfAborted();
-          const review=validateExperimentalReview(response.review,experimentalPrepared.plan);
+          const review=validateExperimentalReview(response.review,reviewContract.plan);
           candidate.experimentalReview=review;
           const observations={experimental:`${experimentalPrepared.plan.count}コマ。検査API ${response.requests}回。${review.status}`,
             '検査の項目別判定':JSON.stringify(Object.fromEntries(['status','observedCount','readingOrder','camera','style','story','anatomy','pageText'].map(key=>[key,review[key]??null]))),
@@ -2383,7 +2382,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             if(value) statCallback(`[${observationLabel} / ${key}] ${value}`);
           }
           const result={pass:review.status==='pass',
-            issues:[...experimentalRepairIssues(review,experimentalPrepared.plan),
+            issues:[...experimentalRepairIssues(review,reviewContract.plan),
               ...review.issues.map(reason=>({type:'unverified',panel:null,reason}))],
             evidenceContext:{panelCount:experimentalPrepared.plan.count},
             observations};
@@ -2400,7 +2399,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             stage: candidate.originalImage && candidate.originalImage !== candidateImage ? 'normalized' : 'original',
             ...dimensions, region: { x: 0, y: 0, ...dimensions }, scale: 1,
           }] };
-          if (isOpenAIEngine && colorMode === 'monochrome' && qualityMode === 'four-panel') {
+          if (isOpenAIEngine && generationColorMode === 'monochrome' && qualityMode === 'four-panel') {
             let nativeChroma, reason;
             try {
               nativeChroma = { ...await inspectNativeMonochromeChroma(candidateImage),
@@ -2435,7 +2434,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             referenceImageCount: images.length,
             panelCropCount: panelImages.length,
             evidenceContext,
-            requirePanelStyleEvidence: isOpenAIEngine && colorMode === 'color',
+            requirePanelStyleEvidence: isOpenAIEngine && generationColorMode === 'color',
           });
           if (qualityMode === 'four-panel') {
             const inventoryInstructions=buildBubbleInventoryPrompt({panelCropCount:panelImages.length})
@@ -2452,7 +2451,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
             options: {
               mode: qualityMode, finalPrompt: candidatePrompt, referenceImageCount: images.length,
-              evidenceContext, requirePanelStyleEvidence: isOpenAIEngine && colorMode === 'color',
+              evidenceContext, requirePanelStyleEvidence: isOpenAIEngine && generationColorMode === 'color',
             },
           });
           review = parsedReview;
@@ -3005,10 +3004,6 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     if (finalPrompt) {
       let copiedPrompt;
       try {
-        if (!isExperimentalPage()) {
-          assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
-          assertPrintableDialogue(finalPrompt);
-        }
         copiedPrompt = prepareWebCopyPrompt(finalPrompt);
       } catch (error) {
         showStatus(error.message);
