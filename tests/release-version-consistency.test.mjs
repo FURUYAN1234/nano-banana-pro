@@ -32,6 +32,7 @@ test('version updater synchronizes root lock metadata regardless of field order 
     lock.version = '1.0.1';
     lock.packages[''].version = '1.0.1';
     assert.deepEqual(actual, lock);
+    assert.ok(readFileSync(join(root, 'index.html'), 'utf8').includes('<title>Super FURU AI 4-koma System v1.0.1</title>'));
     const updatedReadme = readFileSync(join(root, 'README.md'), 'utf8');
     const heading = '## 📋 ChangeLog / 更新履歴';
     assert.ok(updatedReadme.includes(heading + '\n\n### v1.0.1'), 'preserve the complete bilingual heading');
@@ -51,7 +52,7 @@ test('release version matches the app, lockfile, HTML title and current README g
   assert.equal(lock.version, version);
   assert.equal(lock.packages[''].version, version);
   assert.match(read('../src/lib/constants.js'), new RegExp(`SYSTEM_VERSION = "v${version.replaceAll('.', '\\.')}"`));
-  assert.match(read('../index.html'), new RegExp(`<title>FURU AI 四コマシステム v${version.replaceAll('.', '\\.')}<\\/title>`));
+  assert.ok(read('../index.html').includes(`<title>Super FURU AI 4-koma System v${version}</title>`));
   const readme = read('../README.md');
   assert.ok(readme.includes(`> Current source version: **v${version}** / 現在のソース版: **v${version}**`));
   assert.ok(readme.includes(`matching v${version} FourPanel Release asset`));

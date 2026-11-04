@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "7d4891dda20a4765ae670fb06ef4dc9e1b8bddd2d728fbfec5f8a7b3655ef590",
-  "manualVersion": "7.2.7",
-  "manualSourceSha256": "8ced68d34a50d1a95abd649a3e0570530f9edc9d5763306be34c59b4bdc23b47",
+  "manualVersion": "7.2.8",
+  "manualSourceSha256": "0c341d70f37f4c2d70ad32d1d56b458d3db73340d17e179a807d844be21f8651",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "c628d5067e42f1c7e5743594752eee38af5cba47932631a7fa1a08f203255ebd"
+      "sha256": "4e7951299d753cf698b22c24e12f34297a872e6f3ee29badcc656c8333b0b427"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "870a5b8b813da8928258ac39dd4b585155e2b0685ad44f62665e3e9076246387"
+      "sha256": "540d0df3de3a2693cb4b2ac1d2eb081afa8b44b03f59ffbff5d97db6e151efbf"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "58a9f7b69ce4eb1bc6ef6635506334f8bb29ff19646252bf9d335b8a3fcb1fdc"
+      "sha256": "9f63820a2561eb3d68c2b386b081763a06d8003cca4d11807e2c4ea8403127db"
     }
   ],
-  "readmeSha256": "e63111807cbaa5a26ac34b2bd2552c9bd9461401d1678077f9b745beb617fdcc",
+  "readmeSha256": "88ea95176454ac7a9c4794ecad25d57166c1d50a5f5b0acc94e62ce77d94da17",
   "readmeLanguageGaps": [],
-  "sourceTree": "892af268d72e9447dc5b75489ce9249ce8a704d6",
-  "publicTree": "82752f8e632333054ce8f81bafe68088c0f1b403",
-  "packageSha256": "c3b011f47811f5da94ac1bbe2c6de0247ef510c8c74da01593074a8b52ee3c44",
+  "sourceTree": "3ed08d6a2fe569ad16c527f2dfd4ceb57076c35f",
+  "publicTree": "c0d7f0c748437cc46f353ab834180ab1fab3eb59",
+  "packageSha256": "90ac506497fe973629abf114111a66e62cd6f909980c7e73f99f9ce6d6b64842",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-04T07:55:20.027Z",
-  "findings": "Reviewed the candidate STEP4 UI, API/Web prompt transport and four-panel A4 spacing against the current bilingual README. Corrected the current price date and kept the older GPT Image 2 price explicitly labeled as a historical reference. Current v7.2.7 H3 asset links follow the configured release asset; older changelog entries remain historical. Matched real OpenAI six-panel and Gemini four-panel comparisons are recorded; no general quality guarantee.",
-  "manualFindings": "Compared all 40 pages of the final full manual against the reviewed candidate. Only page 22 changed; it describes the default-off checkbox, one API/Web prompt, A4 gap preservation, and dated pricing. Inspected the rendered page for readability, overlap and clipping. Validated text bounds and links and copied the reviewed PDF bytes. The two v7.2.7 API setup guides are unchanged from the reviewed candidate.",
+  "checkedAt": "2026-11-04T10:59:27.516Z",
+  "findings": "Checked the browser title against the visible app heading, and the current README version, release asset links, PDF links and changelog. Relative to the reviewed v7.2.7 body, the source change is limited to the browser title and version; the existing STEP4 and provider guidance still applies.",
+  "manualFindings": "Compared text and rendered page pixels across all 71 pages in the three manuals against the reviewed v7.2.7 PDFs. The updates are version labels and the existing watermark example. Verified page dimensions, links and text bounds using the existing manual generator.",
   "pricingReview": {
-    "version": "7.2.7",
+    "version": "7.2.8",
     "sourceSha256": "7d4891dda20a4765ae670fb06ef4dc9e1b8bddd2d728fbfec5f8a7b3655ef590",
-    "checkedAt": "2026-11-04T07:55:20.027Z",
+    "checkedAt": "2026-11-04T10:59:27.516Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
