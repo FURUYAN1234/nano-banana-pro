@@ -122,11 +122,11 @@ try {
   console.log(`[3/4] Updating index.html...`);
   const htmlContent = fs.readFileSync(targetFiles.indexHtml, 'utf8');
   const updatedHtml = htmlContent.replace(
-    /<title>Nano Banana Pro v[^<]+<\/title>/,
-    `<title>Nano Banana Pro v${newVersion}</title>`
+    /<title>(?:Nano Banana Pro|FURU AI 四コマシステム) v[^<]+<\/title>/,
+    `<title>FURU AI 四コマシステム v${newVersion}</title>`
   );
   fs.writeFileSync(targetFiles.indexHtml, updatedHtml, 'utf8');
-  console.log(`      -> <title>Nano Banana Pro v${newVersion}</title>`);
+  console.log(`      -> <title>FURU AI 四コマシステム v${newVersion}</title>`);
 
   // 4. README.md の更新
   console.log(`[4/4] Updating README.md...`);

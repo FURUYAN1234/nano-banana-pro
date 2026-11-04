@@ -51,7 +51,7 @@ test('release version matches the app, lockfile, HTML title and current README g
   assert.equal(lock.version, version);
   assert.equal(lock.packages[''].version, version);
   assert.match(read('../src/lib/constants.js'), new RegExp(`SYSTEM_VERSION = "v${version.replaceAll('.', '\\.')}"`));
-  assert.match(read('../index.html'), new RegExp(`<title>Nano Banana Pro v${version.replaceAll('.', '\\.')}<\\/title>`));
+  assert.match(read('../index.html'), new RegExp(`<title>FURU AI 四コマシステム v${version.replaceAll('.', '\\.')}<\\/title>`));
   const readme = read('../README.md');
   assert.ok(readme.includes(`> Current source version: **v${version}** / 現在のソース版: **v${version}**`));
   assert.ok(readme.includes(`matching v${version} FourPanel Release asset`));

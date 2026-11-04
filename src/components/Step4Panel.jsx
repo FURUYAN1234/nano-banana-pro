@@ -1,5 +1,5 @@
 import React from 'react';
-import { buildRenderOptionsContract, readRenderOptions, NO_PAGE_TITLE } from '../lib/render-options.js';
+import { buildRenderOptionsContract, readRenderOptions, NO_PAGE_TITLE, hasMangaBackgroundSimplification, setMangaBackgroundSimplification } from '../lib/render-options.js';
 import {
   Copy,
   Globe,
@@ -980,6 +980,26 @@ No explanations. No partial results.`;
             この最終プロンプトを直接編集できます。編集した全文を、API画像生成・分割／全体コピー・全文TXT保存・Web版制作情報JSON保存にそのまま使います。
           </div>
 
+          {Boolean(finalPrompt?.trim()) && !isImportedManga && (
+            <div className="mt-4 rounded-lg border border-white/10 px-3 py-2">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-200">
+                <input
+                  id="simplify-manga-background"
+                  type="checkbox"
+                  checked={hasMangaBackgroundSimplification(finalPrompt)}
+                  disabled={isGeneratingImage || isFixingPolicy}
+                  aria-describedby="simplify-manga-background-help"
+                  onChange={(event) => setFinalPrompt(setMangaBackgroundSimplification(finalPrompt, event.target.checked))}
+                />
+                背景を簡略化・デザイン化
+              </label>
+              <p id="simplify-manga-background-help" className="mt-1 text-[11px] text-slate-400">
+                初期状態はOFF。場所を示すコマでは目印を少数の形へ整理し、反応やツッコミのコマでは色面・図形まで背景を抽象化します。人物の絵柄・描き込みと物語の道具は維持するよう指定します。同じ最終プロンプトをAPI生成・Webへの貼り付けに使います。
+              </p>
+
+            </div>
+          )}
+
           <div className="flex flex-col h-full mt-4 gap-4">
             <div className="relative flex-1">
               <textarea
@@ -1308,7 +1328,7 @@ No explanations. No partial results.`;
                         {isOpenAIImageMode ? formatOpenAIImagePricingSummary(openAIImageQuality) : formatGeminiImagePricingSummary()}
                       </span>
                       <span className="text-[9px] font-normal opacity-70">
-                        {isOpenAIImageMode ? `OpenAI公式料金 ${OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点` : `Google公式料金 ${GEMINI_IMAGE_PRICE_SNAPSHOT_DATE}時点`}
+                        {isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).model === 'gpt-image-2' ? 'OpenAI公式参考料金 2026-10-23時点' : `OpenAI公式料金 ${OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点` : `Google公式料金 ${GEMINI_IMAGE_PRICE_SNAPSHOT_DATE}時点`}
                       </span>
                     </>
                   )}

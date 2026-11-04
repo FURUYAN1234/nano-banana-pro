@@ -11,6 +11,7 @@ import { assertImagePromptBudget } from '../src/lib/image-prompt-budget.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from '../src/lib/web-prompt-chunks.js';
 import { buildWebGenerationMetadata } from '../src/lib/generated-image-metadata.js';
 import { resolveFinalPromptReviewContract } from '../src/lib/final-prompt-review-contract.js';
+import { setMangaBackgroundSimplification } from '../src/lib/render-options.js';
 
 const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 let server, Step4Panel, experimental;
@@ -56,26 +57,31 @@ test('copy, every split, TXT and JSON preserve edited text without appending or 
 });
 
 for (const isOpenAIEngine of [true, false]) {
-  test(`${isOpenAIEngine ? 'OpenAI' : 'Gemini'} ordinary API transport sends the exact edited final text`, async () => {
+ for (const simplified of [false, true]) {
+  test(`${isOpenAIEngine ? 'OpenAI' : 'Gemini'} ordinary API transport preserves the final text and character references with background mode ${simplified ? 'ON' : 'OFF'}`, async () => {
     const start = source.indexOf('        progressPhase = repair ?');
     const end = source.indexOf('        const normalizedImage =', start);
     assert.ok(start > 0 && end > start);
-    let sent;
+    let sent, sentReferences;
+    const finalText = setMangaBackgroundSimplification(edited, simplified);
+    const characterSheet = 'data:image/png;base64,YQ==';
     const scope = {
-      prompt:edited, repair:false, repairSource:null, progressPhase:'', isOpenAIEngine,
+      prompt:finalText, repair:false, repairSource:null, progressPhase:'', isOpenAIEngine,
       ...openaiReferences, ...geminiReferences, applyOpenAIImageEngineWatermark, assertImagePromptBudget,
-      images:['data:image/png;base64,YQ=='], referenceAssetsRef:{current:[]}, bg360Image:null, bg360Enabled:false, colorMode:'monochrome',
+      images:[characterSheet], referenceAssetsRef:{current:[]}, bg360Image:null, bg360Enabled:false, colorMode:'monochrome',
       generationScenario:'', styleJson:null, punchlineType:'Auto', getBuiltinPanelMediumReference:()=>null,
       statCallback:()=>{}, resolveOpenAIImageOption:()=>({label:'test'}), openAIImageQuality:'max', openAIImageSize:'auto',
       geminiReferenceImages:[], geminiImageOptions:{}, generationOptions:{},
-      generateImageWithOpenAI:async text => { sent=text; return {}; },
-      generateImageWithImagen:async text => { sent=text; return {}; },
+      generateImageWithOpenAI:async (text, _progress, options) => { sent=text; sentReferences=options.imageInputs.map(item=>item.image_url); return {}; },
+      generateImageWithImagen:async (text, _progress, references) => { sent=text; sentReferences=references; return {}; },
     };
     const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
     const metadataPrompt=await new AsyncFunction(...Object.keys(scope), source.slice(start,end)+'return metadataPrompt;')(...Object.values(scope));
-    assert.equal(sent,edited);
-    assert.equal(metadataPrompt,edited);
+    assert.equal(sent,finalText);
+    assert.equal(metadataPrompt,finalText);
+    assert.deepEqual(sentReferences,[characterSheet], 'background simplification must retain the original character-sheet bytes');
   });
+ }
 }
 
 test('five-panel QA derives dialogue, cast and action from the edited final document', async () => {
@@ -108,6 +114,9 @@ test('five-panel QA derives dialogue, cast and action from the edited final docu
     ['編集した題字','編集した左クレジット','編集した右クレジット']);
   const unknownQa=experimental.buildExperimentalReviewPrompt(review.plan,review.source,{finalPrompt:lettering.replace('Top title EXACTLY','Ambiguous title instruction')});
   assert.equal((await inspectLettering(unknownQa)).review.expectedPageText,null,'unreadable edits must not fall back to the old title');
+  const backgroundQa = experimental.buildExperimentalReviewPrompt(review.plan,review.source,{finalPrompt:setMangaBackgroundSimplification(edited,true)});
+  assert.match(backgroundQa,/BACKGROUND-ONLY MODE CHECK/);
+  assert.doesNotMatch(qa,/BACKGROUND-ONLY MODE CHECK/);
   assert.equal(prepared.source.dialogue[0].text,'確認1','editing never mutates STEP2 history');
   assert.throws(()=>resolveFinalPromptReviewContract(prepared,'ユーザーが構造ごと置き換えた文章'),/未確認/);
 });

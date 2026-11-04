@@ -136,6 +136,9 @@ export const buildPageDrawPlan = (bands, options = {}) => {
     const remaining = panelHeight - heights.reduce((sum, value) => sum + value, 0);
     if (!Number.isFinite(widthScale) || widthScale <= 0 || remaining < 0) return null;
     const gutter = remaining / 3;
+    // Keep the source page together if redistributing the slack would create
+    // conspicuous blank strips. This must never stretch or crop the artwork.
+    if (gutter > layout.height * 0.02) return null;
     let y = titleHeight;
     panelPlans = bands.panelFrames.map((frame, index) => {
       const destination = { x: (width - frame.width * widthScale) / 2, y, width: frame.width * widthScale, height: frame.height * widthScale };
@@ -488,6 +491,9 @@ export const formatPageLayoutStatus = (pageLayout) => {
   }
   const layout = pageLayout.layout;
   if (!layout) return '[ページ配置] 配置の詳細は未確認です。画像は保持します。';
+  if (pageLayout.mode === 'contained-source') {
+    return `[ページ配置] 元ページのコマ間隔を保ったまま${layout.width}×${layout.height}のA4枠に収めました。元のAPI画像も保持しました。`;
+  }
   return `[ページ配置] ${layout.width}×${layout.height}へ自動補正してから表示します。${layout.titleInkHeight === 0 ? '上余白' : 'タイトル'}${layout.titleHeight}px・コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。元のAPI画像も保持しました。`;
 };
 
@@ -514,7 +520,7 @@ export const normalizePageCandidate = async (
     const match = result.dataUrl?.match(/^data:image\/png;base64,([\s\S]+)$/);
     if (!match) throw new Error('ページ配置後のPNGを読み取れません。');
     return { ...candidate, base64Img: match[1], mimeType: 'image/png', originalImage,
-      pageLayout: { applied: true, layout: result.layout } };
+      pageLayout: { applied: true, layout: result.layout, mode: result.mode } };
   } catch (error) {
     return { ...candidate, pageLayout: { applied: false, reason: error.message } };
   }

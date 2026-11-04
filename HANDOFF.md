@@ -1,4 +1,71 @@
-## CURRENT — v7.2.6 最終プロンプトの直接編集（2026-11-03）
+## 最新：背景チェックの通常経路・両API比較を確認（2026-11-04）
+
+- アプリは FURU AI 四コマシステム v7.2.7。初期OFF、ONで背景のみ場面別に簡略化・抽象化し、OFFで元の編集済み指示文を完全復元する。
+- 完成画像の編集を必須にする2段階方式は不採用。通常STEP2→STEP3で生成した同じ最終プロンプトを、通常API生成とWebコピーへ渡す。
+- OpenAI：サンプルキャラシート2枚、5人、6コマ、WATERCOLOR/NORMAL/POP_ART/NORMAL/WATERCOLOR/NORMAL。Sunburst/max、2240×3168、自動修正OFF。OFF `2220f0bc-c895-45b9-ac4d-2e218df9b2f4`、最終ON `5aaeec9c-6066-4c2a-8f66-feac1e69ac4e`。2・5・6コマの背景抽象化と通常コマの人物描写を比較し、全6コマ5人を確認。元からPOPの3コマ目は背景だけの簡略化の証拠に数えない。
+- Gemini：同じ2枚・5人、通常4コマ。Nano Banana 2.1/1K、自動修正OFF。OFF `1984c62b-eaa1-4ecd-aa26-4e75d11c5989`、最終ON `803b1aa5-1719-4fe1-b9a9-51f6289d2d61`。3コマ目の通常人物＋抽象背景を確認。OFFの人物重複と初回ONの話者逆転は失敗記録に保持し、同条件の再生成で最終ONの話者対応を確認した。単例による普遍的な品質保証ではない。
+- 通常4コマと5〜8コマではAction/Dialogue/画風の項目名が異なるため両方を解析。背景指定は人物描法の後へ置き、抽象背景と競合する遠景描写の共通指定を限定する。人物の保護文も各枠の元の描法に合わせる。
+- ローカルLuna検証はdevとloopback previewの両方でフォールバック禁止。OpenAI検証はLuna。Gemini通常経路はGeminiの接続モデルを使用。
+- 最終確認：2,092テスト全通過、lint/build成功、Web security検証成功。OpenAI ON30,028/OFF25,772文字、Gemini ON68,773/OFF65,251文字のコピー一致・OFF完全復元を確認。
+- 既存IABの1タブだけを使用。現在はGemini接続と最終ON画像を表示。Vite devは同じ `http://127.0.0.1:5173/`。API処理はすべて終了。キーはメモリのみ、抽出・保存していない。
+- 比較資料：このチャットのoutputs内 `background-comparison.html` と `gemini-background-comparison.html`。詳細・原文要件・実行記録はWSL `/home/furu/Codex/work/nano-background-20261104/`。公開・commit・pushは行っていない。
+
+以下は途中の失敗記録であり、最新状態ではない。
+
+## 途中記録：キャラシート付きON/OFF比較も不合格 — Web貼り付け要件を保持
+
+{
+  "at": "2026-11-04T04:28:43.283756+00:00",
+  "outcome": "FAILED / not release ready",
+  "on": {
+    "runId": "fafcbefe-2ba2-426b-b8c7-a71472aa5aad",
+    "seconds": 98.697,
+    "file": "background-on-character-sheet-openai-revised.png",
+    "sha256": "d886bc8d5481f5ad3e168790a3c12eb8f4e196b4fa470fe64c896d725f3739b7"
+  },
+  "off": {
+    "runId": "937deb82-c548-4b6f-b5d2-46331d4581f5",
+    "seconds": 102.249,
+    "file": "background-off-character-sheet-openai.png",
+    "sha256": "8101e26ac7591750817f9a7c0e40fcf148c9170e33dd06b46f46706c83b5b25b"
+  },
+  "conditions": {
+    "modelRequested": "gpt-image-2.5-sunburst",
+    "responseModel": "not independently logged",
+    "quality": "max",
+    "size": "2240x3168",
+    "references": 2,
+    "autoRepair": false,
+    "sameScenario": true,
+    "seedControlled": false
+  },
+  "observations": {
+    "background": "ON reduces dense boards/aging/poster detail relative to OFF, but visible wood grain, individual leaf marks and scenic painting remain. Not sparse graphic treatment requested.",
+    "characters": "ON keeps identities/glasses/uniforms but hair highlights and costume/face shading appear weaker than OFF. Different framing/light and one sample per state preclude causal attribution. Character detail preservation is NOT established.",
+    "layout": "Four panels, four dialogue lines, narrow gutters visibly retained in both. No exact gutter pixel metric claimed."
+  },
+  "scope": "API and Web paste must share final prompt; two-stage API-only replacement was discussed but NOT implemented/adopted. Current prompt-only candidate failed. No further paid run authorized."
+}
+
+以下は経過記録。
+
+## 再修正中 — キャラシート付きOpenAI検証も背景は不合格
+
+2026-11-04: runId 8ee2fd33-c6ff-4a37-b2a5-17c86da1dcd5、Sunburst/max、2240×3168、参照2枚、HTTP200、103.769秒（workflow.start〜end）、自動修正OFF。髪・眼鏡・制服と人物の陰影は目視で維持されたが、ベンチの木目・窓外の細かな葉・背景の塗りが残り簡略化は不合格。末尾指定だけでは足りない。render-options.jsで内蔵背景保持ポリシーをON時だけ可逆に置換し、各コマへ背景専用の描画指示を追加。Action/Dialogue/Camera/参照資料は改変しない。両providerの元文完全復帰と人物保護を含む関連89テスト・eslint合格。通常入力欄へ新関数の出力23686文字を反映。IABタブ1・現在のOpenAI接続を維持、再読み込みなし。追加有料ON/OFF比較の現在許可を質問中。追加生成は未投入。Geminiで今回の強化版の実画像は未検証。公開判断は保留。下記は旧候補の履歴。
+
+## CURRENT — v7.2.7 背景簡略化・コマ間隔（2026-11-04、ローカル候補）
+
+本人の「忘れている作業がある」への再監査で、OpenAI実API検証を残したまま公開直前としていた判断を訂正し、前の公開確認を撤回した。その後、本人のOpenAI再接続を確認し、同じ内蔵タブ1で通常STEP3 GPT-6 Luna（応答200・responseModel一致）→背景ONの実生成を完了。追加指示「簡易化を外した場合の差異を見たいよね」により、同じ台本・モデル・画質・サイズでOFFを1回追加した。両画像ともHTTP200、2240×3168px、Sunburst/max、自動修正OFF。ON runId 545d5d5f-60b4-4a13-9d71-cdc6bfb4b517（107.240秒）、OFF c88aa238-ff19-49df-b1aa-2224b4681c21（107.460秒）。時間はworkflow.start〜end。画像応答のmodel欄は独立記録なし。初期OFF、ON→OFFで16097文字が完全一致。OpenAIのONは木の傷・床模様・ポスターの細部が減ったが、描き込みはなお多く、単色・抽象化の保証ではない。シード未固定の各1枚比較。4コマ・各コマ2人・4つの台詞を目視確認し、コマ間隔は双方とも細い。原画像と証拠は作業記録に保存済み。再生成の追加許可は使い切り、公開は未許可。
+
+STEP4の「背景を簡略化・デザイン化」は新規プロンプトでOFF。ONで編集可能な最終全文に背景指示を追加し、Gemini/OpenAIの通常生成・コピー・保存へ共通で渡す。OFFに戻すと追加前の全文へ復帰。背景の空間は枠内と指定し、ONの4コマには狭い溝を指定する。既存のOFFプロンプトは保持。A4配置の幅固定分岐で溝がページ高の2%を超える場合は、元ページ全体を縦横比保持で収める。
+
+本人が許可したGemini実画像3回（初回ON・比較OFF・修正ON）を通常画面で完了。修正ONの実行IDは01b21ae2-68bd-4e94-85b2-7ca8b36cdcb7、2026-11-04T02:11:24.507Z〜02:11:43.587Z。自動検査・修正OFF。画像848×1200pxの白帯は初回48/48/47pxから25/25/24pxへ縮小。木目・葉などの細部抑制、人物2人・台詞4つを目視確認。題字左右の細い線、最終コマの傘・カメラ指定の不一致は残る。Gemini画像応答モデルID/HTTP状態の独立記録はない。OpenAIの実画像比較は上記の後続検証で完了した。
+
+全2080テスト、lint、製品build/Webセキュリティを確認。README17節、日英リリース案、PDF3冊71ページの本文を比較し、変更された全文マニュアル22ページを目視確認。公式通常料金と照合し確認日を11月4日へ更新。API検証後の変更は料金確認日のみで、画像処理は同一。価格日付更新後の検査・build結果は作業台帳を参照。
+
+同作業の重複タブ2を閉じ、内蔵ブラウザーは現在のタブ1だけ。操作接続の障害時も新規タブを作らずcua.getTabで既存タブ1を再取得し、ページを再読込しない。downloadMediaはこの環境で接続を失うため使わず、表示imgのデータを180,000文字ずつ取得し完全長とPNG復号を確認した。タブ1にOpenAI接続・ON/OFF画像履歴2件を保持、生成処理はすべて終了。台帳・証拠は /home/furu/Codex/work/nano-background-20261104/。公開許可前のためcommit/push/公開は未実施。公開先はGitHub Pages・Release・C公開版コピー（HFなし）。承認後のコミットにREADME監査のtreeを結び直し、正式preflightとpublish_app_release.ps1を実行する。
+
+## PRIOR — v7.2.6 最終プロンプトの直接編集（2026-11-03）
 
 通常4コマ・5〜8コマとも、参照指示込みの最終プロンプトを一つの欄で編集。通常画像API、全文・分割コピー、TXT、Web制作情報JSONへ編集済み全文を渡す。OpenAIの通常経路で編集した台詞と赤いマグが画像に反映され、4種類の出力で全文一致を確認。生成画像には構図・話者の不一致があり、題字・フッター検査の追加修正はローカルで検証した。全2,077テスト、変更箇所のlint、ビルドを確認。既存の「自動修正を停止（現在の応答後）」は保持。正式公開の成否は共通トランザクションのレシートで確認する。
 

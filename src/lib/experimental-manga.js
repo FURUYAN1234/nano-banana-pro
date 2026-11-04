@@ -620,7 +620,7 @@ export function buildExperimentalReviewPrompt(plan, source, options={}) {
   const pageTextContract = titleKnown && footerKnown
     ? `Title required EXACTLY ${titleMatch?.[1] || 'null'}. Footer expected exact text: ${left && right ? JSON.stringify({left:JSON.parse(left),right:JSON.parse(right)}) : 'null'} (null means no footer).\n`
     : '';
-  return prompt.replace(/Title required EXACTLY[\s\S]*$/, () => `${pageTextContract}FINAL USER-EDITED INSTRUCTIONS (authoritative for title, footer, story, actions, clothing and all requested content; expected speech withheld for independent transcription):\n${finalInstructions}\nUse these edited instructions, never an earlier scenario. Unreadable or ambiguous instructions remain uncertain. Return pass only with complete visual evidence; report grounded material defects and retain uncertainty for the rest.`);
+  return prompt.replace(/Title required EXACTLY[\s\S]*$/, () => `${pageTextContract}${buildRenderOptionsQa(options.finalPrompt)}\nFINAL USER-EDITED INSTRUCTIONS (authoritative for title, footer, story, actions, clothing and all requested content; expected speech withheld for independent transcription):\n${finalInstructions}\nUse these edited instructions, never an earlier scenario. Unreadable or ambiguous instructions remain uncertain. Return pass only with complete visual evidence; report grounded material defects and retain uncertainty for the rest.`);
 }
 
 function buildExperimentalReviewPromptBase(plan, source, options={}) {

@@ -29,7 +29,13 @@ export const getOpenAIScenarioCostEstimate = (modelId, usage = {}) => {
   return { inputTokens, outputTokens, estimatedUsd };
 };
 
-export const getOpenAIScenarioModelRoute = (selectedModelId = 'auto', isDevelopment = import.meta.env?.DEV === true) => {
+// Local verification includes a production build served by `vite preview`.
+// Production-hosted app routing remains unchanged.
+export const isLocalModelVerification = ({ development = import.meta.env?.DEV === true,
+  hostname = globalThis.location?.hostname || '' } = {}) => development
+  || ['localhost', '127.0.0.1', '[::1]', '::1'].includes(hostname);
+
+export const getOpenAIScenarioModelRoute = (selectedModelId = 'auto', isDevelopment = isLocalModelVerification()) => {
   if (isDevelopment && selectedModelId === 'gpt-6-luna') return ['gpt-6-luna'];
   const selectedIndex = OPENAI_SCENARIO_TEXT_MODEL_IDS.indexOf(selectedModelId);
   return selectedIndex >= 0
@@ -38,7 +44,7 @@ export const getOpenAIScenarioModelRoute = (selectedModelId = 'auto', isDevelopm
 };
 
 export const OPENAI_VISION_MODEL_IDS = [...OPENAI_TEXT_MODEL_IDS];
-export const getOpenAIVisionModelRoute = (selectedModelId = 'auto', isDevelopment = import.meta.env?.DEV === true) => {
+export const getOpenAIVisionModelRoute = (selectedModelId = 'auto', isDevelopment = isLocalModelVerification()) => {
   if (isDevelopment && selectedModelId === 'gpt-6-luna') return ['gpt-6-luna'];
   const selectedIndex = OPENAI_VISION_MODEL_IDS.indexOf(selectedModelId);
   return selectedIndex >= 0 ? OPENAI_VISION_MODEL_IDS.slice(selectedIndex) : OPENAI_VISION_MODEL_IDS;

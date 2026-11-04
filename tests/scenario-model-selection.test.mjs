@@ -9,7 +9,21 @@ import {
   getOpenAIScenarioCostEstimate,
   getOpenAIScenarioModelRoute,
   getOpenAIVisionModelRoute,
+  isLocalModelVerification,
 } from '../src/lib/openai-model-routes.js';
+
+test('a local production preview disables Luna fallback without changing hosted production routes', () => {
+  for (const hostname of ['localhost','127.0.0.1','[::1]']) {
+    const local = isLocalModelVerification({ development:false,hostname });
+    assert.equal(local,true);
+    assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-luna',local),['gpt-6-luna']);
+    assert.deepEqual(getOpenAIVisionModelRoute('gpt-6-luna',local),['gpt-6-luna']);
+  }
+  const hosted = isLocalModelVerification({ development:false,hostname:'furuyan1234.github.io' });
+  assert.equal(hosted,false);
+  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-luna',hosted),['gpt-6-luna','gpt-5.6-luna']);
+  assert.equal(isLocalModelVerification({development:false,hostname:'localhost.example.com'}),false);
+});
 
 test('STEP2 starts on Luna 6 in both environments', () => {
   assert.equal(resolveDefaultOpenAIScenarioModelId(true), 'gpt-6-luna');
@@ -65,8 +79,8 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
     OPENAI_SCENARIO_TEXT_MODEL_IDS,
   );
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ label, description }) => label && description));
-  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-11-03');
-  assert.equal(OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-sol').priceSnapshotDate, '2026-11-03');
+  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-11-04');
+  assert.equal(OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-sol').priceSnapshotDate, '2026-11-04');
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ inputPriceUsdPerM, outputPriceUsdPerM }) => (
     Number.isFinite(inputPriceUsdPerM) && Number.isFinite(outputPriceUsdPerM)
   )));

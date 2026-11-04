@@ -249,12 +249,17 @@ test('large API output keeps the exact A4 ratio and scales every fixed band prop
   assert.ok(plan[1].destination.x + plan[1].destination.width <= 2226);
 });
 
-test('width-bound four-panel art fills the page by scaling intact panels and assigning slack only to gutters', () => {
-  const frames = [180, 170, 165, 180].map((height, index) => ({ x: 0, y: index * 190, width: 604, height }));
+test('width-bound four-panel art fills the page when the intact frames leave narrow gutters', () => {
+  let y = 80;
+  const frames = [195, 185, 183, 195].map(height => {
+    const frame = { x: 0, y, width: 604, height };
+    y += height + 6;
+    return frame;
+  });
   const plan = buildPageDrawPlan({
     canvas: { width: 848, height: 1200 },
     title: { x: 20, y: 10, width: 560, height: 55 },
-    panels: { x: 0, y: 80, width: 604, height: 753 },
+    panels: { x: 0, y: 80, width: 604, height: y - 80 - 6 },
     panelFrames: frames,
     footer: { x: 5, y: 1160, width: 594, height: 18 },
   });
@@ -265,8 +270,30 @@ test('width-bound four-panel art fills the page by scaling intact panels and ass
   assert.ok(panelPlans.every(entry => entry.destination.x === plan.layout.inset));
   assert.ok(panelPlans.every(entry => entry.destination.width === plan.layout.width - 2 * plan.layout.inset));
   assert.equal(panelPlans[0].destination.y, plan.layout.titleHeight);
-  assert.ok(panelPlans.at(-1).destination.y + panelPlans.at(-1).destination.height <= plan.layout.titleHeight + plan.layout.panelHeight);
-  assert.ok(panelPlans.slice(1).every((entry, index) => entry.destination.y > panelPlans[index].destination.y + panelPlans[index].destination.height));
+  assert.ok(panelPlans.at(-1).destination.y + panelPlans.at(-1).destination.height <= plan.layout.titleHeight + plan.layout.panelHeight + 1e-9);
+  assert.ok(panelPlans.slice(1).every((entry, index) => {
+    const previous = panelPlans[index].destination;
+    const gap = entry.destination.y - previous.y - previous.height;
+    return gap > 0 && gap < plan.layout.height * 0.02;
+  }));
+});
+
+test('width-bound A4 normalization falls back to the intact page instead of creating 4% gutters', () => {
+  const heights = [187, 185, 179, 186];
+  let y = 62;
+  const panelFrames = heights.map(height => {
+    const frame = { x: 8, y, width: 650, height };
+    y += height + 10;
+    return frame;
+  });
+  const plan = buildPageDrawPlan({
+    canvas: { width: 900, height: 1200 },
+    title: { x: 40, y: 8, width: 550, height: 44 },
+    panels: { x: 8, y: 62, width: 650, height: y - 62 - 10 },
+    panelFrames,
+    footer: { x: 8, y: 800, width: 650, height: 16 },
+  });
+  assert.equal(plan, null, 'the whole-page fallback must retain the source gaps and all content');
 });
 
 test('cannot fill width-bound panel art without four intact frames: reject instead of stretching or slicing', () => {
