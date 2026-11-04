@@ -983,7 +983,7 @@ KEY PROP / OBJECT CONSISTENCY:
 - Match key object EXACTLY to Action/Dialogue; never substitute its identity. Contents, condition and holder follow each panel's scripted state.
 
 TEXT RULES:
-- Only Dialogue becomes white bubbles: prefer_vertical Japanese tategaki, verbatim character-by-character; horizontal is allowed for composition/readability; no paraphrase, synonyms, softening, added/omitted words.
+- Only Dialogue becomes white bubbles: prefer_vertical Japanese tategaki, verbatim character-by-character; fit vertical columns first and use horizontal only under DIALOGUE WRITING POLICY exceptions; no paraphrase, synonyms, softening, added/omitted words.
 - In each Dialogue block, ONLY decoded quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names after TAILS or TAIL TIP LOCK are routing metadata: NEVER print them, field labels, bubble IDs or wrapper quotation marks. Preserve literal names or quotation marks that are part of the TEXT value itself.
 - Tails point to actual speakers; right-to-left manga order.
 - Explicit scripted handwriting/signage/label/print/screen/board stays exact. Unscripted in-scene lettering is freely allowed on physical surfaces, but it never becomes a speech bubble, narration, prompt label or metadata.

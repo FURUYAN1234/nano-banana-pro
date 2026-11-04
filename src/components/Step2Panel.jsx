@@ -475,7 +475,7 @@ export default function Step2Panel({
               <span className="text-base">🔥</span>
               <span className="text-base font-black tracking-wide text-orange-200 group-hover/enhance-hdr:text-orange-100 transition-colors">シナリオ強化</span>
               <span className="text-xs font-bold text-orange-400/70 hidden sm:inline">Scenario Enhance</span>
-              {originalScenario && <span className="text-[9px] bg-green-600/30 text-green-300 px-1.5 py-0.5 rounded-full border border-green-500/30 font-bold">✓ 強化済み</span>}
+              {originalScenario && <span className="text-[9px] bg-slate-600/30 text-slate-300 px-1.5 py-0.5 rounded-full border border-slate-500/30 font-bold">元台本保存済み</span>}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black uppercase tracking-widest text-orange-400 group-hover/enhance-hdr:text-orange-300 transition-colors">
@@ -488,7 +488,7 @@ export default function Step2Panel({
           {isEnhancePanelOpen && scenario && scenario.length > 20 && (
             <div className="p-4 bg-orange-950/10 space-y-3">
               <p className="text-[11px] text-orange-200/70 leading-relaxed">
-                選択した項目だけを部分編集します。タイトル・Logline・場所・話者・未選択項目は保持され、変更漏れや他項目へのはみ出しは自動検証されます。<br/>
+                選択した項目を部分編集し、元の台本と比較します。人物・画風・話の退行や改善不足を確認し、改善できなければ元の台本を保持します。候補作成と比較に文章APIを使い、追加料金がかかります。比較結果は下のログで確認できます。<br/>
                 <span className="text-orange-300 font-bold">💡 「セリフ書換」は実際の発話を変更し、「{isSeriousEnhancementMode ? 'シリアス演出' : 'ギャグ演出'}」はセリフを保ったまま{isSeriousEnhancementMode ? '緊張・間・結末' : '間とリアクション'}を整えます。</span>
               </p>
 
@@ -585,7 +585,7 @@ export default function Step2Panel({
                   <div className="text-center">
                     <div className={`text-2xl mb-1 ${enhanceDialogue ? 'scale-110' : 'opacity-70 grayscale'}`}>💬</div>
                     <div className="text-[11px] font-bold tracking-wider">セリフ書換</div>
-                    <div className="text-[9px] opacity-70 mt-1">発話を必ず改善</div>
+                    <div className="text-[9px] opacity-70 mt-1">人物らしい言葉と間</div>
                   </div>
                 </label>
 

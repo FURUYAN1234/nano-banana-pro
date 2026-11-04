@@ -149,10 +149,24 @@ test('native generation and subsequent edit cross the real provider orchestratio
   assert.match(calls[0].prompt, /5[〜～–-]8コマ/);
   assert.doesNotMatch(calls[0].prompt, /4コマ/);
   for (const call of calls) assert.equal(call.options.scenarioModelId, 'gpt-6-luna');
-  setFixtureResponse(async () => ({ text: result.scenario.replace(`A「${count}枚目です。」`, 'A「揃いました。」'), model: 'fixture' }));
+  const editCalls = [];
+  setFixtureResponse(async (prompt, _images, _system, _progress, options) => {
+   editCalls.push({prompt, options});
+   return {text: prompt.startsWith('漫画の編集結果を元の台本と比較')
+    ? JSON.stringify({categories:[{category:'dialogue',verdict:'improved',panel:count,
+      before:`${count}枚目です。`,after:'揃いました。',gain:'最後の札が揃った時点を短く明確に伝える。'}],regressions:[]})
+    : result.scenario.replace(`A「${count}枚目です。」`, 'A「揃いました。」'),model:'fixture'};
+  });
   const edited = await provider.enhanceScenarioText({ scenario: result.scenario, selectedCategories: ['dialogue'], ...mode, scenarioModelId: 'gpt-6-luna', castList: 'A' });
   assert.equal(edited.validation.ok, true);
   assert.equal(validation.getScenarioPanelBlocks(edited.text).length, count);
+  assert.equal(editCalls.length, 2, 'authoring and independent before/after review both use the real provider orchestration');
+  for (const call of editCalls) {
+   assert.equal(call.options.scenarioModelId, 'gpt-6-luna');
+   assert.equal(call.options.modelRoute, 'scenario');
+   assert.equal(call.options.timeoutMs, 600_000);
+   assert.ok(call.options.signal instanceof AbortSignal);
+  }
  }
 });
 

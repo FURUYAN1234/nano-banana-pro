@@ -12,6 +12,22 @@ const enhancementModule = existsSync(modulePath)
   ? await import(pathToFileURL(modulePath).href)
   : {};
 
+
+// These tests isolate the structural edit contract. Semantic review behavior,
+// including rejection, is exercised independently in scenario-enhancement-review.
+const runWithApprovedComparison = (options) => enhancementModule.runValidatedScenarioEnhancement({
+  ...options,
+  requestReview: async (comparison) => {
+    const validation = enhancementModule.validateScenarioEnhancement(comparison);
+    return {
+      categories: comparison.selectedCategories.map(category => ({ category,
+        verdict: validation.changedCategories.includes(category) ? 'improved' : 'no_gain',
+        gain: 'Test review of the selected category', panel: 1 })),
+      regressions: []
+    };
+  }
+});
+
 test('camera enhancement compares the page using the shared sequence rule only when selected', () => {
   const selected = enhancementModule.buildScenarioEnhancementPrompt({ scenario: originalScenario, selectedCategories: ['camera'] });
   const unselected = enhancementModule.buildScenarioEnhancementPrompt({ scenario: originalScenario, selectedCategories: ['expressions'] });
@@ -123,7 +139,8 @@ test('enhancement prompt requires selected-only changes and protects the origina
 
   assert.match(prompt, /選択されていないカテゴリ.*変更しない/s);
   assert.match(prompt, /Logline.*最優先/s);
-  assert.match(prompt, /セリフ.*最低1つ.*必ず変更/s);
+  assert.match(prompt, /セリフ強化では.*具体的に改善/);
+  assert.match(prompt, /同義語や句読点だけの置換を改善とみなさない/);
   assert.match(prompt, /背景.*変更しない/s);
   assert.match(prompt, /全身の誇張や強い遠近法は許可/);
   assert.match(prompt, /手足の接続・本数.*小道具の所有・向き/);
@@ -194,7 +211,7 @@ test('enhancement limits newly chosen emotion styles to the automatic palette wh
   });
   assert.equal(preserved.ok, true, 'unchanged explicit legacy styles remain valid during an unrelated edit');
 
-  const fallback = await enhancementModule.runValidatedScenarioEnhancement({
+  const fallback = await runWithApprovedComparison({
     originalScenario,
     selectedCategories: ['expressions'],
     buildPrompt: () => 'test',
@@ -277,7 +294,7 @@ test('invalid first output is retried once and only a validated rewrite is retur
   const responses = [originalScenario, dialogueOnlyCandidate];
   const prompts = [];
 
-  const result = await enhancementModule.runValidatedScenarioEnhancement({
+  const result = await runWithApprovedComparison({
     originalScenario,
     selectedCategories: ['dialogue'],
     buildPrompt: ({ validationIssues = [] }) => {
@@ -296,7 +313,7 @@ test('invalid first output is retried once and only a validated rewrite is retur
 test('enhancement preserves the original scenario after two unchanged outputs', async () => {
   assert.equal(typeof enhancementModule.runValidatedScenarioEnhancement, 'function');
 
-  const result = await enhancementModule.runValidatedScenarioEnhancement({
+  const result = await runWithApprovedComparison({
     originalScenario,
     selectedCategories: ['dialogue'],
     buildPrompt: () => 'prompt',
@@ -316,7 +333,7 @@ test('quality retries retain the strongest safe partial enhancement instead of s
   );
   const responses = [bodyOnlyCandidate, originalScenario];
 
-  const result = await enhancementModule.runValidatedScenarioEnhancement({
+  const result = await runWithApprovedComparison({
     originalScenario,
     selectedCategories: ['expressions', 'body'],
     buildPrompt: () => 'prompt',
@@ -326,7 +343,7 @@ test('quality retries retain the strongest safe partial enhancement instead of s
   assert.equal(result.text, bodyOnlyCandidate);
   assert.equal(result.validation.ok, false);
   assert.equal(result.validationWarning, true);
-  assert.deepEqual(result.validation.issueCodes, ['expressions_unchanged']);
+  assert.deepEqual(result.validation.issueCodes, ['expressions_unchanged', 'semantic_expressions_no_gain']);
   assert.equal(result.attempts, 2);
 });
 
@@ -337,7 +354,7 @@ test('a later API failure retains the strongest safe candidate from enhancement 
   );
   let calls = 0;
 
-  const result = await enhancementModule.runValidatedScenarioEnhancement({
+  const result = await runWithApprovedComparison({
     originalScenario,
     selectedCategories: ['expressions', 'body'],
     buildPrompt: () => 'prompt',
@@ -356,7 +373,7 @@ test('a later API failure retains the strongest safe candidate from enhancement 
 
 test('a provider failure before any usable candidate remains an explicit error', async () => {
   await assert.rejects(
-    enhancementModule.runValidatedScenarioEnhancement({
+    runWithApprovedComparison({
       originalScenario,
       selectedCategories: ['dialogue'],
       buildPrompt: () => 'prompt',
@@ -373,7 +390,7 @@ test('quality retries fall back to the original only when every candidate breaks
     '[Camera: 真上からの俯瞰]'
   );
 
-  const result = await enhancementModule.runValidatedScenarioEnhancement({
+  const result = await runWithApprovedComparison({
     originalScenario,
     selectedCategories: ['dialogue'],
     buildPrompt: () => 'prompt',

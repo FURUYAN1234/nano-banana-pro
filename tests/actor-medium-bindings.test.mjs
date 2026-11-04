@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { bindingFixture, bindingNativePlan, bindingStyles } from './helpers/actor-medium-binding-fixture.mjs';
-import { restoreReviewedActorBindings } from './helpers/prompt-policy-normalization.mjs';
+import { restoreReviewedActorBindings, restoreWritingPolicyBefore729 } from './helpers/prompt-policy-normalization.mjs';
 
 const special = bindingStyles.slice(1, 4);
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/actor-medium-binding-before.json', import.meta.url), 'utf8'));
@@ -64,8 +64,13 @@ try {
         ? buildMangaPrompt({ ...fixture, providerFamily, promptMaxChars: 32000, punchlineType: 'Auto', cinematicTechniques: false })
         : (() => { const { plan, source } = bindingNativePlan(native, fixture); return native.buildExperimentalImagePrompt(plan, source, { colorMode: 'color', providerFamily, promptMaxChars: 32000 }); })();
       const key = `${kind}/${providerFamily}/${count}`;
-      assert.ok(prompt.length <= baseline[key].chars, `${key}: ${prompt.length} > ${baseline[key].chars}`);
-      assert.ok(Buffer.byteLength(prompt) <= baseline[key].bytes, `${key}: UTF-8 grew`);
+      // Measure actor-binding growth against the original lettering policy;
+      // the new shared vertical-first rule is checked separately and remains
+      // part of the actual API budget below. Never strip artwork instructions.
+      const originalPolicyPrompt = restoreWritingPolicyBefore729(prompt);
+      assert.ok(originalPolicyPrompt.length <= baseline[key].chars, `${key}: actor-binding prompt grew`);
+      assert.ok(Buffer.byteLength(originalPolicyPrompt) <= baseline[key].bytes, `${key}: actor-binding UTF-8 grew`);
+      if (providerFamily === 'chatgpt') assert.ok(prompt.length <= 32000, `${key}: actual image API budget exceeded`);
       assert.equal(hash(restoreReviewedActorBindings(prompt)), baseline[key].sha256, `${key}: only the reviewed binding/duplicate-prose change is permitted`);
       const split = value => kind === 'ordinary'
         ? value.split(/^## Panel \d+\s*$/m).slice(1)
@@ -106,7 +111,7 @@ try {
       if (colorMode === 'color' && punchlineType === 'Auto') continue;
       const fixture = bindingFixture(2, false, colorMode);
       const prompt = buildMangaPrompt({ ...fixture, providerFamily, promptMaxChars: 32000, punchlineType, cinematicTechniques: false });
-      if (colorMode === 'color') assert.equal(hash(prompt), baseline[`excluded/${providerFamily}/${colorMode}/${punchlineType}`].sha256);
+      if (colorMode === 'color') assert.equal(hash(restoreWritingPolicyBefore729(prompt)), baseline[`excluded/${providerFamily}/${colorMode}/${punchlineType}`].sha256);
       else {
         assert.match(prompt, /TONE PLACEMENT:.*lit light skin.*paper white/);
         assert.ok(prompt.includes(fixture.camera));

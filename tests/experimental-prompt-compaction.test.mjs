@@ -307,7 +307,7 @@ try {
       else {const cast=prompt.split('CAST: ')[1].split('[END REFERENCE CAST DATA]')[0];assert.match(cast,/hair/);assert.doesNotMatch(cast,/black hair/);}
       assert.match(prompt,/ユウは赤い上着/);
       assert.match(prompt,/No eye-level shots/);assert.match(prompt,/never look at the viewer or camera lens/);
-      assert.match(prompt,/PHYSICAL READING PATH/);assert.match(prompt,/FINAL ENDING is P8/);
+      assert.match(prompt,/PHYSICAL READING PATH/);assert.match(prompt,/結末の台詞\/反応はP8/);
       const chunks=m.buildExperimentalWebCopy(prompt);
       assert.equal(chunks.join(''),prompt.endsWith('\n')?prompt:prompt+'\n');
     }

@@ -1,6 +1,6 @@
 from pathlib import Path
 from xml.sax.saxutils import escape
-import json,re,hashlib
+import json,re,hashlib,os
 from PIL import Image,ImageOps,ImageDraw
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
@@ -13,10 +13,10 @@ from reportlab.lib.utils import ImageReader
 from pypdf import PdfReader
 import pypdfium2 as pdfium
 
-BASE=Path(__file__).resolve().parents[2]/'output/pdf'
+BASE=Path(os.environ.get('MANGA_MANUAL_OUTPUT', Path(__file__).resolve().parents[2]/'output/pdf'))
 (BASE/'source').mkdir(parents=True,exist_ok=True)
 ASSETS=Path(__file__).resolve().parent/'assets'
-RENDER=BASE.parents[1]/'tmp/pdfs/gemini-system-manuals'
+RENDER=BASE/'renders' if os.environ.get('MANGA_MANUAL_OUTPUT') else BASE.parents[1]/'tmp/pdfs/gemini-system-manuals'
 RENDER.mkdir(parents=True,exist_ok=True)
 pdfmetrics.registerFont(TTFont('JP','C:/Windows/Fonts/BIZ-UDGothicR.ttc',subfontIndex=0))
 pdfmetrics.registerFont(TTFont('JPB','C:/Windows/Fonts/BIZ-UDGothicB.ttc',subfontIndex=0))
@@ -56,7 +56,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v7.2.8対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v7.2.9対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -176,8 +176,8 @@ page('シナリオを読む・編集する',
  ('box','編集後はSTEP3を作り直す','シナリオを書き換えると、以前のプロンプトや表示画像は新しい台本の結果ではなくなります。新しい内容をSTEP3で組み立て直してから生成してください。')),
 page('シナリオ強化と元に戻す操作',
  ('body','シナリオができたら「シナリオ強化」を開き、強化したい項目を選びます。表情、身体、演出、背景、カメラ、セリフ、物語の演出を個別に選択できます。'),
- ('body','「シナリオ強化実行」で、指定した項目を改善します。ギャグ・シリアス・ドキュメンタリーの方向性に合わせた演出を使います。強化後は台詞や出来事が変わり過ぎていないか読み直します。'),
- ('body','「強化前に戻す」で元のシナリオへ戻せます。強化・復元・手動編集の後はSTEP3を再構築します。強化も文章APIを使うため、追加の利用料が発生する場合があります。'),
+ ('body','「シナリオ強化実行」で候補を作り、同じ選択モデルの別の文章API呼出しで元台本と比較します。表記や同義語だけの変更は改善扱いせず、引用を照合し、人物・画風・話の退行を確認します。候補作成は最大2回です。'),
+ ('body','全選択項目の改善、一部の改善、元台本保持を区別して表示します。比較失敗や退行のある候補は採用しません。API判定も誤ることがあるため、比較ログと画像を確認してください。候補作成・比較には追加の文章API料金がかかります。「強化前に戻す」で復元でき、台本が変わった後はSTEP3を再構築します。'),
  ('body','自動カメラは俯瞰・アオリを使い、通常の広角は残して魚眼を除外します。アイレベルはユーザーが明示したコマだけです。禁止指定を採用指示と取り違えず、寄り・長焦点も判定します。短縮後も顔・身体の投影指示を残し、背景だけの傾きでは検査を合格にしません。実画像の確認は必要です。'),
  ('body','絵柄は人物・服・小物・背景へ適用します。劇画は顔の彫りと細かなカケアミ、POPは極太輪郭・鮮烈な平面色・大粒の網点、水彩は淡い薄塗りとにじみを指定します。画風を変えてもカメラ・演技・表情・同一性・台詞を保ち、実画像で出方を確認します。'),
  ('box','カメラの強弱を見る','全コマが同じ距離・同じ目線になっていないか確認します。意味のある反復や、明示した正面・肩越し等の構図は残し、身体の動きと反応が読めることを重視します。')),
@@ -208,7 +208,7 @@ page('STEP3  カラー／白黒の選択',
  ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
 page('タイトル・モザイク・ウオーターマーク',
  ('body','STEP3の出力モード直下に「タイトルを表示」があります。初期状態と全設定クリア後はONです。OFFでは題字と専用の帯を描かず、その領域をコマに配分します。A4縦の外枠四辺・四隅と余白、コマ間隔は残します。台本のタイトルは制作情報とファイル名に保持し、台詞や看板などの場面内文字は削除しません。選択は工程移動やコマ数切替でも保持し、再読み込み・全設定クリアではONへ戻ります。切替後はSTEP3を作り直します。切替だけではAPIを呼びません。'),
- ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.5 / GPT-6 Luna / FURU AI 4-koma v7.2.8。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
+ ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.5 / GPT-6 Luna / FURU AI 4-koma v7.2.9。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
  ('rows',[['設定','反映する工程'],['タイトルを表示','STEP3から作り直して反映。初期状態ON'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初期状態ON']]),
  ('body','モザイクは台本の動作で描く既存作品の人物への描画指示です。登録したシート人物は自動モザイクから除外し、生成・品質検査へ同じ除外リストを渡します。原文で本人への遮蔽を明示した場合は、その対象・領域だけ例外です。除外リストが現在のキャストと合わない場合は、STEP3から再構築してください。'),
  ('body','ウオーターマークは画像下部の生成情報とクレジットです。OFFにすると、左右フッターのクレジット描画指示を外します。ONでは、外側フッターへ1回ずつ配置するよう指示します。'),
@@ -232,7 +232,7 @@ page('Web画像の修正・高解像度化',
 page('STEP4  APIで画像を生成する',
  ('body','完成プロンプトを確認して「APIで新しい画像を生成する（STEP4）」を押します。最終プロンプトから新しい画像を作る操作です。表示画像を直す場合は、画像下の「ページ全体／コマを選んで修正」を開きます。'),
  ('body','「背景を簡略化・デザイン化」は初期オフ。オンでは場所紹介・移動・手掛かりのコマに目印を少数の形で残し、反応や会話のコマは大胆な色面・図形まで背景を抽象化する指示へ切り替えます。人物の通常の描き込み、コマ固有の絵柄、物語の道具と文字は維持するよう指定します。同じ最終プロンプトをAPI生成・Web貼り付けに使い、生成後の画像編集は必須にしません。オフで元の指示へ戻り、新しいSTEP3ではオフになります。結果は背景と人物の両方を確認してください。'),
- ('body','4コマのA4配置で白帯が広がりすぎる場合は、元ページのコマ間隔を保ったまま全体をA4枠に収めます。'),
+ ('body','台詞は短句や横長コマでも縦書きを優先し、余白で改行・列数・フキダシ形状を先に調整します。縦組では読めない、重要な絵を隠す、明示指定がある場合は横書きを許容します。絵や人物の描き込みを縮小・簡素化して収めず、文字方向だけで有料再生成しません。4コマは元の間隔を保ってA4枠へ収めます。'),
  ('body','OpenAIの品質設定は、GPT Image 2.0 / high、2.5 Flare / high・xhigh、2.5 Sunburst / high・xhigh・maxです。Sunburstが利用可能な接続ではmaxが初期選択で、利用不可の接続では2.0 / highを初期選択します。設定欄の表示だけで生成成功を保証しません。'),
  ('rows',[['ページ条件','寸法'],['A4標準','1120 × 1584 px'],['A4大','2240 × 3168 px'],['比率','横:縦 = 210:297（70:99）'],['構成','通常4コマ／実験5〜8コマ。題字とクレジットは個別にON/OFF']]),
  ('body','OpenAIのサイズ既定はA4大で、選択は再読み込みまで保持します。Geminiはgemini-nano-banana-2.1のInteractions APIへ1K／3:4で送信し、ページ全体をA4へ正規化します。独立した品質・サイズ選択はありません。生成・追加修正後は比率がずれた画像だけを補正します。実寸表示を確認してください。'),
@@ -365,7 +365,7 @@ SYSTEM.append(page('自動保存の初回動作確認',
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v7.2.8 / 2026-11-04')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v7.2.9 / 2026-11-04')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -407,7 +407,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v7.2.8対応 | 2026年11月4日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v7.2.9対応 | 2026年11月4日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -447,7 +447,7 @@ def verify_and_render(path,layout,pages):
  assert len(r.pages)==len(pages)
  for page_index,pdf_page in enumerate(r.pages,1):
   assert f'{page_index:02d}/{len(r.pages)}' in re.sub(r'\s+','',pdf_page.extract_text()), 'Incorrect footer page count'
- assert all('v7.2.8対応' in p.extract_text() and '2026年11月4日更新' in p.extract_text() for p in r.pages)
+ assert all('v7.2.9対応' in p.extract_text() and '2026年11月4日更新' in p.extract_text() for p in r.pages)
  validate_manual_scope(path.name,text)
  if 'full-manual' in path.name:
   for required in ['14枚','10枚','1枚に複数人','人数による固定上限','保証','保持','認識できない','小物']:
@@ -458,7 +458,7 @@ def verify_and_render(path,layout,pages):
    assert obsolete not in text,obsolete
   for required in ['シリアス：8種類','ギャグ：12種類','怒り・抗議','逆転・反撃','激怒・逆ギレ','自業自得・ブーメラン','立場逆転']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v7.2.8'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v7.2.9'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)

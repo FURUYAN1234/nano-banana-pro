@@ -19,9 +19,11 @@ import {
   SAFE_CONTENT_RETRY_INSTRUCTION
 } from './scenario-content-policy';
 import {
+  SCENARIO_ENHANCEMENT_CATEGORIES,
   buildScenarioEnhancementPrompt,
   runValidatedScenarioEnhancement
 } from './scenario-enhancement';
+import { buildEnhancementReviewPrompt, parseEnhancementReview } from './scenario-enhancement-review.js';
 import {
   assertManualTopicExclusions,
   MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION
@@ -734,7 +736,11 @@ export async function enhanceScenarioText({
   scenarioModelId,
   onProgress
 }) {
+  const signal = getApiWorkSignal();
+  const context = [buildScenarioCastContext(castList), referenceAssetContext].filter(Boolean).join('\n\n');
+  const options = { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario', scenarioModelId, signal };
   const result = await runValidatedScenarioEnhancement({
+    signal,
     scenarioMode,
     originalScenario: scenario,
     selectedCategories,
@@ -749,25 +755,34 @@ export async function enhanceScenarioText({
         validationIssues
       }),
     requestEnhancement: async (prompt) => {
-      const result = await callAI(prompt, [], [buildScenarioCastContext(castList), referenceAssetContext].filter(Boolean).join('\n\n'), onProgress, {
-        timeoutMs: STEP2_TEXT_TIMEOUT_MS,
-        modelRoute: 'scenario',
-        scenarioModelId
-      });
+      throwIfApiWorkCancelled(signal);
+      const result = await callAI(prompt, [], context, onProgress, options);
+      throwIfApiWorkCancelled(signal);
       return {
         text: result.text,
         usedModel: result.model,
         thought: result.thought
       };
     },
+    requestReview: async (comparison) => {
+      throwIfApiWorkCancelled(signal);
+      onProgress?.('強化前後を比較中: 選択項目の実質的な改善と、人物・画風・物語の退行を確認します。');
+      const review = await callAI(buildEnhancementReviewPrompt(comparison), [], context, onProgress, options);
+      throwIfApiWorkCancelled(signal);
+      return { ...parseEnhancementReview(review.text, comparison), usedModel: review.model };
+    },
     onRetry: (validation, attempt) => {
-      onProgress?.(`強化再検査 ${attempt}回目: 選択項目以外の変更などを検出。理由: ${validation.issues.join(' / ')}。対象だけを修正して再試行します。`);
+      onProgress?.(`強化比較 ${attempt}回目: ${validation.issues.join(' / ')}。元台本から候補を1回再作成します。`);
     },
     onWarning: (validation, _text, fallbackToOriginal) => {
-      const retained = fallbackToOriginal ? '元のシナリオ' : '最良の安全候補';
-      onProgress?.(`強化再検査結果: ${validation.issues.join(' / ')}。再試行上限に達したため、${retained}を保持して続行します。`);
+      const retained = fallbackToOriginal ? '元のシナリオ' : '一部の改善を確認できた候補';
+      onProgress?.(`強化比較結果: ${validation.issues.join(' / ')}。${retained}を保持します。全選択項目の強化成功ではありません。`);
     }
   });
-  if (result.validation?.ok) onProgress?.(`強化再検査結果: ${result.attempts}回目の候補が選択項目の変更範囲を通過しました。`);
+  throwIfApiWorkCancelled(signal);
+  for (const item of result.validation?.review?.categories || []) {
+    onProgress?.(`${SCENARIO_ENHANCEMENT_CATEGORIES[item.category]?.label || item.category} [${item.verdict}] ${item.panel}コマ目「${item.before}」→「${item.after}」: ${item.gain}`);
+  }
+  if (result.validation?.ok) onProgress?.(`強化比較結果: ${result.attempts}回目の候補で、選択項目の改善と編集範囲の維持を確認しました。`);
   return result;
 }

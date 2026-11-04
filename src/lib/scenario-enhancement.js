@@ -112,7 +112,9 @@ const HARD_ENHANCEMENT_ISSUE_CODES = new Set([
   'effects_changed_without_selection',
   'tone_escalation',
   'anatomy_escalation',
-  'serious_style_switch'
+  'serious_style_switch',
+  'semantic_regression',
+  'enhancement_review_unverified'
 ]);
 
 const normalizeText = (value) =>
@@ -185,11 +187,11 @@ const addIssue = (issues, issueCodes, code, message) => {
 const hasHardEnhancementIssue = (validation) =>
   validation.issueCodes.some((code) => HARD_ENHANCEMENT_ISSUE_CODES.has(code));
 
-const scoreEnhancementCandidate = (text, validation) => (
-  validation.changedCategories.length * 1000 -
-  validation.issueCodes.length * 100 +
-  Math.min(normalizeText(text).length, 999) / 1000
+const scoreEnhancementCandidate = (validation) => (
+  validation.improvedCategories.length * 1000 - validation.issueCodes.length * 100
 );
+
+const substantiveText = (text) => normalizeText(text).normalize('NFKC').replace(/[\p{P}\p{S}\s]/gu, '');
 
 const categoryChanged = (category, original, candidate) => {
   switch (category) {
@@ -270,7 +272,7 @@ export const buildScenarioEnhancementPrompt = ({
     .join('\n');
   const lockedLabels = locked.map((category) => categoryDefinitions[category].label).join('、');
   const dialogueRule = selected.includes('dialogue')
-    ? `- セリフ強化を選択したため、「」内のセリフを最低1つは必ず変更する。話者の順序と人数は変えない
+    ? `- セリフ強化では、人物固有の口調、応答の間、伝わる意味のいずれかを具体的に改善する。同義語や句読点だけの置換を改善とみなさない。話者の順序と人数は変えない
 - 変更が不要なセリフまで一律に言い換えない。短く口語的に保ち、セリフ全体を元の約1.5倍以内に収める
 - 最終コマのオチは元より冗長にせず、「もしかしたら」「かもしれない」「気がする」など弱い婉曲表現を新たに足さない`
     : '- セリフは未選択なので、明示された発話・音読の本文と話者を一字一句変更しない。ト書き内の引用や比喩は発話として数えない';
@@ -307,6 +309,7 @@ ${styleSelectionRule}
 - 選択されていないカテゴリは変更しない。未選択: ${lockedLabels || 'なし'}
 - 全身の誇張や強い遠近法は許可する。手足の接続・本数と小道具の所有・向きを保ち、部位の増殖、身体崩壊、ボディホラーを新たに加えない
 - 「MAX」「限界」「極端に」など強度語の機械的な足し算ではなく、具体性と読みやすさを上げる
+- 人物の顔・髪・衣装・身体の描き込み、各コマの指定画風と描画密度を保つ。背景や文字の読みやすさを理由に人物まで簡素化しない。演技は人物ごとの違いと場面の強弱を保ち、無難な同じ姿勢へ揃えない
 - 元にない事件、設定、キャラクター、場所、建造物を追加しない
 ${dialogueRule}
 ${backgroundRule}
@@ -318,8 +321,9 @@ ${panelRule(gestureVarietyRules)}
 ${selected.includes('camera') ? panelRule(SCENARIO_CAMERA_SEQUENCE_RULES) : ''}
 ${selected.includes('camera') && selected.includes('body') ? panelRule(SCENARIO_SHOT_DESIGN_RULES) : ''}
 
-【選択されたカテゴリ — 変更必須】
+【選択されたカテゴリ — 実質的な改善を目指す】
 ${selectedInstructions || '- なし'}
+- 改善する意味のある箇所だけを編集する。元が十分に良い項目は無理に改変しない。文字数増加や単なる言い換えを成果とせず、編集前後の読み手への効果を比較してから出力する
 ${styleBlock}${retryBlock}
 【出力形式】
 - 元と同じ見出し・タグ形式のシナリオ本文だけを返す
@@ -349,6 +353,8 @@ export const validateScenarioEnhancement = ({
   }
   if (candidate.text === original.text) {
     addIssue(issues, issueCodes, 'scenario_unchanged', 'シナリオ全体が変更されていません');
+  } else if (substantiveText(candidate.text) === substantiveText(original.text)) {
+    addIssue(issues, issueCodes, 'formatting_only', '表記だけの変更で、内容の改善を確認できません');
   }
 
   for (const field of METADATA_FIELDS) {
@@ -557,22 +563,36 @@ export const runValidatedScenarioEnhancement = async ({
   punchlineType = null,
   buildPrompt,
   requestEnhancement,
+  requestReview,
+  signal,
   maxAttempts = 2,
   onRetry,
   onWarning
 }) => {
   assertScenarioPanelStructure(originalScenario, { scenarioMode });
+  if (typeof requestReview !== 'function') throw new TypeError('強化前後を比較するAPI検査が必要です');
   let validationIssues = [];
   let lastResult = null;
   let bestSafeCandidate = null;
   let laterRequestError = null;
+  let lastValidation = null;
+  let attempts = 0;
+  const checkCancelled = () => signal?.throwIfAborted();
+  const rethrowCancellation = (error) => {
+    checkCancelled();
+    if (error?.code === 'CANCELLED' || error?.name === 'AbortError') throw error;
+  };
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    checkCancelled();
+    attempts = attempt;
     const prompt = buildPrompt({ attempt, validationIssues });
     let result;
     try {
       result = await requestEnhancement(prompt, attempt);
+      checkCancelled();
     } catch (error) {
+      rethrowCancellation(error);
       if (!bestSafeCandidate) throw error;
       laterRequestError = error;
       break;
@@ -585,6 +605,27 @@ export const runValidatedScenarioEnhancement = async ({
       selectedCategories,
       punchlineType
     });
+    validation.improvedCategories = [];
+    if (!hasHardEnhancementIssue(validation)
+      && !validation.issueCodes.includes('scenario_unchanged') && !validation.issueCodes.includes('formatting_only')) {
+      try {
+        const review = await requestReview({ originalScenario, candidateScenario: text, selectedCategories, punchlineType }, attempt);
+        checkCancelled();
+        validation.review = review;
+        validation.improvedCategories = review.categories.filter(item => item.verdict === 'improved').map(item => item.category);
+        for (const item of review.categories) {
+          if (item.verdict !== 'improved') addIssue(validation.issues, validation.issueCodes,
+            item.verdict === 'regressed' ? 'semantic_regression' : `semantic_${item.category}_${item.verdict}`,
+            `${SCENARIO_ENHANCEMENT_CATEGORIES[item.category].label}: ${item.gain}`);
+        }
+        for (const regression of review.regressions) addIssue(validation.issues, validation.issueCodes,
+          'semantic_regression', `${regression.panel}コマ目: ${regression.reason}`);
+      } catch (error) {
+        rethrowCancellation(error);
+        addIssue(validation.issues, validation.issueCodes, 'enhancement_review_unverified', `強化比較が未完了です: ${error.message}`);
+      }
+    }
+    validation.ok = validation.issueCodes.length === 0;
 
     if (validation.ok) {
       return {
@@ -595,15 +636,17 @@ export const runValidatedScenarioEnhancement = async ({
       };
     }
 
-    if (!hasHardEnhancementIssue(validation)) {
-      const score = scoreEnhancementCandidate(text, validation);
+    if (!hasHardEnhancementIssue(validation) && validation.improvedCategories.length > 0
+      && !validation.review.categories.some(item => item.verdict === 'uncertain')) {
+      const score = scoreEnhancementCandidate(validation);
       if (!bestSafeCandidate || score > bestSafeCandidate.score) {
         bestSafeCandidate = { result, text, validation, score };
       }
     }
 
     lastResult = result;
-    validationIssues = validation.issueCodes;
+    lastValidation = validation;
+    validationIssues = [...validation.issueCodes, ...validation.issues];
     if (attempt < maxAttempts) onRetry?.(validation, attempt);
   }
 
@@ -613,7 +656,7 @@ export const runValidatedScenarioEnhancement = async ({
     return {
       ...bestSafeCandidate.result,
       text: bestSafeCandidate.text,
-      attempts: maxAttempts,
+      attempts,
       validation: bestSafeCandidate.validation,
       validationWarning: true,
       fallbackToOriginal: retainedOriginal,
@@ -633,13 +676,15 @@ export const runValidatedScenarioEnhancement = async ({
     selectedCategories,
     punchlineType
   });
-  onWarning?.(originalValidation, originalText, true);
+  onWarning?.(lastValidation || originalValidation, originalText, true);
   return {
     ...lastResult,
     text: originalText,
-    attempts: maxAttempts,
+    attempts,
     validation: originalValidation,
+    rejectedValidation: lastValidation,
     validationWarning: true,
-    fallbackToOriginal: true
+    fallbackToOriginal: true,
+    warningMessage: '編集条件を守り実質的な改善を確認できた候補がないため、元のシナリオを保持しました。'
   };
 };

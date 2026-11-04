@@ -5,6 +5,17 @@ import { readFileSync } from 'node:fs';
 // unknown recipe or prompt line: an unlisted change must fail.
 const selectionContracts = JSON.parse(readFileSync(new URL('../fixtures/selection-shared-contract-normalization.json', import.meta.url), 'utf8'));
 
+// v7.2.9 changes only the shared lettering policy. Keep the frozen actor-media
+// snapshots useful by inverting these exact compiler clauses, not art recipes.
+export const restoreWritingPolicyBefore729 = value => String(value)
+  .replace(/^(Create ONE complete Japanese manga page with EXACTLY [5-8] framed panels\.[^\n]*)コマ間は白溝で明瞭に分離し、外余白で代用しない。$/m, '$1Internal white gutters は明瞭に分離し、外余白で代用しない。')
+  .replace('\nPHYSICAL READING PATH（非印字）:', '\nPHYSICAL READING PATH (not printed):')
+  .replace(`${VERTICAL_DIALOGUE_GEOMETRY}\nPHYSICAL READING PATH (not printed):`, 'PHYSICAL READING PATH (not printed):')
+  .replace(/^(PHYSICAL READING PATH \(not printed\): P1[^\n]*\. )各場面は指定枠へ。結末の台詞\/反応はP([5-8])。$/gm, '$1PAGE FRAME内の一場面をその位置に描く。FINAL ENDING is P$2; 結末の台詞/反応はそこに置く。')
+  .replace(/^台詞IDは参照専用、印字\/重複発話禁止。source beat番号は配置指定でない。$/gm, '原文条件は対応枠直前に一度だけ記載。台詞トークンは正確なID参照で、印字/重複発話禁止。source beat番号は配置指定ではない。')
+  .replaceAll(VERTICAL_DIALOGUE_GEOMETRY, 'DIALOGUE WRITING POLICY: prefer_vertical: upright top-to-bottom glyphs; columns right-to-left. Horizontal allowed if best for composition/readability.')
+  .replaceAll('- Only Dialogue becomes white bubbles: prefer_vertical Japanese tategaki, verbatim character-by-character; fit vertical columns first and use horizontal only under DIALOGUE WRITING POLICY exceptions; no paraphrase, synonyms, softening, added/omitted words.', '- Only Dialogue becomes white bubbles: prefer_vertical Japanese tategaki, verbatim character-by-character; horizontal is allowed for composition/readability; no paraphrase, synonyms, softening, added/omitted words.');
+
 // Reviewed 2026-10-16 additions, frozen independently of the production helper.
 // Remove only these complete compiler lines, never a prefix or an unknown edit.
 const reviewedActorMediumLines = new Set([
@@ -21,7 +32,7 @@ export const restoreReviewedActorBindings = value => {
   const oldSuffix = ' 全可視人物に適用。Camera/Action・表情・切取りを保持、隠れた顔の露出や寄りへの変更禁止。';
   const colorLines = [...reviewedActorMediumLines].filter(line => line.endsWith(oldSuffix));
   let style = '', reviewed = false;
-  return String(value).split('\n').map((line, index, lines) => {
+  return restoreWritingPolicyBefore729(value).split('\n').map((line, index, lines) => {
     if (/^(?:## Panel \d+|\[PAGE FRAME P\d+ \|)/.test(line)) { style = ''; reviewed = false; }
     const scope = line.match(/^(?:PANEL STYLE LOCK: |FRAME MEDIUM P\d+ — )(POP_ART|WATERCOLOR|GEKIGA)(?:;|:)/);
     if (scope) { style = scope[1]; reviewed = false; }
@@ -160,7 +171,9 @@ export const restorePrePolicyContracts = value => String(value)
   .replaceAll('rear view: 後方は基準対象に対して保持。背面指定の人物だけ背面を描く。場所/道具の向きで全員を回さない。距離/切取り保持、肩越し接写を強制しない', 'show back planes of the scripted subject; preserve crop/distance, no forced close OTS')
   .replaceAll('PROMPT PRIORITY: cast/count/identity/glasses/wardrobe, exact script/Camera/panel medium/layout. 人数のため顔出し/横並び/画風・投影変更不可。', 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium.')
   .replaceAll(VERTICAL_DIALOGUE_GEOMETRY, 'Upright glyphs top-to-bottom; columns right-to-left. No horizontal/rotated rows, including single-balloon shouts.')
+  .replaceAll('DIALOGUE WRITING POLICY: prefer_vertical: upright top-to-bottom glyphs; columns right-to-left. Horizontal allowed if best for composition/readability.', 'Upright glyphs top-to-bottom; columns right-to-left. No horizontal/rotated rows, including single-balloon shouts.')
   .replaceAll('- Prefer vertical Japanese tategaki in regular manga Mincho: slender black strokes on white, clear counters and readable spacing.', '- Render every Japanese dialogue bubble in vertical Japanese tategaki using regular-weight Japanese manga Mincho-style type: slender, even strokes, clear counters, tight but readable vertical spacing, and black text on a white bubble.')
+  .replaceAll('- Only Dialogue becomes white bubbles: prefer_vertical Japanese tategaki, verbatim character-by-character; fit vertical columns first and use horizontal only under DIALOGUE WRITING POLICY exceptions; no paraphrase, synonyms, softening, added/omitted words.', '- Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.')
   .replaceAll('- Only Dialogue becomes white bubbles: prefer_vertical Japanese tategaki, verbatim character-by-character; horizontal is allowed for composition/readability; no paraphrase, synonyms, softening, added/omitted words.', '- Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.')
   .replaceAll('- Only Dialogue becomes white bubbles: verbatim・言換/軟化/追加/省略禁止。TYPE準拠。', '- Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim; no paraphrase/synonyms/softening/addition/omission/horizontal text.')
   .replaceAll('CAST INSTANCE LOCK: 各人物は背景も実体1人。紙/画面の像で代替不可。\n', '')

@@ -83,12 +83,15 @@ test('long-prompt compaction cannot interpret literal speech as a rendering dire
   assert.equal(extractBubbleContracts(prompt).find(p => p.panel === 4)?.bubbles[0]?.text, text);
 });
 
-test('full and compact provider prompts prefer upright columns and allow composition-led horizontal lettering', () => {
+test('both provider prompts fit vertical lettering first and protect the artwork when horizontal exceptions are needed', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = build('甲「待ってーっ！」', providerFamily);
-    assert.match(prompt, /upright[^\n]*top-to-bottom[^\n]*right-to-left/i);
+    assert.match(prompt, /正立文字は上→下、列は右→左/);
     assert.match(prompt, /prefer_vertical/);
-    assert.match(prompt, /horizontal allowed.*composition\/readability/i);
+    assert.match(prompt, /余白の改行\/列数\/吹出形を先に調整/);
+    assert.match(prompt, /短句\/叫び\/横長も縦組/);
+    assert.match(prompt, /横組は縦組の判読不能・絵の遮蔽時か明示指定のみ/);
+    assert.match(prompt, /人物描写保持。絵の縮小\/簡素化禁止/);
   }
 });
 

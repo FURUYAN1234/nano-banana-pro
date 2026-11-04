@@ -7,6 +7,7 @@ import { createServer } from 'vite';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import Ajv from 'ajv';
+import { restoreWritingPolicyBefore729 } from './helpers/prompt-policy-normalization.mjs';
 
 const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
 try {
@@ -37,6 +38,18 @@ try {
   const scenario = scenarioFor(6);
   const input = { enabled: true, scenario, castList: '人物A', colorMode: 'monochrome', images: [] };
   const source = m.readExperimentalSource(input);
+  test('native pages apply the shared vertical-first policy for both providers without weakening art direction',()=>{
+    for (const providerFamily of ['chatgpt', 'gemini']) {
+      const prompt=m.buildExperimentalImagePrompt(six,source,{...input,providerFamily});
+      assert.match(prompt,/DIALOGUE WRITING POLICY: prefer_vertical: 正立文字は上→下、列は右→左/);
+      assert.match(prompt,/短句\/叫び\/横長も縦組/);
+      assert.match(prompt,/横組は縦組の判読不能・絵の遮蔽時か明示指定のみ/);
+      assert.match(prompt,/人物描写保持。絵の縮小\/簡素化禁止/);
+      assert.match(prompt,/台詞は縦書き漫画明朝/);
+      assert.match(prompt,/preserve camera strength, drawing quality, style, expression and dramatic energy/);
+      assert.ok(prompt.length<=32000);
+    }
+  });
   test('experimental reading flow preserves acting and forbids eye-level or viewer eye contact',()=>{
     for(const prompt of [m.buildExperimentalPlanPrompt(source),m.buildExperimentalImagePrompt(six,source,input),m.buildExperimentalReviewPrompt(six,source,input)]) {
       assert.match(prompt,/READING FLOW WITH ACTING/);
@@ -73,7 +86,7 @@ try {
     const colorSource = m.readExperimentalSource({scenario, castList, colorMode:'color'});
     const color = m.buildExperimentalImagePrompt(plan, colorSource, {colorMode:'color'});
     // Captured before the monochrome-only fix; version text is intentionally normalized.
-    assert.equal(createHash('sha256').update(color.replace(/v\d+\.\d+\.\d+/g,'v<VERSION>')).digest('hex'),
+    assert.equal(createHash('sha256').update(restoreWritingPolicyBefore729(color).replace(/v\d+\.\d+\.\d+/g,'v<VERSION>')).digest('hex'),
       '5951da401a8db0995f364a3e4b3753238f54532d014a327b308308c48813f20f');
     for (const count of [5,6,7,8]) {
       const scenario = scenarioFor(count).replaceAll(/行動\d+/g, '葵と凛が木箱を運ぶ。');
@@ -1287,7 +1300,7 @@ try {
   });
   test('page envelope explicitly constrains outside margins without removing gutters',()=>{
     const prompt=m.buildExperimentalImagePrompt(six,source,input);
-    assert.match(prompt,/0\.6%/);assert.match(prompt,/white gutters/);
+    assert.match(prompt,/0\.6%/);assert.match(prompt,/コマ間は白溝/);
   });
   test('observed dialogue is checked in physical reading slots, not reordered by the story',()=>{
     const spokenSource=m.readExperimentalSource({...input,scenario:scenario.replace(/セリフなし/g,'人物A：「同じ言葉、私は人物A。」').replace(/同じ言葉、私は人物A。」$/,'結末の言葉」')});

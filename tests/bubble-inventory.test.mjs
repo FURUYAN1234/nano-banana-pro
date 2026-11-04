@@ -7,7 +7,7 @@ import { VERTICAL_DIALOGUE_GEOMETRY } from '../src/lib/bubble-text.js';
 const prompt = '## Panel 3\nDialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="袋はここで開く？"; B2="ああ、ここで受け止めよう。". TAIL TIP LOCK: B1=>[ユウ]; B2=>[エムバ].';
 test('QA requests horizontal tolerance only for the preferred writing policy', () => {
   const preferred = buildImageQualityQaPrompt({ finalPrompt: `${VERTICAL_DIALOGUE_GEOMETRY}\n${prompt}` });
-  assert.match(preferred, /permits coherent horizontal\/mixed dialogue/);
+  assert.match(preferred, /permits horizontal dialogue for an individual balloon only when vertical reflow/);
   assert.match(preferred, /Writing direction alone is never a defect or a repair trigger/);
   assert.doesNotMatch(preferred, /horizontal rows or mixed horizontal\/vertical layout are also a defect/);
   const strict = buildImageQualityQaPrompt({ finalPrompt: `TYPE: BUBBLES: vertical tategaki.\n${prompt}` });

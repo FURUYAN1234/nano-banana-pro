@@ -952,17 +952,20 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       if (enhanceEpoch !== scenarioRunEpochRef.current) return;
 
       if (result && result.text && (result.validation?.ok || result.validationWarning)) {
-        invalidateScenarioOutput();
-        setScenario(result.text);
+        if (!result.fallbackToOriginal) {
+          invalidateScenarioOutput();
+          setScenario(result.text);
+        }
         setEnhanceLog(prev => {
           const retryInfo = result.attempts > 1 ? ` / 自動修正 ${result.attempts - 1}回` : '';
           const warningLog = result.validationWarning
-            ? `\n> [WARNING] 強化品質の再試行上限に達したため、${result.fallbackToOriginal ? '元のシナリオ' : '最良の安全候補'}を保持してSTEP3へ進めます: ${result.validation?.issueCodes?.join(', ') || 'quality_check'}`
+            ? `\n> [WARNING] ${result.warningMessage} ${(result.rejectedValidation || result.validation)?.issues?.join(' / ') || ''}`
             : '';
-          const successLabel = result.fallbackToOriginal ? '元のシナリオを保持しました' : '選択カテゴリだけを強化しました';
-          const baseLog = prev + `\n> [SUCCESS] ${successLabel}（${result.text.length}文字${retryInfo}）${warningLog}\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`;
+          const successLabel = result.fallbackToOriginal ? '改善を確認できず、元のシナリオを保持しました'
+            : result.validationWarning ? '一部の項目の改善を採用しました' : '選択カテゴリの改善を確認しました';
+          const baseLog = prev + `\n> [${result.validationWarning ? 'WARNING' : 'SUCCESS'}] ${successLabel}（${result.text.length}文字${retryInfo}）${warningLog}\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`;
           if (result.thought) {
-            const separator = "\n\n--- ✅ シナリオ強化完了 (思考トレース) ---\n";
+            const separator = "\n\n--- 候補作成時の思考トレース（採用・品質判定とは別） ---\n";
             return baseLog + separator + result.thought;
           }
           return baseLog;
@@ -974,7 +977,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         setEnhanceCameraWork(false);
         setEnhanceDialogue(false);
         setEnhanceGag(false);
-        showStatus(result.validationWarning ? "強化品質の警告がありますが、STEP3へ進めます" : "シナリオ強化完了！");
+        showStatus(result.fallbackToOriginal ? "改善を確認できず、元のシナリオを保持しました"
+          : result.validationWarning ? "一部の改善を採用しました。比較ログを確認できます" : "選択カテゴリの改善を確認しました");
       } else {
         setEnhanceLog(prev => prev + "\n> [ERROR] AIの応答が短すぎます。もう一度お試しください。");
         showStatus("強化失敗: AIの応答が不十分です");
