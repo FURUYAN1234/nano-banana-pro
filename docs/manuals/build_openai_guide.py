@@ -29,7 +29,7 @@ styles={
  'url':ParagraphStyle('url',fontName='JP',fontSize=9,leading=14,textColor=TEAL,wordWrap='CJK',splitLongWords=True),
 }
 c=canvas.Canvas(str(OUT),pagesize=A4,pageCompression=1)
-c.setTitle('はじめてのOpenAI API取得・設定ガイド | 2026-10-23')
+c.setTitle('はじめてのOpenAI API取得・設定ガイド | 2026-11-05')
 c.setAuthor('Super FURU AI 4-koma System')
 c.setSubject('APIアカウント、課金、認証、キー取得・管理とアプリへの接続確認')
 page=0; y=0; transcript=[]; checks=[]
@@ -49,7 +49,7 @@ def new(title,kicker='操作ガイド',sources=''):
  c.setFont('JPB',21); c.setFillColor(INK); c.drawString(M,H-73,title)
  c.setStrokeColor(HexColor('#cfdddf')); c.line(M,H-89,W-M,H-89)
  c.bookmarkPage(f'p{page}'); c.addOutlineEntry(title,f'p{page}',0,False)
- c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.2.9対応 | 2026年11月4日更新 | A4 日本語版')
+ c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.3.0対応 | 2026年11月5日更新 | A4 日本語版')
  c.drawRightString(W-M,31,f'{page:02d} / 19')
  if sources: c.setFont('JP',7.5); c.drawString(M,45,'根拠: '+sources+'（出典一覧は19ページ）')
  transcript.append('\n\n'+str(page)+'. '+title)
@@ -185,7 +185,7 @@ p('このページは現行公式説明に基づく設定図解です。実際�
 
 # 10
 new('⑧ 本人確認の要否を確認する','難所 1 / 要求された人は次ページの詳しい手順へ','F・G・現行アプリ')
-p('公式は、GPT Image利用前に認証が<b>必要になる場合がある</b>と案内しています。AstraやGPT Image 2.5の新規利用者全員に必須とする公式情報は確認できません。認証済み、または要求されず利用可能なら⑨へ進みます。','small')
+p('公式は、GPT Image利用前に認証が<b>必要になる場合がある</b>と案内しています。全アカウントで必須とは限りません。認証済み、または要求されず利用可能なら⑨へ進みます。','small')
 link('組織の一般設定','https://platform.openai.com/settings/organization/general')
 flow([('General → Verifications','API組織の一般設定を開きます。今回の既存アカウントでは、ここにVerifiedの表示を確認しました。'),('認証を要求された個人利用者','現行アプリの案内は「Verifications → Individual → Start」。公式の要求・エラーのリンクから開始する場合もあります。'),('公式の認証先で手続きする','身分証・顔写真はPlatformから開始した認証先に提出します。アプリの案内ではPersonaを使うフローです。')])
 table([['表示状態','次の行動'],['未認証＋認証を要求された','11ページの準備をして開始します。'],['確認中・審査中','画面の案内に従って待ちます。完了時間は保証できません。'],['Verified／要求なしで利用可','同じ組織か確認して⑨へ進みます。'],['入口がない／権限がない','認証を要求された場合は組織・Owner権限を確認し、要求元のリンクへ戻ります。']])
@@ -205,7 +205,7 @@ p('公式では、個人の本人確認で確認できるアカウント／組�
 new('⑨ モデルの利用権限を確認する','難所 2 / 課金・本人確認・Projectの許可はそれぞれ別','C・F・G・実画面')
 steps([('漫画用Projectを選び「Settings → Limits」','まず左上で③のProjectを選択します。組織全体のLimitsとは別の、Project SettingsのLimitsを開きます。'),('「Model usage」の「Allow or block models」へ','その説明に対応する<b>Select models</b>を押します。同じページにRate limits用のSelect modelsもあるので、取り違えないでください。'),('対象モデルが禁止されていないか確認する','設定の選択肢は下表の3つです。すでに許可されているなら変更不要です。会社・共有組織の制限は管理者へ依頼します。')])
 table([['モデルの許可設定','意味'],['Allow all models','現在と将来のモデルをProject側で許可。OpenAI側の制限を解除する操作ではありません。'],['Allow all except selected models','選択したモデルだけ禁止。Astraや画像モデルが禁止リストにないか確認。'],['Allow only selected models','選択したモデルだけ許可。画像モデルだけ許可しても解析・シナリオ処理は動きません。']])
-box('最低限、どの名前を探す？','本アプリの標準の文章・画像解析用モデルは<b>gpt-6-luna</b>です。<b>gpt-6.1-terra</b>、<b>gpt-6.1-sol</b>、<b>gpt-6-astra</b>を選ぶ場合は、そのモデルも許可します。画像は<b>gpt-image-2.5-sunburst</b>、必要に応じて<b>gpt-image-2.5-flare</b>を確認します。')
+box('最低限、どの名前を探す？','本アプリの標準の文章・画像解析用モデルは<b>gpt-6-luna</b>です。<b>gpt-6.1-terra</b>、<b>gpt-6.1-sol</b>、<b>gpt-6-astra</b>を選ぶ場合は、そのモデルも許可します。画像生成にはまず<b>gpt-image-2.6-sunburst</b>を確認します。別の画像モデルを選ぶ場合は、そのモデルも許可します。')
 p('<b>許可範囲を絞る場合：</b>選択したシナリオモデル、解析・検査モデル、画像モデルを確認します。アプリのModel Chainで失敗時の代替モデルも確認し、必要な範囲を管理者と相談してください。画像の2.0を使う場合はgpt-image-2も対象です。','small')
 p('許可設定を変更する場合はSaveで保存し、反映を待ちます。AllowedはProject内の設定です。OpenAI側の制限を解除する購入ボタンではありません。キー権限、残高、要求された認証の完了も確認します。','small')
 
@@ -272,14 +272,14 @@ sources=[
  ('K APIキーの権限','https://help.openai.com/en/articles/8867743'),
  ('L GPT-6 Astra','https://developers.openai.com/api/docs/models/gpt-6-astra'),
  ('M GPT-6.1 Terra','https://developers.openai.com/api/docs/models/gpt-6.1-terra'),
- ('M GPT Image 2.5 Sunburst','https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst'),
+ ('M GPT Image 2.6 Sunburst','https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst'),
 ]
 for label,url in sources:
  p(f'<b>{escape(label)}</b>　<link href="{url}" color="#087f80">{escape(url)}</link>','small',gap=7)
 p('入力例のmanga-app／Personal manga、初回5～10米ドル、30日のキー期限は本資料の説明例・提案です。OpenAIの必須条件とは区別しています。','small')
 end();c.save()
 (BASE/'source'/'guide-text.txt').write_text('\n'.join(transcript),encoding='utf-8')
-(BASE/'source'/'layout-check.json').write_text(json.dumps({'pages':page,'layout':checks,'date':'2026-11-01'},ensure_ascii=False,indent=2),encoding='utf-8')
+(BASE/'source'/'layout-check.json').write_text(json.dumps({'pages':page,'layout':checks,'date':'2026-11-05'},ensure_ascii=False,indent=2),encoding='utf-8')
 print(f'CREATED {OUT} pages={page}')
 
 # Reuse the shared manual gate: render every page and reject stale versions,

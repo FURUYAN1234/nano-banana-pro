@@ -16,6 +16,10 @@ test('chooses Sunburst max only when the verified model list contains Sunburst',
   const settings = await import(`../src/lib/openai-image-settings.js?initial-selection=${Date.now()}`);
 
   assert.equal(
+    settings.selectInitialOpenAIImageQuality(['gpt-image-2.6-sunburst', 'gpt-image-2.5-sunburst', 'gpt-image-2']),
+    'sunburst-26-max',
+  );
+  assert.equal(
     settings.selectInitialOpenAIImageQuality(['gpt-image-2.5-sunburst', 'gpt-image-2']),
     'sunburst-max',
   );
@@ -32,9 +36,9 @@ test('selection starts at max and never reads or writes browser storage', () => 
     getItem: key => values.get(key), setItem: (key, value) => values.set(key, value),
   } });
   try {
-    assert.equal(settings.DEFAULT_OPENAI_IMAGE_QUALITY, 'sunburst-max');
+    assert.equal(settings.DEFAULT_OPENAI_IMAGE_QUALITY, 'sunburst-26-max');
     assert.equal(settings.normalizeOpenAIImageQuality('high'), 'high');
-    assert.equal(settings.normalizeOpenAIImageQuality('invalid'), 'sunburst-max');
+    assert.equal(settings.normalizeOpenAIImageQuality('invalid'), 'sunburst-26-max');
     assert.equal(settings.readOpenAIImageQuality, undefined);
     assert.equal(settings.saveOpenAIImageQuality, undefined);
     assert.equal(values.size, 0);
@@ -48,7 +52,7 @@ test('2.0 is an explicit high-quality option, not an automatic fallback', () => 
   const request = buildOpenAIImageRequestBody('same prompt', { quality: 'gpt-image-2-high' });
   assert.equal(request.model, 'gpt-image-2');
   assert.equal(request.quality, 'high');
-  assert.equal(settings.OPENAI_IMAGE_OPTIONS.length, 6);
+  assert.equal(settings.OPENAI_IMAGE_OPTIONS.length, 9);
 });
 
 test('A4 manga output defaults to the large manuscript tier and keeps the same ratio', () => {
@@ -76,12 +80,12 @@ test('formats the current quality and size for the collapsed STEP4 settings butt
   );
   assert.equal(
     settings.formatOpenAIImageSettingsSummary('invalid', 'invalid'),
-    'GPT Image 2.5 Sunburst / max・A4大：2240×3168',
+    'GPT Image 2.6 Sunburst / max・A4大：2240×3168',
   );
 });
 
 test('formats the official image API token prices for the selected STEP4 model', () => {
-  assert.equal(settings.OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-11-04');
+  assert.equal(settings.OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-11-05');
   assert.equal(
     settings.formatOpenAIImagePricingSummary('sunburst-xhigh'),
     'GPT Image 2.5 Sunburst｜画像 入力 $8（キャッシュ $2）/ 出力 $30・テキスト 入力 $5（キャッシュ $1.25） USD / 100万トークン',
@@ -92,17 +96,40 @@ test('formats the official image API token prices for the selected STEP4 model',
   );
   assert.equal(
     settings.formatOpenAIImagePricingSummary('invalid'),
-    settings.formatOpenAIImagePricingSummary('sunburst-xhigh'),
+    'GPT Image 2.6 Sunburst｜画像 入力 $8（キャッシュ $2）/ 出力 $30・テキスト 入力 $5（キャッシュ $1.25） USD / 100万トークン',
   );
 });
 
-test('only explicit organization verification failures on 2.5 show the verification warning', () => {
+test('only explicit organization verification failures on Sunburst and Flare show the verification warning', () => {
   assert.equal(typeof settings.isOpenAIImageVerificationError, 'function');
   const message = "OpenAI API Error: 403 Your organization must be verified to use the model 'gpt-image-2.5-flare'.";
   assert.equal(settings.isOpenAIImageVerificationError(message, 'xhigh'), true);
+  assert.equal(settings.isOpenAIImageVerificationError(
+    message.replace('2.5-flare', '2.6-sunburst'), 'sunburst-26-max'), true);
   assert.equal(settings.isOpenAIImageVerificationError(message, 'gpt-image-2-high'), false);
   for (const error of ['403 permission denied', '401 invalid key', '429 insufficient_quota', 'network error']) {
     assert.equal(settings.isOpenAIImageVerificationError(error, 'xhigh'), false);
+  }
+});
+
+test('2.6 generation and reference editing send the selected Sunburst quality and exact PNG canvas', async () => {
+  const {buildOpenAIImageRequest} = await import('../src/lib/openai.js');
+  for (const quality of ['high', 'xhigh', 'max']) {
+    for (const [imageInputs, route, size] of [
+      [[], 'generations', '1120x1584'],
+      [[{image_url: 'data:image/png;base64,YQ=='}], 'edits', '2240x3168'],
+    ]) {
+      const {url, body} = buildOpenAIImageRequest('same prompt', {
+        quality: `sunburst-26-${quality}`, size, imageInputs,
+      });
+      assert.equal(url, `https://api.openai.com/v1/images/${route}`);
+      assert.equal(body.model, 'gpt-image-2.6-sunburst');
+      assert.equal(body.quality, quality);
+      assert.equal(body.size, size);
+      assert.equal(body.output_format, 'png');
+      assert.equal(body.prompt, 'same prompt');
+      assert.equal(body.images?.length ?? 0, imageInputs.length);
+    }
   }
 });
 

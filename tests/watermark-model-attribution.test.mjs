@@ -77,7 +77,7 @@ test('image engine prefix is added without removing the scenario model', () => {
 test('current image selection updates only the generated footer, preserving dialogue and scenario provenance', () => {
  assert.equal(typeof imageSettings.applyOpenAIImageEngineWatermark,'function');
  const original='- Bottom-right watermark EXACTLY "ChatGPT / GPT-6.1 Sol / FURU AI 4-koma v6.9.6".\nB1="ChatGPT / GPT-6.1 Sol / FURU AI 4-koma v6.9.6"';
- for(const [selection,name] of [['sunburst-max','ChatGPT Images 2.5'],['xhigh','ChatGPT Images 2.5'],['gpt-image-2-high','ChatGPT Images 2.0']]) {
+ for(const [selection,name] of [['sunburst-26-max','ChatGPT Images 2.6'],['sunburst-max','ChatGPT Images 2.5'],['xhigh','ChatGPT Images 2.5'],['gpt-image-2-high','ChatGPT Images 2.0']]) {
   const updated=imageSettings.applyOpenAIImageEngineWatermark(original,selection);
   assert.ok(updated.split('\n')[0].includes(`${name} / GPT-6.1 Sol / FURU AI 4-koma v6.9.6`));
   assert.equal(updated.split('\n')[1],original.split('\n')[1]);

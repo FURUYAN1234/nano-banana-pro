@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "7d4891dda20a4765ae670fb06ef4dc9e1b8bddd2d728fbfec5f8a7b3655ef590",
-  "manualVersion": "7.2.9",
-  "manualSourceSha256": "77c398e468f0dd9b608513e26743b62f15e347ad504fa3acaa81300e541af734",
+  "pricingSourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
+  "manualVersion": "7.3.0",
+  "manualSourceSha256": "4397e500257fe313a39f5c603f30b23c9662ba48700fbc8c3a4ea670b75315d7",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "61060b33c50a37ede9a3ba88a6820e37356747a5c875d385064177f32d606cd2"
+      "sha256": "ea99807509700e260c84fb1c8ced1c77cd549758f010b7be49f49a56aee46641"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "041a7cf31b036bc2df6e1bcf176580e4a72d492e3ef64855ad224ce1bc2d2154"
+      "sha256": "be123afad947d668442c50b369a8da8f2ab1b5000939bb32e9a15f4b18e827d6"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "dea2db0a9ee2c9288a0f4abac6b67ebabe779793013f51dacd41a873aa4354d5"
+      "sha256": "22357847575dcaaf933f7a10b50057c1837aa0e15cb972738faf70cac769b4a6"
     }
   ],
-  "readmeSha256": "21557ce18a6f6dbd6d10571ebce32dd38f0231fd9fde574b7094a7941aaa9bd1",
+  "readmeSha256": "2821b1fc4a75061940df1c71b04d4aba96c1dcf3cfcb7bc136f368a40c4b7434",
   "readmeLanguageGaps": [],
-  "sourceTree": "78c7a5a4a99ae1c4f1ab08c340c37195d146f77f",
-  "publicTree": "7aa3c2726c0d341877c2646c251fd49b7bca4c1a",
-  "packageSha256": "96a5f4746b36efc234557691e455f19cca2cd99bf2cc5edb479caf8d468d7258",
+  "sourceTree": "aad2f0213ed0ad9478b525638b45d03714778e39",
+  "publicTree": "b2f228684cbb03dd61fe2afee2db7d5c33676d11",
+  "packageSha256": "78d96dc3032d54cd7f148b3bc9447b6d1c5fed8c365d9a688f3eb3e3d8d50ab5",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,22 +41,18 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-04T13:00:39.505Z",
-  "findings": "Compared v7.2.9 README changes with the reviewed v7.2.8 body: enhancement now documents separate comparison, verified/partial/original outcomes and API costs; lettering documents vertical-first exceptions with artwork preservation. The remaining sections retain the reviewed behavior. Release URLs are prepared for v7.2.9 and must be verified against published assets during the separately gated deployment. Source and public trees identify the v7.2.9 release candidate.",
-  "manualFindings": "Compared extracted text and rendered pixel difference boxes across all 71 pages against the reviewed v7.2.8 PDFs. Beyond version labels, only full-manual pages 13 (enhancement comparison) and 22 (vertical-first lettering) change. Inspected both rendered pages: complete text, readable spacing, no clipping. Shared generator verified A4, page numbers, version, links, privacy and text bounds for all three PDFs.",
+  "checkedAt": "2026-11-05T11:00:22.457Z",
+  "findings": "Compared the exact local candidate README with v7.2.9. The STEP4 model and quality, availability-based initial selection, generated credit example, API pricing and A4 description match the candidate. The original sample remains attributed to 2.5. Future v7.3.0 release asset is labeled available only after release; the verified public v7.2.9 link remains available. Candidate uses a temporary-index tree; the release gate still requires a matching committed HEAD and actual API acceptance.",
+  "manualFindings": "The 12-page Gemini, 19-page OpenAI and 40-page full PDFs were compared page by page to v7.2.9 by text and rendered pixels. The Gemini cover changed its version; OpenAI pages 10, 12 and 19 update verification, the model to allow and the official link. Full manual pages 18 and 22 update the image credit and STEP4 settings. Visually inspected all six affected body pages. Built-in privacy, A4, text bounds, link and version checks passed.",
   "pricingReview": {
-    "version": "7.2.9",
-    "sourceSha256": "7d4891dda20a4765ae670fb06ef4dc9e1b8bddd2d728fbfec5f8a7b3655ef590",
-    "checkedAt": "2026-11-04T13:31:16.364Z",
+    "version": "7.3.0",
+    "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
+    "checkedAt": "2026-11-05T11:00:22.457Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
-      "https://developers.openai.com/api/docs/models/gpt-6-sol",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
-      "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
+      "https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst"
     ],
-    "findings": "Rechecked official Standard short-context rates on 2026-11-04, separating Batch rates. USD per million tokens input/output: GPT-6 Astra 10/50, GPT-6.1 Sol 2/10, GPT-6.1 Terra 1/5, GPT-6 Sol 2/10, GPT-5.6 Sol 4/20, GPT-5.6 Terra 2/12, GPT-6 Luna .10/.50, GPT-5.6 Luna .20/1.20. Image 2.5 Sunburst image input 8/cached 2/output 30 and text input 5/cached 1.25. Gemini 3.8 Flash .75/3.75 through December 31. Nano Banana 2.1 input 1.50, text/thinking output 7.50 and image output 30, equivalent to .0336 per 1K image. The current official table displays GPT Image 2 in Batch only; its older Standard reference remains dated October 23 in the UI and manuals rather than relabeled as a current quote. For v7.2.9, reopened both official tables and reconfirmed the current Standard rates for GPT-6 Luna, GPT-6.1 Sol, GPT Image 2.5, Gemini 3.8 Flash and Nano Banana 2.1. The other model entries retain the same-day model-page comparison."
+    "findings": "The official GPT Image 2.6 Sunburst Standard list is $8/$2 cached image input, $30 image output and $5/$1.25 cached text input per million. This is a list of token rates, not a per-image bill. Existing 2.5 and Gemini standard rates remain; Batch prices are separate, and the 2.0 price stays labeled as an October 23 reference."
   }
 }

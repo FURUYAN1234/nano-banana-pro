@@ -1272,13 +1272,13 @@ No explanations. No partial results.`;
                     大サイズは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
                   </p>
                   <p className="step4-help-copy mt-2 text-slate-400">
-                    初回接続時、GPT Image 2.5 Sunburstが利用可能ならSunburst / maxを、利用できない場合はGPT Image 2.0 / highを初期選択します。
+                    初回接続時は、接続先で利用できるモデルに応じて GPT Image 2.6 Sunburst / max、2.5 Sunburst / max、2.0 / high の順に初期選択します。
                   </p>
                   <p className="step4-help-copy mt-2 text-slate-300">
-                    GPT Image 2.5 Sunburstが初期選択されなかった場合も、上のプルダウンからモデルを変更できます。生成時のエラーで自動切替・自動再送信はしません。
+                    モデルと品質は上のプルダウンから変更できます。生成時のエラーで自動切替・自動再送信はしません。
                   </p>
                   <p className="step4-help-copy mt-2 text-slate-400">
-                    GPT Image 2.5の利用には、APIアカウントの組織認証（個人の場合は本人確認）が必要な場合があります。
+                    選択した画像モデルで組織認証を求められた場合は、OpenAIの組織設定で認証状況を確認してください。
                     <a href="https://platform.openai.com/settings/organization/general" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">組織設定</a>
                     の「Verifications → Individual → Start」から、Personaの公式画面で対応する本人確認書類を提出し、承認をお待ちください。書類はこのアプリへ送らないでください。
                   </p>

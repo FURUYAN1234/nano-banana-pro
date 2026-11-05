@@ -1,3 +1,7 @@
+# GPT Image 2.6 Sunburst candidate v7.3.0 — 2026-11-05
+
+Local candidate only. STEP4 prefers 2.6 Sunburst/max when listed by the connected project; 2.5 and 2.0 options and the no-model-fallback generation policy remain. Actual account access, generation and editing quality remain pending. Work record: /home/furu/Codex/work/gpt-image-2.6-20261105/task.md.
+
 ## v7.2.9 シナリオ強化・縦書き優先（実装/API検証済み、公開前）
 
 - 今回の実装は本人指定でAstra。デプロイ前にSolへ戻す指定を保持。push・公開はまだ行っていない。次工程はSol切替完了とv7.2.9のデプロイ許可を確認し、既存の統一リリース経路を使う。

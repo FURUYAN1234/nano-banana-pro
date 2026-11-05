@@ -4,11 +4,21 @@ import {
 } from './manga-manuscript-format.js';
 
 export const OPENAI_IMAGE_MODEL = 'gpt-image-2.5-flare';
-export const DEFAULT_OPENAI_IMAGE_QUALITY = 'sunburst-max';
+const OPENAI_IMAGE_26_SUNBURST = 'gpt-image-2.6-sunburst';
+const OPENAI_IMAGE_25_SUNBURST = 'gpt-image-2.5-sunburst';
+const LEGACY_SUNBURST_QUALITY = 'sunburst-max';
+export const DEFAULT_OPENAI_IMAGE_QUALITY = 'sunburst-26-max';
 export const DEFAULT_OPENAI_IMAGE_SIZE = MANGA_MANUSCRIPT_LARGE.value;
-export const OPENAI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-11-04';
+export const OPENAI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-11-05';
 const OPENAI_IMAGE_PRICING_USD_PER_M = Object.freeze({
-  'gpt-image-2.5-sunburst': Object.freeze({
+  [OPENAI_IMAGE_26_SUNBURST]: Object.freeze({
+    imageInput: 8,
+    cachedImageInput: 2,
+    imageOutput: 30,
+    textInput: 5,
+    cachedTextInput: 1.25,
+  }),
+  [OPENAI_IMAGE_25_SUNBURST]: Object.freeze({
     imageInput: 8,
     cachedImageInput: 2,
     imageOutput: 30,
@@ -39,9 +49,12 @@ export const OPENAI_IMAGE_OPTIONS = [
   { value: 'gpt-image-2-high', label: 'GPT Image 2.0 / high', model: 'gpt-image-2', quality: 'high' },
   { value: 'high', label: 'GPT Image 2.5 Flare / high', model: OPENAI_IMAGE_MODEL, quality: 'high' },
   { value: 'xhigh', label: 'GPT Image 2.5 Flare / xhigh', model: OPENAI_IMAGE_MODEL, quality: 'xhigh' },
-  { value: 'sunburst-high', label: 'GPT Image 2.5 Sunburst / high', model: 'gpt-image-2.5-sunburst', quality: 'high' },
-  { value: 'sunburst-xhigh', label: 'GPT Image 2.5 Sunburst / xhigh', model: 'gpt-image-2.5-sunburst', quality: 'xhigh' },
-  { value: 'sunburst-max', label: 'GPT Image 2.5 Sunburst / max', model: 'gpt-image-2.5-sunburst', quality: 'max' },
+  { value: 'sunburst-high', label: 'GPT Image 2.5 Sunburst / high', model: OPENAI_IMAGE_25_SUNBURST, quality: 'high' },
+  { value: 'sunburst-xhigh', label: 'GPT Image 2.5 Sunburst / xhigh', model: OPENAI_IMAGE_25_SUNBURST, quality: 'xhigh' },
+  { value: LEGACY_SUNBURST_QUALITY, label: 'GPT Image 2.5 Sunburst / max', model: OPENAI_IMAGE_25_SUNBURST, quality: 'max' },
+  { value: 'sunburst-26-high', label: 'GPT Image 2.6 Sunburst / high', model: OPENAI_IMAGE_26_SUNBURST, quality: 'high' },
+  { value: 'sunburst-26-xhigh', label: 'GPT Image 2.6 Sunburst / xhigh', model: OPENAI_IMAGE_26_SUNBURST, quality: 'xhigh' },
+  { value: DEFAULT_OPENAI_IMAGE_QUALITY, label: 'GPT Image 2.6 Sunburst / max', model: OPENAI_IMAGE_26_SUNBURST, quality: 'max' },
 ];
 export function resolveOpenAIImageOption(value) {
   return OPENAI_IMAGE_OPTIONS.find(option => option.value === value)
@@ -66,15 +79,17 @@ export function normalizeOpenAIImageQuality(value) {
 }
 
 export function selectInitialOpenAIImageQuality(availableModelIds) {
-  return Array.isArray(availableModelIds) && availableModelIds.includes('gpt-image-2.5-sunburst')
-    ? DEFAULT_OPENAI_IMAGE_QUALITY
-    : FALLBACK_OPENAI_IMAGE_QUALITY;
+  if (!Array.isArray(availableModelIds)) return FALLBACK_OPENAI_IMAGE_QUALITY;
+  if (availableModelIds.includes(OPENAI_IMAGE_26_SUNBURST)) return DEFAULT_OPENAI_IMAGE_QUALITY;
+  if (availableModelIds.includes(OPENAI_IMAGE_25_SUNBURST)) return LEGACY_SUNBURST_QUALITY;
+  return FALLBACK_OPENAI_IMAGE_QUALITY;
 }
 
-export const OPENAI_IMAGE_VERIFICATION_MESSAGE = 'GPT Image 2.5の組織認証（個人認証）が未承認、または承認がAPIに未反映です。組織設定を確認するか、プルダウンでGPT Image 2.0を選択してください。';
+export const OPENAI_IMAGE_VERIFICATION_MESSAGE = '選択したGPT Imageモデルを使うにはOpenAIの組織認証が必要です。組織設定を確認し、承認済みなら反映を待ってください。プルダウンから利用可能な別モデルも選べます。';
 
 export function isOpenAIImageVerificationError(message, selection) {
-  return resolveOpenAIImageOption(selection).model.startsWith('gpt-image-2.5-')
+  const { model } = resolveOpenAIImageOption(selection);
+  return [OPENAI_IMAGE_26_SUNBURST, OPENAI_IMAGE_25_SUNBURST, OPENAI_IMAGE_MODEL].includes(model)
     && /organization must be verified/i.test(String(message));
 }
 

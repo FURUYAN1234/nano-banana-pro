@@ -10,7 +10,7 @@ import {
 test('gpt-image request uses the supported low moderation level', () => {
   const request = buildOpenAIImageRequestBody('full production manga prompt');
 
-  assert.equal(request.model, 'gpt-image-2.5-sunburst');
+  assert.equal(request.model, 'gpt-image-2.6-sunburst');
   assert.equal(request.quality, 'max');
   assert.equal(request.prompt, 'full production manga prompt');
   assert.equal(request.moderation, 'low');
@@ -21,7 +21,7 @@ test('gpt-image request uses the supported low moderation level', () => {
 test('non-streaming fallback omits streaming-only request fields', () => {
   const request = buildOpenAIImageRequestBody('fallback prompt', { stream: false });
 
-  assert.equal(request.model, 'gpt-image-2.5-sunburst');
+  assert.equal(request.model, 'gpt-image-2.6-sunburst');
   assert.equal(request.prompt, 'fallback prompt');
   assert.equal('stream' in request, false);
   assert.equal('partial_images' in request, false);
