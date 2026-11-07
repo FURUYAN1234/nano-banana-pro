@@ -1,3 +1,9 @@
+# Nano v7.3.1 — Gemini image review and OpenAI layout recovery
+
+- The standard Gemini four-panel review reads dialogue and speaker routing from the editable image prompt. Camera inspection requests localized pixel evidence and distinguishes clear reversed pitch from missing evidence; balloon tails can verify by direction when their tips are separated from the intended speaker.
+- Explicit straight-down and upward close-up instructions retain the authored crop and action. OpenAI 5–8-panel STEP3 omits unusable optional effect suggestions without changing the validated panel order, camera or dialogue.
+- The same six-panel script completed STEP3 with GPT-6 Luna, without fallback. The normal Gemini dialogue check passed all four panels. Verify the subsequent camera and speaker changes via the normal Gemini generation and review before publication.
+
 # GPT Image 2.6 Sunburst candidate v7.3.0 — 2026-11-05
 
 Local candidate only. STEP4 prefers 2.6 Sunburst/max when listed by the connected project; 2.5 and 2.0 options and the no-model-fallback generation policy remain. Actual account access, generation and editing quality remain pending. Work record: /home/furu/Codex/work/gpt-image-2.6-20261105/task.md.
