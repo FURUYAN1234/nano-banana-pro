@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-  "manualVersion": "7.3.1",
-  "manualSourceSha256": "7b3c6639c3bcb0ba52cc231cd1321b4fdb12432e8fdd83920f5cbc99d4d97087",
+  "manualVersion": "7.3.2",
+  "manualSourceSha256": "f2030fb5619c947f372c44859e63b4b92650508e55ff2118871ff54664f2f063",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "9bb884915554829866637fed889d36bb6c1481e9cdd46c03f07ae3e4ed83ad04"
+      "sha256": "d110c5c354b0dd0e78e8844f050215a6f83acc66497479861ad234607c544d9e"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "8977888a317fc3e3f0691d715ab79a1e4364c45b3367d017dd5f727443f96f2f"
+      "sha256": "214f5f01f99375e3343d2cb272f01bff6e4186997139422367a666a8affd8392"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "c7214b41c7f68a188f2d13e1f699493e64be061267a7ce8b7630bdd8dadb533d"
+      "sha256": "c480dd50d58811d12a6414233c450a5237e32dc77d7f29202ac42880decd47c5"
     }
   ],
-  "readmeSha256": "5ef19b63b0ac82a59a0eaca40c2b49fc4c61bb1a9be42cbccd06fa7b13b29d01",
+  "readmeSha256": "2da5721366a2fae44d9c692295c554dc13c18be31322d5799bba6ddc063f252b",
   "readmeLanguageGaps": [],
-  "sourceTree": "482c0fdde86f043de46402196d297aa9ca860c38",
-  "publicTree": "cbcab64fe4a411a9dd6c86b30b180b1e8f9b893b",
-  "packageSha256": "ca5c1b8009be0553d6a7fc90d390734f9c4fe1f837ee691bc32c6dce5dae8a3f",
+  "sourceTree": "c136d6cdb6f4f4e7ef478e1e8a8e952516727e86",
+  "publicTree": "6094e4e9104768c2d89469c03d7a773ece422832",
+  "packageSha256": "ed37f62db50e167b48cb8aafb328772f8168d6016c3159883532fc622dddb6fb",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,18 +41,17 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-07T01:51:14.405Z",
-  "findings": "Compared the complete current README section list with v7.3.0 and checked the affected STEP3/STEP4 workflow, provider conditions, final-prompt dialogue and speaker/camera evidence, v7.3.1 footer, current release asset path and both language versions. Existing ComfyUI download workflow and asset contents match the verified tag-derived file manifest. The README describes the review limits, not perfect model output.",
-  "manualFindings": "All 71 rendered pages compared to the v7.3.0 manuals. Verified v7.3.1 on each page, and visually inspected the four pages with body differences (Gemini page 1, system pages 18, 19 and 23). Confirmed STEP3 optional-effect handling and STEP4 camera, speaker and dialogue text, retained page counts and layout; copied the three reviewed PDF bytes to public/downloads.",
+  "checkedAt": "2026-11-07T06:04:05.445Z",
+  "findings": "Reused the verified v7.3.1 body review for unchanged sections; compared the complete README diff, current heading list, STEP3 exception routing, diagnostic privacy contract, source/release version links and footer example. The FAQ now explains retained exception metadata and the limits of historical incomplete exports. No change to model routes, content generation, reference handling or the bundled ComfyUI asset. Original historical STEP3 failure remains unconfirmed; the logging defect is the confirmed correction.",
+  "manualFindings": "Rendered and compared all 71 PDF pages against the verified v7.3.1 public PDFs. Body pixels outside footers are unchanged except the Gemini cover version, system page18 example version, and system page32 added diagnostic text. Inspected before/after images for OpenAI page1, Gemini page1, system page18 and page32; no clipping or overlap. Current version/footer, bounds, page count and secret-information scans passed for all pages. Copied the reviewed PDF bytes into public/downloads.",
   "pricingReview": {
-    "version": "7.3.1",
+    "version": "7.3.2",
     "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-    "checkedAt": "2026-11-07T01:51:14.405Z",
+    "checkedAt": "2026-11-07T06:04:05.445Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
-      "https://ai.google.dev/gemini-api/docs/pricing",
-      "https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst"
+      "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Reviewed official Standard pricing separately from Batch. GPT Image 2.6 Sunburst image input/output $8/$30 and cached image input $2 per million; text input $5 and cached $1.25. Gemini Nano Banana 2.1 standard input $1.50, text/thinking output $7.50 per million and $0.0336 for a 1K output; Gemini 3.8 Flash standard 2026 introductory $0.75/$3.75. Pricing settings are unchanged; the existing 2.0 label remains a dated reference."
+    "findings": "Opened both official pricing pages and compared Standard pricing separately from Batch. GPT-6 Luna $0.10/$0.50; GPT-6.1 Sol $2/$10; Terra $1/$5; Astra $10/$50 per million input/output tokens. GPT Image 2.6 Sunburst image input/output $8/$30, cached input $2; text input $5, cached $1.25. Gemini Nano Banana 2.1 $1.50 input, $7.50 text/thinking output, 1K image $0.0336. Gemini 3.8 Flash 2026 Standard introductory $0.75/$3.75. The app pricing source is unchanged; older-model entries remain dated reference estimates."
   }
 }
