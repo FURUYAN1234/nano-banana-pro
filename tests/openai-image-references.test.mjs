@@ -90,19 +90,21 @@ test('recognized background and prop batches do not acquire character rendering 
   }
 });
 
-test('only initial OpenAI monochrome requests end with the ink manuscript finishing instruction, even without references', () => {
+test('only initial OpenAI monochrome requests retain the manuscript finish followed by ink economy, even without references', async () => {
+  const { MONOCHROME_INK_ECONOMY } = await import('../src/lib/manga-render-mode.js');
   const finish = '最終仕上げ：漫画雑誌の墨一色原稿として、白地・黒ベタ・網点で描く。白い肌の明部と未指定の紙面は無地の白。グレーの塗り・ぼかし・全体にかかる網点を除き、指定素材・褐色肌・光源に沿う影の網点は保持する。各コマの指定画風、劇画の墨線・ベタ・カケアミを保ち、色は一切残さない。';
   for (const count of [0, 2, 16]) {
     const characterImages = Array.from({ length: count }, (_, i) => image(`ref ${i}`));
     const plan = buildOpenAIReferencePlan({ characterImages, colorMode: 'monochrome' });
-    assert.ok(plan.rolePrompt.endsWith(finish));
+    const finalDirections = `${finish}\n\n${MONOCHROME_INK_ECONOMY}`;
+    assert.ok(plan.rolePrompt.endsWith(finalDirections));
     assert.equal(plan.rolePrompt.split(finish).length, 2);
     assert.deepEqual(plan.imageInputs, characterImages.map(image_url => ({ image_url })));
-    if (!count) assert.equal(plan.rolePrompt, finish);
+    if (!count) assert.equal(plan.rolePrompt, finalDirections);
     const body = '文'.repeat(getOpenAIPromptBodyBudget(plan));
     const copied = appendOpenAIReferencePrompt(body, plan);
     assert.equal(copied.length, 32000);
-    assert.ok(copied.endsWith(finish));
+    assert.ok(copied.endsWith(finalDirections));
     assert.equal(buildOpenAIImageRequest(copied, { imageInputs: plan.imageInputs }).body.prompt, copied);
     assert.throws(() => appendOpenAIReferencePrompt(`${body}文`, plan), /上限/);
     assert.doesNotMatch(buildOpenAIReferencePlan({ characterImages, colorMode: 'color' }).rolePrompt, /最終仕上げ/);
