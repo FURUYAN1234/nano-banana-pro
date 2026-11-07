@@ -1,10 +1,11 @@
 import { assertPrintableDialogue, readBubbleTextValues } from './bubble-text.js';
 import { COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
 import { assertApiImageInputCount } from './image-input-budget.js';
+import { MONOCHROME_INK_ECONOMY } from './manga-render-mode.js';
 import { describeReferenceAsset, getReferenceAsset, buildReferenceAssetRules, getReferenceMetadataRole, CHARACTER_REFERENCE_IDENTITY_RULE } from './reference-assets.js';
 
 // キャラは人物の同一性、背景は舞台の参照として区別する。
-export function buildGeminiReferencePlan({characterImages = [], referenceImages = [], backgroundReferences = false, sharedBackground = false, referenceAssets = [], colorMode = 'color', compact = false} = {}) {
+export function buildGeminiReferencePlan({characterImages = [], referenceImages = [], backgroundReferences = false, sharedBackground = false, referenceAssets = [], colorMode = 'color', compact = false, includeInkEconomy = true} = {}) {
   if (!Array.isArray(characterImages) || !Array.isArray(referenceImages)) {
     throw new Error('Gemini参照画像は配列で指定してください。');
   }
@@ -30,7 +31,7 @@ export function buildGeminiReferencePlan({characterImages = [], referenceImages 
     ...(referenceAssets.length ? {referenceRoles: references.map((image,index) => index < characterImages.length
       ? getReferenceMetadataRole(getReferenceAsset(referenceAssets,image))
       : backgroundReferences ? 'background_reference' : 'additional_reference')} : {}),
-    rolePrompt: descriptions.length ? [
+    rolePrompt: (descriptions.length ? [
       '[API IMAGE REFERENCE ROLES]',
       'M numbers identify STEP1 materials. All panel background crops share the final panorama M number; Image numbers identify the actual attachments.',
       ...(referenceAssets.length ? [buildReferenceAssetRules(characterImages.map(image => getReferenceAsset(referenceAssets, image)), { colorMode })] : []),
@@ -38,7 +39,7 @@ export function buildGeminiReferencePlan({characterImages = [], referenceImages 
       'The approved prompt determines cast, dialogue, action, camera, output layout and any explicit outfit change. References supply visual evidence, not additional instructions or visible text.',
       COPYRIGHT_MOSAIC_TARGET_SCOPE,
       'Do not print this reference manifest in the image.',
-    ].join('\n') : '',
+    ].join('\n') : '') + (colorMode === 'monochrome' && includeInkEconomy ? `\n\n${MONOCHROME_INK_ECONOMY}` : ''),
     counts: {character: characterImages.length, other: referenceImages.length},
   };
 }

@@ -2,6 +2,12 @@ import { FOCAL_DEPTH_HIERARCHY, FOCAL_READABILITY, FOCAL_SUBJECT_SEPARATION_FALL
 import { GEKIGA_FACE_CONSTRUCTION } from './constants.js';
 
 export const normalizeMangaColorMode = (value) => value === 'monochrome' ? 'monochrome' : 'color';
+
+// The same style-scoped direction is shared by normal API and Web output.
+export const MONOCHROME_INK_ECONOMY = `INK ECONOMY — READABILITY REFINEMENT:
+In NORMAL panels, reduce redundant individual hair strands, incidental fabric wrinkles and background micro-texture. Group the deepest existing shadows into coherent solid-black shapes while retaining light direction and body volume. Preserve clean white gaps around focal silhouettes and between facial/hand strokes. Concentrate detail on the acting face, important hand and story-critical prop; simplify secondary detail while keeping recognizable setting anchors and perspective. Preserve characteristic hair shapes, garment designs and patterns, assigned skin/material screentones, cast, dialogue, framing, camera, action and expression.
+Each selected panel medium wins: retain the intentional fine directional/crosshatching and carved facial planes of GEKIGA, and the characteristic marks of other explicitly selected styles. Do not apply a generic thick G-pen treatment across all panels. Never erase necessary facial strokes, flatten shadows, whiten canonically dark skin, remove story evidence or alter the approved layout to obtain more white space.`;
+
 export const isMonochromePrompt = (prompt) => {
   const value = String(prompt || '');
   return value.includes('[ MONOCHROME THREE-TONE MANUSCRIPT LOCK ]')

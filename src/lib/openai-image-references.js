@@ -3,6 +3,7 @@ import { COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
 import { OPENAI_IMAGE_INPUT_LIMIT } from './image-input-budget.js';
 import { describeReferenceAsset, getReferenceAsset, buildReferenceAssetRules, getReferenceMetadataRole, CHARACTER_REFERENCE_IDENTITY_RULE } from './reference-assets.js';
 import { buildPanelMediumReferenceInstruction } from './panel-medium-reference.js';
+import { MONOCHROME_INK_ECONOMY } from './manga-render-mode.js';
 
 export { OPENAI_IMAGE_INPUT_LIMIT };
 export const OPENAI_IMAGE_DATA_URL_MAX_CHARS = 20971520;
@@ -92,6 +93,7 @@ export function buildOpenAIReferencePlan({
   if (colorMode === 'monochrome' && !originalCandidate) {
     const finish = '最終仕上げ：漫画雑誌の墨一色原稿として、白地・黒ベタ・網点で描く。白い肌の明部と未指定の紙面は無地の白。グレーの塗り・ぼかし・全体にかかる網点を除き、指定素材・褐色肌・光源に沿う影の網点は保持する。各コマの指定画風、劇画の墨線・ベタ・カケアミを保ち、色は一切残さない。';
     rolePrompt += `${rolePrompt ? '\n' : ''}${finish}`;
+    rolePrompt += `\n\n${MONOCHROME_INK_ECONOMY}`;
   }
   return {imageInputs: entries.map(({image_url}) => ({image_url})), rolePrompt, counts,
     ...(referenceAssets.length || mediumReference ? {referenceRoles: entries.map(entry => entry.role === 'character'
@@ -110,7 +112,8 @@ export function appendOpenAIWebReferencePrompt(prompt, plan) {
 // 修復では元画像が添付の先頭へ加わるため、旧番号表だけを交換する。
 // 通常生成・コピー・保存には使用せず、利用者の最終全文を保持する。
 export function stripImageReferenceManifest(prompt) {
-  return prompt.replace(/\[API IMAGE REFERENCE ROLES\][\s\S]*?Do not print this reference manifest in the image\./g, '');
+  return prompt.replace(/\[API IMAGE REFERENCE ROLES\][\s\S]*?Do not print this reference manifest in the image\./g, '')
+    .replaceAll(`\n\n${MONOCHROME_INK_ECONOMY}`, '');
 }
 
 export function appendOpenAIReferencePrompt(prompt, plan) {

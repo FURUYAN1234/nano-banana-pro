@@ -2314,6 +2314,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           });
         } else {
           const referencePlan = buildGeminiReferencePlan({ compact: true,
+            includeInkEconomy: !repair,
             characterImages: images,
             referenceAssets: referenceAssetsRef.current,
             colorMode,

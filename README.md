@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.3.2** / 現在のソース版: **v7.3.2**
+> Current source version: **v7.3.3** / 現在のソース版: **v7.3.3**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -109,6 +109,8 @@ The overall `Outfit` and clothing stated in scene/action directions take priorit
 
 In free input, write directions such as 'Panel 1 NORMAL, panel 2 POP, panel 3 watercolor, panel 4 GEKIGA.' Apply the same notation to the panels in five- to eight-panel mode. Numbers identify story panels, not style-menu choices. English style names also work. Each panel's `[EMOTION: ...]` records its style, so you can check or edit it before STEP3. / 自由入力に「1コマ目は通常、2コマ目はPOP、3コマ目は水彩、4コマ目は劇画」のように書けます。5〜8コマモードでも、作成するコマに合わせて同じ書き方を使います。数字は選択肢の番号ではなく、物語のコマ番号です。英語名でも指定できます。台本では各コマの `[EMOTION: ...]` に画風が記載されるので、STEP3へ進む前に確認・編集できます。
 
+Monochrome NORMAL panels request fewer redundant hair strands, incidental fabric wrinkles and background micro-textures. Existing deep shadows are grouped into coherent black shapes, with white gaps around faces, hands and focal silhouettes. GEKIGA keeps its directional crosshatching; character identity, skin/material tone assignments, dialogue, camera and acting remain part of the same instruction. The finalized document is shared by API generation, Web copy and TXT export. Targeted repairs keep their local scope. / 白黒の通常コマでは、不要な髪の細線、服のしわ、背景の微細模様を整理する指示を加えています。深い影はまとまった黒ベタへ寄せ、顔や手、主役の輪郭の周囲に白い隙間を残します。劇画の方向性のあるカケアミ、人物の特徴、肌・素材のトーン、台詞、カメラ、演技は同じ指示文で保持します。確定した全文をAPI生成・Webコピー・TXT保存へ共通で渡し、部分修正は指定箇所の範囲を保ちます。
+
 | Style / 画風 | Identifier / 英語名 | Appearance / 見た目の特徴 |
 |---|---|---|
 | Normal / 通常 | NORMAL | Everyday manga drawing based on the registered character references / 登録した人物資料の絵柄を基準にした、普段の漫画表現 |
@@ -164,7 +166,7 @@ Camera parsing distinguishes prohibitions such as "no fisheye or eye-level shots
 
 Drawing options: STEP2 mosaic masking for existing copyrighted characters and STEP3 watermarking default to ON. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. Settings last until a full reset or reload, do not alter existing images retroactively, and require visual confirmation. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
-The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.6 / GPT-6.1 Sol / FURU AI 4-koma v7.3.2`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.6 / GPT-6.1 Sol / FURU AI 4-koma v7.3.2`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
+The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.6 / GPT-6.1 Sol / FURU AI 4-koma v7.3.3`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.6 / GPT-6.1 Sol / FURU AI 4-koma v7.3.3`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
 
 
 Mosaic targets are existing-work characters actually depicted in the scripted Action. Reference sheets, art style, resemblance or a shared name alone do not authorize masking original cast members. An intentional source instruction applies only to its specified person and region. Check both masked and unmasked subjects in the final image. The independent OpenAI model selectors before STEP1 start STEP1, STEP2 and STEP3 at GPT-6 Luna. Local Luna validation stops on failure without automatic model substitution for STEP2 and STEP3. / モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。STEP1の前にある独立したOpenAIモデル選択はSTEP1・STEP2・STEP3ともGPT-6 Lunaが初期値です。ローカル検証版でSTEP2・STEP3にLunaを選んだ場合、失敗しても別モデルへ自動切替しません。
@@ -631,7 +633,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.3.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.3.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.3.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.3.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.3.3](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.3.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.3.3のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.3.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -687,7 +689,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.3.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.3.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.3.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.3.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -794,6 +796,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.3.3 (2026-11-07)
+- **[Fix & UX]** Added style-scoped monochrome ink economy for redundant hair strands, fabric wrinkles and background micro-detail, preserving black masses, white reserves, GEKIGA hatching and skin/material tones. / 白黒漫画の通常コマで髪の細線・服のしわ・背景の微細描写を整理する指示を追加。黒ベタと白い余白、劇画のカケアミ、肌と衣服のトーンを保つ。
 
 ### v7.3.2 (2026-11-07)
 - **[Fix & UX]** Preserve the original STEP3 exception so diagnostic JSON retains its name, code and reduced source location without storing input or credentials. / STEP3失敗時の元の例外を保持し、診断JSONにエラー名・コード・発生位置を残す。本文・キーは保存しない。
