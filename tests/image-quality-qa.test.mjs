@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { isMaterialImageQualityIssue } from '../src/lib/image-quality-failsafe.js';
 import { getPanelShotExecution } from '../src/lib/composition-variety.js';
 import * as imageQualityQa from '../src/lib/image-quality-qa.js';
+import { buildGeminiImageApiPrompt, buildGeminiReferencePlan } from '../src/lib/gemini-image-references.js';
 
 import {
   buildImageQualityQaImageParts,
@@ -19,6 +20,86 @@ import {
   extractPanelCastContracts,
   applyBubbleInventory,
 } from '../src/lib/image-quality-qa.js';
+
+const geminiDialoguePrompt = () => buildGeminiImageApiPrompt([
+  '## Panel 1',
+  'Dialogue (ONLY inside bubbles): TEXT (PRINT VALUES ONLY): B1="出発する？"; B2="もう少し待って。". TAIL TIP LOCK: B1=>[ナオ] mouth/head; B2=>[レン] mouth/head.',
+  '## Panel 2',
+  'Dialogue (ONLY inside bubbles): (Characters interact without dialogue in this panel).',
+  '## Panel 3',
+  'Dialogue (ONLY inside bubbles): TEXT (PRINT VALUES ONLY): B1="こちらだよ。".',
+  'OFFSCREEN VOICE: B1=>[ナオ] frame_edge.',
+  '## Panel 4',
+  'Dialogue (ONLY inside bubbles): (Characters interact without dialogue in this panel).',
+].join('\n'), buildGeminiReferencePlan());
+
+test('Gemini transport dialogue is read from the editable final prompt, with literal JSON quotes and offscreen speakers', () => {
+  const edited = geminiDialoguePrompt().replace('"出発する？"', JSON.stringify('「出発」と書いた？ "はい"'));
+  const contracts = imageQualityQa.extractBubbleContracts(edited);
+  assert.deepEqual(contracts[0].bubbles, [
+    { bubble: 'B1', text: '「出発」と書いた？ "はい"', speaker: 'ナオ' },
+    { bubble: 'B2', text: 'もう少し待って。', speaker: 'レン' },
+  ]);
+  assert.deepEqual(contracts[1].bubbles, []);
+  assert.deepEqual(contracts[2].bubbles, [{ bubble: 'B1', text: 'こちらだよ。', speaker: 'ナオ', offscreen: true }]);
+});
+
+test('Gemini dialogue QA separates correct text, reversed reading order, changed words and unexpected speech', () => {
+  const region = (text, center_x) => ({ text, center_x, region_kind: 'speech_balloon', container_evidence: 'white balloon with a tail' });
+  const first = region('出発する？', 0.8), second = region('もう少し待って。', 0.2);
+  const compare = (panel1, panel2 = []) => applyBubbleInventory({ status: 'pass', observations: {}, issues: [] }, JSON.stringify({
+    panels: [panel1, panel2, [region('こちらだよ。', 0.8)], []].map((text_regions, i) => ({ panel: i + 1, text_regions })),
+  }), geminiDialoguePrompt());
+  assert.deepEqual(compare([second, first]).issues, []);
+  assert.deepEqual(compare([{ ...first, center_x: 0.2 }, { ...second, center_x: 0.8 }]).issues.map(x => [x.panel, x.type]), [[1, 'bubble_order']]);
+  for (const wrong of [[{ ...first, text: '出発出発する？' }, second], [second]]) {
+    assert.deepEqual(compare(wrong).issues.map(x => [x.panel, x.type]), [[1, 'unverified']]);
+  }
+  assert.deepEqual(compare([first, second], [region('無断の台詞', 0.5)]).issues.map(x => [x.panel, x.type]), [[2, 'unverified']]);
+});
+
+test('the actual four-panel QA response example includes the required observed camera and tail fields', () => {
+  const prompt = buildImageQualityQaPrompt({ mode: 'four-panel', finalPrompt: '## Panel 1\nCamera: low-angle wide shot' });
+  const example = JSON.parse(prompt.split('\n').find(line => line.startsWith('{"pass":true,')));
+  const { elevation, framing } = example.spatial_checks[0].camera_geometry.dimensions;
+  assert.ok(Object.hasOwn(elevation, 'observed_pitch'));
+  assert.ok(Array.isArray(elevation.projection_cues));
+  assert.ok(Object.hasOwn(framing, 'scale_evidence'));
+  assert.ok(Object.hasOwn(example.spatial_checks[0].bubble_speaker.bubbles[0], 'tail_root'));
+  assert.ok(Array.isArray(example.spatial_checks[0].bubble_speaker.bubbles[0].other_visible_head_anchors));
+});
+
+test('a grounded camera inversion is a defect even when the reviewer called the elevation OK', () => {
+  const finalPrompt = '## Panel 1\nCamera: 床から見上げる接写\nCAST COUNT: [A] each EXACTLY ONCE.';
+  const checks = spatialChecks();
+  const elevation = checks[0].camera_geometry.dimensions.elevation;
+  Object.assign(elevation, {
+    requested: 'floor level upward', observed: 'A head crown above visible upper plane of the table',
+    status: 'ok', observed_pitch: 'downward', projection_cues: [
+      { subject: 'A head crown', actor: 'A', surface: 'top', x: 0.4, y: 0.3 },
+      { subject: 'table upper face', surface: 'top', x: 0.7, y: 0.5 },
+    ],
+  });
+  const read = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  assert.ok(read().issues.some(i => i.type === 'camera_geometry' && i.panel === 1 && isMaterialImageQualityIssue(i)));
+  elevation.projection_cues[0].actor = 'unidentified';
+  assert.equal(read().issues.some(i => i.type === 'camera_geometry' && i.panel === 1), false);
+  elevation.projection_cues[0].actor = 'A';
+  elevation.observed_pitch = 'uncertain';
+  assert.equal(read().issues.some(i => i.type === 'camera_geometry' && i.panel === 1), false);
+});
+
+test('an explicit straight-down close-up keeps its overhead axis without adding it to a diagonal view', () => {
+  for (const compact of [false, true]) {
+    assert.match(getPanelShotExecution('道具の真上から手元を真下に見る接写', { compact }), /vertical optical axis|光軸を鉛直/);
+    assert.doesNotMatch(getPanelShotExecution('斜め上から手元を見下ろす接写', { compact }), /vertical optical axis|光軸を鉛直/);
+  }
+});
+
+test('an upward close-up fixes the viewpoint below the authored focal action, without changing a horizontal aim', () => {
+  assert.match(getPanelShotExecution('低い位置から道具を見上げる接写'), /lens below the focal action/);
+  assert.doesNotMatch(getPanelShotExecution('低い位置から水平に撮る接写'), /lens below the focal action/);
+});
 
 test('rear-camera QA distinguishes a named room or prop anchor from an actor back-view contract', () => {
   for (const camera of ['共同作業室の後方から俯瞰', '人物の後方から背面を描く']) {
@@ -1835,6 +1916,20 @@ Dialogue: silent`;
     tail_tip: { x: 0.4, y: 0.51 }, speaker_anchor: { x: 0.4, y: 0.65, part: 'mouth' },
   }, validB2]);
   assert.ok(ordinaryGap.issues.every(issue => !isMaterialImageQualityIssue(issue)));
+  const pointingGap = {
+    ...baseB1, endpoint_relation: 'points_to_speaker', tail_endpoint_evidence: 'A straight tail points down toward Saeko.',
+    tail_root: { x: 0.4, y: 0.43 }, tail_tip: { x: 0.4, y: 0.51 },
+    speaker_anchor: { x: 0.4, y: 0.65, part: 'mouth' },
+    other_visible_head_anchors: [{ x: 0.62, y: 0.62 }],
+  };
+  assert.equal(makeReview([pointingGap, validB2]).pass, true);
+  for (const uncertain of [
+    { ...pointingGap, tail_root: { x: 0.53, y: 0.51 } },
+    { ...pointingGap, other_visible_head_anchors: [{ x: 0.41, y: 0.59 }] },
+    { ...pointingGap, other_visible_head_anchors: undefined },
+  ]) {
+    assert.ok(makeReview([uncertain, validB2]).issues.some(issue => issue.type === 'unverified' && issue.subject === 'B1'));
+  }
   const shortPointer = makeReview([{ ...baseB1, endpoint_relation: 'points_to_speaker',
     tail_endpoint_evidence: 'The short tail points to the correct head without touching it.',
     tail_tip: { x: 0.4, y: 0.60 },

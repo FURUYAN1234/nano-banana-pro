@@ -201,6 +201,16 @@ export const getPanelShotExecution = (camera = '', { compact = false } = {}) => 
   else if (elevation === 'low') cues.push(compact
     ? `${floor ? '床付近' : '低所'}: 座位/ちびの顔より下。${horizontal ? '水平を保ち低い地平線' : '見上げて顎/道具下面、後退する額、顔より低い地平線と上方収束。顔/体/場を同じ仰角にし、背景だけ傾けない'}。指定高/角度/体格を保持`
     : `${floor ? 'floor-level' : 'low'} camera below faces including crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background'}; preserve scripted height/pitch/proportions`);
+  if (elevation === 'low' && close && !horizontal) {
+    cues.push(compact
+      ? '仰角の接写: レンズは主動作より下。見上げた手・道具の下面を焦点にし、接触や切取りは維持'
+      : 'upward close-up: lens below the focal action, looking up at the underside of the focal hand or object as visible; preserve the authored contact and crop');
+  }
+  if (elevation === 'high' && /真俯瞰|真下(?:に|を)(?:見る|見下ろ|捉え|撮)|真上から(?:真下へ|垂直に)|directly overhead|straight down|nadir/i.test(text)) {
+    cues.push(compact
+      ? '真俯瞰: 光軸を鉛直下向きに固定。焦点の上面と周囲の地面/卓面を主に見せ、斜めの肩越しや地平線に置換しない。指定の切取り保持'
+      : 'straight-down view: vertical optical axis over the focal action; show its top planes and surrounding floor/table planes, no horizon or oblique shoulder view; keep the authored crop');
+  }
   if (/(?:膝|腰|胸|肩|[^\s、。]+台|机|卓)(?:の高さ|高)から/i.test(text)) cues.push(compact ? '指定高の基準/角度保持。顔/文字のためにカメラを上げない' : 'keep scripted height landmark; pitch strength follows script; faces/text never lift camera');
   if (/(?:斜め(?:に(?:見上げ|見下ろ)|から|上|下|前|後ろ)|(?:左|右)(?:(?:前|後)?斜め|(?:前|後)方)|diagonal (?:view|camera)|oblique|three-quarter|3\/4)/i.test(text) && !/(?:正面|真正面|front[ -]on|frontal)/i.test(text)) cues.push(compact ? '斜め: 指定側、体の近遠面/場の縁/床の奥行を保持。平坦な正面整列は禁止' : 'oblique view: near/far body planes, receding setting edges/floor planes; staggered depth, not a flat frontal lineup; keep named camera side');
   if (/(?:左|右)?側面から|side[ -]view|profile (?:view|shot)/i.test(text)) cues.push(compact ? '側面: 指定側に沿う体の近遠面/四肢の重なり。正面化禁止' : 'side view: near/far body planes/limb overlap follow named side; no forced front-facing cast');

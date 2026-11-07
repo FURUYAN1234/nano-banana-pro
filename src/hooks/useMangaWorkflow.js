@@ -1444,7 +1444,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         promptAssemblyRunRef.completedScenario=prepared.source.scenario;
         const completePrompt = prepareFinalPrompt(prepared.prompt, { sourceScenario: prepared.source.scenario, providerFamily: effectiveProviderFamily });
         setFinalPrompt(completePrompt);
-        setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}\nSTEP2のコマ数・順序・台詞を保持しました。`);
+        const effectNote = prepared.omittedEffectPanels.length
+          ? `\n${prepared.omittedEffectPanels.join('・')}コマ目の使用できない任意演出を除外しました。` : '';
+        setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}\nSTEP2のコマ数・順序・台詞を保持しました。${effectNote}`);
         return completePrompt;
       }
       const activePunchlineType = resolvedPunchlineTypeRef.current || resolveScenarioEndingType(currentScenario, punchlineType);

@@ -148,7 +148,7 @@ Schema: {count:INTEGER ${count},layout:compatible catalog ID,reason:concise Japa
 Do not invent or resize catalog rectangles. Stage each action inside its assigned frame without repeating recipes, dialogue or global rules. Preserve every required visible prop and relationship. Fit the FRAME to the Camera, never weaken the Camera to fit a frame: wide frames can contain full-body depth; tall frames are not mandatory. Keep intentional crops and hidden body parts. If a layout cannot fit the source shot, choose another layout, never remove a scenario panel.
 CATALOG: ${JSON.stringify(experimentalLayoutOptions(count))}. Right-to-left within rows, then downward. Recent geometries are context, not quotas: ${JSON.stringify(recentLayouts)}.
 Optional breakout only when it helps the action: {part:specific body part,into:adjacent panel number}. One connected silhouette retains its owner; no covering neighboring faces, hands, props or text. Otherwise null.
-Choose zero to three compatible visualEffects per panel, only when supported by its source action and medium. silentOnly effects require the source panel to contain no dialogue. match_cut connects motivated shapes in adjacent scenario panels. No effect may replace Camera/style/facts or add lettering, nested frames, events or characters.
+Choose zero to three unique visualEffects IDs (catalog keys, not labels or objects) per panel, only when supported by its source action and medium. Use [] if unsure. silentOnly effects require the source panel to contain no dialogue. match_cut connects motivated shapes in adjacent scenario panels. No effect may replace Camera/style/facts or add lettering, nested frames, events or characters.
 VISUAL EFFECTS: ${JSON.stringify(EXPERIMENTAL_VISUAL_EFFECTS)}
 SOURCE SCENARIO (one-to-one story data): ${JSON.stringify({context:source.context,castList:source.castList,colorMode:source.colorMode,panels:source.panels,dialogue:source.dialogue})}`;
 }
@@ -156,6 +156,22 @@ SOURCE SCENARIO (one-to-one story data): ${JSON.stringify({context:source.contex
 export function parseExperimentalPlan(text) {
   const clean=String(text).trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
   try { return JSON.parse(clean); } catch { fail('配置案のJSONを読み取れません。自動再試行はしません。'); }
+}
+
+// Only the untrusted planner response may drop optional effects. The approved
+// plan still goes through the strict validator before compilation and reuse.
+function omitInvalidPlannedEffects(plan, source, omittedPanels) {
+  if (!Array.isArray(plan?.panels)) return plan;
+  const panels = plan.panels.map((panel, index) => {
+    const raw = panel?.visualEffects;
+    if (raw == null) return panel;
+    const effects = Array.isArray(raw) ? [...new Set(raw.filter(id => typeof id === 'string'
+      && Object.hasOwn(EXPERIMENTAL_VISUAL_EFFECTS, id)
+      && (!EXPERIMENTAL_VISUAL_EFFECTS[id].silentOnly || source.panels[index]?.dialogueIds.length === 0)))].slice(0, 3) : [];
+    if (!Array.isArray(raw) || effects.length !== raw.length) omittedPanels.push(index + 1);
+    return { ...panel, visualEffects: effects };
+  });
+  return { ...plan, panels };
 }
 
 export function parseExperimentalReview(text, response={}) {
@@ -1105,14 +1121,15 @@ export async function prepareExperimentalManga(input, requestPlan, {colorOnlyPre
       // A legacy or invalid plan uses the ordinary planning path, never a bypass.
     }
   }
+  const omittedEffectPanels=[];
   if(!plan) {
     const response=await requestPlan(buildExperimentalPlanPrompt(source,input),input.signal);
     cancelled(input.signal);
-    plan=validateExperimentalPlan(parseExperimentalPlan(response),source);
+    plan=validateExperimentalPlan(omitInvalidPlannedEffects(parseExperimentalPlan(response),source,omittedEffectPanels),source);
   }
   const prompt=buildExperimentalImagePrompt(plan,source,input);
   assertImagePromptBudget(prompt,input.promptMaxChars);
-  return {source,plan,prompt,colorLayoutContext:context};
+  return {source,plan,prompt,colorLayoutContext:context,omittedEffectPanels};
 }
 
 export function experimentalImageSaveItem(item) {

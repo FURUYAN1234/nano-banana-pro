@@ -49,6 +49,28 @@ export function appendGeminiReferencePrompt(prompt, plan) {
 }
 
 const ordinalWords = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
+const balloonOrdinal = index => ordinalWords[index] || `number ${index + 1}`;
+
+// Read the actual editable transport prompt. Match a panel-local dialogue line
+// only; the separate For Panel N script reminders are not extra speech.
+export function readGeminiPanelDialogue(panelBody) {
+  const line = String(panelBody).match(/^Place the first white speech balloon [^\r\n]*/m)?.[0];
+  if (!line) return [];
+  const clause = /Place the (\w+|number \d+) white speech balloon [^.]+\. Inside it, print exactly ("(?:\\.|[^"\\])*") vertically in Japanese\. (?:Its tail tip touches (.+?)'s mouth or head silhouette\.|Use the tail assignment in the matching panel Dialogue block\.)/y;
+  const entries = [];
+  do {
+    const match = clause.exec(line);
+    if (!match || match[1] !== balloonOrdinal(entries.length)) return [];
+    try {
+      entries.push({ bubble: `B${entries.length + 1}`, text: JSON.parse(match[2]), speaker: match[3]?.trim() || '' });
+    } catch {
+      return [];
+    }
+    if (!line.startsWith(' Place the ', clause.lastIndex)) break;
+    clause.lastIndex++;
+  } while (clause.lastIndex < line.length);
+  return entries;
+}
 
 const describeBalloonPosition = (index, count) => {
   if (count === 1) return 'in clear space on its assigned speaker side, with the shortest unobstructed tail';
@@ -66,7 +88,7 @@ const rewriteGeminiDialogueLine = (line) => {
     .map(([, number, bracketed, plain]) => [number, String(bracketed || plain || '').trim()]));
   const panel = line.match(/Panel\s+(\d+)/i)?.[1];
   const directions = entries.map((entry, index) => {
-    const ordinal = ordinalWords[index] || `number ${index + 1}`;
+    const ordinal = balloonOrdinal(index);
     const speaker = speakers.get(entry.number);
     const tail = speaker
       ? `Its tail tip touches ${speaker}'s mouth or head silhouette.`
@@ -106,8 +128,8 @@ const rewriteGeminiBubbleRouting = (prompt) => {
 };
 
 // Gemini image models may render nearby routing syntax literally even when it
-// is marked NEVER PRINT. Keep the approved prompt unchanged for QA, but turn
-// the API transport copy into ordinary placement prose before adding images.
+// is marked NEVER PRINT. Use ordinary placement prose before adding images;
+// QA reads this same format from the final editable prompt.
 export function buildGeminiImageApiPrompt(prompt, plan) {
   if (typeof prompt !== 'string') throw new Error('画像生成プロンプトは文字列で指定してください。');
   assertPrintableDialogue(prompt);

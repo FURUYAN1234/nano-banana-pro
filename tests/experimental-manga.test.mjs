@@ -1510,6 +1510,26 @@ try {
     const hiddenSpeech=structuredClone(rich);hiddenSpeech.panels[0].dialogueIds=[0];hiddenSpeech.panels[0].visualEffects=['silhouette'];
     assert.throws(()=>m.validateExperimentalPlan(hiddenSpeech,spoken),/無言/);
   });
+  test('ordinary STEP3 drops only invalid optional effects from a planner response and makes no second request', async()=>{
+    const generated=structuredClone(six);
+    generated.panels[0].visualEffects=['foreground_depth','unknown','foreground_depth','hero_scale','diagonal_frame','silent_pause'];
+    generated.panels[1].visualEffects='motion_trail';
+    let requests=0;
+    const request=async()=>{requests++;return JSON.stringify(generated);};
+    const result=await m.prepareExperimentalManga({...input,providerFamily:'chatgpt'},request);
+    assert.equal(requests,1);
+    assert.equal(result.plan.layout,six.layout);
+    assert.equal(result.plan.count,six.count);
+    assert.deepEqual(result.plan.panels[0].visualEffects,['foreground_depth','hero_scale','diagonal_frame']);
+    assert.deepEqual(result.plan.panels[1].visualEffects,[]);
+    assert.deepEqual(result.omittedEffectPanels,[1,2]);
+    assert.deepEqual(result.plan.panels.map(({visualEffects: _effects,...panel})=>panel),six.panels);
+    generated.panels[0].camera='別のカメラ';
+    await assert.rejects(m.prepareExperimentalManga({...input,providerFamily:'chatgpt'},request),/Camera/);
+    generated.panels[0].camera=six.panels[0].camera;
+    generated.panels[0].dialogueIds=[7];
+    await assert.rejects(m.prepareExperimentalManga({...input,providerFamily:'chatgpt'},request),/台詞/);
+  });
   test('a changed rendering contract cannot silently generate a different prompt from the prepared Web prompt',async()=>{
     const prepared=await m.prepareExperimentalManga(input,async prompt=>planResponse(prompt,six));let images=0;
     await assert.rejects(m.runExperimentalManga({...input,prepared,showWatermarks:true},{image:async()=>images++}),/STEP3/);
