@@ -1,3 +1,7 @@
+# v7.3.2 diagnostic candidate — 2026-11-07
+
+STEP3 passed only its translated error string to the diagnostic facade, losing the original exception name/code/stack. A regression failed on v7.3.1 and passes after forwarding the original Error. Related 42 checks and production build pass. User-supplied historical STEP3 failure occurred before an API request; its precise cause remains unconfirmed because the old export discarded the exception. User reports reload reached STEP4. Real API and publication are pending: the app is visibly open in IAB, but the browser-control tool returns a saved-policy denial despite explicit user permission and confirmation that site access is already allowed. Do not blame user settings or bypass the browser policy. Release, note/X/Facebook and full backup remain authorized and unfinished. Work record: `/home/furu/Codex/work/nano-step3-error-20261107/task-state.json`.
+
 # Nano v7.3.1 — Gemini image review and OpenAI layout recovery
 
 - The standard Gemini four-panel review reads dialogue and speaker routing from the editable image prompt. Camera inspection requests localized pixel evidence and distinguishes clear reversed pitch from missing evidence; balloon tails can verify by direction when their tips are separated from the intended speaker.

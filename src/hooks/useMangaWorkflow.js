@@ -1536,7 +1536,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     } catch (error) {
       if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
       const translatedMsg = translateApiError(error);
-      console.error(translatedMsg);
+      console.error(error, translatedMsg);
       setAssembleThought(prev => prev + `\n\n${translatedMsg}`);
       showStatus("指示文を構築できませんでした。STEP3のエラー理由を確認してください。");
       return null; // [v2.79] フルオート連鎖用: 失敗
