@@ -63,6 +63,7 @@ test('the actual four-panel QA response example includes the required observed c
   const example = JSON.parse(prompt.split('\n').find(line => line.startsWith('{"pass":true,')));
   const { elevation, framing } = example.spatial_checks[0].camera_geometry.dimensions;
   assert.ok(Object.hasOwn(elevation, 'observed_pitch'));
+  assert.ok(Object.hasOwn(elevation, 'parallel_edges'));
   assert.ok(Array.isArray(elevation.projection_cues));
   assert.ok(Object.hasOwn(framing, 'scale_evidence'));
   assert.ok(Object.hasOwn(example.spatial_checks[0].bubble_speaker.bubbles[0], 'tail_root'));
@@ -94,6 +95,8 @@ test('an explicit straight-down close-up keeps its overhead axis without adding 
     assert.match(getPanelShotExecution('道具の真上から手元を真下に見る接写', { compact }), /vertical optical axis|光軸を鉛直/);
     assert.doesNotMatch(getPanelShotExecution('斜め上から手元を見下ろす接写', { compact }), /vertical optical axis|光軸を鉛直/);
   }
+  assert.match(getPanelShotExecution('真俯瞰の接写。手の甲だけ。人物の顔と胴体は画角外。'), /visible hands.*satisfy cast presence/);
+  assert.doesNotMatch(getPanelShotExecution('真俯瞰の接写。手元と顔を映す。'), /satisfy cast presence/);
 });
 
 test('a generic downward PASS cannot approve a requested vertical shot', () => {
@@ -181,11 +184,12 @@ test('invalid image QA remains unverified without retry; valid uncertainty does 
   const good = {text: JSON.stringify({pass:true, observations, spatial_checks:spatialChecks(), issues:[]})};
   const images = [{image_url:'test-image'}];
   const calls = [];
-  const result = await imageQualityQa.requestImageQualityQa({prompt:'Inspect unchanged image',images,request:async (...args) => {
+  const result = await imageQualityQa.requestImageQualityQa({prompt:'Inspect unchanged image',images,structuredJson:true,request:async (...args) => {
     calls.push(args); return calls.length === 1 ? {text:'{invalid'} : good;
   }});
   assert.equal(calls.length,1);
   assert.strictEqual(calls[0][1],images);
+  assert.equal(calls[0][4].responseFormat, 'json_object');
   assert.equal(result.review.pass,false);
   assert.equal(result.review.requestFailed,true);
   let count=0;
@@ -279,7 +283,7 @@ test('comparison parsing does not discard malformed duplicate checks and falsely
 test('output-limit termination is unverified even if a complete JSON prefix was returned', () => {
   const reply = JSON.stringify({ pass: true, issues: [], observations, spatial_checks: spatialChecks() });
   assert.equal(parseImageQualityQaResponse(reply, { finishReason: 'stop' }).pass, true);
-  for (const finishReason of ['length', 'max_output_tokens']) {
+  for (const finishReason of ['length', 'max_output_tokens', 'MAX_TOKENS']) {
     const result = parseImageQualityQaResponse(reply, { finishReason });
     assert.equal(result.pass, false);
     assert.match(result.issues[0].reason, /出力上限/);
@@ -1924,14 +1928,14 @@ Dialogue: silent
 Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="菓子をしまいなさい。"; B2="香りで交渉する流れ？". TAIL TIP LOCK: B1=>[サエコ]; B2=>[ミク].
 ## Panel 4
 Dialogue: silent`;
-  const makeReview = (bubbles, reportedDefect = false) => {
+  const makeReview = (bubbles, reportedDefect = false, evidenceContext) => {
     const checks = spatialChecks();
     checks[2].bubble_speaker = {
       status: reportedDefect ? 'defect' : 'ok', evidence: 'Each tail was traced from balloon outline to its visible endpoint.',
       left_to_right_texts: ['香りで交渉する流れ？', '菓子をしまいなさい。'], bubbles,
     };
     const issues = reportedDefect ? ['bubble_speaker', 'bubble_order'].map(type => ({ type, panel: 3, subject: 'B1', reason: 'Reviewer claims the B-number identifies a wrong speaker/order.' })) : [];
-    return parseImageQualityQaResponse(JSON.stringify({ pass: !reportedDefect, issues, observations, spatial_checks: checks }), { finalPrompt });
+    return parseImageQualityQaResponse(JSON.stringify({ pass: !reportedDefect, issues, observations, spatial_checks: checks }), { finalPrompt, evidenceContext });
   };
   const validB2 = {
     bubble: 'B2', text: '香りで交渉する流れ？', expected_speaker: 'ミク', observed_tail_target: 'ミク',
@@ -1964,6 +1968,14 @@ Dialogue: silent`;
     other_visible_head_anchors: [{ x: 0.62, y: 0.62 }],
   };
   assert.equal(makeReview([pointingGap, validB2]).pass, true);
+  const widePanel = { panelAspectRatios: { 3: 3.27 } };
+  const widePointer = { ...pointingGap,
+    tail_root: {x: 0.79, y: 0.69}, tail_tip: {x: 0.77, y: 0.7},
+    speaker_anchor: {x: 0.61, y: 0.61, part: 'mouth'},
+    other_visible_head_anchors: [{x: 0.36, y: 0.65}],
+  };
+  assert.equal(makeReview([widePointer, validB2], false, widePanel).pass, true);
+  assert.equal(makeReview([{...widePointer, other_visible_head_anchors: [{x: 0.66, y: 0.69}]}, validB2], false, widePanel).pass, false);
   for (const uncertain of [
     { ...pointingGap, tail_root: { x: 0.53, y: 0.51 } },
     { ...pointingGap, other_visible_head_anchors: [{ x: 0.41, y: 0.59 }] },

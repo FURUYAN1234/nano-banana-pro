@@ -19,6 +19,7 @@ const GEMINI_BASE_URL = isLocalGeminiHost
     ? '/gemini-api'
     : 'https://generativelanguage.googleapis.com';
 const GEMINI_TEXT_TIMEOUT_MS = 600_000;
+const GEMINI_IMAGE_QA_OUTPUT_TOKENS = 16_384;
 
 export const setApiKey = (key) => {
     if (key) setApiSession('gemini', key);
@@ -154,7 +155,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             const result = await postGeminiGenerateContent(modelId, {
                 contents: [{ role: "user", parts: finalPromptParts }],
                 ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
-                generationConfig: { maxOutputTokens: 8192,
+                generationConfig: { maxOutputTokens: options.outputProfile === 'image-quality-review' ? GEMINI_IMAGE_QA_OUTPUT_TOKENS : 8192,
                     ...(options.responseFormat === 'json_object' ? { responseMimeType: 'application/json' } : {}) }
             }, timeoutMs, options.signal);
 

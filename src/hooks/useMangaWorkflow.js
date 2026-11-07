@@ -2424,9 +2424,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             statCallback(`[原寸RGB検査] ${reason}`);
             onReviewProgress?.(review);
           }
-          const panelImages = qualityMode === 'four-panel'
-            ? await extractMangaPanelCrops(candidateImage)
+          const panelCrops = qualityMode === 'four-panel'
+            ? await extractMangaPanelCrops(candidateImage, { includeDimensions: true })
             : [];
+          const panelImages = panelCrops.map(crop => crop.dataUrl);
+          if (panelCrops.length === 4) evidenceContext.panelAspectRatios = Object.fromEntries(
+            panelCrops.map((crop, index) => [index + 1, crop.width / crop.height]),
+          );
           const qualityImageParts = buildImageQualityQaImageParts({
             candidate,
             panelImages,
@@ -2454,6 +2458,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           const nativeReview = review;
           const { response: qualityResponse, review: parsedReview } = await requestImageQualityQa({
             prompt: qualityPrompt, images: qualityImageParts, request: reviewRequest,
+            structuredJson: !isOpenAIEngine,
             onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
             options: {
               mode: qualityMode, finalPrompt: candidatePrompt, referenceImageCount: images.length,

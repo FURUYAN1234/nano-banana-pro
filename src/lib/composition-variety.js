@@ -210,6 +210,12 @@ export const getPanelShotExecution = (camera = '', { compact = false } = {}) => 
     cues.push(compact
       ? '真俯瞰: 光軸を鉛直下向きに固定。焦点の上面と床/卓面。水平面に実在する平行辺は画面でも平行。地平線・奥へすぼまる卓・斜めの肩越しに置換しない。指定の切取り保持'
       : 'straight-down view: vertical optical axis over the focal action; show its top planes and surrounding floor/table planes. Parallel edges of the level surface stay parallel in the image; no taper toward a distant edge, horizon or oblique shoulder view. Keep the authored crop');
+    if (close && /手元|両手|手の甲|\bhands?\b/i.test(text)
+      && /(?:顔|胴体|上半身)[^。.;；]{0,26}(?:画角外|画面外|映さない|写さない)|(?:face|head|torso)[^.;]{0,35}(?:out of (?:the )?frame|outside (?:the )?frame)/i.test(text)) {
+      cues.push(compact
+        ? '手元のみの指定範囲では手と前腕で人物の登場を満たす。人数確認のために画角外の顔・胴体や追加の腕を描かない'
+        : 'Authored hand-detail crop: the visible hands and forearms satisfy cast presence; do not reveal any excluded face or torso, and do not draw an extra arm to show a whole actor');
+    }
   }
   if (/(?:膝|腰|胸|肩|[^\s、。]+台|机|卓)(?:の高さ|高)から/i.test(text)) cues.push(compact ? '指定高の基準/角度保持。顔/文字のためにカメラを上げない' : 'keep scripted height landmark; pitch strength follows script; faces/text never lift camera');
   if (/(?:斜め(?:に(?:見上げ|見下ろ)|から|上|下|前|後ろ)|(?:左|右)(?:(?:前|後)?斜め|(?:前|後)方)|diagonal (?:view|camera)|oblique|three-quarter|3\/4)/i.test(text) && !/(?:正面|真正面|front[ -]on|frontal)/i.test(text)) cues.push(compact ? '斜め: 指定側、体の近遠面/場の縁/床の奥行を保持。平坦な正面整列は禁止' : 'oblique view: near/far body planes, receding setting edges/floor planes; staggered depth, not a flat frontal lineup; keep named camera side');

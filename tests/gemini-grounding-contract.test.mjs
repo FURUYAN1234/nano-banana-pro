@@ -31,9 +31,11 @@ test('explicit JSON output reaches Gemini and exposes completion metadata withou
   try {
     const ordinary = await callThinkingGemini('Return JSON.', null, null, null);
     const json = await callThinkingGemini('Return JSON.', null, null, null, { responseFormat: 'json_object' });
-    assert.equal(bodies.length, 2);
+    await callThinkingGemini('Inspect this page.', [], null, null, { responseFormat: 'json_object', outputProfile: 'image-quality-review' });
+    assert.equal(bodies.length, 3);
     assert.deepEqual(bodies[0].generationConfig, { maxOutputTokens: 8192 });
     assert.deepEqual(bodies[1], { ...bodies[0], generationConfig: { maxOutputTokens: 8192, responseMimeType: 'application/json' } });
+    assert.deepEqual(bodies[2].generationConfig, { maxOutputTokens: 16384, responseMimeType: 'application/json' });
     assert.equal(ordinary.finishReason, undefined);
     assert.equal(ordinary.usage, undefined);
     assert.equal(json.finishReason, 'STOP');

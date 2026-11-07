@@ -2,7 +2,7 @@
 
 - The standard Gemini four-panel review reads dialogue and speaker routing from the editable image prompt. Camera inspection requests localized pixel evidence and distinguishes clear reversed pitch from missing evidence; balloon tails can verify by direction when their tips are separated from the intended speaker.
 - Explicit straight-down and upward close-up instructions retain the authored crop and action. OpenAI 5–8-panel STEP3 omits unusable optional effect suggestions without changing the validated panel order, camera or dialogue.
-- The same six-panel script completed STEP3 with GPT-6 Luna, without fallback. The normal Gemini dialogue check passed all four panels. Verify the subsequent camera and speaker changes via the normal Gemini generation and review before publication.
+- The same six-panel script completed STEP3 with GPT-6 Luna, without fallback. Normal Gemini dialogue review passed all four panels. Gemini initially missed an oblique view and an extra hand; the retained image review reproduced `MAX_TOKENS` at the generic text limit. A single structured QA call with the dedicated limit completed and located the extra hand and the body/table side outside the authored crop. The normal generation candidate needs a final API readback before publication. Workspace evidence: `/home/furu/Codex/work/nano-v730-gemini-dialogue-20261107`.
 
 # GPT Image 2.6 Sunburst candidate v7.3.0 — 2026-11-05
 

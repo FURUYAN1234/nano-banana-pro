@@ -457,7 +457,7 @@ const hasA4PageRatio = ({ width, height } = {}) => Number.isFinite(width)
   && Number.isFinite(height) && width > 0 && height > 0
   && Math.abs(width - (height * PAGE_LAYOUT.width / PAGE_LAYOUT.height)) <= 1;
 
-export const extractMangaPanelCrops = async (dataUrl) => {
+export const extractMangaPanelCrops = async (dataUrl, { includeDimensions = false } = {}) => {
   const image = new Image();
   image.src = dataUrl;
   await image.decode();
@@ -478,7 +478,8 @@ export const extractMangaPanelCrops = async (dataUrl) => {
     cropContext.imageSmoothingEnabled = true;
     cropContext.imageSmoothingQuality = 'high';
     cropContext.drawImage(image, frame.x, frame.y, frame.width, frame.height, 0, 0, crop.width, crop.height);
-    return crop.toDataURL('image/png');
+    const dataUrl = crop.toDataURL('image/png');
+    return includeDimensions ? { dataUrl, width: frame.width, height: frame.height } : dataUrl;
   }).filter(Boolean);
 };
 
