@@ -208,8 +208,8 @@ export const getPanelShotExecution = (camera = '', { compact = false } = {}) => 
   }
   if (elevation === 'high' && /真俯瞰|真下(?:に|を)(?:見る|見下ろ|捉え|撮)|真上から(?:真下へ|垂直に)|directly overhead|straight down|nadir/i.test(text)) {
     cues.push(compact
-      ? '真俯瞰: 光軸を鉛直下向きに固定。焦点の上面と周囲の地面/卓面を主に見せ、斜めの肩越しや地平線に置換しない。指定の切取り保持'
-      : 'straight-down view: vertical optical axis over the focal action; show its top planes and surrounding floor/table planes, no horizon or oblique shoulder view; keep the authored crop');
+      ? '真俯瞰: 光軸を鉛直下向きに固定。焦点の上面と床/卓面。水平面に実在する平行辺は画面でも平行。地平線・奥へすぼまる卓・斜めの肩越しに置換しない。指定の切取り保持'
+      : 'straight-down view: vertical optical axis over the focal action; show its top planes and surrounding floor/table planes. Parallel edges of the level surface stay parallel in the image; no taper toward a distant edge, horizon or oblique shoulder view. Keep the authored crop');
   }
   if (/(?:膝|腰|胸|肩|[^\s、。]+台|机|卓)(?:の高さ|高)から/i.test(text)) cues.push(compact ? '指定高の基準/角度保持。顔/文字のためにカメラを上げない' : 'keep scripted height landmark; pitch strength follows script; faces/text never lift camera');
   if (/(?:斜め(?:に(?:見上げ|見下ろ)|から|上|下|前|後ろ)|(?:左|右)(?:(?:前|後)?斜め|(?:前|後)方)|diagonal (?:view|camera)|oblique|three-quarter|3\/4)/i.test(text) && !/(?:正面|真正面|front[ -]on|frontal)/i.test(text)) cues.push(compact ? '斜め: 指定側、体の近遠面/場の縁/床の奥行を保持。平坦な正面整列は禁止' : 'oblique view: near/far body planes, receding setting edges/floor planes; staggered depth, not a flat frontal lineup; keep named camera side');

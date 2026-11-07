@@ -96,9 +96,50 @@ test('an explicit straight-down close-up keeps its overhead axis without adding 
   }
 });
 
+test('a generic downward PASS cannot approve a requested vertical shot', () => {
+  const finalPrompt = '## Panel 1\nCamera: 道具の真上から手元を真下に見る接写\nCAST COUNT: [A] each EXACTLY ONCE.';
+  const checks = spatialChecks();
+  const elevation = checks[0].camera_geometry.dimensions.elevation;
+  Object.assign(elevation, { requested: 'vertical', observed: 'A shoulders and the box lid are visible beside its upright front',
+    status: 'ok', observed_pitch: 'downward', projection_cues: [
+      { subject: 'A shoulder top', actor: 'A', surface: 'top', x: 0.3, y: 0.45 },
+      { subject: 'box lid', surface: 'top', x: 0.65, y: 0.35 },
+    ] });
+  const read = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  assert.ok(read().issues.some(i => i.type === 'unverified' && /straight-down/.test(i.reason)));
+  elevation.oblique_evidence = { subject: 'upright box front below lid', x: 0.66, y: 0.58, evidence: 'Front panel and its full height are visible beneath the top lid.' };
+  assert.ok(read().issues.some(i => i.type === 'camera_geometry' && /straight-down/.test(i.reason)));
+  elevation.observed_pitch = 'straight_down';
+  assert.ok(read().issues.some(i => i.type === 'unverified' && /straight-down/.test(i.reason)));
+  delete elevation.oblique_evidence;
+  elevation.observed = 'Shoulder and lid top seen from vertically above, with no projecting vertical face';
+  assert.equal(read().issues.some(i => i.subject === 'camera_geometry' && i.panel === 1 && /straight-down/.test(i.reason)), false);
+});
+
 test('an upward close-up fixes the viewpoint below the authored focal action, without changing a horizontal aim', () => {
   assert.match(getPanelShotExecution('低い位置から道具を見上げる接写'), /lens below the focal action/);
   assert.doesNotMatch(getPanelShotExecution('低い位置から水平に撮る接写'), /lens below the focal action/);
+});
+
+test('converging edges of a level rectangular surface expose an oblique view even when the reviewer calls it vertical', () => {
+  const finalPrompt = '## Panel 1\nCamera: 真俯瞰の接写\nCAST COUNT: [A] each EXACTLY ONCE.';
+  const checks = spatialChecks();
+  const elevation = checks[0].camera_geometry.dimensions.elevation;
+  Object.assign(elevation, { requested: 'vertical', observed: 'Wooden worktop around the cropped hands',
+    status: 'ok', observed_pitch: 'straight_down', projection_cues: [
+      { subject: 'dorsum of A hand', actor: 'A', surface: 'top', x: 0.35, y: 0.6 },
+      { subject: 'worktop upper surface', surface: 'top', x: 0.7, y: 0.4 },
+    ], parallel_edges: { subject: 'level rectangular worktop',
+      first: { start: {x: 0.16, y: 0.04}, end: {x: 0.05, y: 0.9} },
+      second: { start: {x: 0.82, y: 0.04}, end: {x: 0.96, y: 0.9} },
+    } });
+  const read = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  assert.ok(read().issues.some(i => i.type === 'camera_geometry' && /converg/.test(i.reason) && isMaterialImageQualityIssue(i)));
+  elevation.parallel_edges.second.end.x = 0.71;
+  assert.equal(read().issues.some(i => i.type === 'camera_geometry' && /converg/.test(i.reason)), false);
+  elevation.parallel_edges.second.end.x = 0.96;
+  elevation.parallel_edges.second.start.y = 0.86;
+  assert.equal(read().issues.some(i => i.type === 'camera_geometry' && /converg/.test(i.reason)), false);
 });
 
 test('rear-camera QA distinguishes a named room or prop anchor from an actor back-view contract', () => {

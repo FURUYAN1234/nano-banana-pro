@@ -21,6 +21,11 @@ export const buildScenarioPanelCountInstruction = (scenarioMode = 'four-panel') 
 
 const NO_DIALOGUE_RE = /^\s*(?:[-*]\s*)?(?:無言|(?:台詞|セリフ|せりふ)\s*[:：]?\s*(?:なし|無し)|(?:Dialogue\s*:\s*)?(?:none|no\s+dialogue|without\s+dialogue))\s*[。.!]?\s*$/im;
 
+const hasExplicitSilence = panelText => NO_DIALOGUE_RE.test(panelText)
+  || [...panelText.matchAll(/^\s*(?:状況|Action)\s*[:：]\s*([^\r\n]+)/gim)].some(([, action]) =>
+    action.replace(/「[^」]*」|『[^』]*』|“[^”]*”|"(?:[^"\\]|\\.)*"/gu, '〈引用〉')
+      .split(/[。！？]+|[.!?](?=\s|$)/u).some(sentence => NO_DIALOGUE_RE.test(sentence)));
+
 const stripThoughtBlocks = (text) => String(text || '').replace(/<thought>[\s\S]*?<\/thought>/gi, '');
 
 const createPanelHeaderRegex = () => /\[\s*([0-9\uFF10-\uFF19\u4E00\u4E8C\u4E09\u56DB\u4E94\u516D\u4E03\u516B\u4E5D\u5341]+)\s*(?:\u30B3\u30DE\u76EE|\u3053\u307E\u76EE)[^\]]*\]/gu;
@@ -155,12 +160,13 @@ export const validateMangaScenario = (scenarioText, castList = '', { scenarioMod
     }
   }));
 
-  const panelsMissingDialogue = panels
-    .filter((panel) => panel.found && !hasDialogue.get(panel.num) && !NO_DIALOGUE_RE.test(panel.text))
-    .map((panel) => panel.num);
-  const silentPanels = panels
-    .filter((panel) => panel.found && NO_DIALOGUE_RE.test(panel.text) && !hasDialogue.get(panel.num))
-    .map((panel) => panel.num);
+  const panelsMissingDialogue = [];
+  const silentPanels = [];
+  for (const panel of panels) {
+    if (panel.found && !hasDialogue.get(panel.num)) {
+      (hasExplicitSilence(panel.text) ? silentPanels : panelsMissingDialogue).push(panel.num);
+    }
+  }
 
   return {
     ok: structure.structuralValid && panelsMissingDialogue.length === 0 && invalidDialogue.length === 0,

@@ -90,6 +90,15 @@ test('accepts explicit silent beats but not accidentally missing dialogue', () =
   }
 });
 
+test('an unquoted standalone silence instruction inside an action line is explicit', () => {
+  const result = validateMangaScenario(fourPanels('状況: 両手で短冊に糸を通す。無言。文字と吹き出しはない。'), CAST_LIST);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.silentPanels, [1, 2, 3, 4]);
+  for (const action of ['状況: 看板に「注意。無言。」と書く。', '状況: 箱を渡す。無言ではない。', '状況: 一人は無言。']) {
+    assert.equal(validateMangaScenario(fourPanels(action), CAST_LIST).ok, false, action);
+  }
+});
+
 test('does not mistake accepted non-ASCII panel headers for dialogue', () => {
   for (const numbers of [['１', '２', '３', '４'], ['一', '二', '三', '四']]) {
     const scenario = numbers.map(num => `[ ${num} こま目: 起]\n状況: 人物が箱を運ぶ。`).join('\n');
