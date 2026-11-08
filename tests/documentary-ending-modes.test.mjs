@@ -68,7 +68,7 @@ after(async () => {
   await server?.close();
 });
 
-const buildScenarioRequest = (punchlineType) => getScenarioPrompt({
+const buildScenarioRequest = (punchlineType, overrides = {}) => getScenarioPrompt({
   randomCategory: 'user supplied material',
   targetDate: '2026-09-13',
   inputMode: 'manual',
@@ -92,7 +92,8 @@ const buildScenarioRequest = (punchlineType) => getScenarioPrompt({
     style_name: 'External style override',
     reproduction_prompt: 'Render every panel as a watercolor picture book.',
     anti_patterns: 'Do not retain the reference line style.'
-  }
+  },
+  ...overrides
 });
 
 const CAST_LIST = `## SpeakerA
@@ -174,6 +175,20 @@ test('serious documentary keeps source fidelity and removes comedy or art-style 
   assert.doesNotMatch(prompt, /笑いの構造設計|ギャグ強度の方針|強制コメディトーン指定|絵柄の急変/);
   assert.doesNotMatch(prompt, /Render every panel as a watercolor picture book/);
   assert.doesNotMatch(prompt, /4コマの中で少なくとも2種類以上のタグ/);
+});
+
+test('documentary scenario instructions use the same source boundary as validation', () => {
+  for (const ending of ['SeriousDocumentary', 'Documentary']) {
+    const direction = '俯瞰カメラとローアングルを交互に使って描いてください。';
+    const creative = buildScenarioRequest(ending, {manualTopic: direction, documentarySourceText: ''});
+    assert.match(creative, /入力は制作指示で、引用検査の対象となる事実本文はない/);
+    assert.match(creative, /指示の言い回しを台詞や状況へ逐語転載する必要はなく/);
+    assert.match(creative, /元の入力は引き続き演出の指定として守る/);
+    const facts = '市の施設は4月に受付時間を変更した。';
+    const mixed = buildScenarioRequest(ending, {manualTopic: `${facts}\n${direction}`, documentarySourceText: facts});
+    assert.match(mixed, /【保持する本文】\s*市の施設は4月に受付時間を変更した。/);
+    assert.doesNotMatch(mixed, /入力は制作指示で、引用検査の対象となる事実本文はない/);
+  }
 });
 
 test('documentary source fidelity preserves dates, quantities, and equivalent Japanese clock times', () => {

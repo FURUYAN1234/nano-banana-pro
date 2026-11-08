@@ -68,13 +68,34 @@ export const normalizeDocumentaryScenarioTimeline = (scenarioText = '', sourceTe
   return scenario.replace(RELATIVE_EFFECTIVE_DATE_RE, `${uniqueCalendarAnchors[0]}から`);
 };
 
+// 自由入力は本文と制作指示を兼ねる。明確な演出だけを事実の逐語検査から
+// 分離し、数値・引用・報道・主語のある叙述や曖昧な文は本文として保持する。
+const isDrawingDirectionOnly = (text) => {
+  const sentence = normalizeDigits(text).trim();
+  if (extractDocumentaryFactualAnchors(sentence).length > 0
+    || /[「」『』“”"]/.test(sentence)
+    || /発表|報道|報告|公表|決定|変更|救助|発生|という|と述べ|と話し/u.test(sentence)) return false;
+
+  const explicitScope = /^(?:演出|描画|制作|構図|画風)(?:指示|指定)?\s*[:：]|^(?:[1-8一二三四五六七八]コマ目|全コマ|各コマ|最終コマ|ページ全体)/u.test(sentence);
+  if (!explicitScope && /^[^、。:：]{1,24}(?:は|が)/u.test(sentence)) return false;
+
+  const drawingCue = /コマ(?:目|数|枠|割り)|画風|構図|アングル|カメラ|エフェクト|吹き出し|フキダシ|線画|描画|演出/u.test(sentence);
+  const requestEnding = /(?:描く|描いて(?:ください|ほしい)?|描写する|表現する|してください|すること|にする|禁止|不要)[。！？!?\s]*$/u.test(sentence);
+  return drawingCue && requestEnding;
+};
+
 export const selectDocumentarySourceText = ({
   inputMode = '',
   manualTopic = '',
   extractedArticleText = ''
 } = {}) => {
   if (inputMode !== 'manual') return '';
-  return String(extractedArticleText || manualTopic || '').trim();
+  const article = String(extractedArticleText || '').trim();
+  if (article) return article;
+  const topic = String(manualTopic || '').trim();
+  const sentences = topic.split(/(?<=[。！？!?])\s*|\r?\n+/u).filter(Boolean);
+  const sourceSentences = sentences.filter((sentence) => !isDrawingDirectionOnly(sentence));
+  return sourceSentences.length === sentences.length ? topic : sourceSentences.join('\n').trim();
 };
 
 const normalizeForLexicalCoverage = (text) => normalizeJapaneseClockTimes(text)

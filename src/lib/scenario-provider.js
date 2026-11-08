@@ -446,7 +446,13 @@ export async function generateScenario({
     inputMode === 'manual' ? manualTopic : randomCategory,
     extractedArticleText, customLocation, backgroundLocation
   ].filter(Boolean).join('\n');
+  const documentarySourceText = selectDocumentarySourceText({
+    inputMode,
+    manualTopic,
+    extractedArticleText
+  });
   const scenarioPrompt = getScenarioPrompt({
+    documentarySourceText,
     scenarioMode,
     autoSelectPanelCount,
     recentScenarios,
@@ -468,12 +474,6 @@ export async function generateScenario({
     comedyTone: activeComedyTone,
     styleJson
   });
-  const documentarySourceText = selectDocumentarySourceText({
-    inputMode,
-    manualTopic,
-    extractedArticleText
-  });
-
   const safeScenarioResult = await requestSafeScenario({
     initialPrompt: scenarioPrompt,
     requestScenario: (prompt) => requestSafeScenarioContent({

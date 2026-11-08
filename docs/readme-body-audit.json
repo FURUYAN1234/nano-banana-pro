@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-  "manualVersion": "7.3.3",
-  "manualSourceSha256": "b77f2187b149bc179da97db6dca8cab6f23a5b744ac94268f8a1037410a4693e",
+  "manualVersion": "7.3.4",
+  "manualSourceSha256": "666dd9596825b4439157632acc61455abb2dd6f47e885c3f724c2885440f97b2",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "8b003e62ec8ed5f70612bbd65464df073eadad07aa809d9a9bbd543862bec30f"
+      "sha256": "6e2152e7a8464e52de448acd3eeecea7484fdfe8ee08df7604ea7c5a06124fb8"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "0194f3f576e0ffb17ab4e235d5817aa76faf08358d4b2c45ad243292bd81f15a"
+      "sha256": "9d9dd80f9fa9323ded9d5dff41de5292b50ebc8679ae053d36b3b9a740b27eed"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "56446db2e0edb2a7c29cb47734c56f86ce0ae67c3961fc452a1918180e3470c5"
+      "sha256": "76ee5e26d19b2b38a96c502f67e8e97a50e48ce5181f10be53e8741b6edcf57b"
     }
   ],
-  "readmeSha256": "201e2f5fdffa8f6f928c4477d70d8383cf6932462940389b89b65329a46c36cd",
+  "readmeSha256": "c0999d3d21bd96d90b9e3d9dee23b433f813de7af40f6d2a5b282698f14b033b",
   "readmeLanguageGaps": [],
-  "sourceTree": "3c176feddd9145038c54e206559c467266ab4b81",
-  "publicTree": "a703003bfe5404121d3ab2992f0a909996ffb29f",
-  "packageSha256": "95356a187ae5db04d535d9be8c577d686617d5a6e21e40fbba3726a95cf3d569",
+  "sourceTree": "b2b0197d6321bb61ba1b68b550075a230c4fce13",
+  "publicTree": "d9e6f49d93e9dc8e979e53692c3952584e9baeb2",
+  "packageSha256": "7da02f15a0ef329ffb2844fb0785e3853418bfc3d45ea1ec6a8e1b0058ca48eb",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,17 +41,17 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-07T09:11:30.662Z",
-  "findings": "Reviewed the complete README diff and current heading list against normal monochrome reference plans, the final editable document, OpenAI prompt budgeting and targeted-repair routing. The new art-style paragraph describes the tested ink-economy direction while retaining per-panel GEKIGA and skin/material mappings. Current source/version/download links and the footer example are v7.3.3. Reused the previous verified body review for unchanged sections; model routes, key privacy, exports and the immutable ComfyUI asset are unchanged.",
-  "manualFindings": "Compared all 71 rendered pages with the verified v7.3.2 PDFs. Body pixels outside footers changed only on Gemini page1 and system pages17/18; viewed all three before/after images and confirmed readable layout with no clipping. All pages contain v7.3.3 and preserve page counts. Shared PDF text/privacy/layout gates passed, and reviewed PDF bytes were copied into public/downloads.",
+  "checkedAt": "2026-11-08T21:57:17.415Z",
+  "findings": "Reviewed the complete candidate README diff against the changed source and all 17 current section headings. The documentary input paragraph distinguishes production directions from factual text and preserves factual validation, selected endings and reference style. Current version, footer example and candidate release links are v7.3.4. Reused the previously verified review for unchanged README sections; model routes, API key handling, exports and the immutable ComfyUI ZIP are unchanged. Candidate links become available only upon a later release; this review does not report deployment. Bound the reviewed source/public trees to this staged v7.3.4 release candidate after the explicit deployment authorization.",
+  "manualFindings": "Compared all 71 rendered pages against verified v7.3.3 PDFs. Outside footer bands only Gemini p1 and system p11/p18 changed; visually inspected all three before/after page images and confirmed readable text with no clipping. The system p11 addition preserves the existing ending-selection explanation. OpenAI body pixels are unchanged. All three builders passed page counts, current version/date, text bounds, links and privacy scans. Reused earlier verified body review for unchanged pages; copied reviewed PDF bytes into public/downloads and checked SHA256 equality.",
   "pricingReview": {
-    "version": "7.3.3",
+    "version": "7.3.4",
     "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-    "checkedAt": "2026-11-07T09:11:30.662Z",
+    "checkedAt": "2026-11-08T21:57:17.418Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Read the current official OpenAI Standard tables and fetched the current official Google pricing document after the web reader failed. Standard and Batch were compared separately. GPT-6 Luna $0.10/$0.50, GPT-6.1 Sol $2/$10, Terra $1/$5 and Astra $10/$50 per million input/output tokens; Image 2.6 Sunburst image $8/$30 (cached $2), text input $5 (cached $1.25). Gemini Nano Banana 2.1 input $1.50, text/thinking output $7.50, image output $30; 1K image $0.0336. Gemini 3.8 Flash Standard $0.75/$3.75 through 2026-12-31. Current pricing source remains unchanged; these are token rates, not per-run invoices."
+    "findings": "Checked current official Standard prices separately from Batch. GPT-6 Luna $0.10/$0.50, Sol $2/$10, Terra $1/$5, Astra $10/$50 per million input/output tokens. Image 2.6 Sunburst image $8/$30, cached image $2, text input $5/cached $1.25. Google official document: Nano Banana 2.1 input $1.50, text/thinking $7.50, image $30 ($0.0336 per 1K image); Batch $0.75/$3.75/$15. Gemini 3.8 Flash Standard $0.75/$3.75 through 2026-12-31, Batch $0.375/$1.875. Source pricing settings unchanged. This is a candidate review; deployment after 24 hours requires a fresh official review. Reopened both official price sources immediately before this release; rates remain unchanged."
   }
 }

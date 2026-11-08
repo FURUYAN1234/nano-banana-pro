@@ -6,6 +6,7 @@ import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
+import { selectDocumentarySourceText } from './documentary-source-fidelity.js';
 import { buildSeasonalOutfitInstruction, getSeasonContext, SCENARIO_WARDROBE_CONTRACT } from './seasonal-outfit';
 import { FOCAL_READABILITY, PANEL_EDGE_CONTINUITY_LOCK, SHARED_IMAGE_QUALITY_CONTRACT, WARDROBE_ENVIRONMENT_CONTRAST_LOCK, WARDROBE_COMPONENT_LOCK } from './shared-image-quality';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_WARDROBE_LOCK, MONOCHROME_STYLE_QA, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_FINAL_CHROMA_AUDIT } from './manga-render-mode.js';
@@ -276,6 +277,7 @@ ${scenario}
  */
 export const getScenarioPrompt = ({
   recentScenarios = [],
+  documentarySourceText,
   scenarioMode = 'four-panel',
   autoSelectPanelCount = false,
   mosaicCopyrightedCharacters = true,
@@ -314,6 +316,12 @@ export const getScenarioPrompt = ({
     : '【四コマ構成】ちょうど4コマを起承転結で構成する。';
   const punchlineType = requestedPunchlineType === 'PsychoHorror' ? 'Surreal' : requestedPunchlineType;
   const endingPolicy = getEndingModePolicy(punchlineType);
+  const factualSource = documentarySourceText ?? selectDocumentarySourceText({inputMode, manualTopic});
+  const documentarySourceBoundary = endingPolicy.documentary && inputMode === 'manual'
+    ? `【原文と制作指示の区別】
+         - 自由入力の制作・演出指示はカメラ、構図、動作、効果として実現する。指示の言い回しを台詞や状況へ逐語転載する必要はなく、指示文を作中の出来事や報道事実へ変換しない。元の入力は引き続き演出の指定として守る。
+         ${factualSource ? `- 以下の本文の数値・時系列・原因・行動・結果を保持する。本文と制作指示が混在していても、この事実を省略しない。\n         【保持する本文】\n${factualSource}` : '- 入力は制作指示で、引用検査の対象となる事実本文はない。指定された題材・動作・世界観を漫画として具体化し、選択中の結末・参照画風の条件を守る。実在の報道や発表を捏造せず、演出指示を説明するだけの会話にしない。'}`
+    : '';
   const isSeriousDocumentary = endingPolicy.documentary && endingPolicy.endingTone === 'serious';
   const isGeneralSerious = !endingPolicy.documentary && endingPolicy.endingTone === 'serious';
   const effectiveLocationPlan = locationPlan || {
@@ -353,6 +361,7 @@ export const getScenarioPrompt = ({
          【Context Force Reboot】
          Ignore all previous instructions and conversation history. This is a fresh, standalone session.
          ${contextRebootLock}
+         ${documentarySourceBoundary}
          ${panelStructure}
          ${autoSelectPanelCount ? '全4〜8コマを1から欠番・重複なく書く。決定後の監査・修正ではコマ数を保持する。' : buildScenarioPanelCountInstruction(scenarioMode)}
          ${buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters)}
