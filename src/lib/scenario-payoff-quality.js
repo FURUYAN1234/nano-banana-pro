@@ -30,7 +30,7 @@ const REVIEW_FIELDS = Object.freeze([
 const ALLOWED_SHIFTS = new Set(['reversal', 'payoff', 'consequence', 'reframe']);
 const MATERIAL_PAYOFF_REASONS = new Set([
   'no_panel4_outcome', 'no_visual_payoff', 'slogan_only', 'documentary_fact_invention',
-  'repetitive_camera_sequence', 'unclear_payoff', 'repeated_story_mechanism',
+  'repetitive_camera_sequence', 'unclear_payoff', 'repeated_story_mechanism', 'action_ending_only',
 ]);
 
 const materialPayoffReasons = (reasonCodes) => reasonCodes.filter(code =>
@@ -46,13 +46,15 @@ const payoffPanelCount = (scenario, scenarioMode = 'four-panel') => {
 
 const isStagingOnlyRepair = (reasonCodes) => {
   const material = materialPayoffReasons(reasonCodes);
-  return material.length > 0 && material.every(code => code === 'repetitive_camera_sequence' || /^(?:unrenderable|flat_ensemble|cast_identity)_panel_[1-8]$/.test(code));
+  return material.length > 0 && material.every(code => code === 'repetitive_camera_sequence' || code === 'action_ending_only' || /^(?:unrenderable|flat_ensemble|cast_identity)_panel_[1-8]$/.test(code));
 };
 
-const usesBalloonPatch = (scenario, reasonCodes) => isStagingOnlyRepair(reasonCodes)
-  && reasonCodes.some(code => code.startsWith('BALLOON_'))
-  && reasonCodes.every(code => code.startsWith('BALLOON_') || /^unrenderable_panel_[1-8]$/.test(code))
-  && getScenarioPanelBlocks(scenario).every(panel => panel.found && /^BalloonLayout\s*[:：]/m.test(panel.text));
+const usesStagingPatch = (scenario, reasonCodes) => isStagingOnlyRepair(reasonCodes)
+  && (reasonCodes.includes('action_ending_only') || (
+    reasonCodes.some(code => code.startsWith('BALLOON_'))
+    && reasonCodes.every(code => code.startsWith('BALLOON_') || /^unrenderable_panel_[1-8]$/.test(code))
+    && getScenarioPanelBlocks(scenario).every(panel => panel.found && /^BalloonLayout\s*[:：]/m.test(panel.text))
+  ));
 
 // Field edits preserve all other source bytes, including dialogue, metadata and panel order.
 export const applyScenarioStagingPatch = (scenario, response, castList = '', { scenarioMode = 'four-panel' } = {}) => {
@@ -111,6 +113,8 @@ const PAYOFF_REASON_LABELS = {
   slogan_only: '最終コマが標語・説明だけになっている',
   no_payoff_shift: '予測から帰結への変化がない',
   unclear_payoff: '何が変わったのか読者に伝わらない',
+  action_ending_only: '途中の動きと結末が絵でつながっていない',
+  action_continuity_unverified: '途中の動きと結末のつながりを確認できない',
   documentary_fact_invention: '原文にない事実が追加された',
   cast_identity_unverified: '人物設定と台本の外見・話者対応を確認できない',
 };
@@ -166,6 +170,7 @@ ${buildScenarioPanelCountInstruction(scenarioMode)}
 ${experimental ? '互換JSON名 panel3_prediction は最終直前までの予測、panel4_outcome は実際の最終コマの帰結を意味する。番号3・4へ固定しない。panel_development は全コマを確認し、新しい動作・応答・発見・意味のある沈黙や間の必要性を evidence に記す。同じ出来事・情報の再掲やカメラだけの変更で、削除しても時機・感情・理解を何も失わない明確な水増しだけ material_padding=true とし、同じ題材・結末を保つ correction を添える。無言という理由だけで失格にせず、台詞や沈黙の数のノルマを設けない。' : ''}
 ${toneRule}
 ${policy.guidance ? `選択した結末の判定基準: ${policy.guidance}` : ''}
+${policy.actionDirection ? `${policy.actionDirection}\n- action_continuity: 結末より前の別々のコマに、結末と因果でつながる動きの開始と、動きによる状態変化が描かれているか。コマ番号と台本にある動作・変化・結果を evidence に挙げる。最後のポーズだけ、会話中の身振りだけ、準備を口にするだけ、無関係な動作の羅列、同じ動作の別アングルだけであれば material_failure=true。元の題材と結末を保って途中の演技を直す案を correction に書く。明示された静止や固定のコマ割りが演技追加を禁じる場合は、ユーザー原文の該当指定を evidence に引用して false。動作の派手さや好みだけで不合格にしない。` : ''}
 ${factRule}
 ${buildRecentStoryContext(recentScenarios)}
 ${recentScenarios.length ? '追加JSONフィールド recent_repetition: {"status":"distinct|same_mechanism|intentional_repeat|uncertain","matched_index":null,"evidence":"過去と今回の具体的な種・行為・帰結の比較","correction":""}。matched_indexはRECENT配列の0始まり。型・題材・絵柄が同じだけならdistinct。名詞だけ変えた同じ仕掛けと帰結の再利用が明確で、新作の展開を失わせる場合だけsame_mechanismとして該当indexと指定結末を保つcorrectionを記す。明示された再現・続編・意図した反復はintentional_repeat。推測はuncertain。' : ''}
@@ -206,7 +211,7 @@ ${String(userTopic).trim()}
   "shift_kind": "reversal",
   "visual_payoff": true,
   "payoff_clarity": {"material_failure":false,"evidence":"specific setup cue and visible final action explain what changes, or readable absurd contrast","correction":""},
-  "slogan_only": false,
+${policy.actionDirection ? '  "action_continuity": {"material_failure":false,"evidence":"コマ番号と具体的な開始・変化・結果、またはユーザーの明示制約","correction":""},\n' : ''}  "slogan_only": false,
   "unseeded_fact": false,
   "visual_feasibility": ${JSON.stringify(Array.from({length:panelCount},(_,i)=>({panel:i+1,feasible:true,evidence:'camera, actor, and focal hand/prop relation at readable scale',correction:''})))},
   "ensemble_continuity": ${JSON.stringify(Array.from({length:panelCount},(_,i)=>({panel:i+1,material_break:false,evidence:'specific cast positions, actions and reactions or why stillness is intentional',correction:''})))},
@@ -244,7 +249,11 @@ const hasCameraRhythmEvidence = (camera, panelCount = 4) => {
       || (camera.repeated_panels.length >= 2 && nonempty(camera.correction))));
 };
 
-export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', panelCount = 4 } = {}) => {
+const hasActionContinuityEvidence = (item) => typeof item?.material_failure === 'boolean'
+  && typeof item.evidence === 'string' && item.evidence.trim()
+  && typeof item.correction === 'string' && (!item.material_failure || item.correction.trim());
+
+export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', panelCount = 4, punchlineType } = {}) => {
   if (scenarioMode === 'four-panel' ? panelCount !== 4 : scenarioMode !== 'experimental-manga' || !Number.isInteger(panelCount) || panelCount < 5 || panelCount > 8) throw new Error('incomplete_payoff_review: invalid panel count');
   const source = extractText(text).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   const jsonText = source.match(/\{[\s\S]*\}/)?.[0];
@@ -272,6 +281,7 @@ export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', p
     || typeof parsed.payoff_clarity.evidence !== 'string' || !parsed.payoff_clarity.evidence.trim()
     || typeof parsed.payoff_clarity.correction !== 'string'
     || (parsed.payoff_clarity.material_failure && !parsed.payoff_clarity.correction.trim())
+    || (getEndingModePolicy(punchlineType).actionDirection && !hasActionContinuityEvidence(parsed.action_continuity))
     || typeof parsed.slogan_only !== 'boolean'
     || typeof parsed.unseeded_fact !== 'boolean'
     || !Array.isArray(parsed.visual_feasibility)
@@ -311,6 +321,7 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
       // Panel evidence is authoritative, not an unsupported model-generated code.
       .filter(code => !code.startsWith('flat_ensemble_panel_') && !code.startsWith('unrenderable_panel_')
         && code !== 'repetitive_camera_sequence' && code !== 'unclear_payoff'
+        && code !== 'action_ending_only' && code !== 'action_continuity_unverified'
         && code !== 'repeated_story_mechanism' && code !== 'recent_comparison_unverified' && !code.startsWith('redundant_panel_')
         && !code.startsWith('cast_identity_panel_') && code !== 'cast_identity_unverified'));
 
@@ -338,6 +349,10 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
   if (review?.slogan_only) reasons.add('slogan_only');
   if (review?.payoff_clarity?.material_failure === true
     && review.payoff_clarity.evidence?.trim() && review.payoff_clarity.correction?.trim()) reasons.add('unclear_payoff');
+  if (policy.actionDirection) {
+    if (!hasActionContinuityEvidence(review?.action_continuity)) reasons.add('action_continuity_unverified');
+    else if (review.action_continuity.material_failure) reasons.add('action_ending_only');
+  }
   if (!surrealMode && !ALLOWED_SHIFTS.has(review?.shift_kind)) reasons.add('no_payoff_shift');
   if (!surrealMode && review?.unseeded_fact) reasons.add('unseeded_fact');
   if (policy.documentary && review?.unseeded_fact) reasons.add('documentary_fact_invention');
@@ -369,8 +384,10 @@ export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, revie
   const repairReview = { ...review, reason_codes: reasonCodes,
     visual_feasibility: review?.visual_feasibility?.map(item => item.material_loss === false
       ? { ...item, correction: '' } : item) };
-  if (usesBalloonPatch(scenario, reasonCodes)) return `STAGING PATCH JSON
-監査で指摘された吹き出しの矛盾だけを修正する。台本全文は再出力しない。
+  if (usesStagingPatch(scenario, reasonCodes)) return `STAGING PATCH JSON
+${reasonCodes.includes('action_ending_only')
+    ? '監査で指摘された演技・配置・カメラを必要なコマだけ修正する。結末より前に、元からある人物・物を使って動きの開始と状態の変化を別々のコマで描き、元の帰結へつなぐ。まず状況を直し、変更した動作や話者位置に必要な場合だけCameraやBalloonLayoutを調整する。'
+    : '監査で指摘された吹き出しの矛盾だけを修正する。'} 台本全文は再出力しない。
 ENDING MODE: ${punchlineType || 'Auto'}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
 監査結果: ${JSON.stringify(repairReview)}
@@ -389,6 +406,7 @@ ENDING MODE: ${punchlineType || 'Auto'}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
 監査結果: ${JSON.stringify(repairReview, null, 2)}
 ${getEndingModePolicy(punchlineType).guidance ? `選択した結末の意味を保つ: ${getEndingModePolicy(punchlineType).guidance}` : ''}
+${getEndingModePolicy(punchlineType).actionDirection || ''}
 ${buildRecentStoryContext(recentScenarios)}
 ${mosaicReviewRule(mosaicCopyrightedCharacters)}
 
@@ -450,7 +468,7 @@ export const runScenarioPayoffGate = async ({
       userTopic,
       mosaicCopyrightedCharacters,
       scenarioMode,
-    })), { scenarioMode, panelCount });
+    })), { scenarioMode, panelCount, punchlineType });
     firstEvaluation = evaluateScenarioPayoffReview(firstReview, { punchlineType, recentScenarios, scenarioMode, panelCount });
   } catch (error) {
     onProgress(`構成・画像化の検査結果: 判定できませんでした。理由: ${error.message}。元シナリオを保持します。`);
@@ -487,7 +505,7 @@ export const runScenarioPayoffGate = async ({
         mosaicCopyrightedCharacters,
         scenarioMode,
       }));
-      repaired = usesBalloonPatch(current.scenario, current.evaluation.reasonCodes)
+      repaired = usesStagingPatch(current.scenario, current.evaluation.reasonCodes)
         ? applyScenarioStagingPatch(current.scenario, response, castList, { scenarioMode })
         : extractText(response).replace(/^Scenario:\s*/i, '').trim();
       if (!repaired) throw new Error('empty repair');
@@ -521,7 +539,7 @@ export const runScenarioPayoffGate = async ({
         userTopic,
         mosaicCopyrightedCharacters,
         scenarioMode,
-      })), { scenarioMode, panelCount });
+      })), { scenarioMode, panelCount, punchlineType });
       const evaluation = evaluateScenarioPayoffReview(review, { punchlineType, recentScenarios, scenarioMode, panelCount });
       onProgress(evaluation.ok
         ? `改善案の再検査結果 ${attempt}/${maxRepairs}: 合格。構成と画像化可能な配置を確認しました。`

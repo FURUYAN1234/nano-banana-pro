@@ -5,6 +5,8 @@ const DEFAULT_ENDING_POLICY = Object.freeze({
   label: null
 });
 
+const ACTION_SCENARIO_DIRECTION = `【ページ全体のアクション演出】題材の主題を伝える一つの動きの流れを決め、序盤〜中盤から描く。結末より前の別々のコマで、動きが始まる瞬間と、その動きで人物・物・空間の状態が変わる瞬間を見せ、結末で結果や受け手の反応を回収する。各コマの「状況」に誰が何へどう働きかけ、どこへ動き、次のコマで何が変わったかを描ける形で書く。会話中心の題材でも、登場人物が元からある場所・物・課題に働きかける行動に情報を載せる。視線や指差し、効果線、カメラの変更だけで一連の動作を代用しない。動作に応じて重心、接点、前後差が読めるカメラを選ぶ。すべてのコマを動かす必要はなく、必要な会話・間・静止は残す。原文の事実・時系列、明示されたコマ・動作・静止・カメラ・画風と、台詞の文言・話者・順序を優先し、新しい報道事実や無関係な事件・暴力を足さない。`;
+
 const ENDING_MODE_POLICIES = Object.freeze({
   Auto: Object.freeze({
     documentary: false,
@@ -72,6 +74,7 @@ const ENDING_MODE_POLICIES = Object.freeze({
   SeriousAction: Object.freeze({
     documentary: false, endingTone: 'serious', preserveReferenceStyle: false,
     label: 'アクション（シリアス）',
+    actionDirection: ACTION_SCENARIO_DIRECTION,
     guidance: '題材に根拠のある緊迫した動作を軸に、きっかけ・身体の反応・判断・結果をつなぐ。追跡、競技、救助、作業、攻防など場面に合う行動を選び、最後の動作で局面や人物の選択がどう変わったかを見せる。台詞や効果線だけで動作を代用せず、指定されたカメラと接触を保つ。'
   }),
   Surreal: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '静寂型 (シュール)' }),
@@ -107,6 +110,7 @@ const ENDING_MODE_POLICIES = Object.freeze({
   GagAction: Object.freeze({
     documentary: false, endingTone: 'gag', preserveReferenceStyle: false,
     label: 'アクション（ギャグ）',
+    actionDirection: ACTION_SCENARIO_DIRECTION,
     guidance: '題材に根拠のある大きな動きやドタバタを軸に、仕掛け・動き・予想外の着地や受け手の反応で笑わせる。動いた人・物とその結果が絵でつながるようにする。無関係な暴力や表情だけのオチに置き換えず、指定されたカメラと接触を保つ。'
   }),
   SeriousDocumentary: Object.freeze({

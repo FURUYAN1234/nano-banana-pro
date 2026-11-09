@@ -67,6 +67,35 @@ const nativeReview = count => ({ ...structuredClone(STRONG_GAG_REVIEW),
   panel_development: Array.from({ length: count }, (_, i) => ({ panel: i + 1, material_padding: false, evidence: '作業の変化または反応までの必要な間を示している。', correction: '' })),
 });
 
+test('an action ending alone triggers a staging repair, but the same beat is allowed in a non-action mode', async () => {
+  const original = nativeScenario(4).replace('Aが作業の段階4を進める。', 'Aが最後に箱を持ち上げ、Bが驚く。');
+  const repaired = original
+    .replace('Aが作業の段階2を進める。', 'Aが箱の両脇をつかみ、膝を曲げる。')
+    .replace('Aが作業の段階3を進める。', 'Aの踏ん張りで箱の底が床を離れ、Bが足を引く。');
+  const endingOnly = { ...STRONG_GAG_REVIEW, action_continuity: {
+    material_failure: true, evidence: '箱に触れる最初の動作は4コマ目。', correction: '2コマ目で箱を持つ姿勢をとり、3コマ目で床から浮かせる。',
+  } };
+  const connected = { ...STRONG_GAG_REVIEW, action_continuity: {
+    material_failure: false, evidence: '2コマ目で手が箱にかかり、3コマ目で箱が床から浮き、4コマ目で持ち上げた結果を受けてBが驚く。', correction: '',
+  } };
+  const options = { punchlineType: 'GagAction' };
+  assert.equal(evaluateScenarioPayoffReview(endingOnly, { punchlineType: 'GagAuto' }).ok, true);
+  assert.deepEqual(evaluateScenarioPayoffReview(endingOnly, options).reasonCodes, ['action_ending_only']);
+  assert.throws(() => parseScenarioPayoffReview(JSON.stringify(STRONG_GAG_REVIEW), options), /incomplete_payoff_review/);
+  const result = await runScenarioPayoffGate({ ...options, scenario: original,
+    requestReview: async prompt => JSON.stringify(prompt.includes('Aの踏ん張りで箱の底が床を離れ') ? connected : endingOnly),
+    requestRepair: async prompt => {
+      assert.match(prompt, /STAGING PATCH JSON/);
+      return JSON.stringify([
+        { panel: 2, field: '状況', value: 'Aが箱の両脇をつかみ、膝を曲げる。' },
+        { panel: 3, field: '状況', value: 'Aの踏ん張りで箱の底が床を離れ、Bが足を引く。' },
+      ]);
+    },
+  });
+  assert.equal(result.status, 'repaired');
+  assert.equal(result.scenario, repaired);
+});
+
 for (const count of [5, 8]) {
   test(`native ${count}-panel payoff checks the actual ending and every camera while retaining purposeful silence`, async () => {
     const scenario = nativeScenario(count), review = nativeReview(count);
