@@ -54,7 +54,7 @@ try {
       assert.equal(requests,1,JSON.stringify(change));assert.equal(result.plan.layout,'hero_top');
     }
     let requests=0;
-    await assert.rejects(m.prepareExperimentalManga({...input,colorMode:'monochrome',scenario:'not a scenario'},async()=>{requests++;},{colorOnlyPrepared:previous}),/STEP2/);
+    await assert.rejects(m.prepareExperimentalManga({...input,colorMode:'monochrome',scenario:'not a scenario'},async()=>{requests++;},{colorOnlyPrepared:previous}),error => error.code === 'PANEL_STRUCTURE_CONTRACT' && /panel headers/.test(error.message));
     assert.equal(requests,0);
   });
 

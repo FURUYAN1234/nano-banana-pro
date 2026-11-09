@@ -1,4 +1,4 @@
-import { getScenarioPanelBlocks, validateMangaScenario } from './scenario-validation.js';
+import { getScenarioPanelBlocks, validateMangaScenario, formatMangaScenarioValidationIssue } from './scenario-validation.js';
 import { collectCastNameEntries, extractDialogueOnly, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix } from './panel-utils.js';
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
@@ -55,9 +55,15 @@ export const EXPERIMENTAL_VISUAL_EFFECTS = Object.freeze({
   rim_light: {label:'輪郭の光',instruction:'RIM LIGHT: if supported by the existing light source, use a restrained edge highlight to separate the actor from the background. Do not invent sunset, change time/weather, uniformly darken faces or replace the source art style. Omit when physically unsupported.'},
 });
 
-export function readExperimentalSource({ scenario, castList, colorMode, userDirection='' }) {
+export function readExperimentalSource({ scenario, castList, colorMode, userDirection='', allowScenarioQualityWarning=false }) {
   const valid = validateMangaScenario(scenario, castList, {scenarioMode:'experimental-manga'});
-  if (!valid.ok) fail('STEP2で台詞形式が有効な5〜8コマのシナリオを作成してください。');
+  // 通常4コマと同じく、台詞なしの警告は原文を保持して継続する。
+  // コマ構造と壊れた台詞は、警告継続が許可されていても受け付けない。
+  if (!valid.structuralValid || valid.invalidDialogue.length || (!valid.ok && !allowScenarioQualityWarning)) {
+    const code = !valid.structuralValid ? 'PANEL_STRUCTURE_CONTRACT'
+      : valid.invalidDialogue.length ? 'DIALOGUE_SYNTAX' : 'DIALOGUE_CONTRACT';
+    throw Object.assign(new Error(`実験的コマ割り: ${formatMangaScenarioValidationIssue(valid)}`), { code });
+  }
   // Validate every camera before a malformed balloon can trigger paid recovery.
   const sourcePanels = getScenarioPanelBlocks(scenario).map(panel => {
     const camera = direction(panel.text, 'Camera');

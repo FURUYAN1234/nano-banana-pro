@@ -1333,6 +1333,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   const experimentalInput = (sourceScenario = scenario) => ({
     enabled:true,scenarioMode:getScenarioMode(),scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,showTitle,
+    allowScenarioQualityWarning:true,
     providerFamily:getCurrentPromptProviderFamily(),
     userDirection:inputMode==='manual'?manualTopic:'',
     imageEngineLabel:isOpenAIEngine?formatOpenAIImageEngineName(openAIImageQuality):GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana '),
