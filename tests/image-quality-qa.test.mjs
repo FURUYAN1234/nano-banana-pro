@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import { isMaterialImageQualityIssue } from '../src/lib/image-quality-failsafe.js';
 import { getPanelShotExecution } from '../src/lib/composition-variety.js';
 import * as imageQualityQa from '../src/lib/image-quality-qa.js';
+
+test('compact balloon layout retains exact speaker bindings and rejects contradictory metadata',()=>{
+  const prompt='## Panel 1\nDialogue: TEXT (PRINT VALUES ONLY): B1="返す！"; B2="待って！". BALLOON LAYOUT: B1 x=0.8, [アカリ] 頭, tail=右の頭へ; B2 x=0.2, [サエコ] 後頭部, tail=左の頭へ.\n';
+  assert.deepEqual(imageQualityQa.extractBubbleContracts(prompt)[0].bubbles.map(x=>x.speaker),['アカリ','サエコ']);
+  assert.equal(imageQualityQa.extractBubbleContracts(prompt+'B1=>[サエコ]\n')[0].bubbles[0].speaker,'');
+});
 import { buildGeminiImageApiPrompt, buildGeminiReferencePlan } from '../src/lib/gemini-image-references.js';
 
 import {
@@ -1048,6 +1054,25 @@ Dialogue: silent`;
   assert.ok(!review.issues.some(issue => issue.type === 'bubble_speaker'));
 });
 
+test('a clear sideways tail is not a speaker swap; wrong targets and overlapping routes remain defects', () => {
+  const finalPrompt = '## Panel 1\nDialogue: TEXT (PRINT VALUES ONLY): B1="任せて！". TAIL TIP LOCK: B1=>[アカリ] mouth/head.\n## Panel 2\nDialogue: silent\n## Panel 3\nDialogue: silent\n## Panel 4\nDialogue: silent';
+  const bubble = { bubble: 'B1', text: '任せて！', expected_speaker: 'アカリ', observed_tail_target: 'アカリ',
+    endpoint_relation: 'touches_speaker', tail_endpoint_evidence: 'The short sideways triangle ends at Akari ginger hair contour.',
+    tail_root: {x: 0.70, y: 0.30}, tail_tip: {x: 0.60, y: 0.30}, speaker_anchor: {x: 0.59, y: 0.30, part: 'head'},
+    root_relation: 'other', path_relation: 'clear', tail_path_evidence: 'Root at balloon left side, empty corridor to the head contour.',
+    center_x: 0.75, position_evidence: 'Right balloon body.' };
+  const inspect = overrides => {
+    const checks = spatialChecks();
+    checks[0].bubble_speaker = {status: 'ok', evidence: 'Visible tail traced.', left_to_right_texts: ['任せて！'], bubbles: [{...bubble, ...overrides}]};
+    return parseImageQualityQaResponse(JSON.stringify({pass: true, issues: [], observations, spatial_checks: checks}), {finalPrompt});
+  };
+  assert.equal(inspect({}).pass, true);
+  for (const change of [{observed_tail_target: 'サエコ', endpoint_relation: 'wrong_character'}, {path_relation: 'crosses_face'}, {path_relation: 'crosses_text'}]) {
+    assert.ok(inspect(change).issues.some(issue => issue.type === 'bubble_speaker'));
+  }
+  assert.ok(inspect({root_relation: 'ambiguous'}).issues.some(issue => issue.type === 'unverified'));
+});
+
 test('registered full names and bracket typography are one speaker, but unknown titles and other people are not', () => {
   for (const castLine of ['- Character [ルカ（夜の案内人）]: blue coat', '- [ルカ（夜の案内人）]: blue coat', 'MOSAIC PROTECTED CAST: ["ルカ（夜の案内人）"]']) {
     const finalPrompt = `${castLine}\n## Panel 1\nDialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="出発だ。". TAIL TIP LOCK: B1=>[ルカ] mouth/head.\n## Panel 2\nDialogue: silent\n## Panel 3\nDialogue: silent\n## Panel 4\nDialogue: silent`;
@@ -1100,6 +1125,7 @@ Dialogue: silent`;
     assert.ok(!review.issues.some(isMaterialImageQualityIssue));
   }
   assert.equal(inspect([target('乙'), target('甲')]).pass, true);
+  assert.equal(inspect([{...target('乙'), root_relation: 'other'}, {...target('甲'), root_relation: 'other'}]).pass, true);
   for (const bad of [
     { ...target('丙'), endpoint_relation: 'wrong_character' },
     { ...target('乙'), path_relation: 'crosses_face' },

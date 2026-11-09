@@ -11,6 +11,7 @@ import { assertImagePromptBudget } from '../src/lib/image-prompt-budget.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from '../src/lib/web-prompt-chunks.js';
 import { buildWebGenerationMetadata } from '../src/lib/generated-image-metadata.js';
 import { resolveFinalPromptReviewContract } from '../src/lib/final-prompt-review-contract.js';
+import { extractDialogueOnly } from '../src/lib/panel-utils.js';
 import { setMangaBackgroundSimplification } from '../src/lib/render-options.js';
 
 const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
@@ -91,6 +92,10 @@ test('five-panel QA derives dialogue, cast and action from the edited final docu
   const prepared = await experimental.prepareExperimentalManga(input, async()=>JSON.stringify({count:5,layout:'hero_bottom',reason:'最後の集合を広くする',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'ユウが青いカップを持つ。',dialogueIds:p.dialogueIds,breakout:null}))}));
   const original = resolveFinalPromptReviewContract(prepared, prepared.prompt);
   assert.deepEqual(original.plan.expectedDialogue.map(d=>d.text),source.dialogue.map(d=>d.text));
+  assert.deepEqual(original.plan.expectedDialogue.map(d=>d.speaker),source.dialogue.map(d=>d.speaker));
+  let compactPanel=0;
+  const compact=prepared.prompt.replace(/^Dialogue:[^\n]*$/gm,()=>`Dialogue: ${extractDialogueOnly(source.panels[compactPanel++].text,input.castList,{forImagePrompt:true,compactMetadata:true,separateMetadata:true})}`);
+  assert.deepEqual(resolveFinalPromptReviewContract(prepared,compact).plan.expectedDialogue.map(d=>d.speaker),source.dialogue.map(d=>d.speaker));
   const edited = prepared.prompt.replaceAll('青いカップ','赤いカップ').replace('確認1','一つずつ確かめよう');
   const review = resolveFinalPromptReviewContract(prepared, edited);
   assert.equal(review.plan.expectedDialogue[0].text,'一つずつ確かめよう');

@@ -1,5 +1,6 @@
 import { buildRenderOptionsContract, buildProtectedCastContract } from './render-options.js';
 import { readExplicitOutfit, hasScopedOutfitAssignment, OUTFIT_SCOPE_CONTRACT, OUTFIT_SCOPE_CONTRACT_COMPACT } from './seasonal-outfit.js';
+import { applyScriptedSfxPolicy, hasScriptedSfx } from './manga-sfx.js';
 import { stripSourceMetadata } from './sns-explanation.js';
 import { MANGA_FACIAL_ACTING_LOCK_COMPACT } from './facial-acting.js';
 import { formatGeneratedMangaTitle } from './manga-title.js';
@@ -874,7 +875,7 @@ ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${lensRule}
 ${eyeLineRule}
 
-${panelOutfits[i]?source(`FRAME OUTFIT: ${panelOutfits[i]}`)+'\n':''}${source(`Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}.`)}
+${panelOutfits[i]?source(`FRAME OUTFIT: ${panelOutfits[i]}`)+'\n':''}${source(`Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says ${hasScriptedSfx(pt)?'SFX/drawn lettering, ':''}handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}.`)}
 Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}.
 ${geminiRearForegroundLock}`;
     }).join('\n\n');
@@ -898,6 +899,7 @@ ${geminiRearForegroundLock}`;
       .replace(/Comedy does not excuse unrelated drawing defects\./g, 'Drama does not excuse unrelated drawing defects.');
   }
 
+  rawPrompt = applyScriptedSfxPolicy(rawPrompt, scenario);
   // 年齢セーフティフィルターの適用
   let safePrompt = applySafetyAgeUp(rawPrompt.trim());
   if (isMonochrome) {

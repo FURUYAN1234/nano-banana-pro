@@ -80,23 +80,24 @@ function setup(overrides = {}) {
 }
 const guideInputs = plan => plan.imageInputs.filter((_, i) => plan.referenceRoles?.[i] === 'style_reference');
 
-test('the four real planner expressions use the same builtin guide with complete attachment budget', () => {
+test('all real planner expressions use the same builtin guide with complete attachment budget', () => {
   const planners = calls('buildOpenAIReferencePlan');
-  assert.equal(planners.length, 4, 'native budget, ordinary budget, Web copy, API');
+  assert.equal(planners.length, 5, 'native budget, ordinary budget, Web copy, API, repair budget');
   const h = setup();
   const plans = planners.map(node => evaluate(workflow, node, h.context));
   assert.ok(plans.every(plan => guideInputs(plan).length === 1));
   assert.ok(plans.every(plan => guideInputs(plan)[0].image_url === guideInputs(plans[0])[0].image_url));
   assert.ok(plans.every(plan => plan.rolePrompt === plans[0].rolePrompt));
+  h.context.repairReferencePlan=plans[4];
   const budgets = calls('getOpenAIPromptBodyBudget').map(node => evaluate(workflow, node, h.context));
-  assert.equal(budgets.length, 2);
-  assert.deepEqual(budgets, Array(2).fill(references.getOpenAIPromptBodyBudget(plans[0])));
+  assert.equal(budgets.length, 3);
+  assert.deepEqual(budgets, Array(3).fill(references.getOpenAIPromptBodyBudget(plans[0])));
   assert.equal(budgets[0] + plans[0].rolePrompt.length + 2, 32000);
 });
 
 test('each production planner uses its current scenario instead of a stale display scenario', () => {
   const planners = calls('buildOpenAIReferencePlan');
-  const scenarioNames = ['sourceScenario', 'currentScenario', 'sourceScenario', 'generationScenario'];
+  const scenarioNames = ['sourceScenario', 'currentScenario', 'sourceScenario', 'generationScenario', 'generationScenario'];
   for (const [index, name] of scenarioNames.entries()) {
     const h = setup({ scenario: normal, sourceScenario: normal, currentScenario: normal, generationScenario: normal, [name]: mixed });
     const plan = evaluate(workflow, planners[index], h.context);
@@ -104,7 +105,7 @@ test('each production planner uses its current scenario instead of a stale displ
   }
 });
 
-test('all four actual call sites exclude mono, custom style, source-style lock and ordinary media', () => {
+test('all actual call sites exclude mono, custom style, source-style lock and ordinary media', () => {
   for (const overrides of [{ colorMode: 'monochrome' }, { styleJson: { style_name: '利用者指定', reproduction_prompt: '指定描法' } },
     { punchlineType: 'SeriousDocumentary', activePunchlineType: 'SeriousDocumentary', resolvedPunchlineTypeRef: { current: 'SeriousDocumentary' } },
     { scenario: normal, sourceScenario: normal, currentScenario: normal, generationScenario: normal }]) {
@@ -115,6 +116,21 @@ test('all four actual call sites exclude mono, custom style, source-style lock a
       assert.equal(plan.imageInputs.length, 2);
       assert.doesNotMatch(plan.rolePrompt, /STYLE ONLY/);
     }
+  }
+});
+
+test('repair budget includes the actual source image and the same selected media as repair transport',()=>{
+  for(const colorMode of ['color','monochrome']) {
+    const originalCandidate={mimeType:'image/png',base64Img:'Yw=='};
+    const h=setup({colorMode,originalCandidate,repairSource:originalCandidate});
+    const planners=calls('buildOpenAIReferencePlan');
+    const sent=evaluate(workflow,planners[3],h.context),budget=evaluate(workflow,planners[4],h.context);
+    assert.equal(sent.rolePrompt,budget.rolePrompt);
+    assert.deepEqual(sent.imageInputs,budget.imageInputs);
+    assert.equal(budget.counts.original,1);
+    const available=references.getOpenAIPromptBodyBudget(budget);
+    assert.equal(references.appendOpenAIReferencePrompt('X'.repeat(available),sent).length,32000);
+    assert.throws(()=>references.appendOpenAIReferencePrompt('X'.repeat(available+1),sent));
   }
 });
 

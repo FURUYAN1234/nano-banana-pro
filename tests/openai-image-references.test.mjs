@@ -60,10 +60,18 @@ test('recognized character materials retain rendering priority through color, mo
       characterImages: [sheet, background, prop],
       ...(repair ? { originalCandidate: { base64Img: 'Yw==', mimeType: 'image/png' } } : {}) });
     const rules = plan.rolePrompt.split('\n').find(line => line.startsWith('CHARACTER REFERENCE.'));
-    assert.match(rules, /identity and canonical clothing unless the approved prompt explicitly overrides clothing/);
-    assert.match(rules, /identifying traits and age/);
-    assert.match(rules, /selected panel rendering recipe determines face\/eye construction and body stylization/);
-    assert.match(rules, /preserve the reference drawing style only under an explicit reference-style lock in the approved prompt/);
+    if (compact && repair) {
+      assert.match(rules, /識別特徴・年齢・標準衣装/);
+      assert.match(rules, /明示Outfit\/同一場面で確立した服を優先/);
+      assert.match(rules, /後の省略で参照服へ戻さない/);
+      assert.match(rules, /コマ限定指定と着替えを保持/);
+      assert.match(rules, /顔\/目の構築と頭身は指定コマの描法に従い、参照描法固定は明示時だけ/);
+    } else {
+      assert.match(rules, /identity and canonical clothing unless the approved prompt explicitly overrides clothing/);
+      assert.match(rules, /identifying traits and age/);
+      assert.match(rules, /selected panel rendering recipe determines face\/eye construction and body stylization/);
+      assert.match(rules, /preserve the reference drawing style only under an explicit reference-style lock in the approved prompt/);
+    }
     for (const role of ['BACKGROUND REFERENCE.', 'PROP REFERENCE.']) {
       for (const line of plan.rolePrompt.split('\n').filter(line => line.includes(role))) {
         assert.doesNotMatch(line, /face\/eye|body stylization|reference-style lock|canonical clothing/);
@@ -169,8 +177,10 @@ test('monochrome reference headroom is reserved identically for Web copy and API
 test('workflow reserves, copies and sends the same selected reference medium', () => {
   const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
   const plans = [...source.matchAll(/buildOpenAIReferencePlan\(\{([\s\S]*?)\}\)/g)];
-  assert.equal(plans.length, 4); // normal/experimental preparation, Web copy, API send
+  assert.equal(plans.length, 5); // normal/experimental preparation, Web copy, API send, repair budget
   for (const [, options] of plans) assert.match(options, /\bcolorMode\b/);
+  assert.match(source,/repairPromptSource: isOpenAIEngine \? stripImageReferenceManifest\(currentPrompt\)/);
+  assert.match(source,/repairPromptMaxChars: isOpenAIEngine \? getOpenAIPromptBodyBudget\(repairReferencePlan\)/);
 });
 
 test('character sheets precede the active panorama and have separate roles', () => {

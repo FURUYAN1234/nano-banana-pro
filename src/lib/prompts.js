@@ -1,4 +1,5 @@
 import { buildCopyrightMosaicInstruction, NO_PAGE_TITLE } from './render-options.js';
+import { SCENARIO_SFX_CONTRACT } from './manga-sfx.js';
 import { buildScenarioPanelCountInstruction } from './scenario-validation.js';
 import { getPunchlineLabel, COMPACT_EMOTION_STYLES, STYLE_DRAWING_CONTRACTS } from './constants';
 import { buildRecentStoryContext } from './generation-history.js';
@@ -405,6 +406,8 @@ export const getScenarioPrompt = ({
 
          ${SCENARIO_FACIAL_ACTING_CONTRACT}
          ${SCENARIO_EXPRESSIVE_STAGING_CONTRACT}
+         ${SCENARIO_SFX_CONTRACT}
+         アクションは選択したオチの種類に関係なく、題材や人物の判断から必要なら描く。動きの前後・接触・支点・反動を状況欄に具体化し、読む順番に沿って一コマずつ進める。静かな題材へ派手な動作を無理に足さない。Cameraの強さや画風を動作のために落とさない。
 
          ${punchlineType === 'Surreal'
            ? `【${lastPanel}のシュールな静寂】: シュール指定では静かな間を使ってよいが、物語に必要な人物配置・視線・小道具を明記し、無関係な記念写真構図にはしないこと。`

@@ -9,6 +9,27 @@ let getScenarioPrompt;
 let getPanelCompositionAssist;
 let getPanelShotExecution;
 let sharePanelShotExecution;
+
+test('shot projection resolves hidden expression and balloon requests without rotating the actor', () => {
+  for (const compact of [false, true]) {
+    const cue = getPanelShotExecution('左後方の高所から45度見下ろす。頭頂と背面を見せる広角の引き。', { compact });
+    assert.match(cue, /見えない眉・目・口.*描き足さない/);
+    assert.match(cue, /吹き出し.*口を露出させない/);
+    assert.match(cue, /指定の体\/首\/顔向き/);
+    const tele = getPanelShotExecution('右前の高い位置から25度見下ろす85mm望遠の引き', { compact });
+    assert.match(tele, /望遠でも.*俯角.*頭頂.*肩上面/);
+    assert.doesNotMatch(tele, /前景大\/遠景小は可|foreground may stay large, receding actors smaller/);
+    assert.doesNotMatch(getPanelShotExecution('右前の低所から見上げる望遠'), /望遠でも.*俯角/);
+  }
+});
+
+test('explicit scene-axis rotation compiles as roll without treating bodily tilt as camera roll', () => {
+  assert.match(getPanelShotExecution('左側面の低所から20度見上げる。場面の鉛直を15度傾ける。'), /ロール:/);
+  assert.match(getPanelShotExecution('俯瞰。画面を右へ20度傾けて撮る。'), /ロール:/);
+  for (const camera of ['俯瞰。顔を15度傾ける。', '俯瞰。箱を右へ15度傾ける。']) {
+    assert.doesNotMatch(getPanelShotExecution(camera), /ロール:/);
+  }
+});
 const applicableShotClauses = (prompt, panelNumber) => {
   const shared = [...prompt.matchAll(/^SHOT (P\d+(?:\/P\d+)*) ONLY: (.+)$/gm)]
     .filter(([, panels]) => panels.split('/').includes(`P${panelNumber}`)).map(([, , cue]) => cue);
@@ -18,7 +39,7 @@ const applicableShotClauses = (prompt, panelNumber) => {
 
 test('rear camera projection permits natural back planes without an explicit back-view instruction', () => {
   for (const compact of [false, true]) {
-    for (const camera of ['作業室の左後方から俯瞰する引き', '装置の右後ろから見上げる中景', 'from the rear of the hall, high-angle']) {
+    for (const camera of ['作業室の左後方から俯瞰する引き', '講評室の後方左上から強く見下ろす広めのショット', '後方右上から俯瞰', '背後から見上げる', '装置の右後ろから見上げる中景', 'from the rear of the hall, high-angle']) {
       const cue = getPanelShotExecution(camera, { compact });
       assert.doesNotMatch(cue, /背面指定の人物だけ|only.*explicit.*back/i);
       assert.match(cue, /人物の指定向きを保持.*正面\/側面\/背面.*Camera\/Actionの位置関係/);
@@ -26,6 +47,17 @@ test('rear camera projection permits natural back planes without an explicit bac
       assert.match(cue, /距離\/切取り保持、肩越し接写を強制しない/);
     }
   }
+});
+
+test('floor position and overlapping border instructions preserve a wide pullback', () => {
+  for (const camera of ['床寄りの位置から見上げる広角20mmの引き。', '地面寄りの視点から広角の引き。枠線は頭の後ろで途切れる。', '左前から見上げる広角の引き。枠線はその後ろで途切れる。']) {
+    const cue = getPanelShotExecution(camera, { compact: true });
+    assert.equal(isPullbackShot(camera), true, camera);
+    assert.match(cue, /引き:/, camera);
+    assert.doesNotMatch(cue, /主対象を寄りで切取|仰角の接写:|後方は基準対象に対して保持/, camera);
+  }
+  const detail = getPanelShotExecution('床寄りの位置から、装置の右後ろの低い位置で手の寄りを撮る接写。', { compact: true });
+  assert.match(detail, /主対象を寄りで切取.*後方は基準対象に対して保持/);
 });
 
 test('rear camera anchors do not force every actor to turn away from scripted gaze', () => {

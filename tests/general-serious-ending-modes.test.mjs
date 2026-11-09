@@ -135,7 +135,8 @@ test('registers general serious endings independently from documentary fidelity'
     'EmotionalClosure',
     'TragicClosure',
     'AngerProtest',
-    'EarnedReversal'
+    'EarnedReversal',
+    'SeriousAction'
   ]);
   assert.deepEqual(GAG_ENDING_OPTIONS.map(({ value }) => value), [
     'Surreal',
@@ -149,7 +150,8 @@ test('registers general serious endings independently from documentary fidelity'
     'CanceledEnding',
     'ComicRage',
     'SelfInflicted',
-    'RoleReversal'
+    'RoleReversal',
+    'GagAction'
   ]);
   assert.equal(getPunchlineLabel('SeriousAuto'), 'シリアス内でおまかせ');
   assert.equal(getPunchlineLabel('QuietAftermath'), '静かな余韻');
@@ -177,9 +179,11 @@ test('groups automatic, serious, gag, and documentary endings in the existing se
 const ADDED_ENDINGS = [
   { type: 'AngerProtest', label: '怒り・抗議', tone: 'serious', meaning: /静かな抗議/, boundary: /叫びや暴力を必須にしない/ },
   { type: 'EarnedReversal', label: '逆転・反撃', tone: 'serious', meaning: /先に示した行動・準備・証拠/, boundary: /突然の能力や偶然だけで解決しない/ },
+  { type: 'SeriousAction', label: 'アクション（シリアス）', tone: 'serious', meaning: /きっかけ・身体の反応・判断・結果/, boundary: /指定されたカメラと接触を保つ/ },
   { type: 'ComicRage', label: '激怒・逆ギレ', tone: 'gag', meaning: /怒りの原因/, boundary: /無関係な相手への突然の暴力に置き換えない/ },
   { type: 'SelfInflicted', label: '自業自得・ブーメラン', tone: 'gag', meaning: /本人の発言・行動/, boundary: /無関係な罰を突然与える結末にしない/ },
-  { type: 'RoleReversal', label: '立場逆転', tone: 'gag', meaning: /先に示した力関係や役割/, boundary: /最後に新設定を足して逆転を説明しない/ }
+  { type: 'RoleReversal', label: '立場逆転', tone: 'gag', meaning: /先に示した力関係や役割/, boundary: /最後に新設定を足して逆転を説明しない/ },
+  { type: 'GagAction', label: 'アクション（ギャグ）', tone: 'gag', meaning: /仕掛け・動き・予想外の着地/, boundary: /指定されたカメラと接触を保つ/ }
 ];
 
 test('new explicit endings and automatic lists carry distinct causes rather than a generic anger tag', () => {
@@ -198,6 +202,13 @@ test('new explicit endings and automatic lists carry distinct causes rather than
     assert.match(native, boundary);
     assert.doesNotMatch(native, /4コマ目/);
   }
+});
+
+test('other endings still allow story-driven action without changing the chosen ending', () => {
+  const prompt=buildScenarioRequest('EarnedReversal','壁を蹴って体勢を立て直し、競技で逆転する。');
+  assert.match(prompt,/アクションは選択したオチの種類に関係なく、題材や人物の判断から必要なら描く/);
+  assert.match(prompt,/必ず『逆転・反撃』/);
+  assert.match(prompt,/壁を蹴って体勢を立て直し/);
 });
 
 test('enhancement and payoff checks preserve each new ending meaning and reject replacement endings', () => {

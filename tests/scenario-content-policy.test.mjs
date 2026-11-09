@@ -17,6 +17,15 @@ test('rejects unsafe biological and weaponized wording across the full scenario 
   );
 });
 
+test('distinguishes a prohibition on showing blood from an actual depiction', () => {
+  for (const scenario of ['流血も怪我もない。壁を蹴って着地する。', '流血なし。', '流血を描かない。', '流血・怪我なし。', '流血や負傷は描かない。']) {
+    assert.doesNotThrow(() => assertSafeScenarioContent({ scenario }), scenario);
+  }
+  for (const scenario of ['流血している。', '流血なしではない。', '流血なし。別の人物が流血している。', '流血なし。背景には臓器が見える。']) {
+    assert.throws(() => assertSafeScenarioContent({ scenario }), /表現衛生/, scenario);
+  }
+});
+
 test('allows harmless comedy and retries once with a safe rewrite instruction', async () => {
   const prompts = [];
   const responses = [

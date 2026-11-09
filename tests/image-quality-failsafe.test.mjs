@@ -18,6 +18,30 @@ import {
   selectImageQualityCandidate,
 } from '../src/lib/image-quality-failsafe.js';
 
+test('long page repair budgets the sendable source and preserves every issue in a compact edit',async()=>{
+  const original={base64Img:'original'},fixed={base64Img:'fixed'};
+  const body='APPROVED CAMERA/DIALOGUE/STYLE\n'+'原文保持'.repeat(6800);
+  const full=body+'\nOLD REFERENCE MANIFEST\n'+'old attachment map '.repeat(160);
+  const issues=[{type:'camera_geometry',panel:4,subject:'lens',reason:'near hand enlarged instead of distant telephoto',correction:'Use the approved high telephoto projection.'}];
+  let reviews=0,edits=0;
+  const result=await pageWorkflow.runPageImageQuality({kind:'experimental-manga',count:6},{
+    mode:'experimental-manga',allowRepair:true,originalCandidate:original,originalPrompt:full,
+    repairPromptSource:body,repairPromptMaxChars:body.length+1500,
+    reviewCandidate:async(_,prompt)=>{reviews++;assert.equal(prompt,full);return {pass:false,issues};},
+    generateRepairCandidate:async prompt=>{edits++;assert.ok(prompt.startsWith(body));assert.ok(prompt.length<=body.length+1500);assert.ok(prompt.includes(issues[0].reason));assert.ok(prompt.includes(issues[0].correction));assert.match(prompt,/6/);return fixed;},
+  });
+  assert.equal(reviews,1);assert.equal(edits,1);assert.equal(result.candidate,fixed);assert.equal(result.finalReview.notRechecked,true);
+});
+
+test('oversize repair fails before API and reports its real reason without dropping source or issues',async()=>{
+  const progress=[],image={base64Img:'original'};
+  const result=await pageWorkflow.runPageImageQuality({kind:'four-panel',count:4},{mode:'four-panel',allowRepair:true,
+    originalCandidate:image,originalPrompt:'X'.repeat(500),repairPromptMaxChars:100,
+    reviewCandidate:async()=>({pass:false,issues:[{type:'bubble_text',panel:1,reason:'missing last word'}]}),
+    generateRepairCandidate:()=>assert.fail('oversize prompt must not be sent'),onProgress:x=>progress.push(x)});
+  assert.equal(result.candidate,image);assert.equal(result.stopReason,'repair_failed');assert.match(progress.join('\n'),/上限/);
+});
+
 test('page contract skips review when OFF and rejects cross-mode inputs before review', async () => {
   const image={base64Img:'fixture'};
   for(const mode of ['four-panel','single-image']) {

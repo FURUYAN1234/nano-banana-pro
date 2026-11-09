@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-  "manualVersion": "7.3.6",
-  "manualSourceSha256": "fd7a2ab3fe6a255a443b48e80ae902ff61df750b6bc68806cbf7ccc4f7250b20",
+  "manualVersion": "7.3.7",
+  "manualSourceSha256": "3f98ee775b57ccfcafbe1a5eb104d04dbf79e0f249483641aefbdffa001a0dc4",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "a35a615fc0cad56b6754f42e1616d86677aac8a7435f4b783b7711cc533f33ea"
+      "sha256": "86ef8e82c95fdf67923da341da89f2d383ab1af1031f488fa0442ac26748ba90"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "9e23901e3cc7b6e9cd0e3e42e3e628652b58491c26ff2d2342647212038fa26a"
+      "sha256": "6f985ec078363a4e7766c311f9ef173abdce4dae50f190b34e90b3751a146e61"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "a97ae39491151d44e947afb2afc74a0bab346710dba65b7a449e764c2ad62239"
+      "sha256": "1841b16d19e73c2c5971fc11de36497fe45a52970d15cad805da66a5305cddc3"
     }
   ],
-  "readmeSha256": "5c3a255120e38c2c4a66986022468422efbe55bfe31f851e51c1d255846e6d66",
+  "readmeSha256": "fcdc23941e53a62e6f88731cb1371689b3934a8abb2ae95ffd8e7f122102f37f",
   "readmeLanguageGaps": [],
   "sourceTree": "e33117515e0c67b7a4c8862063888fa55c8589a7",
   "publicTree": "fcacb31cf4f76268999ff40a1aea001af4fc64f1",
-  "packageSha256": "b1186f3e2e7a24ce15149b1e79e821a084b27b6c41b026be20eb0b0d89f48f8b",
+  "packageSha256": "f4d32bafee0c08b51b45979f90c2e892290d8c08c13a0d21ca7dc17981ae7b7d",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,17 +41,17 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-09T04:38:10.759Z",
-  "findings": "Reviewed all current README edits against the source. Current display, footer and candidate release links are v7.3.6. The long-prompt section explains overflow-only sharing of exact repeated frame recipes with explicit frame scope, retention of original camera, dialogue and actor directions, and reuse on color-only change. Other sections use the v7.3.5 verified review. Bound the reviewed source and public trees to the staged v7.3.6 release after explicit authorization.",
-  "manualFindings": "Compared all 71 pages against v7.3.5. Outside the footer, Gemini p1 and system p18/p19 changed. Inspected all three before/after pairs; the STEP3 explanation and version changes fit without clipping or overlap. Builder checks passed for page bounds, version, privacy and links. The three public candidate PDFs match the reviewed files by SHA-256.",
+  "checkedAt": "2026-11-09T07:49:44.044Z",
+  "findings": "Reviewed v7.3.7 README changes against source: serious/gag action counts and optional action elsewhere; explicit spanning Camera constraints and one bounded plan correction; one whole-page inspection when breakout prevents reliable local frame detection; no invented crops or pass from ambiguous boundaries. Both language bodies now describe the same behavior. Existing sections retain the unchanged v7.3.6 review. This is a documentation audit, not image-quality or deployment acceptance; real API validation is still in progress. Revision53 adds tail-to-body speaker verification and the user-approved minor-variation tolerance. Reviewed both language blocks against the implementation. No image acceptance is claimed. Revision55: both README languages describe scenario-directed drawn SFX, no text overlay, explicit-silence priority and protected dialogue/acting. Changelog matches sideways-tail classification and actual repair manifest budgeting; no API acceptance claimed.",
+  "manualFindings": "Reused the prior v7.3.7 comparison of all 71 pages (changed Gemini p1 and system p11/p14/p18 viewed; remaining body regions equal apart from version footers). Rebuilt the system and Gemini manuals after updating whole-page inspection and explicit spans; inspected system p14: text fits with no clipping, wrapping remains readable. Builder page bounds/version/privacy/link checks passed. The system PDF matches the viewed candidate; unchanged Gemini drawing streams were previously compared equal (PDF metadata may differ). Real API quality acceptance remains pending. Revision53 system p14 rebuilt and visually inspected: balloon-ownership and tolerance text fits without clipping. Revision55: system page17 rebuilt and visually inspected; SFX paragraph fits with no clipping. Page count40 and bounds/privacy/link checks pass. Gemini manual unchanged in public downloads.",
   "pricingReview": {
-    "version": "7.3.6",
+    "version": "7.3.7",
     "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
     "checkedAt": "2026-11-09T04:38:10.759Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Reopened official pricing: OpenAI Standard Luna $0.10/$0.50, Sol $2/$10, Terra $1/$5, Astra $10/$50 per 1M input/output; image Sunburst $8/$30, cached image $2, text $5/cached $1.25. Google source fetched from official pricing redirect: Nano Banana 2.1 Standard $1.50 input/$7.50 text output/$30 image, Batch $0.75/$3.75/$15. Flash 3.8 Standard $0.75/$3.75 through 2026-12-31; Batch $0.375/$1.875. Source prices unchanged. Reopened and compared both official price tables immediately before release. Standard rates match the candidate. Reopened and compared both official rate tables immediately before the v7.3.6 release. The candidate pricing sources match the reviewed Standard rates."
+    "findings": "Reopened official pricing: OpenAI Standard Luna $0.10/$0.50, Sol $2/$10, Terra $1/$5, Astra $10/$50 per 1M input/output; image Sunburst $8/$30, cached image $2, text $5/cached $1.25. Google source fetched from official pricing redirect: Nano Banana 2.1 Standard $1.50 input/$7.50 text output/$30 image, Batch $0.75/$3.75/$15. Flash 3.8 Standard $0.75/$3.75 through 2026-12-31; Batch $0.375/$1.875. Source prices unchanged. Reopened and compared both official price tables immediately before release. Standard rates match the candidate. Reopened and compared both official rate tables immediately before the v7.3.6 release. The candidate pricing sources match the reviewed Standard rates. v7.3.7 pricing source is byte-identical to the same-day v7.3.6 reviewed source; reused that observation and its original timestamp."
   }
 }

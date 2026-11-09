@@ -12,6 +12,36 @@ try {
   const {resolvePageWorkflow}=await server.ssrLoadModule('/src/lib/page-workflow.js');
   const inputFor=count=>({enabled:true,scenarioMode:'experimental-manga',castList:'## ユウ',colorMode:'color',scenario:Array.from({length:count},(_,i)=>`[${i+1}コマ目]\n[Camera: 高い位置から俯瞰]\n[EMOTION: NORMAL]\n状況: ユウが道具を順に確かめる。\n${i===2?'セリフなし':`ユウ「確認${i+1}」`}`).join('\n')});
   const planFor=source=>({count:source.panels.length,layout:'two_columns',reason:'動作順を保ち、隣り合う場面を対比する',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'ユウが指定の道具を確かめる。',dialogueIds:p.dialogueIds,breakout:null}))});
+  test('explicit vertical spanning frames constrain layout without weakening the source shot',async()=>{
+    for(const [count,panel,layout] of [[5,1,'tall_right_top'],[6,3,'tall_right_middle'],[8,6,'tall_right_bottom']]) {
+      const input=inputFor(count);
+      let n=0;
+      input.scenario=input.scenario.replaceAll('[Camera: 高い位置から俯瞰]',()=>`[Camera: ${++n===panel?'縦2段を連結した一枚の縦長コマ。上下に分割しない。':''}高い位置から俯瞰]`);
+      const source=m.readExperimentalSource(input),plan=planFor(source);
+      assert.throws(()=>m.validateExperimentalPlan(plan,source),error=>error.code==='EXPLICIT_LAYOUT_CONTRACT');
+      assert.equal(m.validateExperimentalPlan({...plan,layout},source).layout,layout);
+      const prompt=m.buildExperimentalPlanPrompt(source);
+      assert.match(prompt,/EXPLICIT FRAME CONTRACT/);
+      let calls=0;
+      const result=await m.prepareExperimentalManga(input,async prompt=>{
+        calls++;if(calls===2)assert.match(prompt,/EXPLICIT_LAYOUT_CONTRACT/);
+        return JSON.stringify({...plan,layout:calls===1?'two_columns':layout});
+      });
+      assert.equal(calls,2);assert.equal(result.plan.layout,layout);
+      assert.equal(result.plan.panels[panel-1].camera,source.panels[panel-1].camera);
+      assert.match(result.prompt,/SPANNING FRAMES/);
+      calls=0;
+      await assert.rejects(m.prepareExperimentalManga(input,async()=>{calls++;return JSON.stringify(plan);}),error=>error.code==='EXPLICIT_LAYOUT_CONTRACT');
+      assert.equal(calls,2,'one bounded plan repair, never an unlimited reroll');
+    }
+  });
+  test('vertical bodies and prohibited or optional tall frames do not force a spanning layout',()=>{
+    for(const text of ['縦長の箱を持つ人物を俯瞰','縦長コマは禁止。俯瞰','縦長コマにしない。俯瞰','縦長コマでもよい。俯瞰']) {
+      const input=inputFor(6);input.scenario=input.scenario.replace('高い位置から俯瞰',text);
+      const source=m.readExperimentalSource(input);
+      assert.equal(m.validateExperimentalPlan(planFor(source),source).layout,'two_columns');
+    }
+  });
   test('native five and eight panels survive STEP3 once, without expansion or silent padding',async()=>{
     for(const count of [5,8]) {
       const input=inputFor(count),source=m.readExperimentalSource(input),plan=planFor(source);let calls=0;

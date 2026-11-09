@@ -6,6 +6,51 @@ const server = await createServer({appType:'custom',logLevel:'silent',server:{mi
 try {
   const m = await server.ssrLoadModule('/src/lib/experimental-manga.js');
   const {runPageImageQuality} = await server.ssrLoadModule('/src/lib/image-quality-failsafe.js');
+  test('observed elevation must match the planned direction, not merely be non-eye-level', () => {
+    for(const [camera,elevation,mismatch] of [['俯瞰','low',true],['アオリ','high',true],['俯瞰','high',false],['アオリ','low',false],['俯瞰','uncertain',false]]) {
+      const plan={count:1,panels:[{camera}]};
+      const result=m.validateExperimentalReview({inspectionVersion:11,observedCount:1,camera:'pass',evidence:[{panel:1,
+        view:{elevation,gaze:'uncertain',evidence:'人物の頭頂と肩の上面および床の面が見える。'}}]},plan);
+      assert.equal(result.issues.some(issue=>issue.includes('指定は')&&issue.includes('実画像の投影')),mismatch);
+      if(mismatch)assert.equal(result.camera,'fail');
+    }
+  });
+  test('breakout pages inspect camera and lettering in the same request using observed frame bounds', async () => {
+    const frames=m.experimentalLayout(6,'tall_right_top').map((r,i)=>({panel:i+1,bounds:[.02+.96*r.x,.08+.88*r.y,.95*r.w,.87*r.h],edgeEvidence:'上下左右の実線と白い溝が連続して見える。'}));
+    const plan={count:6,layout:'tall_right_top',panels:frames.map((_,i)=>({breakout:i===1?{part:'hand',into:1}:null}))};
+    let requests=0;
+    const response={complete:true,observedFrames:frames,observedCount:6,status:'warning',camera:'fail',
+      pageEvidence:'実際の題字を観察',issues:['後ろ姿の指定に対し、正面の両眼と口が見える。'],
+      evidence:frames.map((_,i)=>({panel:i+1,view:{elevation:'high',gaze:'uncertain',evidence:'両眼と口が正面から見え、肩の前面が見える。'},physical_bodies:[],text_regions:[]}))};
+    const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan,prompt:'Expected source contract'},
+      async(prompt,images)=>{requests++;assert.match(prompt,/Expected source contract/);assert.match(prompt,/observedFrames/);
+        assert.doesNotMatch(prompt,/Inspect only the physical comic frames/);assert.equal(images.length,3);
+        return {text:JSON.stringify(response),model:'test-only'};},
+      {detect:async()=>[],inspect:async()=>({width:2240,height:3168}),crop:async(_image,rect)=>{assert.ok(rect.y>=3000,'only footer crops, never predicted panel slots');return {dataUrl:'footer'};}});
+    assert.equal(requests,1);assert.equal(result.review.camera,'fail');assert.equal(result.review.evidence.length,6);
+    assert.equal(result.review.inspectionKind,'whole-page-assessment');
+    assert.deepEqual(result.review.evidence[1].bounds,frames[1].bounds);
+  });
+  test('ambiguous or mismatched whole-page observations never fabricate crops or permit repair', async () => {
+    const plan={count:6,layout:'tall_right_top',panels:Array.from({length:6},(_,i)=>({breakout:i===1?{part:'hand',into:1}:null}))};
+    const realFrames=m.experimentalLayout(5,'two_columns').map(r=>({bounds:[.02+.96*r.x,.08+.88*r.y,.95*r.w,.87*r.h],edgeEvidence:'輪郭線の接続と白いコマ間が見える。'}));
+    for(const [frames,complete,status] of [[realFrames,true,'warning'],[realFrames,false,'unverified'],[realFrames.map(()=>realFrames[0]),true,'unverified']]) {
+      let requests=0;
+      const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan,prompt:'Source contract for comparison'},
+        async(prompt,images)=>{
+          requests++;assert.equal(images.length,3);assert.match(prompt,/Never copy expected layout coordinates/);
+          return {text:JSON.stringify({complete,observedFrames:frames}),model:'test-only'};
+        },{detect:async()=>[],inspect:async()=>({width:2240,height:3168}),crop:async(_image,rect)=>{
+          assert.ok(rect.y>=3000,'never crop guessed panels');return {dataUrl:'footer'};
+        }});
+      const review=m.validateExperimentalReview(result.review,plan);
+      assert.equal(requests,1);
+      assert.equal(review.status,status);
+      assert.equal(review.observedCount,status==='warning'?5:null);
+      assert.equal(review.camera,'uncertain');
+      assert.deepEqual(m.experimentalRepairIssues(review,plan),[],'partial observation cannot spend a repair');
+    }
+  });
   test('automatic correction OFF performs no inspection or repair for any page kind',async()=>{
     for(const [kind,count] of [['single-image',1],['four-panel',4],['experimental-manga',6]]) {
       const originalCandidate={base64Img:'original',mimeType:'image/png'};

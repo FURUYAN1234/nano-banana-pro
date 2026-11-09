@@ -347,12 +347,15 @@ Within each panel scan regions from the physical LEFT edge to the RIGHT edge, re
 export const extractBubbleContracts = (prompt) => [...String(prompt).replace(/^[\t ]+/gm, '').matchAll(/^## Panel (\d+)\s*\n([\s\S]*?)(?=^## Panel \d+\s*\n|$(?![\s\S]))/gm)]
   .map(([, number, body]) => {
     const dialogue = body.match(/^Dialogue[^\n]*TEXT \(PRINT VALUES ONLY\): ([^\n]*)/m)?.[1] || '';
-    const speakers = new Map([...body.matchAll(/\b(B\d+)\s*(?:=>|->)\s*\[([^\]]+)\]/g)]
-      .map(([, bubble, speaker]) => [bubble, speaker.trim()]));
+    const layout = body.match(/\bBALLOON LAYOUT:\s*(B\d+\s+x=[^\n]*)/)?.[1] || '';
+    const speakerBindings = [...body.matchAll(/\b(B\d+)\s*(?:=>|->)\s*\[([^\]]+)\]/g),
+      ...layout.matchAll(/\b(B\d+)\s+x=[0-9.]+,\s*\[([^\]]+)\]/g)]
+      .map(([, bubble, speaker]) => [bubble, speaker.trim()]);
     const entries = dialogue ? readBubbleTextValues(dialogue) : readGeminiPanelDialogue(body);
     const bubbles = entries
       .map(({ bubble, text, speaker: transportSpeaker }) => {
-        const speaker = transportSpeaker || speakers.get(bubble) || '';
+        const candidates = [...new Set([transportSpeaker,...speakerBindings.filter(([id])=>id===bubble).map(([,name])=>name)].filter(Boolean))];
+        const speaker = candidates.length===1 ? candidates[0] : '';
         const cast = readPanelCastNames(body);
         const group = parseCollectiveSpeaker(speaker, cast);
         const offscreen = [...body.matchAll(/^OFFSCREEN VOICE: ([^\n]*)/gm)].some(([, line]) =>
@@ -541,7 +544,7 @@ const collectiveTailIssues = (bubble, expected, panel, aliases) => {
       || typeof target.tail_path_evidence !== 'string' || !target.tail_path_evidence.trim()
       || target.root_relation === 'ambiguous' || target.path_relation === 'ambiguous') {
       add('unverified', 'Collective tail branch lacks grounded root/path evidence.');
-    } else if (target.root_relation !== 'lower_speaker_facing' || target.path_relation !== 'clear') {
+    } else if (target.path_relation !== 'clear') {
       add('bubble_speaker', `Collective tail geometry is ${target.root_relation}/${target.path_relation}. ${target.tail_path_evidence}`);
     }
   }
@@ -1438,7 +1441,9 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
                 issues.push({ type: 'unverified', panel: entry.panel, subject: bubble.bubble, reason: 'Bubble tail lacks a grounded root/path inspection.' });
               } else if (rootRelation === 'ambiguous' || pathRelation === 'ambiguous') {
                 issues.push({ type: 'unverified', panel: entry.panel, subject: bubble.bubble, reason: `${bubble.bubble} tail root or route is ambiguous. ${pathEvidence}` });
-              } else if (rootRelation !== 'lower_speaker_facing' || pathRelation !== 'clear') {
+              // A sideways root can still point unambiguously to the right speaker.
+              // Endpoint/identity checks above and route overlap checks remain independent.
+              } else if (pathRelation !== 'clear') {
                 issues.push({ type: 'bubble_speaker', panel: entry.panel, subject: bubble.bubble,
                   reason: `${bubble.bubble} tail geometry is ${rootRelation}/${pathRelation}. ${pathEvidence}` });
               }

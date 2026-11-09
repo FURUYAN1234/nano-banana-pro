@@ -69,6 +69,11 @@ const ENDING_MODE_POLICIES = Object.freeze({
     label: '逆転・反撃',
     guidance: '不利な状況にいた人物が、先に示した行動・準備・証拠を使って局面を逆転させ、反撃または主導権の回復を具体的に示す。勝利の宣言だけにせず、何がどう変わったかを見せる。突然の能力や偶然だけで解決しない。反撃に暴力を必須にしない。'
   }),
+  SeriousAction: Object.freeze({
+    documentary: false, endingTone: 'serious', preserveReferenceStyle: false,
+    label: 'アクション（シリアス）',
+    guidance: '題材に根拠のある緊迫した動作を軸に、きっかけ・身体の反応・判断・結果をつなぐ。追跡、競技、救助、作業、攻防など場面に合う行動を選び、最後の動作で局面や人物の選択がどう変わったかを見せる。台詞や効果線だけで動作を代用せず、指定されたカメラと接触を保つ。'
+  }),
   Surreal: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '静寂型 (シュール)' }),
   Explosion: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '爆発型 (カオス)' }),
   FakeEmotion: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '感動詐欺' }),
@@ -99,6 +104,11 @@ const ENDING_MODE_POLICIES = Object.freeze({
     label: '立場逆転',
     guidance: '先に示した力関係や役割が、仕込んだ行動・弱点・条件によって最後にひっくり返る結末にする。入れ替わった人物双方の振る舞いと反応で落差を見せる。勝敗だけでなく役割の逆転で笑わせ、最後に新設定を足して逆転を説明しない。'
   }),
+  GagAction: Object.freeze({
+    documentary: false, endingTone: 'gag', preserveReferenceStyle: false,
+    label: 'アクション（ギャグ）',
+    guidance: '題材に根拠のある大きな動きやドタバタを軸に、仕掛け・動き・予想外の着地や受け手の反応で笑わせる。動いた人・物とその結果が絵でつながるようにする。無関係な暴力や表情だけのオチに置き換えず、指定されたカメラと接触を保つ。'
+  }),
   SeriousDocumentary: Object.freeze({
     documentary: true,
     endingTone: 'serious',
@@ -122,7 +132,8 @@ export const SERIOUS_ENDING_OPTIONS = Object.freeze([
   Object.freeze({ value: 'EmotionalClosure', icon: '🕯️', menuLabel: '感動・救い（理解や支えで心を結ぶ）' }),
   Object.freeze({ value: 'TragicClosure', icon: '🌧️', menuLabel: '悲劇・喪失（取り戻せないものと向き合う）' }),
   Object.freeze({ value: 'AngerProtest', icon: '✊', menuLabel: '怒り・抗議（不当な扱いに異議を示す）' }),
-  Object.freeze({ value: 'EarnedReversal', icon: '↗️', menuLabel: '逆転・反撃（積み上げた行動で局面を変える）' })
+  Object.freeze({ value: 'EarnedReversal', icon: '↗️', menuLabel: '逆転・反撃（積み上げた行動で局面を変える）' }),
+  Object.freeze({ value: 'SeriousAction', icon: '⚡', menuLabel: 'アクション（緊迫した動きで局面を変える）' })
 ]);
 
 export const GAG_ENDING_OPTIONS = Object.freeze([
@@ -137,7 +148,8 @@ export const GAG_ENDING_OPTIONS = Object.freeze([
   Object.freeze({ value: 'CanceledEnding', icon: '🏃', menuLabel: '打ち切りエンド (俺たちの戦いはこれからだ)' }),
   Object.freeze({ value: 'ComicRage', icon: '😡', menuLabel: '激怒・逆ギレ（怒りと責任転嫁の落差で笑う）' }),
   Object.freeze({ value: 'SelfInflicted', icon: '🪃', menuLabel: '自業自得・ブーメラン（自分の行動が自分へ返る）' }),
-  Object.freeze({ value: 'RoleReversal', icon: '🔄', menuLabel: '立場逆転（役割や力関係がひっくり返る）' })
+  Object.freeze({ value: 'RoleReversal', icon: '🔄', menuLabel: '立場逆転（役割や力関係がひっくり返る）' }),
+  Object.freeze({ value: 'GagAction', icon: '💨', menuLabel: 'アクション（ドタバタと動きのオチ）' })
 ]);
 
 export const DOCUMENTARY_ENDING_OPTIONS = Object.freeze([
@@ -161,12 +173,12 @@ const normalizeEndingLabel = (value) => String(value || '')
 
 export const resolveScenarioEndingType = (scenario, fallback) => {
   const label = String(scenario || '').match(/^Punchline:\s*([^\r\n]+)/mi)?.[1]?.trim();
+  const entries = Object.entries(ENDING_MODE_POLICIES);
+  const exact = entries.find(([key, policy]) => key === label || String(policy.label).normalize('NFKC') === label?.normalize('NFKC'));
+  if (exact) return exact[0];
   const normalizedLabel = normalizeEndingLabel(label);
-  return Object.entries(ENDING_MODE_POLICIES).find(([key, policy]) => (
-    key === label
-    || policy.label === label
-    || (normalizedLabel && normalizeEndingLabel(policy.label) === normalizedLabel)
-  ))?.[0] || fallback;
+  const matches = entries.filter(([, policy]) => normalizedLabel && normalizeEndingLabel(policy.label) === normalizedLabel);
+  return matches.length === 1 ? matches[0][0] : fallback;
 };
 
 export const resolveGeneratedEnding = ({ activeType, generatedPunchline } = {}) => {

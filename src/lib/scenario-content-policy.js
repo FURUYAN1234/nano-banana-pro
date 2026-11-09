@@ -10,8 +10,18 @@ const flattenValues = (value) => {
   return [String(value ?? '')];
 };
 
+// Only a complete negative clause is exempt. Keep scanning all other clauses,
+// including double negations and affirmative depictions of the same term.
+const HARM_STATE = '(?:怪我|けが|負傷|出血|傷)';
+const NO_BLOOD_DEPICTION = new RegExp(
+  `流血(?:も${HARM_STATE}も(?:ない|無し|なし)|(?:[・、/やと]${HARM_STATE})*(?:(?:は|が)?(?:ない|無し|なし)|(?:は|を)?(?:描かない|描写しない|見せない|描写禁止)))(?=\\s*(?:[。．.!！?？、,;；」』）)]|$))`,
+  'gu'
+);
+
 export const isSafeScenarioContent = (...values) => {
-  const text = values.flatMap(flattenValues).join('\n').normalize('NFKC');
+  const text = values.flatMap(flattenValues).map(value =>
+    value.normalize('NFKC').split('\n').map(line => line.replace(NO_BLOOD_DEPICTION, ' ')).join('\n')
+  ).join('\n');
   return !UNSAFE_SCENARIO_PATTERNS.some((pattern) => pattern.test(text));
 };
 
@@ -23,7 +33,7 @@ export const assertSafeScenarioContent = (scenario = {}) => {
 };
 
 export const SAFE_CONTENT_RETRY_INSTRUCTION = `SAFE SCENARIO CONTENT RETRY:
-Rewrite the complete scenario from scratch for a general audience. Remove biological-horror, gore, weaponized-body, blood, viscera, organ, and secretion wording. Keep the topic, cast, four-panel structure, dialogue intent, and comedy intact. Use ordinary food, props, or playful non-biological metaphors instead.`;
+Rewrite the complete scenario from scratch for a general audience. Remove actual biological-horror, gore, weaponized-body, blood, viscera, organ, and secretion depictions. Preserve the requested panel count, topic, cast, tone, action, Camera and dialogue intent. Keep safe action, and replace unsuitable details with ordinary props or safe visual equivalents.`;
 
 export const requestSafeScenarioContent = async ({
   initialPrompt,

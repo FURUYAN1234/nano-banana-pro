@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.3.6** / 現在のソース版: **v7.3.6**
+> Current source version: **v7.3.7** / 現在のソース版: **v7.3.7**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -132,6 +132,8 @@ For OpenAI image generation, a built-in technique guide is attached automaticall
 
 ## Visual direction and reading / 演出と読みやすさ
 
+Sound effects are drawn as part of the manga artwork, outside speech balloons. The scenario can place motivated Japanese lettering beside movement, impacts and everyday sounds in any ending mode. The image generator renders it in the selected medium; the app does not overlay typed text afterward. Explicit silence or no-SFX instructions take priority, and dialogue, faces and action contacts remain readable. / 擬音は吹き出しの外に、絵の一部として描きます。どの結末でも、動き・衝撃・生活音に合う描き文字を台本で指定し、画像AIが各画風で描画します。生成後に文字を重ねる処理ではありません。無音・擬音なしの明示指定を優先し、台詞・顔・動作の接触点を隠さないよう指示します。
+
 GEKIGA panels request exaggerated facial relief through dense multidirectional fine pen hatching: deep eye sockets, a projecting nose and carved cheek/jaw planes, including calm or smiling faces. Line density builds the shadows; solid black supports only local occlusions. Color sits under the pen drawing; monochrome remains black and white. Other panel styles retain their own rendering. This is a drawing instruction, not a guarantee; inspect the generated faces. / 劇画コマでは、目のくぼみ・鼻梁・頬骨・顎の彫りを強め、顔や首に細い斜線を何方向にも重ねる濃いカケアミを指定します。影は線の密度で作り、黒ベタは局所を締める補助に留めます。穏やかな顔や笑顔も描き込みを弱めず、年齢や表情は保ちます。カラーはペンの描線の下に着色し、白黒は無彩色を保ちます。他の画風には適用しません。指示どおりになる保証ではなく、生成後の顔を確認してください。
 
 POP panels redraw faces, hair, clothes, props and backgrounds with extra-bold black contours, vivid opaque flat colors and clearly separated large Ben-Day dots. Monochrome uses bold black/white shapes and dots only in permitted shadow/material regions. Camera, acting, identity and dialogue stay intact; inspect the actual output. / POPでは顔・髪・服・小物・背景に極太の黒い輪郭、鮮烈で不透明な平面色、大粒で明瞭な網点を指定します。白黒では大胆な白黒面と、許可された影・素材面の網点へ置き換えます。カメラ・演技・同一性・台詞を保つ指示ですが、実際の出方は生成画像で確認してください。
@@ -166,7 +168,7 @@ Camera parsing distinguishes prohibitions such as "no fisheye or eye-level shots
 
 Drawing options: STEP2 mosaic masking for existing copyrighted characters and STEP3 watermarking default to ON. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. Settings last until a full reset or reload, do not alter existing images retroactively, and require visual confirmation. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
-The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.6 / GPT-6.1 Sol / FURU AI 4-koma v7.3.6`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.6 / GPT-6.1 Sol / FURU AI 4-koma v7.3.6`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
+The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.6 / GPT-6.1 Sol / FURU AI 4-koma v7.3.7`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.6 / GPT-6.1 Sol / FURU AI 4-koma v7.3.7`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
 
 
 Mosaic targets are existing-work characters actually depicted in the scripted Action. Reference sheets, art style, resemblance or a shared name alone do not authorize masking original cast members. An intentional source instruction applies only to its specified person and region. Check both masked and unmasked subjects in the final image. The independent OpenAI model selectors before STEP1 start STEP1, STEP2 and STEP3 at GPT-6 Luna. Local Luna validation stops on failure without automatic model substitution for STEP2 and STEP3. / モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。STEP1の前にある独立したOpenAIモデル選択はSTEP1・STEP2・STEP3ともGPT-6 Lunaが初期値です。ローカル検証版でSTEP2・STEP3にLunaを選んだ場合、失敗しても別モデルへ自動切替しません。
@@ -199,15 +201,23 @@ Rear camera geometry / 後方カメラの見え方: Preserve the stated room, pr
 
 Scene-led selection / 場面に応じた選択: STEP2 chooses art styles and endings from the story, without fixed tag quotas or character rotations. A coherent, motivated payoff takes priority over novelty. Up to six recent accepted endings from the current screen session are sent as comparison data during scenario generation and review; they are cleared by the full settings reset or reload. The same ending type, intentional repetition or an uncertain comparison alone does not trigger repair. / 絵柄・決め役・オチの型を固定配分せず、伏線と人物の動機・行動から成立する結末を優先します。同じ画面セッションの直近採用作から最大6件の結末要約を、生成・監査時に接続先AIへ比較資料として送ります。全設定リセットまたは再読込で消去されます。同じ型、意図した反復、不確かな比較だけでは修正しません。画風固定など選択モードの条件は保持します。
 
-STEP2 offers **8 serious endings and 12 gag endings**, plus automatic and documentary choices, with either OpenAI or Gemini. The five additions in v7.1.2 are below. / STEP2の結末は、個別の **シリアス8種類・ギャグ12種類** に加え、おまかせとドキュメンタリーから選べます。OpenAI・Gemini共通で、v7.1.2では次の5種類を追加しました。
+STEP2 offers **9 serious endings and 13 gag endings**, plus automatic and documentary choices, with either OpenAI or Gemini. The action options build the story around movement; any ending can still include action when the story calls for it. / STEP2は **シリアス9種類・ギャグ13種類** と、おまかせ・ドキュメンタリーに対応します。アクションは動きを軸に組み立てる選択肢です。他の結末でも、話に必要な動きは描けます。
 
 | Mode / 分類 | Ending / 結末 | Direction / 描く変化 |
 |---|---|---|
 | Serious / シリアス | Anger / protest / 怒り・抗議 | A concrete objection to unfair treatment. / 不当な扱いに対して異議を示す。 |
 | Serious / シリアス | Earned reversal / 逆転・反撃 | Earlier choices and actions turn the situation around. / 積み上げた選択や行動で局面を変える。 |
+| Serious / シリアス | Action / アクション | Movement changes the situation or reveals a choice. / 緊迫した動きで局面や人物の選択が変わる。 |
 | Gag / ギャグ | Comic rage / 激怒・逆ギレ | Anger or blame shifting creates a comic contrast. / 怒りや責任転嫁の落差で笑いを作る。 |
 | Gag / ギャグ | Self-inflicted consequences / 自業自得・ブーメラン | A character's own action comes back to them. / 自分の行動が自分へ返ってくる。 |
 | Gag / ギャグ | Role reversal / 立場逆転 | Roles or the balance of power switch at the payoff. / 役割や力関係の反転をオチにする。 |
+| Gag / ギャグ | Action / アクション | Movement leads to a visible comic payoff. / ドタバタの動きが目に見えるオチにつながる。 |
+
+Spanning panels / 縦2段のコマ: In five- to eight-panel mode, a right-hand frame can span two frames on the left. An explicit vertical frame in the accepted Camera restricts the layout choices; an incompatible plan gets one bounded layout correction. Hands, feet or heads may intentionally cross internal borders. / 5～8コマでは、右の1コマを左の上下2コマと同じ高さに連結できます。確定したCameraに縦長コマが明示されていれば、その条件を満たす配置に限定し、指定が抜けた配置案は1回だけ修正します。手足や頭の意図した枠越えも可能です。
+
+Dialogue ownership / 吹き出しの話者: Native page review compares transcribed lines, physical right-to-left order and tail endpoints bound to observed characters separately. Correct text with swapped speakers fails; unreadable tails stay unverified. Coherent minor pose, expression and shading variation is acceptable when the action and drawing remain clear. / 5～8コマの検査では、台詞全文・右から左の順序・実際の人物へつながる尾を別々に照合します。文面が正しくても話者の入れ替わりは不合格、尾が読めない場合は未確認です。動作が伝わり絵の品質が保たれていれば、軽微な姿勢・表情・陰影の差は許容します。
+
+Whole-page review / 全体画像での検査: When a breakout joins locally detected frames, one review observes actual boundaries and checks camera, style, action, anatomy and lettering together. No crops are invented from the plan; ambiguous boundaries stay unverified and cannot trigger repair. Camera-hidden faces remain hidden despite expression or balloon instructions; telephoto retains its specified pitch. Rendering still needs visual verification. / はみ出しで枠検出がつながる場合は、全体画像から実際の境界とカメラ・画風・動作・身体・文字を1回で検査します。計画座標で仮のコマ画像を切り出さず、境界が不明なら未確認として修正しません。隠れる顔を表情や吹き出しのために露出させず、望遠でも指定の俯角を保つよう指示します。効果は実画像で確認してください。
 
 Focus / ピント: Focus follows the scripted speaker, reaction or main action; a cast-count check does not require equal sharpness for every person. Nonessential foreground and background may soften or use thinner, paler detail. Required text, contacts and reactions remain readable, and explicit deep focus wins. Directional motion blur is optional for scripted movement. / 人数確認は全員を同じ鮮明さにする指定ではありません。話者・反応・主動作に合わせ、非重要な前後景はボケや薄描きを使えます。必要な文字・接触・反応の判読と明示した深いピントは守ります。動きがある場面では方向に沿ったモーションブラーを使えます。実画像で描画を確認してください。
 
@@ -393,7 +403,7 @@ Normal-style focal figures use varied G-pen line weight; watercolor and other st
 
 ### Story endings / ストーリーの結末
 
-STEP2 groups endings into Automatic, Serious and Gag. Automatic chooses the tone from the topic; clear loss, disaster and victim-related topics use serious endings. Each tone also has its own automatic choice. Serious offers quiet aftermath, resolve, warning, open question, emotional closure, tragic closure, anger/protest and earned reversal, with short explanations beside each choice. / STEP2の結末は「おまかせ」「シリアス」「ギャグ」に分類しています。全体のおまかせは題材に応じて調子を選び、明白な喪失・災害・被害などはシリアスへ振り分けます。両カテゴリ内にも専用のおまかせがあります。シリアスでは静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失、怒り・抗議、逆転・反撃を、括弧の説明を見ながら選べます。
+STEP2 groups endings into Automatic, Serious and Gag. Automatic chooses the tone from the topic; clear loss, disaster and victim-related topics use serious endings. Each tone has its own automatic choice and an action option, with a short explanation beside each ending. / STEP2の結末は「おまかせ」「シリアス」「ギャグ」に分類しています。全体のおまかせは題材に応じて調子を選び、明白な喪失・災害・被害などはシリアスへ振り分けます。両カテゴリに専用のおまかせとアクションがあり、括弧の説明を見ながら選べます。
 
 General serious endings use serious story construction, enhancement and image direction without forcing a gag or chibi transformation. They retain the selected art style; the all-panel reference-style lock remains specific to Serious Documentary. The resolved automatic ending is retained through STEP3 and STEP4. / 一般シリアスでは物語設計・シナリオ強化・画像演出をシリアス用に切り替え、ギャグやちび化を強制しません。選んだ画風を使い、全コマの参照絵柄固定はシリアス・ドキュメンタリー専用です。自動選択で決まった結末はSTEP3・STEP4へ引き継ぎます。
 
@@ -635,7 +645,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.3.6](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.3.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.3.6のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.3.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.3.7](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.3.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.3.7のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.3.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -693,7 +703,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.3.6 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.3.6 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.3.7 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.3.7 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -800,6 +810,10 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.3.7 (2026-11-09)
+- **[Fix & UX]** Add serious and gag action options, clarify spanning frames, and fix camera-position parsing and panel review. / シリアス・ギャグのアクション選択、縦2段のコマ割りと境界検査、カメラ位置の誤読を改善。
+- **[Fix]** Restore artwork SFX, preserve speaker checks without rejecting clear sideways tails, and calculate repair budgets from the actual replacement reference manifest. / 絵としての擬音を復元。明確な横向きの尾を話者違いと誤認せず、修正時の指示文上限を実際の参照一覧で計算します。
 
 ### v7.3.6 (2026-11-09)
 - **[Fix]** Share repeated native-page style recipes when a color change would exceed the reserved OpenAI prompt budget. Preserve the layout and authored instructions. / 5〜8コマの白黒切替などで描画指示が上限を超える場合、同じ画風の説明を対象コマにまとめ、元の配置と指示を保持。

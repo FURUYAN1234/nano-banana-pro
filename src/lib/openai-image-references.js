@@ -95,6 +95,16 @@ export function buildOpenAIReferencePlan({
     rolePrompt += `${rolePrompt ? '\n' : ''}${finish}`;
     rolePrompt += `\n\n${MONOCHROME_INK_ECONOMY}`;
   }
+  // Repair replaces the old attachment map. Compact only compiler-owned role
+  // prose; every asset description, material binding and authored rule stays.
+  if (compact && originalCandidate) {
+    rolePrompt = rolePrompt
+      .replaceAll(CHARACTER_REFERENCE_IDENTITY_RULE, '人物参照は識別特徴・年齢・標準衣装用。明示Outfit/同一場面で確立した服を優先し、後の省略で参照服へ戻さない。コマ限定指定と着替えを保持。顔/目の構築と頭身は指定コマの描法に従い、参照描法固定は明示時だけ。')
+      .replace('M numbers identify STEP1 materials; Image numbers identify attachments in this request. A repair source has no M number. Resolve scenario material numbers through this mapping.', 'M番号=STEP1素材、Image番号=今回の添付。修正元にM番号はない。脚本の素材番号はこの対応表で解く。')
+      .replace(descriptions.original, colorMode==='monochrome'
+        ? 'SOURCE IMAGE TO EDIT: 正しい絵を保持し、指摘と必要な局所的影響だけ修正。元の色被りは保持せず、人物/Camera/動作/コマ画風を守って墨/紙白/指定網点で描く。'
+        : 'SOURCE IMAGE TO EDIT: 正しい絵を保持し、指定不具合と必要な局所的影響だけ修正。');
+  }
   return {imageInputs: entries.map(({image_url}) => ({image_url})), rolePrompt, counts,
     ...(referenceAssets.length || mediumReference ? {referenceRoles: entries.map(entry => entry.role === 'character'
       ? (referenceAssets.length ? getReferenceMetadataRole(getReferenceAsset(referenceAssets, entry.image_url)) : 'character_reference')

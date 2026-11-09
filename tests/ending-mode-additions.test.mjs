@@ -5,9 +5,11 @@ import { getEndingModePolicy, resolveGeneratedEnding, resolveScenarioEndingType 
 const endings = [
   ['AngerProtest', '怒り・抗議', 'serious'],
   ['EarnedReversal', '逆転・反撃', 'serious'],
+  ['SeriousAction', 'アクション（シリアス）', 'serious'],
   ['ComicRage', '激怒・逆ギレ', 'gag'],
   ['SelfInflicted', '自業自得・ブーメラン', 'gag'],
-  ['RoleReversal', '立場逆転', 'gag']
+  ['RoleReversal', '立場逆転', 'gag'],
+  ['GagAction', 'アクション（ギャグ）', 'gag']
 ];
 
 for (const [type, label, tone] of endings) {

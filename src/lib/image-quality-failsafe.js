@@ -137,6 +137,7 @@ export const formatImageQualityStopReason = (reason) => ({
   unverified: '根拠不足のみ', non_material: '軽微な指摘のみ', repair_disabled: '自動修正OFF', review_warning: '検査指摘あり',
   analysis_failed: '修正方針を確定できない', prompt_limit: '修正指示の長さ上限',
   generation_failed: '修正版の生成失敗', retry_limit: '修正回数の上限', cancelled: '利用者が停止',
+  repair_failed: '修正処理の失敗（元画像を保持）',
   no_improvement: '修正で改善を確認できない', review_timeout: '品質検査の時間上限・検査未完了',
 })[reason] || '検査未完了';
 
@@ -278,7 +279,7 @@ export const parseImageFailureAnalysis = (text, { issues, history = [], original
   });
 };
 
-export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode, panelCount = 4, sourceMode = 'regenerate', attempt = 2, maxAttempts = IMAGE_QUALITY_MAX_ATTEMPTS } = {}) => {
+export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode, panelCount = 4, sourceMode = 'regenerate', attempt = 2, maxAttempts = IMAGE_QUALITY_MAX_ATTEMPTS, compact = false } = {}) => {
   const anatomyRepair = issues.some(issue => issue?.type === 'anatomy') ? LOCAL_ANATOMY_REPAIR : '';
   const concreteIssues = issues
     .filter((issue) => issue?.type !== 'unverified')
@@ -302,6 +303,15 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
     const sourceLayout = effectiveMode === 'single-image'
       ? 'Edit the same single illustration. Do not introduce panels, a comic page, a collage, additional scenes, unrequested characters, or a new setting.'
       : `Edit the same manga page. Preserve exactly ${panelCount} separate visible panels and the original page geometry. Do not merge, omit, duplicate, or reorder panels.`;
+    if (compact) return `${String(originalPrompt)}
+IMAGE QUALITY CORRECTION ATTEMPT ${attempt}/${maxAttempts}: 添付1は修正元。${effectiveMode==='single-image'?'同じ一枚絵、コマ/別場面を追加しない。':`同じ${panelCount}コマ、数/配置/読順を保持。統合/欠落/重複/並替え禁止。`}
+修正対象（描画しない）:
+${concreteIssues || '- 具体的な指摘なし。変更しない。'}
+${structuralOverrides}
+${anatomyRepair}
+${bubbleOrderRepair}
+${bubbleMoves}
+指定は誤った元画像より優先。指摘箇所だけ最小限に直し、ページを描き直さず、参照シートの配置を転載しない。既に正しい全台詞/話者/尾/人物同一性/人数/衣装/動作/表情/Camera/画角/書体/画風/仕上げを保持。${isMonochromePrompt(originalPrompt)?'白黒・正しい墨と網点を維持し、指摘された色/灰色/全体の色被りだけを除去。':'正しい色を保持。'}修正に必要な接触/遮蔽/局所影だけ整合させ、衣装修正で演技や構図を平坦化しない。欠員の指摘がある場合だけ指定人物を指定枠へ一人戻し、他の人物を追加しない。修正箇所と全ての台詞/話者/人数/手足・道具の所有/Camera/変更外の絵を検証。物と人体の遮蔽境界、印字の実面・天地を辿り、文字を画布へ直立させない。脚本のシュールな出来事と正しい隣接面を保持。話者ラベル/メタデータ/翻訳/注釈/余計な文字を描かない。`;
     return `${String(originalPrompt)}
 
   IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${maxAttempts}):
@@ -362,7 +372,7 @@ export async function runPageImageQuality(contract, options) {
     if (!Number.isInteger(contract.count) || contract.count < 5 || contract.count > 8
       || options?.mode !== contract.kind) invalid();
   } else invalid();
-  const {originalCandidate,originalPrompt,reviewCandidate,generateRepairCandidate,
+  const {originalCandidate,originalPrompt,repairPromptSource=originalPrompt,reviewCandidate,generateRepairCandidate,
     allowRepair=false,reviewOnly=false,shouldStop=()=>false,isReviewBudgetExhausted=()=>false,
     onProgress=()=>{},repairSourceMode='source-image',repairPromptMaxChars=IMAGE_REPAIR_PROMPT_MAX_CHARS}=options;
   let candidate=originalCandidate,originalReview={pass:false,skipped:true,issues:[]},finalReview=originalReview;
@@ -388,8 +398,12 @@ export async function runPageImageQuality(contract, options) {
   const issues=getRepairableIssues(originalReview);
   if(!issues.length) {stopReason=originalReview.issues?.some(issue=>issue.type==='unverified')?'unverified':'non_material';return outcome();}
   try {
-    const repairPrompt=buildImageQualityRepairPrompt({originalPrompt,issues,mode:contract.kind,
+    let repairPrompt=buildImageQualityRepairPrompt({originalPrompt:repairPromptSource,issues,mode:contract.kind,
       panelCount:contract.count,sourceMode:repairSourceMode,maxAttempts:2});
+    if(repairPrompt.length>repairPromptMaxChars&&repairSourceMode==='source-image') {
+      repairPrompt=buildImageQualityRepairPrompt({originalPrompt:repairPromptSource,issues,mode:contract.kind,
+        panelCount:contract.count,sourceMode:repairSourceMode,maxAttempts:2,compact:true});
+    }
     if(repairPrompt.length>repairPromptMaxChars)throw Error('修正指示が画像APIの上限を超えます。指摘を切り捨てず元画像を保持します。');
     onProgress('総合検査の指摘をまとめて1回修正します。修正後の再検査・自動再修正は行いません。');
     const repaired=await generateRepairCandidate(repairPrompt,originalCandidate);
@@ -401,7 +415,7 @@ export async function runPageImageQuality(contract, options) {
     finalReview={pass:false,notRechecked:true,issues:[]};
     history.push({attempt:2,issues,outcome:{status:'edit_completed',rechecked:false}});
     stopReason='single_repair_completed';
-  } catch(error) {repairError=error;stopReason='repair_failed';}
+  } catch(error) {repairError=error;stopReason='repair_failed';onProgress(`修正できませんでした。元画像を保持します: ${error.message||String(error)}`);}
   return outcome();
 }
 

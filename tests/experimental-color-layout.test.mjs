@@ -13,6 +13,27 @@ try {
   const planFor=input=>({count:m.readExperimentalSource(input).panels.length,layout:'two_columns',reason:'手順を読みやすく並べる',panels:m.readExperimentalSource(input).panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:`ユウが道具${p.id}を手に取る。`,dialogueIds:p.dialogueIds,breakout:null}))});
   const prepare=input=>m.prepareExperimentalManga(input,async()=>JSON.stringify(planFor(input)));
 
+  test('all six selectable panel styles keep their camera through a spanning page color change',async()=>{
+    const styles=['NORMAL','POP_ART','WATERCOLOR','GEKIGA','SKETCH','CHIBI_GAG'];
+    const cameras=['床寄りの位置から20mm広角の引き','左後方から45度俯瞰、ダッチ20度','右側面から望遠の接写','右前から85mm望遠の引き、25度俯瞰','膝より低く見上げる100mm望遠','左前から広角の引き。枠線は頭の後ろで途切れる'];
+    const input={...fixture(6),providerFamily:'chatgpt',scenario:fixture(6).scenario
+      .replace(/\[Camera: [^\]]+\]\n\[EMOTION: NORMAL\]/g,(_,offset)=>{
+        const i=fixture(6).scenario.slice(0,offset).match(/\[Camera:/g)?.length??0;
+        return `[Camera: ${cameras[i]}]\n[EMOTION: ${styles[i]}]`;
+      })};
+    const original=await m.prepareExperimentalManga(input,async()=>JSON.stringify({...planFor(input),layout:'tall_right_top'}));
+    const mono=await m.prepareExperimentalManga({...input,colorMode:'monochrome'},async()=>assert.fail('color change must reuse layout'),{colorOnlyPrepared:original});
+    for(const candidate of [original,mono]) {
+      assert.deepEqual(candidate.source.panels.map(p=>p.style),styles);
+      assert.deepEqual(candidate.plan.panels.map(p=>p.camera),cameras);
+      assert.match(candidate.prompt,/右P1は左の上P2と下P3の高さを合わせた未分割の一枠/);
+      for(const [i,style] of styles.entries()) {
+        assert.ok(candidate.prompt.includes(`FRAME MEDIUM P${i+1} — ${style}:`));
+        assert.ok(candidate.prompt.includes(cameras[i]));
+      }
+    }
+  });
+
   for(const count of [5,8]) test(`native ${count}-panel color round trips recompile the same layout without another planning request`,async()=>{
     const input=fixture(count);let requests=0;
     let previous=await prepare(input);

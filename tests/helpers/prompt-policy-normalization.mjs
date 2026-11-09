@@ -64,18 +64,25 @@ export const restoreReviewedMonoStyleReminder = value => String(value).split('\n
   .map(line => reviewedCompactMonoRecipes.has(line)
     ? `${line} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.` : line).join('\n');
 
+export const restoreActionProjectionBefore737 = value => String(value).replace(/^SHOT P\d+(?:\/P\d+)* ONLY: 投影後に見えない眉・目・口は描き足さない。感情は見える後頭部\/肩\/重心で表し、吹き出しは話者の頭側へ向けて口を露出させない。表情集・媒体の顔指示より、この可視範囲を優先\.\n/gm, '').replace(/^(SHOT (?:EXECUTION:|P\d+(?:\/P\d+)* ONLY:) [^\n]*)$/gm, line => line
+  .replace('SHOT EXECUTION: 投影後に見えない眉・目・口は描き足さない。感情は見える後頭部/肩/重心で表し、吹き出しは話者の頭側へ向けて口を露出させない。表情集・媒体の顔指示より、この可視範囲を優先; ', 'SHOT EXECUTION: ')
+  .replace('; 投影後に見えない眉・目・口は描き足さない。感情は見える後頭部/肩/重心で表し、吹き出しは話者の頭側へ向けて口を露出させない。表情集・媒体の顔指示より、この可視範囲を優先', '')
+  .replace('; 望遠でも指定の俯角を保持。頭頂・肩上面・床を上から同じ角度で見る。圧縮するのは奥行きで、高さを水平へ戻さない。低い姿勢にCameraを下げない', ''));
+
 export const restoreReviewedShotExecution = value => {
-  let result = String(value);
+  let result = restoreActionProjectionBefore737(value);
   // Invert only reviewed generated clauses and their exact panel scope.
   // Unknown shared rules and authored text must still fail the old style hashes.
   const order = '人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、可視の瞳を指定先へ（対象未指定/閉眼/明示の読者目線は保持）→独立Cameraで立体投影→画風';
   const conditionalOrder = '人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定なら対象に応じた自然な頭向きを補う（明示の横目/目だけの移動/顔上げ/背面を優先、顔/対象の遮蔽保持）、可視瞳を指定先へ（対象未指定/閉眼/明示の読者目線保持）→独立Cameraで立体投影→画風';
   const naturalRear = '後方は基準対象に対して保持。人物の指定向きを保持し、見える正面/側面/背面はCamera/Actionの位置関係から投影。場所/道具の向きで全員を回さない。距離/切取り保持、肩越し接写を強制しない';
+  const projectionOrder = conditionalOrder + '; 投影後に見えない眉・目・口は描き足さない。感情は見える後頭部/肩/重心で表し、吹き出しは話者の頭側へ向けて口を露出させない。表情集・媒体の顔指示より、この可視範囲を優先';
   const previousRear = '後方は基準対象に対して保持。背面指定の人物だけ背面を描く。場所/道具の向きで全員を回さない。距離/切取り保持、肩越し接写を強制しない';
   // Exact inverse at compiler-owned shot boundaries only. An altered exception,
   // unknown clause, or the same words inside authored Action must stay visible.
   result = result.replace(/^(## Panel \d+\nCamera:[^\n]*\n)(SHOT EXECUTION: [^\n]*)$/gm,
     (_line, prefix, shot) => prefix + shot
+      .replace(`SHOT EXECUTION: ${projectionOrder}; `, `SHOT EXECUTION: ${order}; `)
       .replace(`SHOT EXECUTION: ${conditionalOrder}; `, `SHOT EXECUTION: ${order}; `)
       .replace(`rear view: ${naturalRear}`, `rear view: ${previousRear}`)
       .replace('ロール: 場面の鉛直/水平を光軸回りに投影。机の遠近線だけで代用せず透視収束保持。指定角を弱めず強めない',
@@ -84,7 +91,7 @@ export const restoreReviewedShotExecution = value => {
   const high = 'look down from the scripted higher viewpoint, not eye-level: head/shoulder tops, shortened torsos, upper prop faces, floor/table planes as visible';
   const shared = [];
   result = result.replace(/^SHOT (P\d+(?:\/P\d+)*) ONLY: (.+)\.\n/gm, (line, panels, cue) => {
-    if (cue === conditionalOrder) cue = order;
+    if (cue === conditionalOrder || cue === projectionOrder) cue = order;
     if (![order, high].includes(cue)) return line;
     shared.push({panels:panels.split('/'),cue});return '';
   });

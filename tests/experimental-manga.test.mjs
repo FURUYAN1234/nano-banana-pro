@@ -7,7 +7,7 @@ import { createServer } from 'vite';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import Ajv from 'ajv';
-import { restoreWritingPolicyBefore729 } from './helpers/prompt-policy-normalization.mjs';
+import { restoreWritingPolicyBefore729, restoreActionProjectionBefore737 } from './helpers/prompt-policy-normalization.mjs';
 
 const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
 try {
@@ -85,8 +85,20 @@ try {
     plan.panels.forEach(p => { p.action = '葵と凛が木箱を運ぶ。'; });
     const colorSource = m.readExperimentalSource({scenario, castList, colorMode:'color'});
     const color = m.buildExperimentalImagePrompt(plan, colorSource, {colorMode:'color'});
-    // Captured before the monochrome-only fix; version text is intentionally normalized.
-    assert.equal(createHash('sha256').update(restoreWritingPolicyBefore729(color).replace(/v\d+\.\d+\.\d+/g,'v<VERSION>')).digest('hex'),
+    // The new layout line applies to both modes; guard the rest of the color output.
+    assert.match(color,/右P3は左の上P4と下P5の高さを合わせた未分割の一枠/);
+    // Added projection cues cross the soft compaction threshold. Expand only
+    // the exact shared compiler clauses; the old content hash stays unchanged.
+    let colorWithoutLayoutAddition=restoreActionProjectionBefore737(color.replace(/^SPANNING FRAMES（非印字）: .*\n/m,''));
+    const sharedOrder='人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定なら対象に応じた自然な頭向きを補う（明示の横目/目だけの移動/顔上げ/背面を優先、顔/対象の遮蔽保持）、可視瞳を指定先へ（対象未指定/閉眼/明示の読者目線保持）→独立Cameraで立体投影→画風';
+    if(colorWithoutLayoutAddition.includes(`SHOT P1/P2/P3/P4/P5/P6 ONLY: ${sharedOrder}.\n`)) {
+      colorWithoutLayoutAddition=colorWithoutLayoutAddition.replace(`SHOT P1/P2/P3/P4/P5/P6 ONLY: ${sharedOrder}.\n`,'')
+        .replace(/^SHOT EXECUTION: /gm,`SHOT EXECUTION: ${sharedOrder}; `)
+        .replace(/^Camera: /gm,'Inside this frame — Camera: ')
+        .replace('ALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。\n','')
+        .replace(/^(FRAME MEDIUM P\d+ — NORMAL: [^\n]*) ALL ACTORS\.$/gm,'$1 Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。');
+    }
+    assert.equal(createHash('sha256').update(restoreWritingPolicyBefore729(colorWithoutLayoutAddition).replace(/v\d+\.\d+\.\d+/g,'v<VERSION>')).digest('hex'),
       '5951da401a8db0995f364a3e4b3753238f54532d014a327b308308c48813f20f');
     for (const count of [5,6,7,8]) {
       const scenario = scenarioFor(count).replaceAll(/行動\d+/g, '葵と凛が木箱を運ぶ。');
@@ -188,7 +200,7 @@ try {
     assert.equal(m.summarizeExperimentalLayouts([...records,...records]).length,6);
     const prompt=m.buildExperimentalPlanPrompt(source,{recentLayouts:history});
     assert.match(prompt,/compatible layout IDs, including a non-spanning arrangement/);
-    assert.match(prompt,/wide frames can contain full-body depth; tall frames are not mandatory/);
+    assert.match(prompt,/wide frames can contain full-body depth; tall frames are optional unless explicitly assigned in the accepted Camera/);
     assert.match(prompt,/Recent geometries are context, not quotas/);
     assert.match(m.EXPERIMENTAL_LAYOUTS.mixed_rows.description,/6=\[\[2,0\.20\],\[1,0\.30\],\[2,0\.23\],\[1,0\.27\]\]/);
     assert.match(m.EXPERIMENTAL_LAYOUTS.tall_right_middle.description,/count5=0\.77/);
@@ -208,14 +220,15 @@ try {
       const rects=m.experimentalLayout(count,'mixed_rows');
       mixed.observedFrames=rects.map(rect=>({bounds:[.02+.96*rect.x,.05+.9*rect.y,.96*rect.w,.88*rect.h]}));
       mixed.evidence.forEach((entry,index)=>{entry.bounds=mixed.observedFrames[index].bounds;});
-      assert.equal(m.validateExperimentalReview(mixed,candidatePlan).status,'pass');
+      if(count===6) assert.equal(m.validateExperimentalReview(mixed,candidatePlan).status,'warning','the expected tall frame is absent despite the right count');
+      assert.equal(m.validateExperimentalReview(mixed,{...candidatePlan,layout:'mixed_rows'}).status,'pass');
     }
     const compound=structuredClone(report);compound.evidence[0].physical_bodies[0].features=['黒い短髪、赤いコート'];
     assert.equal(m.validateExperimentalReview(compound,plan).status,'pass','comma-delimited observed cues do not lose their independent meaning');
     compound.evidence[0].physical_bodies[0].features=['人物'];
     assert.equal(m.validateExperimentalReview(compound,plan).status,'unverified','a single vague cue remains insufficient');
     const staged=structuredClone(report);staged.inspectionVersion=4;
-    for(const panel of staged.evidence) panel.view={elevation:'high',gaze:'in_scene',evidence:'頭頂と机の上面が見え、顔は向かいの相手に向く'};
+    for(const [i,panel] of staged.evidence.entries()) panel.view={elevation:i%2?'low':'high',gaze:'in_scene',evidence:i%2?'顎と机の下面が見え、顔は向かいの相手に向く':'頭頂と机の上面が見え、顔は向かいの相手に向く'};
     assert.equal(m.validateExperimentalReview(staged,plan).status,'pass');
     for(const view of [{elevation:'eye_level',gaze:'in_scene'},{elevation:'high',gaze:'at_viewer'}]) {
       const forbidden=structuredClone(staged);Object.assign(forbidden.evidence[0].view,view);
@@ -242,7 +255,7 @@ try {
     const missing=structuredClone(report);delete missing.evidence[0].physical_bodies;
     assert.equal(m.validateExperimentalReview(missing,plan).status,'unverified');
   });
-  const currentPairReview=()=>({inspectionVersion:4,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続',view:{elevation:'high',gaze:'in_scene',evidence:'人物は机を見下ろし頭頂と肩上面が見える'},physical_bodies:[],cast_instances:[]}))});
+  const currentPairReview=()=>({inspectionVersion:4,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続',view:{elevation:i%2?'low':'high',gaze:'in_scene',evidence:i%2?'顎と机の下面が見え、上方へ向かう透視がある':'頭頂と肩上面、机の天面を上から見ている'},physical_bodies:[],cast_instances:[]}))});
   const blindGaze=(i=0)=>({visibility_basis:'visible_eyes',pupil_placement:i?'The pupils lie at the left edge of the eye openings.':'The pupils lie at the right edge of the eye openings.',eye_visibility:'visible',direction:'in_scene',eye_position:[.25+i*.4,.25],
     eye_evidence:i?'虹彩は瞼の左下へ寄り、右側の白目が広く見える。':'黒目が瞼の右下へ寄り、左側の白目が広く見える。',
     face_direction:i?'首を自然に傾けて顔の左側を台へ向ける。':'横向きの顔を右下の台へ向けている。',
@@ -439,7 +452,7 @@ try {
   });
   test('blind body gaze rejects the observed narrative in_scene claim without inventing eye observations',()=>{
     const report=styledReview();
-    report.evidence[5].view={elevation:'high',gaze:'in_scene',evidence:'高所から全員の頭頂と目線が水平器へ集まっている。'};
+    report.evidence[5].view={elevation:'low',gaze:'in_scene',evidence:'低所から全員の顎の下面が見え、目線が水平器へ集まっている。'};
     report.evidence[5].physical_bodies=[{id:'p6_1',bounds:[.18,.21,.13,.61],features:['long black hair','grey suit','arms folded']}];
     const checked=m.validateExperimentalReview(report,six);
     assert.equal(checked.camera,'uncertain','the actual assessment claim has no independent pupil/eyelid observations');
@@ -513,6 +526,35 @@ try {
     const styles=JSON.parse(prompt.match(/^EXPECTED PANEL STYLES: (.+)$/m)?.[1]||'null');
     assert.deepEqual(styles,six.panels.map((p,i)=>({panel:i+1,style:p.sourcePanel===1?'GEKIGA':'NORMAL'})));
     assert.match(prompt,/style_observation/);assert.match(prompt,/face_visibility/);
+  });
+  test('a grounded hidden-face crop can verify its visible medium without inventing a face',()=>{
+    const report=styledReview();report.inspectionVersion=11;
+    const actor=report.evidence[0].style_observation.actors[0];
+    Object.assign(actor,{face_visibility:'hidden',face:'後頭部と衣服だけが見え、顔面は身体の裏側に隠れる。'});
+    Object.assign(report.evidence[0].physical_bodies[0].gaze,{eye_visibility:'not_visible',visibility_basis:'rear_head',
+      direction:'no_visible_eyes',eye_position:null,pupil_placement:null,target:null,eye_evidence:'後頭部の髪が手前で顔と両眼は裏側に隠れている。'});
+    assert.equal(m.validateExperimentalReview(report,six).style,'pass');
+    actor.status='uncertain';
+    assert.equal(m.validateExperimentalReview(report,six).style,'uncertain','unresolved visible medium cannot be waived');
+  });
+  test('native validation rejects a correct line attached to the other speaker',()=>{
+    const plan={...six,expectedDialogue:[{id:99,speaker:'人物A',text:'待って！'}],
+      panels:six.panels.map((p,i)=>({...p,dialogueIds:i?[]:[99]}))};
+    const report=styledReview();report.inspectionVersion=11;report.corrections=[];
+    report.observedFrames=m.experimentalLayout(6,six.layout).map(r=>({bounds:[r.x,r.y,r.w,r.h]}));
+    for(const [i,panel] of report.evidence.entries()){
+      panel.dialogue=[];panel.text_regions=[];panel.bounds=report.observedFrames[i].bounds;
+    }
+    const panel=report.evidence[0];panel.dialogue=['待って！'];
+    panel.cast_instances=['人物A','人物B'].map((name,i)=>({name,status:'ok',observed_count:1,instances:[{
+      body_id:i?'right':'left',location:i?'右の人物':'左の人物',matched_features:['短い黒髪','白い作業服']}]}));
+    panel.text_regions=[{region_kind:'speech_balloon',text:'待って！',center_x:.7,container_evidence:'右上に縦長の吹き出しがある。',
+      tail_targets:[{body_id:'left',tip:[.25,.2],region:'head',evidence:'尾は左の人物の頭の輪郭へ連続している。'}]}];
+    assert.equal(m.validateExperimentalReview(report,plan).readingOrder,'pass');
+    Object.assign(panel.text_regions[0].tail_targets[0],{body_id:'right',tip:[.65,.2],evidence:'尾は右の人物の頭の輪郭へ連続している。'});
+    const checked=m.validateExperimentalReview(report,plan);
+    assert.equal(checked.readingOrder,'fail');
+    assert.equal(m.experimentalRepairIssues(checked,plan)[0]?.type,'bubble_speaker');
   });
   test('partial body observations remain uncertain but comparable; confirmed regressions remain blocked',async()=>{
     const original={plan:six,review:currentPairReview(),image:{base64Img:'old'},prompt:'same',groupId:'same'};
@@ -661,7 +703,7 @@ try {
     assert.deepEqual(checked.validationErrors||[],[]);
     assert.deepEqual(m.validateExperimentalReview(checked,plan),checked);
     const old={...original,review:legacy};let inspections=0;
-    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:10}},async()=>{inspections++;return {};});
+    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:11}},async()=>{inspections++;return {};});
     assert.equal(inspections,1,'a quarantined census must not start another inspection of the old image');
     const next={...original,image:{base64Img:'fresh'}};
     const selected=await m.selectExperimentalCandidate(old,next,async()=>({preferred:'repair',reason:'台詞を保ち、演技が明瞭。',readingOrderChecks:checks}));
@@ -884,7 +926,7 @@ try {
     }
   });
   test('candidate review pair reuses valid current evidence and never inspects another prepared group',async()=>{
-    const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion:10}};
+    const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion:11}};
     let requests=0;
     for(const previous of [original,null]) {
       await m.reviewExperimentalCandidatePair({},previous,async()=>{requests++;return {pass:true,issues:[]};});
@@ -896,10 +938,10 @@ try {
       const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion}};
       const fresh={base64Img:'new'},started=[];
       await m.reviewExperimentalCandidatePair(fresh,original,async image=>{
-        started.push(image);image.experimentalReview={...styledReview(),inspectionVersion:10};return {pass:true,issues:[]};
+        started.push(image);image.experimentalReview={...styledReview(),inspectionVersion:11};return {pass:true,issues:[]};
       });
       assert.deepEqual(started,[fresh,original.image]);
-      assert.equal(original.review.inspectionVersion,10);
+      assert.equal(original.review.inspectionVersion,11);
     }
   });
   test('candidate review pair preserves provider timeout failures and does not claim a comparison',async()=>{
@@ -1379,7 +1421,7 @@ try {
             {region_kind:'printed_object',text:'3'},{region_kind:'speech_balloon',text:'右の台詞',center_x:.8}]:[]}))})};
     },{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})});
     assert.equal(calls.length,1);assert.equal(calls[0].count,9,'combined review sees all native frames and footer crops');
-    assert.equal(result.review.inspectionVersion,10);
+    assert.equal(result.review.inspectionVersion,11);
     assert.deepEqual(result.review.evidence[0].physical_bodies,[independentBody],'observed gaze, body identity and geometry remain bound to the panel');
     assert.deepEqual(result.review.expectedStyles,expectedStyles,'expected media come from the source contract, not the assessment model');
     assert.deepEqual(result.review.expectedOutfits,expectedOutfits,'outfit authority comes from the compiler, never the assessment response');
@@ -1423,7 +1465,7 @@ try {
     const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>{requests++;throw new Error('no paid review for count mismatch');},{detect:async()=>frames,inspect:async()=>({width:400,height:600}),crop:async()=>{crops++;throw new Error('no crop based on incompatible plan');}});
     assert.equal(requests,0);assert.equal(crops,0);assert.equal(result.requests,0);
     assert.equal(result.review.observedCount,7);assert.deepEqual(result.review.observedFrames,frames);
-    assert.equal(result.review.inspectionVersion,10,'local count evidence belongs to the current inspection format');
+    assert.equal(result.review.inspectionVersion,11,'local count evidence belongs to the current inspection format');
     const review=m.validateExperimentalReview(result.review,six);
     assert.equal(review.status,'warning');assert.equal(review.observedCount,7);
     assert.equal(m.validateExperimentalReview(JSON.parse(JSON.stringify(review)),six).status,'warning','saved local geometry retains its supported count warning');

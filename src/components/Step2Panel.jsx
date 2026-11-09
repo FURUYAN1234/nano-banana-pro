@@ -377,6 +377,7 @@ export default function Step2Panel({
               </select>
               <ChevronDown size={20} strokeWidth={3} className="punchline-select-chevron" aria-hidden="true" />
             </div>
+            <p className="mt-2 text-xs text-slate-400">アクションを選ぶと動きを軸に組み立てます。他の結末でも、話に必要な動きは描けます。</p>
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
               style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
               <input type="checkbox" checked={mosaicCopyrightedCharacters}

@@ -2548,6 +2548,12 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         image:{mimeType:previousMatch[1],base64Img:previousMatch[2],modelId:previousExperimental.modelId,metadataContext:previousExperimental.metadataContext,workflowSource:previousExperimental.workflowSource,experimentalReview:previousExperimental.experimentalReview},
         review:previousExperimental.experimentalReview,plan:experimentalPrepared.plan,prompt:currentPrompt,groupId:experimentalPrepared.groupId,
       }:null;
+      const repairReferencePlan = isOpenAIEngine ? buildOpenAIReferencePlan({ compact: true,
+        characterImages: images, referenceAssets: referenceAssetsRef.current,
+        backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
+        originalCandidate, colorMode,
+        mediumReference: getBuiltinPanelMediumReference({scenario:generationScenario,colorMode,styleJson,punchlineType}),
+      }) : null;
       let qualityOutcome = await runPageImageQuality(pageContract, {
         allowRepair: repairEnabled,
         isReviewBudgetExhausted: () => qualityBudget.exhausted,
@@ -2555,6 +2561,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           || (isFullAutoMode && fullAutoAbortRef.current),
         originalCandidate,
         originalPrompt: currentPrompt,
+        repairPromptSource: isOpenAIEngine ? stripImageReferenceManifest(currentPrompt) : currentPrompt,
         mode: qualityMode,
         reviewOnly:Boolean(generationOptions.reviewOnly),
         reviewCandidate: (candidate,prompt,options)=>qualityBudget.run(signal=>
@@ -2563,7 +2570,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           repair:true,repairSource:isOpenAIEngine?sourceCandidate:null,
         }),
         repairSourceMode: isOpenAIEngine ? 'source-image' : 'regenerate',
-        repairPromptMaxChars: isOpenAIEngine ? undefined : GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
+        repairPromptMaxChars: isOpenAIEngine ? getOpenAIPromptBodyBudget(repairReferencePlan) : GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
       });
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
