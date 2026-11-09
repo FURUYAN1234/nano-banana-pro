@@ -1,3 +1,9 @@
+# v7.3.8 action continuity — 2026-11-09
+
+The user authorized the official release, the existing note update, Facebook and X announcements, and one full backup. In both Action modes, scenario generation and review now look for an action that begins before the final panel, changes what is visible, and leads to the ending. An action-only staging repair edits panel fields while keeping the title and dialogue.
+
+The ordinary API workflow was verified with a color four-panel gag and a monochrome five-panel serious story. The serious story kept all nine lines; the second panel needed an additional targeted edit to make each tail reach the right speaker. The accepted version is still open in the local preview. The scenario repair path was verified by regression tests. The final action candidate passed 2,160 tests and lint. The three release manuals were rebuilt and all 71 pages compared; three changed body pages were visually reviewed. Release and public readbacks are tracked separately.
+
 # v7.3.7 action, panel layout and drawn sound effects — 2026-11-09
 
 The user accepted the v7.3.7 real API samples and authorized deployment, the existing note update, Facebook and X with a reference image, and the established full backup. The local preview connection and current image are retained. The approved criteria were varied angles, perspective and styles, sufficient drawing quality, complete dialogue and correct speaker tails.
