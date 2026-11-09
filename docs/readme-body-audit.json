@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "fcdc23941e53a62e6f88731cb1371689b3934a8abb2ae95ffd8e7f122102f37f",
   "readmeLanguageGaps": [],
-  "sourceTree": "e33117515e0c67b7a4c8862063888fa55c8589a7",
-  "publicTree": "fcacb31cf4f76268999ff40a1aea001af4fc64f1",
+  "sourceTree": "5ba80c81177c1f10f09cc25a29e0947ea8487328",
+  "publicTree": "ec5e9310c2d9ea1284b2c3050813318bd72c817a",
   "packageSha256": "f4d32bafee0c08b51b45979f90c2e892290d8c08c13a0d21ca7dc17981ae7b7d",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -47,11 +47,11 @@
   "pricingReview": {
     "version": "7.3.7",
     "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-    "checkedAt": "2026-11-09T04:38:10.759Z",
+    "checkedAt": "2026-11-09T09:36:07.217Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Reopened official pricing: OpenAI Standard Luna $0.10/$0.50, Sol $2/$10, Terra $1/$5, Astra $10/$50 per 1M input/output; image Sunburst $8/$30, cached image $2, text $5/cached $1.25. Google source fetched from official pricing redirect: Nano Banana 2.1 Standard $1.50 input/$7.50 text output/$30 image, Batch $0.75/$3.75/$15. Flash 3.8 Standard $0.75/$3.75 through 2026-12-31; Batch $0.375/$1.875. Source prices unchanged. Reopened and compared both official price tables immediately before release. Standard rates match the candidate. Reopened and compared both official rate tables immediately before the v7.3.6 release. The candidate pricing sources match the reviewed Standard rates. v7.3.7 pricing source is byte-identical to the same-day v7.3.6 reviewed source; reused that observation and its original timestamp."
+    "findings": "Reopened official pricing: OpenAI Standard Luna $0.10/$0.50, Sol $2/$10, Terra $1/$5, Astra $10/$50 per 1M input/output; image Sunburst $8/$30, cached image $2, text $5/cached $1.25. Google source fetched from official pricing redirect: Nano Banana 2.1 Standard $1.50 input/$7.50 text output/$30 image, Batch $0.75/$3.75/$15. Flash 3.8 Standard $0.75/$3.75 through 2026-12-31; Batch $0.375/$1.875. Source prices unchanged. Reopened and compared both official price tables immediately before release. Standard rates match the candidate. Reopened and compared both official rate tables immediately before the v7.3.6 release. The candidate pricing sources match the reviewed Standard rates. v7.3.7 pricing source is byte-identical to the same-day v7.3.6 reviewed source; reused that observation and its original timestamp. Rechecked both official Standard and Batch tables for this release. The displayed model rates match the same pricing source."
   }
 }
