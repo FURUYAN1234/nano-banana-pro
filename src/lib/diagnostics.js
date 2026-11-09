@@ -36,6 +36,7 @@ const investigationGuide = Object.freeze({
     '画面・通信・保存・生成内容・検査器を切り分ける。ソースがあれば同じ版のstack内ファイル名・行番号と共通処理を照合し、個別素材だけの例外修正を避ける。',
     '白黒の線の密度を調べる場合は、通常生成と部分修正を区別し、通常コマの線整理と劇画等の意図的なカケアミを混同しない。肌・素材トーンや台詞・カメラの維持は実画像で別に確認する。',
     'STEP3の失敗は、翻訳表示前の例外からエラー名・コード・縮約した発生位置を記録する。本文や例外全文は保存しない。5〜8コマも台詞なしの品質警告は原文を保持して継続する。壊れた台詞はDIALOGUE_SYNTAX、コマ構造の不備はPANEL_STRUCTURE_CONTRACTで停止する。旧版のコード欠落から具体的な不備を断定しない。',
+    'IMAGE_PROMPT_BUDGETは描画指示が文字数上限を超えたときの検証エラー。promptLengthとpromptMaxCharsを照合する。参照説明分を予約した本文上限は32,000文字より小さくなる。',
     'REFERENCE_ANALYSIS_INVALIDは素材解析結果の対応検証で発生する。HTTP成功後にも起こり得る。ログのコードだけでは具体的な不一致を断定せず、画面の解析エラーと対象版の人物名・画像番号等の検証処理を照合する。',
     'DOCUMENTARY_SOURCE_FIDELITYは事実本文の数値・重要語句・語句網羅の検査で発生する。自由入力の制作指示を本文と誤認していないか、実入力と画面の失敗理由を対象版の本文選択処理へ照合する。コードだけで生成物の事実欠落と断定しない。',
     'ログにない本文・画像・実際の保存完了や、消えた古い記録は推測で補わない。必要な場合だけ再現手順・短い症状・対象版のソースや成果物を求める。'],
@@ -66,9 +67,10 @@ export function summarizeDiagnosticError(error) {
     : /timeout|timed out/.test(text) ? 'timeout' : /fetch|network|connection/.test(text) ? 'network'
     : /api.?key|unauthorized|authentication/.test(text) ? 'authentication'
       : /policy|safety|blocked/.test(text) ? 'policy' : /json|parse|syntax/.test(text) ? 'format'
-        : /invalid|validation|contract/.test(text) ? 'validation' : 'unknown';
+      : error?.code === 'IMAGE_PROMPT_BUDGET' || /invalid|validation|contract/.test(text) ? 'validation' : 'unknown';
   return {errorName: safeToken(error?.name), errorCode: safeToken(error?.code), errorKind,
     status: Number.isFinite(Number(error?.status)) ? Number(error.status) : undefined,
+    ...(error?.code === 'IMAGE_PROMPT_BUDGET' ? {promptLength:error.promptLength, promptMaxChars:error.promptMaxChars} : {}),
     stack: stackFrames(error?.stack)};
 }
 
@@ -84,7 +86,7 @@ export function makeDiagnosticEvent(event, details = {}, {now = Date.now(), sess
     if (value !== undefined) row[key] = value;
   }
   if (['openai', 'gemini'].includes(details.provider)) row.provider = details.provider;
-  for (const key of ['step', 'imageCount', 'characterCount', 'scenarioLength', 'promptLength', 'status', 'elapsedMs', 'inputTokens', 'outputTokens', 'panelCount']) {
+  for (const key of ['step', 'imageCount', 'characterCount', 'scenarioLength', 'promptLength', 'promptMaxChars', 'status', 'elapsedMs', 'inputTokens', 'outputTokens', 'panelCount']) {
     if (typeof details[key] === 'number' && Number.isFinite(details[key]) && details[key] >= 0) row[key] = Math.round(details[key]);
   }
   for (const key of ['fullAuto', 'experimental', 'fallback', 'ok']) if (typeof details[key] === 'boolean') row[key] = details[key];

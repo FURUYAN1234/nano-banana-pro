@@ -4,13 +4,22 @@ import { OPENAI_IMAGE_PROMPT_MAX_CHARS, assertImagePromptBudget } from '../src/l
 import { buildOpenAIReferencePlan, getOpenAIPromptBodyBudget, appendOpenAIReferencePrompt } from '../src/lib/openai-image-references.js';
 import { buildOpenAIImageRequest } from '../src/lib/openai.js';
 import { applyComedyReview } from '../src/lib/comedy-review.js';
+import { makeDiagnosticEvent, summarizeDiagnosticError } from '../src/lib/diagnostics.js';
 
 test('shared boundary accepts 32,000 characters unchanged and rejects 32,001 without truncating', () => {
   assert.equal(OPENAI_IMAGE_PROMPT_MAX_CHARS, 32000);
   const text = 'あ'.repeat(32000);
   assert.equal(assertImagePromptBudget(text), text);
   assert.equal(buildOpenAIImageRequest(text).body.prompt, text);
-  assert.throws(() => assertImagePromptBudget(text + 'い'), /上限/);
+  assert.throws(() => assertImagePromptBudget(text + 'い'), error => {
+    const row = makeDiagnosticEvent('workflow.error', summarizeDiagnosticError(error));
+    assert.equal(row.errorCode, 'IMAGE_PROMPT_BUDGET');
+    assert.equal(row.errorKind, 'validation');
+    assert.equal(row.promptLength, 32001);
+    assert.equal(row.promptMaxChars, 32000);
+    assert.doesNotMatch(JSON.stringify(row), /あ|い/);
+    return /上限/.test(error.message);
+  });
   assert.throws(() => buildOpenAIImageRequest(text + 'い'), /32,000/);
   for (const max of [0, -1, NaN, Infinity, 32001]) assert.throws(() => assertImagePromptBudget('test', max), /不正/);
 });

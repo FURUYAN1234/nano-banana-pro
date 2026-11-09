@@ -8,7 +8,10 @@ export function assertImagePromptBudget(prompt, maxChars = OPENAI_IMAGE_PROMPT_M
   }
   if (typeof prompt !== 'string') throw new Error('画像生成プロンプトは文字列で指定してください。');
   if (prompt.length > maxChars) {
-    throw new Error(`画像生成プロンプトが上限を超えています（${prompt.length.toLocaleString()}文字 / ${maxChars.toLocaleString()}文字）。台詞や指示は自動で切り捨てません。内容を整理して再構築してください。`);
+    throw Object.assign(
+      new Error(`画像生成プロンプトが上限を超えています（${prompt.length.toLocaleString()}文字 / ${maxChars.toLocaleString()}文字）。台詞や指示は自動で切り捨てません。内容を整理して再構築してください。`),
+      { code: 'IMAGE_PROMPT_BUDGET', promptLength: prompt.length, promptMaxChars: maxChars }
+    );
   }
   return prompt;
 }

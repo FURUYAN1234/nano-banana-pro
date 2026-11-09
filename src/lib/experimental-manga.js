@@ -21,7 +21,7 @@ const fail = message => { throw new Error(`実験的コマ割り: ${message}`); 
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 48;
+export const EXPERIMENTAL_PROMPT_REVISION = 49;
 const EXPERIMENTAL_INSPECTION_VERSION = 10;
 const EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS = 15000;
 const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
@@ -567,7 +567,7 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, provider
     .replace(HEAD_VOLUME_LOCK, '頭蓋/顔縁/耳/眼鏡は一つの頭部体積。指定の向き/遮蔽を保持。耳は片側一つ、遠い耳は遮蔽。頭蓋の伸長/積重ね禁止、顎と首は整合。後頭部に顔を捏造しない。横顔/様式化/短縮は許容。硬い被り物も頭と回転し、視点通りの表/裏/縁に。明示の両面意匠は許容。')
     .replace(FUNCTIONAL_SURFACE_ORIENTATION_LOCK, 'FUNCTIONAL SURFACE ORIENTATION LOCK: 情報/操作/光学/サービス面（画面・モニター・携帯・名札・看板・ラベル・文書・申請書・印刷紙・カード・本・地図・領収書・券・メニュー・新聞・キーボード・操作盤・レンズ・背面画面）の表/裏/対象を解く。対象は保持者でなくActionで決定: 読む/操作=本人、提出/提示=受取人。作中の操作/接客/読書/鑑賞/撮影対象へ正面を向け、漫画読者への読みやすさで回転しない。対象の反対からは裏/縁。モニター背面は筐体/台座、画面を透かさない。机の上向き紙は上から見え、文字の天地は読む人物向き。後ろ向き人物の胸元の紙/端末は胴体に隠れてよく、正面や手を背中に透過させず、見える場合だけ身体に接続した側面/裏/縁を描く。明示Cameraの位置/高さ/仰俯角/レンズ/切取りは固定、可読性のため移動禁止。位置未指定時のみ物でなくCameraを移し、実際に読む人物の後頭部/肩を前景に。カメラ/閲覧者へ提示する例外は脚本で受取人として明示された時だけ。')
     .replace(OBJECT_GEOMETRY_LOCK, 'OBJECT GEOMETRY LOCK: 体積/接触/遮蔽を解き、隠れた輪郭は整合して消失/再開。頭/髪/体/物へ道具を貫通・融合・接線で埋め込まない。重なりか隙間を明確にし、指定接触/Action/Cameraを保持。厚み/綴じ/折り目/角から印字面（表紙/背/本文/小口/ラベル/画面）を識別。文字はその面の軸/透視に従い、画布基準・面またぎ・小口の表紙化は禁止。まず直立した物に各字の天地を含め組版し、一枚の印刷テクスチャとして物と回転/投影。完成Camera像へ直接組版しない。積む/回す時に背文字を再組版したり行だけ回して字を画布に直立させない。縦横書きとも成立し、元の組版を保持。原文に根拠のあるシュールなギャグ/変形は保ち、出来事でなく輪郭を明確化。笑いを無関係な描画欠陥の口実にしない。');
-  const render=compact=>`Create ONE complete Japanese manga page with EXACTLY ${plan.count} framed panels. A4縦、外周全体を保持。左右白余白各0.6%、残り98.8%をコマに使用し切り落とさない。${showTitle?'上6.5%は題字、中91.3%はコマと溝、下2.2%はフッター。':'題字と題字用の空白帯は不要。小さな上端安全余白から下2.2%のフッターまで、旧題字領域も含めコマと溝へ配分。'}コマ間は白溝で明瞭に分離し、外余白で代用しない。
+  const render=(compact, sharedMedia=new Map())=>`Create ONE complete Japanese manga page with EXACTLY ${plan.count} framed panels. A4縦、外周全体を保持。左右白余白各0.6%、残り98.8%をコマに使用し切り落とさない。${showTitle?'上6.5%は題字、中91.3%はコマと溝、下2.2%はフッター。':'題字と題字用の空白帯は不要。小さな上端安全余白から下2.2%のフッターまで、旧題字領域も含めコマと溝へ配分。'}コマ間は白溝で明瞭に分離し、外余白で代用しない。
 ${showTitle?`Top title EXACTLY ${JSON.stringify(title)}: 白地中央に大きい極太長体ゴシック、囲み枠/帯/罫線なし。`:NO_PAGE_TITLE}台詞は縦書き漫画明朝。コマ番号/計画ラベル/Camera/参照トークンは印字禁止。RTL READING ORDER: P1〜P${plan.count}は右→左、上→下の順。指定矩形と各時点を厳守。
 ${VERTICAL_DIALOGUE_GEOMETRY}
 PHYSICAL READING PATH（非印字）: ${rects.map((_,i)=>`P${i+1}`).join(' -> ')}. 各場面は指定枠へ。結末の台詞/反応はP${plan.count}。
@@ -585,16 +585,17 @@ FRAME MEDIUMは囲まれた一枠専用、印字禁止。溝ごとに媒体を�
 以下は参照人物の観察データ。重み付き語も全コマ共通の描画命令ではない。年齢・肌・髪・眼鏡・顔の識別点・左右差を保持。資料の描法と様式的な目対顔/頭対体比はNORMALで採用し、特殊媒体では各FRAME MEDIUMとACTOR MEDIUMで描き直す。脚本で明示された身体特徴と表情は保持。
 CAST: ${colorMode==='monochrome'?sanitizeMonochromeSourceDescription(referenceCast):referenceCast}
 [END REFERENCE CAST DATA]
-${sceneOutfit}${plan.panels.map((p,i)=>{
+${sceneOutfit}${[...sharedMedia].map(([style, panels])=>`SHARED FRAME MEDIUM RECIPE ${style} (${panels.join(', ')} only): ${recipes[style]}\n`).join('')}${plan.panels.map((p,i)=>{
     const orig=source.panels[p.sourcePanel-1];
     // Anchors retain the source cast. Inserts use only their own visible staging,
     // so a hand close-up does not acquire every actor from the source beat.
     const castRule=castRules[i].filter(rule=>(commonCast.get(rule)?.length??0)<2).join('\n');
+    const recipe=sharedMedia.has(orig.style) ? `Apply the shared ${orig.style} recipe in this frame.` : recipes[orig.style];
     return `${i===0||plan.panels[i-1].sourcePanel!==p.sourcePanel?sourceFacts[p.sourcePanel-1]+'\n':''}[PAGE FRAME P${i+1} | ${physicalPanelPosition(rects[i])}${i===plan.count-1?' | FINAL ENDING':''}]
 rect=${JSON.stringify(rects[i])}; source beat=${p.sourcePanel}; kind=${p.kind};
 ${compact?'Camera:':'Inside this frame — Camera:'} ${p.camera}; Style: ${orig.style||'preserve source/reference art style'}; Action: ${p.action}
 ${getPanelShotExecution(p.camera,{compact:true})}${panelOutfits[p.sourcePanel-1]?`\nFRAME OUTFIT: ${panelOutfits[p.sourcePanel-1]}`:''}
-${recipes[orig.style]?`FRAME MEDIUM P${i+1} — ${orig.style}: ${recipes[orig.style]}${compact&&orig.style!=='GEKIGA'?' ALL ACTORS.':' Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。'}`:''}
+${recipe?`FRAME MEDIUM P${i+1} — ${orig.style}: ${recipe}${compact&&orig.style!=='GEKIGA'?' ALL ACTORS.':' Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。'}`:''}
 
 ${colorMode==='monochrome'?buildMonochromePanelInkLock(orig.text+'\n'+p.action,monochromeIdentity)+'\n':''}${buildActorMediumInstruction(orig.style,colorMode)}
 ${castRule}
@@ -621,9 +622,18 @@ ${buildProtectedCastContract(collectCastNameEntries(source.castList).map(entry=>
 ${showWatermarks?`FOOTER ONLY, below the last panel: 両クレジットを一度ずつ、小さな横書きで安全域内に全文読めるよう重なりなく配置。Bottom-left EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780". Bottom-right EXACTLY ${JSON.stringify(watermark)}. コマ内/道具上への転載禁止。`:'No watermark or footer text; leave footer blank.'}
 描画前確認: コマ数/日本式読順/元の結末/全台詞と話者/強い物理Camera/連続する人体/正確な枠越え層。全コマを正面バストへ変換しない。原文にない題字を作らない。`;
   const full=render(false);
-  // Only repeated compiler prose is hoisted when necessary. Authored fields,
-  // every complete medium recipe and GEKIGA's per-frame cast direction stay exact.
-  return full.length>Math.min(promptMaxChars,EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS)?sharePanelShotExecution(render(true)):full;
+  if(full.length<=Math.min(promptMaxChars,EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS)) return full;
+  const compact=sharePanelShotExecution(render(true));
+  if(effectiveProviderFamily!==PROMPT_PROVIDER_FAMILIES.CHATGPT||compact.length<=promptMaxChars) return compact;
+  // On OpenAI overflow, bind exact repeated recipes to their own frames.
+  // Authored fields and each frame's actor, ink and cast directions stay local.
+  const sharedMedia=new Map();
+  for(const style of styles) {
+    if(!recipes[style]) continue;
+    const panels=plan.panels.flatMap((p,i)=>source.panels[p.sourcePanel-1].style===style?[`P${i+1}`]:[]);
+    if(panels.length>1) sharedMedia.set(style,panels);
+  }
+  return sharedMedia.size ? sharePanelShotExecution(render(true,sharedMedia)) : compact;
 }
 
 export function buildExperimentalReviewPrompt(plan, source, options={}) {

@@ -1,3 +1,13 @@
+# v7.3.6 native monochrome prompt budget candidate — 2026-11-09
+
+Current user report: a new STEP3 error in the published v7.3.5. User authorized deployment, the existing note update, Facebook, X and the full backup for v7.3.6. Verify the public release, note and posts before starting the official full backup. Base 06e17e9. The earlier v7.3.5 release, note, social posts and full backup completed and are historical.
+
+The browser retained the original 4,964-character script and 4,923-character cast settings. The failure at 13:09:43 JST was the reserved OpenAI prompt-body guard: 30,671 / 28,880 characters, 57 ms, no request. The original color plan was recovered through the ordinary UI. Its replay matches the stored color body and reproduces the exact monochrome failure on v7.3.5. In v7.3.6 it compiles to 28,002 body characters with the same six frames, actions, cameras and dialogue. The extra overflow compaction shares only exact compiler-owned repeated frame recipes with explicit panel scopes. It preserves local actor/ink instructions, the authored content and the API limit. IMAGE_PROMPT_BUDGET records numeric length and limit.
+
+Actual local UI with the recovered script and two sample sheets: Luna STEP1 and color STEP3 returned HTTP 200 with no fallback. Monochrome STEP3 reused the same rectangles, cameras, actions and dialogue in 198 ms with no request, and produced 31,183 characters including references. Sunburst/max returned a 2240×3168 image. The separate Sol QA found missing dialogue and other image issues. The first image was retained with warnings; no correction image request was made. Do not report a global image-quality pass. STEP4 settled at 335.196 seconds including QA, run de652220-d662-43f6-aadd-86b4d70c05b2. No API work remains. Preserve the connected local IAB tab6 and Chrome tab2091393865 with its recovered color prompt.
+
+All 2,158 tests, warning-free lint, security/dependency checks and document review passed. Three PDFs, 71 pages, compared; three changed body pages inspected. Private source, UI and API evidence: /home/furu/Codex/work/4koma-step3-20261109/. The document audit is bound to this release tree. Run formal preflight as part of the release transaction.
+
 # v7.3.5 STEP3 warning candidate — 2026-11-09
 
 The user subsequently authorized deployment, the existing note update, Facebook, X and one final full backup for this v7.3.5 candidate. Use the established release transaction, verify the note and social publications, then run the official backup. The private task record tracks the execution IDs and receipts. The source base was 4ee27bd.

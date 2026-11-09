@@ -222,6 +222,37 @@ try {
       assert.equal((await m.prepareExperimentalManga(options,async()=>JSON.stringify(diagnosticPlan))).prompt,prompt);
     }
   });
+  test('six detailed GEKIGA frames can switch to monochrome within the OpenAI reference budget', async () => {
+    const scenario = budgetScenario.replace(/\[EMOTION: \w+\]/g, '[EMOTION: GEKIGA]')
+      .replace(/^状況: /gm, '状況: 作業台の窓側には道具を避けた空きがあり、窓からの光で紙の縁と人物それぞれの手の位置が見える。');
+    const input = {...budgetInput, scenario, providerFamily:'chatgpt', promptMaxChars:28880};
+    const source = m.readExperimentalSource(input);
+    const plan = diagnosticPlanFor(source);
+    const color = await m.prepareExperimentalManga(input, async () => JSON.stringify(plan));
+    let calls = 0;
+    const mono = await m.prepareExperimentalManga({...input, colorMode:'monochrome'}, async () => {
+      calls++;
+      throw new Error('Color-only changes must reuse the approved layout');
+    }, {colorOnlyPrepared:color});
+    assert.equal(calls, 0);
+    assert.deepEqual(mono.plan, color.plan);
+    assert.equal(mono.source.scenario, scenario);
+    assert.ok(mono.prompt.length <= input.promptMaxChars);
+    assert.match(mono.prompt, /SHARED FRAME MEDIUM RECIPE GEKIGA \(P1, P2, P3, P4, P5, P6 only\):/);
+    assert.ok(mono.prompt.includes(GEKIGA_FACE_CONSTRUCTION));
+    for (const [i, panel] of plan.panels.entries()) {
+      const frame = mono.prompt.split(`[PAGE FRAME P${i+1} |`)[1].split('[END PAGE FRAME')[0];
+      assert.ok(frame.includes(panel.camera));
+      assert.ok(frame.includes(panel.action));
+      assert.ok(frame.includes('Apply the shared GEKIGA recipe in this frame.'));
+      assert.ok(frame.includes(buildActorMediumInstruction('GEKIGA', 'monochrome')));
+      for (const id of panel.dialogueIds) assert.ok(frame.includes(JSON.stringify(source.dialogue[id].text)));
+    }
+    const roundTrip = await m.prepareExperimentalManga(input, async () => {
+      throw new Error('Compacted monochrome preparation must remain reusable');
+    }, {colorOnlyPrepared:mono});
+    assert.equal(roundTrip.prompt, color.prompt);
+  });
   for(const count of [5,6,7,8]) test(`five-person ${count}-panel mixed media remains intact in both color budgets`,async()=>{
     const actors=['ナオ','ユキ','カナタ','コハル','マコト'];
     const events=['葉の木版と用紙を並べる','試し刷りで葉脈の欠けを見つける','版の端を二人で支える','ローラーでインクを均等にのせる','紙の四隅を合わせる','ばれんを一定の強さで滑らせる','紙の角をゆっくりめくる','つながった葉の刷り上がりを全員で囲む'];
