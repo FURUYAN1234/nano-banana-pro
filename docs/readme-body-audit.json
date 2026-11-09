@@ -19,7 +19,7 @@
   "readmeSha256": "71e496415ceab8fd0d1321773468b8d9e6003f654e2904473a941206f00dcec0",
   "readmeLanguageGaps": [],
   "sourceTree": "fcc7276215899a5d0b9d7d5853b195b65bb061e1",
-  "publicTree": "637c9cbfe4d86f4935a259633449a6eb335934fe",
+  "publicTree": "2282f7e4ecf80ed57b0a63f582f23d13833ab5e7",
   "packageSha256": "71f5fd512d839bfd616ed38733bc9cc0e380c49621e8c3a9032ec468e7361b20",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -42,7 +42,7 @@
     "📋 ChangeLog / 更新履歴"
   ],
   "checkedAt": "2026-11-09T11:42:55.571Z",
-  "findings": "Compared the v7.3.8 bilingual README with the published v7.3.7 baseline, action policy, planner and review. STEP2 now specifies movement before the ending, physical change across panels and a visible result, while other endings can still include action. Read the existing body sections in context of that diff. Updated source version, attribution example, release asset link labels and release history. Distribution ZIP is byte-identical to the reviewed prior asset. Actual image checks cover one color and one monochrome sample; monochrome required a targeted balloon-tail edit.",
+  "findings": "Compared the v7.3.8 bilingual README with the published v7.3.7 baseline, action policy, planner and review. STEP2 now specifies movement before the ending, physical change across panels and a visible result, while other endings can still include action. Read the existing body sections in context of that diff. Updated source version, attribution example, release asset link labels and release history. Distribution ZIP is byte-identical to the reviewed prior asset. Actual image checks cover one color and one monochrome sample; monochrome required a targeted balloon-tail edit. Regenerated both SVG diagrams after the version bump and reviewed the diff; the diagram labels now match v7.3.8.",
   "manualFindings": "Built the three v7.3.8 PDFs. Compared all 71 rendered pages to the previous public PDFs above their updated footers. Only Gemini page 1 and system pages 11 and 18 changed in body; inspected all three at full page size. System page 11 describes action starting before the ending and its consequence. The two other body differences are the version references. PDF size, text bounds, scope, privacy and links passed in the builders.",
   "pricingReview": {
     "version": "7.3.8",
