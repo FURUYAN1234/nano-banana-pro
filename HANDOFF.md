@@ -1,3 +1,9 @@
+# v7.3.7 action, panel layout and drawn sound effects — 2026-11-09
+
+The user accepted the v7.3.7 real API samples and authorized deployment, the existing note update, Facebook and X with a reference image, and the established full backup. The local preview connection and current image are retained. The approved criteria were varied angles, perspective and styles, sufficient drawing quality, complete dialogue and correct speaker tails.
+
+The actual color six-panel run included one automatic review and one source-image edit. The same six styles were also checked in a retained monochrome API output. The four-panel gag sample retained all seven lines and their speakers. Fine differences in angles and rendering remain visible. Local validation passed 2,159 tests, lint, build and built web security verification. Release notes are in [v7.3.7.md](docs/releases/v7.3.7.md). The official release and backup receipts are kept separately from this public handoff.
+
 # v7.3.6 native monochrome prompt budget candidate — 2026-11-09
 
 Current user report: a new STEP3 error in the published v7.3.5. User authorized deployment, the existing note update, Facebook, X and the full backup for v7.3.6. Verify the public release, note and posts before starting the official full backup. Base 06e17e9. The earlier v7.3.5 release, note, social posts and full backup completed and are historical.
