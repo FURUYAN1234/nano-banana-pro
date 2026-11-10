@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "8b06dcf6ace45e9115158c7fdebc657e3ec107185b5b9eab2bee0d199261e1cc",
   "readmeLanguageGaps": [],
-  "sourceTree": "fcc7276215899a5d0b9d7d5853b195b65bb061e1",
-  "publicTree": "2282f7e4ecf80ed57b0a63f582f23d13833ab5e7",
+  "sourceTree": "1c30934ee8da9f340645ca31e1c0a6e989f380fd",
+  "publicTree": "89d071fb0fb9c6f23aefe228d03a004eeaa02c01",
   "packageSha256": "13b03540e1d9ff8d569c9d39d4385ec045f3a88c0cfa43ab09bc765b68da1dab",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,8 +41,8 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-09T23:11:46.941Z",
-  "findings": "Reviewed the v7.3.9 bilingual README diff against v7.3.8 and current action, recovery, diagnostic and model-selection code. News action, optional normal movement, separate bodily-staging review, failure-only text retention and STEP1-selected image review are documented. Removed a contradictory old no-input-logging paragraph. Version references and SVG labels match the candidate. This is a documentation review, not final image acceptance or deployment approval. Prior pricing review remains historical. Later review also covers the typed action-payoff check and retention of rejected scenario review contents. Final API image acceptance remains pending.",
+  "checkedAt": "2026-11-10T01:11:15.343Z",
+  "findings": "Reviewed the v7.3.9 bilingual README diff against v7.3.8 and current action, recovery, diagnostic and model-selection code. News action, optional normal movement, separate bodily-staging review, failure-only text retention and STEP1-selected image review are documented. Removed a contradictory old no-input-logging paragraph. Version references and SVG labels match the candidate. This is a documentation review, not final image acceptance or deployment approval. Prior pricing review remains historical. Later review also covers the typed action-payoff check and retention of rejected scenario review contents. Final normal-UI API image acceptance completed on 2026-11-10 for news GagAction six-panel color and SeriousAction four-panel monochrome, using the standard single correction and visual readback; no post-correction API pass is claimed. Refreshed source/public tree IDs after committing the reviewed candidate: the earlier collector had read HEAD at v7.3.8 while reviewing uncommitted v7.3.9 files.",
   "manualFindings": "Rebuilt all three v7.3.9 manuals dated 2026-11-10. Compared all 71 rendered pages above the footer against the public baseline; changed bodies: Gemini page 1, System pages 1, 11, 18, 32, OpenAI none. Visually inspected every changed body page, including the final news/normal-action paragraph on system page 11. Text bounds and builder checks pass. Replaced local public/downloads PDFs only; no external publication. Updated the selected-action ending check on system page 11, compared all 71 pages against the immediately preceding candidate (only that page changed), and visually inspected the final page.",
   "pricingReview": {
     "version": "7.3.9",
