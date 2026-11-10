@@ -35,7 +35,7 @@ test('a malformed primary QA report stops supplementary paid audits and keeps th
   for (const text of ['not JSON', '{"pass":true,"issues":[],"spatial_checks":{"$columns":["panel"],"$rows":[[]]}}']) {
     let requests = 0;
     const requestOptions = [];
-    const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
+    const context = { analysisModelId:'gpt-6-luna',experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
       ...imageQualityQa, qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color', generationColorMode: 'color',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => ['one', 'two', 'three', 'four'],
@@ -53,7 +53,7 @@ test('a malformed primary QA report stops supplementary paid audits and keeps th
       allowRepair: true, reviewCriticalCamera: async () => assert.fail('failed primary cannot spend camera audit'),
       generateRepairCandidate: async () => assert.fail('malformed evidence cannot spend an image') });
     assert.equal(requests, 1, 'malformed review cannot trigger a second paid inspection');
-    assert.ok(requestOptions.every(options => options.outputProfile === 'image-quality-review'));
+    assert.ok(requestOptions.every(options => options.outputProfile === 'image-quality-review' && options.visionModelId === 'gpt-6-luna'));
     assert.equal(result.candidate, candidate);
     assert.equal(result.finalReview.requestFailed, true);
   }
@@ -62,7 +62,7 @@ test('a malformed primary QA report stops supplementary paid audits and keeps th
 test('the actual workflow rejects a second review request at the API boundary', async () => {
   const callback = workflowSource.match(/const reviewImageCandidate = ([\s\S]+?);\r?\n\r?\n      const retainedImage/)[1];
   let calls=0;
-  const context={experimentalPrepared:null,qualityMode:'single-image',generationScenario:'',castList:'',images:[],
+  const context={analysisModelId:'gpt-6-luna',experimentalPrepared:null,qualityMode:'single-image',generationScenario:'',castList:'',images:[],
     isOpenAIEngine:true,colorMode:'color',generationColorMode:'color',inspectImageDimensions:async()=>({width:100,height:100}),getImageContentHash:async()=> 'hash',
     buildImageQualityQaImageParts:()=>[],buildImageQualityQaPrompt:()=> 'quality',statCallback:()=>{},
     callAI:async()=>{calls++;return {text:'{}'};},requestImageQualityQa:async({request})=>{
@@ -81,7 +81,7 @@ test('the actual workflow retains primary findings without supplementary hand or
       { type: 'anatomy', panel: 2, subject: 'actor', reason: 'Three visible hands attached to one actor' },
       ...(missingHand ? [{ type: 'unverified', panel: 2, subject: 'actor', reason: 'Missing or incomplete per-actor visible-hand inventory' }] : []),
     ] };
-    const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
+    const context = { analysisModelId:'gpt-6-luna',experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
       qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color', generationColorMode: 'color',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => ['one', 'two', 'three', 'four'],
@@ -118,7 +118,7 @@ test('native monochrome chroma findings survive every QA outcome without authori
   for (const outcome of ['success', 'primary_failure', 'native_failure']) {
     let inspected = 0, requests = 0;
     const progress = [];
-    const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
+    const context = { analysisModelId:'gpt-6-luna',experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts,
       qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'monochrome', generationColorMode: 'monochrome',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'native-source-hash',
       inspectNativeMonochromeChroma: async value => {
@@ -165,7 +165,7 @@ test('native chroma inspection is never invoked for color, Gemini or single-imag
   const callback = workflowSource.match(/const reviewImageCandidate = ([\s\S]+?);\r?\n\r?\n      const retainedImage/)[1];
   for (const [isOpenAIEngine, colorMode, qualityMode] of [[true, 'color', 'four-panel'], [false, 'monochrome', 'four-panel'],
     [false, 'color', 'four-panel'], [true, 'monochrome', 'single-image']]) {
-    const context = { experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts, isOpenAIEngine, colorMode, generationColorMode:colorMode, qualityMode, scenario: '', castList: '', images: [],
+    const context = { analysisModelId:'gpt-6-luna',experimentalPrepared:null, generationScenario:"", extractBubbleContracts: imageQualityQa.extractBubbleContracts, isOpenAIEngine, colorMode, generationColorMode:colorMode, qualityMode, scenario: '', castList: '', images: [],
       inspectNativeMonochromeChroma: () => assert.fail('non-target path must not inspect pixels'),
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => [], buildImageQualityQaImageParts: () => [], buildImageQualityQaPrompt: () => 'primary',
@@ -242,7 +242,7 @@ test('adopting one automatic repair preserves the actual original image and its 
   const originalCandidate={base64Img:'original',mimeType:'image/png',metadataContext:{source:'original'},modelId:'source-model'};
   const acceptedHistoryItem={id:20,img:'data:image/png;base64,fixed',metadataContext:{source:'fixed'},selected:true};
   const context={originalCandidate,acceptedHistoryItem,acceptedImageStr:acceptedHistoryItem.img,finalImageStr:'data:image/png;base64,original',
-    timestamp:20,experimentalPrepared:null,qualityOutcome:{candidate:{base64Img:'fixed'},originalReview:{pass:false}},addGenerationHistoryItem};
+    timestamp:20,analysisModelId:'gpt-6-luna',experimentalPrepared:null,qualityOutcome:{candidate:{base64Img:'fixed'},originalReview:{pass:false}},addGenerationHistoryItem};
   const update=new Function(...Object.keys(context),'return prev=>{'+body+'};')(...Object.values(context));
   const history=update([{id:1,img:'older-user-image'},{id:19,img:context.finalImageStr}]);
   assert.equal(history.filter(item=>item.img===context.finalImageStr).length,1);

@@ -66,7 +66,7 @@ export default function DiagnosticLogPanel({defaultOpen = false, panelHost}) {
           <div className="diagnostic-content">
             {fromError && <p role="status" className="diagnostic-error-notice">エラーを検出したため開きました。調査記録をJSONで保存できます。</p>}
             <p>発生時刻・操作・アプリの仕様・調査手順はログに含まれます。JSONを丸ごと調査担当のAIへ渡し、簡単な症状をひと言添えてください。</p>
-            <p>同じブラウザー・同じURL内に直近7日分を保存します。記録データは最大2MiB・2,000件で、古い方から削除します。APIキー、入力本文、画像本体は記録しません。</p>
+            <p>同じブラウザー・同じURL内に直近7日分を保存します。記録データは最大2MiB・2,000件で、古い方から削除します。失敗時は、その実行の台本・人物設定・入力・描画指示と修復内容も残します。JSONを共有するとこれらの文章も渡ります。APIキーと画像本体は除外し、長文の省略はJSONに明記します。</p>
             {report ? <>
               <p>保存先：{globalThis.location?.origin} ／ {report.events.length}件 ／ {report.storageState === 'persistent' ? 'ブラウザーに保存済み' : '一時記録のみ（再読み込みで失われます）'}</p>
               {report.storageState !== 'persistent' && <p role="alert" className="diagnostic-error-notice">ログを永続保存できません。JSONを保存してください。アプリの処理は継続できます。</p>}

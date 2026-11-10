@@ -1,4 +1,5 @@
-// Deliberately structured: never accept request/response bodies, headers or free-form UI text.
+import { sanitizeFailureContext } from './diagnostic-failure-context.js';
+// Metadata stays structured. Explicit invocation inputs and repair evidence are saved only on failure.
 export const DIAGNOSTIC_LIMITS = Object.freeze({maxAgeMs: 7 * 86400000, maxBytes: 2 * 1024 * 1024, maxEvents: 2000});
 const EVENTS = new Set(['session.start', 'workflow.start', 'workflow.end', 'workflow.error', 'workflow.cancel', 'workflow.settings', 'ui.action', 'api.request', 'api.response', 'api.payload', 'api.error', 'runtime.error', 'react.error']);
 const sessionId = globalThis.crypto?.randomUUID?.() || `session-${Date.now()}`;
@@ -16,7 +17,7 @@ const applicationSpec = Object.freeze({
     {operation:'step3',behavior:'台本・資料・出力設定を最終プロンプトへまとめ、全文を直接編集できる。フキダシは縦書きの列割りを優先し、読めない・重要な絵を隠す場合や明示指定時だけ個別に横書きを許す。人物や絵柄を簡素化して文字を収めない。編集後の同じ全文を通常API・全体/分割コピー・TXT・JSONへ渡す。'},
     {operation:'step4',behavior:'最終プロンプトと参照画像から画像生成。背景の簡略化は初期状態で無効。有効時は内蔵の背景保持指示との競合を解消し、各コマと末尾に背景専用指示を加える。人物・台詞・参照画像は保持し、無効に戻すと元の指示へ復帰する。通常の4コマと可変コマ形式があり、設定によって検査・修正が続く。追加生成や再試行には費用が発生し得る。'}],
   operationLabels,
-  actionAndLayout:'シリアスとギャグの両方でアクションを選択可能。他の結末でも話に必要な動きは描く。5〜8コマの縦2段指定は一枠として描くよう指示し、意図した手足や頭のはみ出しを許容する。',
+  actionAndLayout:'シリアスとギャグの両方でアクションを選択可能。話に沿った全身の重心移動・ひねり・踏み込み・反動を見せ場へ具体化し、途中の動作と結末をつなぐ。因果の接続・身体演技・選択したアクションの結末を別々に検査する。一般ニュースも報道事実を保ち、架空キャストの行動で動勢を描く。無関係な戦闘や事故は加えず、明示された静止や構図を守る。通常の結末でも場面に合う大胆な動きを任意に織り交ぜ、固定回数を要求しない。5〜8コマの縦2段指定は一枠として描くよう指示し、意図した手足や頭のはみ出しを許容する。',
   behavior:['シナリオ強化: 選択カテゴリの候補を作成し、編集範囲を検査後、同じ選択モデルの別API呼出しで元台本と比較する。引用を照合し、単なる表記変更・意味のない言い換えを改善と扱わない。候補は最大2回。人物・画風・話の退行や比較失敗は不採用。全項目の改善、一部の改善、元台本保持を区別して表示する。',
     '白黒の通常生成は、通常コマの不要な髪の細線・服のしわ・背景の微細描写を整理し、黒ベタと白い隙間を使う指示を参照一覧の末尾へ含める。各コマの描法、肌・素材のトーン、台詞・カメラ・演技を保持する。API・Webコピー・TXTは確定した同じ全文を使う。部分修正にはこの全体描画指示を新たに加えない。',
     '手動・全自動・連続生成があり、設定によって後続STEPへ進む。',
@@ -37,7 +38,7 @@ const investigationGuide = Object.freeze({
     'workflow.cancel、AbortError、CANCELLEDやcancelled分類は利用者の中断と区別する。失敗後に回復したか、後続処理や別のrunIdが始まったかも調べる。',
     '画面・通信・保存・生成内容・検査器を切り分ける。ソースがあれば同じ版のstack内ファイル名・行番号と共通処理を照合し、個別素材だけの例外修正を避ける。',
     '白黒の線の密度を調べる場合は、通常生成と部分修正を区別し、通常コマの線整理と劇画等の意図的なカケアミを混同しない。肌・素材トーンや台詞・カメラの維持は実画像で別に確認する。',
-    'STEP3の失敗は、翻訳表示前の例外からエラー名・コード・縮約した発生位置を記録する。本文や例外全文は保存しない。5〜8コマも台詞なしの品質警告は原文を保持して継続する。壊れた台詞はDIALOGUE_SYNTAX、コマ構造の不備はPANEL_STRUCTURE_CONTRACTで停止する。旧版のコード欠落から具体的な不備を断定しない。',
+    '失敗イベントのfailureContextには、その実行開始時の台本・人物設定・入力・描画指示を記録する。吹き出し修復失敗には修復応答・各コマの抽出台詞・具体的な不一致も付く。台本の品質検査不合格には判定内容と修正理由も残る。originalLengthsとtruncatedFieldsで省略を確認し、再読み込み後の別台本と混同しない。一般API本文・任意の例外全文は保存しない。5〜8コマも台詞なしの品質警告は原文を保持して継続し、配置だけの修復後にも同じ条件を使う。壊れた台詞はDIALOGUE_SYNTAX、コマ構造の不備はPANEL_STRUCTURE_CONTRACTで停止する。旧版で保存されなかった本文は復元できない。',
     'IMAGE_PROMPT_BUDGETは描画指示が文字数上限を超えたときの検証エラー。promptLengthとpromptMaxCharsを照合する。参照説明分を予約した本文上限は32,000文字より小さくなる。',
     'REFERENCE_ANALYSIS_INVALIDは素材解析結果の対応検証で発生する。HTTP成功後にも起こり得る。ログのコードだけでは具体的な不一致を断定せず、画面の解析エラーと対象版の人物名・画像番号等の検証処理を照合する。',
     'DOCUMENTARY_SOURCE_FIDELITYは事実本文の数値・重要語句・語句網羅の検査で発生する。自由入力の制作指示を本文と誤認していないか、実入力と画面の失敗理由を対象版の本文選択処理へ照合する。コードだけで生成物の事実欠落と断定しない。',
@@ -45,7 +46,7 @@ const investigationGuide = Object.freeze({
   responseFormat:['利用者向け：分かったことと次にできる操作を簡潔に示す。',
     '開発者向け：時刻・操作・runId/requestId・エラーコード・発生元などの根拠を示し、原因候補と確認方法、共通修正の範囲、正常例と異常例の再検証案を述べる。',
     '確認済み・推測・未確認を明確に分け、記録が足りなければ断定しない。'],
-  privacy:'仕様と手順に個人名・作品名・素材の固有名詞は含めない。ログはAPIキー・ヘッダー・入力全文・画像本体・例外全文を除外する。秘密情報を求めたり、無断送信・公開・有料再実行を指示しない。',
+  privacy:'静的な仕様と手順に個人名・作品名・素材の固有名詞は含めない。失敗イベントのfailureContextには作品の文章や人物設定が含まれる。APIキー・ヘッダー・画像本体は保存せず、既知の認証文字列も伏せる。ログを共有すると記録された文章も相手へ渡る。秘密情報を求めたり、無断送信・公開・有料再実行を指示しない。',
   limits:'同じブラウザー・同じoriginに保存。保持期限・件数・容量の上限や保存障害で記録が欠け得る。JSONには静的な仕様・調査ガイドも付くため、ファイル全体の容量はイベント保存上限より大きくなり得る。',
 });
 const withReadableContext = row => ({...row, timeISO:new Date(row.time).toISOString(),
@@ -73,6 +74,7 @@ export function summarizeDiagnosticError(error) {
   return {errorName: safeToken(error?.name), errorCode: safeToken(error?.code), errorKind,
     status: Number.isFinite(Number(error?.status)) ? Number(error.status) : undefined,
     ...(error?.code === 'IMAGE_PROMPT_BUDGET' ? {promptLength:error.promptLength, promptMaxChars:error.promptMaxChars} : {}),
+    ...(error?.diagnosticContext ? {failureContext:sanitizeFailureContext(error.diagnosticContext)} : {}),
     stack: stackFrames(error?.stack)};
 }
 
@@ -92,6 +94,11 @@ export function makeDiagnosticEvent(event, details = {}, {now = Date.now(), sess
     if (typeof details[key] === 'number' && Number.isFinite(details[key]) && details[key] >= 0) row[key] = Math.round(details[key]);
   }
   for (const key of ['fullAuto', 'experimental', 'fallback', 'ok']) if (typeof details[key] === 'boolean') row[key] = details[key];
+  if (['workflow.error','runtime.error','react.error','api.error'].includes(event)
+    || (['api.response','api.payload'].includes(event) && details.ok === false)) {
+    const snapshot=sanitizeFailureContext(details.failureContext);
+    if (snapshot) row.failureContext=snapshot;
+  }
   // Only accept already reduced frame identifiers, never arbitrary stacks/messages.
   if (details.stack) row.stack = String(details.stack).split('\n').filter(line => safeToken(line) && /^[a-zA-Z0-9_.-]+\.(?:[cm]?js|jsx|tsx?)(?::\d+:\d+)?$/.test(line)).slice(0, 8).join('\n');
   return withReadableContext(row);
@@ -162,7 +169,13 @@ function enqueue(clear = false) {
 export function recordDiagnostic(event, details = {}) {
   // All failure paths are isolated from the application/API operation being observed.
   try {
-    const row = makeDiagnosticEvent(event, {...context, ...details});
+    const base = details.runId && details.runId !== context.runId ? {} : context;
+    const failureContext = base.failureContext || details.failureContext ? {
+      ...base.failureContext, ...details.failureContext,
+      originalLengths:{...base.failureContext?.originalLengths,...details.failureContext?.originalLengths},
+      truncatedFields:[...(base.failureContext?.truncatedFields || []),...(details.failureContext?.truncatedFields || [])],
+    } : undefined;
+    const row = makeDiagnosticEvent(event, {...base, ...details, failureContext});
     // Append inside the queue, so a preceding transaction cannot discard a newer event.
     queue = queue.then(() => { memory = retainDiagnosticEvents([...memory, row]); });
     const saved = enqueue();
@@ -193,7 +206,7 @@ export function subscribeDiagnosticErrors(listener) {
 }
 
 export function beginDiagnosticRun(operation, metadata = {}) {
-  context = {...settings, ...metadata, runId: id(), operation};
+  context = {...settings, ...metadata, failureContext:sanitizeFailureContext(metadata.failureContext), runId: id(), operation};
   observedRuns.set(operation, {...context});
   void recordDiagnostic('workflow.start');
   return {...context};
@@ -204,7 +217,9 @@ export function beginDiagnosticAction(operation, metadata = {}) {
   // STEP1 can become busy before async file preparation reaches beginApiWork.
   // Reuse that observed run rather than splitting its request from its end.
   const observed = observedRuns.get(operation);
-  context = {...observed, ...settings, ...metadata, runId: observed?.runId || id(), operation};
+  context = {...observed, ...settings, ...metadata,
+    failureContext:sanitizeFailureContext(metadata.failureContext ?? observed?.failureContext),
+    runId: observed?.runId || id(), operation};
   if (observed) observedRuns.set(operation, {...context});
   void recordDiagnostic('ui.action');
 }

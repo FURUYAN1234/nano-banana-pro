@@ -54,11 +54,12 @@ document.querySelector('#run').onclick = async () => {
     assert(report.storageState==='persistent'&&report.events.some(row=>row.operation==='offline_storage'),'recovery lost memory record');
     assert(!JSON.stringify(report).includes('PRIVATE_INPUT')&&!JSON.stringify(report).includes('sk-not-a-real-key'),'secret persisted');
     await d.clearDiagnostics();
-    const run=d.beginDiagnosticRun('step2',{step:2,requestedModel:'gpt-6-luna'});
-    await d.recordDiagnostic('api.error',{errorName:'TypeError',errorCode:'NETWORK_ERROR'});
+    const run=d.beginDiagnosticRun('step2',{step:2,requestedModel:'gpt-6-luna',failureContext:{scenario:'再読み込み前の失敗台本',castList:'## ミク',userTopic:'検証用のお題'}});
+    await d.recordDiagnostic('api.error',{errorName:'TypeError',errorCode:'NETWORK_ERROR',failureContext:{repairResponse:'不正な修復案',issues:[{panel:1,reason:'件数不一致',dialogue:[]}]}});
     d.endDiagnosticRun(run,'settled');
     report=await d.readDiagnostics();
     assert(report.events.length===3&&new Set(report.events.map(row=>row.runId)).size===1,'run correlation failed');
+    assert(report.events.find(row=>row.event==='api.error').failureContext.scenario==='再読み込み前の失敗台本','failure input lost');
     results.textContent='PASS: native IndexedDB burst50, expiry, count2000, UTF8 2MiB, storage denial+recovery, secret exclusion, run correlation.\n'+JSON.stringify(report,null,2);
   } catch(error) { results.textContent='FAIL: '+error.stack; }
 };

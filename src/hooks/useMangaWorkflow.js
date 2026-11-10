@@ -3,7 +3,7 @@ import { diagnosticConsole as console } from '../lib/diagnostics.js';
 import { resolveAutoScenarioMode } from '../lib/scenario-validation.js';
 import { getBuiltinPanelMediumReference } from '../lib/builtin-panel-medium-reference.js';
 import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
-import { beginApiWork, cancelApiWork, getApiWorkSignal, createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS } from '../lib/api-work-cancellation.js';
+import { beginApiWork as startApiWork, cancelApiWork, getApiWorkSignal, createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS } from '../lib/api-work-cancellation.js';
 import { useState, useRef, useEffect } from 'react';
 
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
@@ -358,6 +358,12 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     promptModel: isOpenAIEngine ? promptModelId : undefined,
     inputMode, colorMode, fullAuto: isFullAutoMode, experimental: isExperimentalPage(),
     imageCount: images.length, scenarioLength: scenario.length, promptLength: finalPrompt.length,
+  });
+
+  // Capture the invocation, not whatever text React contains when a late request fails.
+  const beginApiWork = (operation, metadata = {}) => startApiWork(operation, {
+    ...metadata, failureContext:{scenario,castList,userTopic:manualTopic,finalPrompt,
+      punchlineType,scenarioMode:getScenarioMode(),...metadata.failureContext},
   });
 
   // [v2.88] Auto-scroll genLog terminal
@@ -1383,9 +1389,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       showStatus(error.message);
       return null;
     }
-    beginApiWork('step3');
     const promptScenarioEpoch = scenarioRunEpochRef.current;
     const currentScenario = overrideScenario || scenario;
+    beginApiWork('step3',{scenarioLength:currentScenario.length,failureContext:{scenario:currentScenario}});
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
     invalidatePromptAssembly();
     const assemblyRun = promptAssemblyRunRef.current;
@@ -2359,7 +2365,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           signal?.throwIfAborted();
           const response=await callAI(prompt,attachments,system,message=>{
             if(!signal?.aborted) progress?.(message);
-          },{...options,signal});
+          },{...options,visionModelId:analysisModelId,signal});
           signal?.throwIfAborted();
           return response;
         };

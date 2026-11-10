@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-  "manualVersion": "7.3.8",
-  "manualSourceSha256": "845549f8ed35ed9cc430b48f1b2d4ded374740a7989ee1c05f8180d8603e3089",
+  "manualVersion": "7.3.9",
+  "manualSourceSha256": "19b135463a0c0f67a93708bf0fda2d64ab08da89d27d0a8d73efccec3330e332",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "d44b53394a633ec00c4ffdf865b4d29880cb8923e20957d483d18280d9b4dfb4"
+      "sha256": "a1b833d3adcec5ea048a0e0e863f88d3fb9b47751aee1eb2203bfa89f31eb5d6"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "55fd5ea89bc983f79221676265d0c480fa1760debeb6468c68c908e0c5528be6"
+      "sha256": "c3e703d3e2800936336b463db0c7ba87b8fbd9de8a97481b3c52d1bd5a782fcd"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "34dd137435672c4944ebb1a3ae071eecc6aa19cb0eb86947cc54ec0468844d09"
+      "sha256": "f11f426d70b78d06cfddc8850210aa3c5aa615162c38b77e44760ce74a89ae26"
     }
   ],
-  "readmeSha256": "71e496415ceab8fd0d1321773468b8d9e6003f654e2904473a941206f00dcec0",
+  "readmeSha256": "8b06dcf6ace45e9115158c7fdebc657e3ec107185b5b9eab2bee0d199261e1cc",
   "readmeLanguageGaps": [],
   "sourceTree": "fcc7276215899a5d0b9d7d5853b195b65bb061e1",
   "publicTree": "2282f7e4ecf80ed57b0a63f582f23d13833ab5e7",
-  "packageSha256": "71f5fd512d839bfd616ed38733bc9cc0e380c49621e8c3a9032ec468e7361b20",
+  "packageSha256": "13b03540e1d9ff8d569c9d39d4385ec045f3a88c0cfa43ab09bc765b68da1dab",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,17 +41,20 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-09T11:42:55.571Z",
-  "findings": "Compared the v7.3.8 bilingual README with the published v7.3.7 baseline, action policy, planner and review. STEP2 now specifies movement before the ending, physical change across panels and a visible result, while other endings can still include action. Read the existing body sections in context of that diff. Updated source version, attribution example, release asset link labels and release history. Distribution ZIP is byte-identical to the reviewed prior asset. Actual image checks cover one color and one monochrome sample; monochrome required a targeted balloon-tail edit. Regenerated both SVG diagrams after the version bump and reviewed the diff; the diagram labels now match v7.3.8.",
-  "manualFindings": "Built the three v7.3.8 PDFs. Compared all 71 rendered pages to the previous public PDFs above their updated footers. Only Gemini page 1 and system pages 11 and 18 changed in body; inspected all three at full page size. System page 11 describes action starting before the ending and its consequence. The two other body differences are the version references. PDF size, text bounds, scope, privacy and links passed in the builders.",
+  "checkedAt": "2026-11-09T23:11:46.941Z",
+  "findings": "Reviewed the v7.3.9 bilingual README diff against v7.3.8 and current action, recovery, diagnostic and model-selection code. News action, optional normal movement, separate bodily-staging review, failure-only text retention and STEP1-selected image review are documented. Removed a contradictory old no-input-logging paragraph. Version references and SVG labels match the candidate. This is a documentation review, not final image acceptance or deployment approval. Prior pricing review remains historical. Later review also covers the typed action-payoff check and retention of rejected scenario review contents. Final API image acceptance remains pending.",
+  "manualFindings": "Rebuilt all three v7.3.9 manuals dated 2026-11-10. Compared all 71 rendered pages above the footer against the public baseline; changed bodies: Gemini page 1, System pages 1, 11, 18, 32, OpenAI none. Visually inspected every changed body page, including the final news/normal-action paragraph on system page 11. Text bounds and builder checks pass. Replaced local public/downloads PDFs only; no external publication. Updated the selected-action ending check on system page 11, compared all 71 pages against the immediately preceding candidate (only that page changed), and visually inspected the final page.",
   "pricingReview": {
-    "version": "7.3.8",
+    "version": "7.3.9",
     "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-    "checkedAt": "2026-11-09T11:42:55.571Z",
+    "checkedAt": "2026-11-10T01:05:27.9227289Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
-      "https://ai.google.dev/gemini-api/docs/pricing"
+      "https://ai.google.dev/gemini-api/docs/pricing",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "https://developers.openai.com/api/docs/changelog"
     ],
-    "findings": "Reopened the OpenAI pricing and model pages and the official Google pricing page for v7.3.8. Compared Standard rather than discounted Batch: GPT-6 Luna 0.10/0.50, GPT-6.1 Sol and GPT-6 Sol 2/10, GPT-6.1 Terra 1/5, Astra 10/50, GPT-5.6 Sol 4/20, Terra 2/12 and Luna 0.20/1.20; Sunburst and Flare 8/30 image, 2 cached image, 5 text input and 1.25 cached text. Gemini Flash 3.8 Standard 0.75/3.75 through Dec 31, Batch 0.375/1.875. Nano Banana 2.1 Standard 1.50/7.50/30, 1K 0.0336; Batch image output 15. Pricing values in the existing UI, README and manuals match the reviewed Standard rates."
+    "findings": "Rechecked official pricing/model pages for v7.3.9. Standard input/output per million: Astra10/50, Sol6.1 and Sol6 2/10, Terra6.1 1/5, Luna6 0.10/0.50, Sol5.6 4/20, Terra5.6 2/12, Luna5.6 0.20/1.20. Sunburst/Flare2.6 image8/30 (cache2), text input5 (cache1.25). Google Standard Flash3.8 0.75/3.75 through 2026-12-31 and NanoBanana2.1 input1.50/text7.50/image30, 1K0.0336. Used Standard rates, excluding discounted Flex/Batch and Priority. Source prices match existing configuration; no rate changes required. Google direct open was unsupported markdown, so its official indexed Standard table and official latest-model page were used. Reopened official sources immediately before the authorized release on 2026-11-10; the Standard OpenAI tables and Google indexed Standard image table/latest-model pricing still match. No price changes."
   }
 }

@@ -42,7 +42,7 @@ export default function ModelSelectionPanel({
           </div>
         ))}
       </div>
-      <p className="model-selection-note">参考単価は{OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点のUSD/100万トークン。選択はこの画面を開いている間だけ有効です。</p>
+      <p className="model-selection-note">画像生成後の品質検査にもSTEP1の選択モデルを使います。参考単価は{OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点のUSD/100万トークン。選択はこの画面を開いている間だけ有効です。</p>
     </section>
   );
 }

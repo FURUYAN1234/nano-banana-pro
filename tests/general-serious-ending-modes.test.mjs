@@ -206,7 +206,7 @@ test('new explicit endings and automatic lists carry distinct causes rather than
 
 test('other endings still allow story-driven action without changing the chosen ending', () => {
   const prompt=buildScenarioRequest('EarnedReversal','壁を蹴って体勢を立て直し、競技で逆転する。');
-  assert.match(prompt,/アクションは選択したオチの種類に関係なく、題材や人物の判断から必要なら描く/);
+  assert.match(prompt,/アクションは選択したオチの種類に関係なく、話に合う見せ場には大胆な動き/);
   assert.match(prompt,/必ず『逆転・反撃』/);
   assert.match(prompt,/壁を蹴って体勢を立て直し/);
 });

@@ -900,6 +900,17 @@ test('normal STEP2 generation requires non-eye-level design with user overrides 
   assert.match(prompt, /全身の誇張/);
 });
 
+test('ordinary news action selection is not cancelled by the generic quiet-topic instruction', () => {
+  for(const punchlineType of ['SeriousAction','GagAction']) {
+    const prompt=buildNormalScenarioPrompt({punchlineType,manualTopic:'日常の新サービス導入を紹介するニュース。'});
+    assert.doesNotMatch(prompt,/静かな題材へ派手な動作を無理に足さない/);
+    assert.match(prompt,/静かな題材.*静止指定.*ではない/);
+    assert.match(prompt,/日常動作の列挙.*アクション.*不足/);
+    assert.match(prompt,/身体の大きな振れ幅.*動作の頂点/);
+  }
+  assert.match(buildNormalScenarioPrompt({punchlineType:'Auto'}),/話に合う見せ場.*大胆な動き/);
+});
+
 test('strong perspective is reserved for a story beat and does not default to a foot thrust', () => {
   const scenarioPrompt = buildNormalScenarioPrompt();
 

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test, {before, after} from 'node:test';
 import {createServer} from 'vite';
 
-let server, assemble, extractBubbleContracts;
+let server, assemble, extractBubbleContracts, recover, readNative;
 const scenario = readFileSync(new URL('./fixtures/translation-question-balloon-layout.txt', import.meta.url), 'utf8');
 const castList = ['ミク','リン','サエコ','アカリ','ヒカリ'].map(name => `## ${name}`).join('\n');
 const options = {scenario, castList, providerFamily:'chatgpt', colorMode:'color', punchlineType:'Auto'};
@@ -19,6 +19,8 @@ before(async () => {
   server = await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
   ({assembleMangaPromptWithRecovery:assemble} = await server.ssrLoadModule('/src/lib/prompt-assembly-recovery.js'));
   ({extractBubbleContracts} = await server.ssrLoadModule('/src/lib/image-quality-qa.js'));
+  ({withScenarioBalloonLayoutRecovery:recover} = await server.ssrLoadModule('/src/lib/prompt-assembly-recovery.js'));
+  ({readExperimentalSource:readNative} = await server.ssrLoadModule('/src/lib/experimental-manga.js'));
 });
 after(async () => { await server?.close(); });
 
@@ -93,4 +95,32 @@ test('cancellation before or during recovery never publishes a repaired result',
 
 test('unrelated assembly failures do not trigger layout repair', async () => {
   await assert.rejects(assemble({...options,providerFamily:'invalid'},async () => assert.fail('no repair')));
+});
+
+test('native layout recovery preserves permitted missing-dialogue warnings and all other source bytes', async () => {
+  for (const count of [5,6,8]) {
+    const source = Array.from({length:count},(_,i)=>`[${i+1}コマ目: 無言の動き]\n[EMOTION: NORMAL]\n[Camera: 高所から見下ろす俯瞰]\nBalloonLayout: [{"speaker":"ミク","x":0.7,"anchor":"頭","route":"上から短い尾"}]\n状況: ミクが足を踏み出す。`).join('\n\n');
+    const input = {scenario:source,castList,scenarioMode:'experimental-manga',allowScenarioQualityWarning:true};
+    let calls=0;
+    const result=await recover(input,readNative,async()=>{calls++;return response(Array.from({length:count},(_,i)=>edit(i+1,[])));});
+    assert.equal(calls,1);
+    assert.equal(result.repaired,true);
+    assert.equal(result.scenario.replace(/^BalloonLayout: .*$/gm,''),source.replace(/^BalloonLayout: .*$/gm,''));
+    assert.equal(result.value.dialogue.length,0);
+    await assert.rejects(recover({...input,allowScenarioQualityWarning:false},readNative,async()=>assert.fail('warning not permitted')), {code:'DIALOGUE_CONTRACT'});
+    await assert.rejects(recover({...input,scenario:source+'\nミク「未完の台詞'},readNative,async()=>assert.fail('broken dialogue must not be repaired')), {code:'DIALOGUE_SYNTAX'});
+  }
+});
+
+test('failed recovery exposes the original input, exact repair response and panel issues for diagnostics', async () => {
+  const original=damage(0,'[]');
+  await assert.rejects(assemble({...options,scenario:original},async()=>({text:'not JSON'})),error=>{
+    assert.equal(error.diagnosticContext.scenario,original);
+    assert.equal(error.diagnosticContext.castList,castList);
+    assert.equal(error.diagnosticContext.repairResponse,'not JSON');
+    assert.equal(error.diagnosticContext.issues[0].panel,1);
+    assert.deepEqual(error.diagnosticContext.issues[0].dialogue.map(({speaker,text})=>({speaker,text})),expected[0]);
+    assert.match(error.diagnosticContext.repairError,/JSON|Unexpected/);
+    return true;
+  });
 });

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import * as payoffQuality from '../src/lib/scenario-payoff-quality.js';
+import {readDiagnostics} from '../src/lib/diagnostics.js';
 
 import {
   buildScenarioPayoffRepairPrompt,
@@ -25,6 +26,8 @@ const identityFor = count => Array.from({ length: count }, (_, i) => ({
 
 const STRONG_GAG_REVIEW = {
   pass: true,
+  action_staging: { material_failure: false, evidence: '踏み込みで重心が前へ移り、胴体をひねって相手へ働きかける瞬間を見せる。', correction: '' },
+  action_payoff: { material_failure: false, evidence: '加速した動きの結果が最後の飛び出す姿勢と相手の反動に表れる。', correction: '' },
   payoff_clarity: { material_failure: false, evidence: '入口の札と同じ扉が、近道で出発点へ戻る結果を示す。', correction: '' },
   setup_seed: '主人公が最短経路だけを信じて急ぐ。',
   panel3_prediction: '近道を選べば間に合うと読者が予想する。',
@@ -65,6 +68,82 @@ const nativeReview = count => ({ ...structuredClone(STRONG_GAG_REVIEW),
   ensemble_continuity: Array.from({ length: count }, (_, i) => ({ ...STRONG_GAG_REVIEW.ensemble_continuity[0], panel: i + 1 })),
   camera_rhythm: { ...CAMERA_RHYTHM, shots: Array.from({ length: count }, (_, i) => ({ panel: i + 1, signature: `high / action ${i + 1}`, purpose: '直前の作業を進める' })) },
   panel_development: Array.from({ length: count }, (_, i) => ({ panel: i + 1, material_padding: false, evidence: '作業の変化または反応までの必要な間を示している。', correction: '' })),
+});
+
+test('incomplete review preserves its response and names the invalid evidence for the diagnostic export', async () => {
+  const broken={...STRONG_GAG_REVIEW,action_continuity:{material_failure:false,evidence:'開始から結果まで接続',correction:''},action_staging:undefined};
+  const raw=JSON.stringify(broken);
+  assert.throws(()=>parseScenarioPayoffReview(raw,{punchlineType:'SeriousAction'}),error=>{
+    assert.equal(error.code,'SCENARIO_PAYOFF_REVIEW_INVALID');
+    assert.match(error.message,/action_staging/);
+    assert.equal(error.diagnosticContext.validationResponse,raw);
+    return true;
+  });
+  const diagnostics=await import('../src/lib/diagnostics.js');
+  diagnostics.beginDiagnosticAction('step2');
+  const {runId}=diagnostics.getDiagnosticContext();
+  const original=nativeScenario(4);
+  const result=await runScenarioPayoffGate({scenario:original,castList:'## A',punchlineType:'SeriousAction',requestReview:async()=>raw});
+  assert.equal(result.status,'retained');
+  const row=(await diagnostics.readDiagnostics()).events.find(row=>row.runId===runId&&row.errorCode==='SCENARIO_PAYOFF_REVIEW_INVALID');
+  assert.equal(row.failureContext.scenario,original);
+  assert.equal(row.failureContext.validationResponse,raw);
+});
+
+test('action selection rejects flat staging even when the movement is causally connected', async () => {
+  const original = nativeScenario(4);
+  const connected = { material_failure: false, evidence: '2コマ目で作業を始め、3コマ目で物が移動し、最後に結果が出る。', correction: '' };
+  const flat = { ...STRONG_GAG_REVIEW, action_continuity: connected,
+    action_staging: { material_failure: true, evidence: '2〜4コマで身体は直立したまま。物の位置だけが変わり、働きかける身体の動勢が描かれていない。', correction: '元の作業のまま、2コマ目で足を踏み込み、3コマ目で重心を移して押す瞬間を描く。' } };
+  for (const punchlineType of ['SeriousAction', 'GagAction']) {
+    assert.deepEqual(evaluateScenarioPayoffReview(flat, { punchlineType }).reasonCodes, ['flat_action_staging']);
+    const repaired = await runScenarioPayoffGate({ scenario: original, punchlineType,
+      requestReview: async prompt => JSON.stringify(prompt.includes('Aが踏み込み、胴体をひねって作業を進める。')
+        ? { ...flat, action_staging: STRONG_GAG_REVIEW.action_staging } : flat),
+      requestRepair: async prompt => {
+        assert.match(prompt, /STAGING PATCH JSON/);
+        assert.match(prompt, /flat_action_staging/);
+        return JSON.stringify([{ panel: 2, field: '状況', value: 'Aが踏み込み、胴体をひねって作業を進める。' }]);
+      },
+    });
+    assert.equal(repaired.status, 'repaired');
+    assert.equal(repaired.scenario, original.replace('Aが作業の段階2を進める。', 'Aが踏み込み、胴体をひねって作業を進める。'));
+  }
+  assert.equal(evaluateScenarioPayoffReview(flat, { punchlineType: 'GagAuto' }).ok, true);
+});
+
+test('strong motion cannot hide an ending that abandons the selected action payoff', async () => {
+  const original=nativeScenario(4);
+  const review={...STRONG_GAG_REVIEW,action_continuity:{material_failure:false,evidence:'途中の作業は接続。',correction:''},
+    action_payoff:{material_failure:true,evidence:'最後は通常の着席に戻るだけで、途中の動きによる決着や受け手の反応がない。',correction:'同じ作業の最後に全身の反動と結果を見せる。'}};
+  assert.deepEqual(evaluateScenarioPayoffReview(review,{punchlineType:'GagAction'}).reasonCodes,['action_payoff_missing']);
+  let calls=0;
+  const result=await runScenarioPayoffGate({scenario:original,punchlineType:'GagAction',
+    requestReview:async()=>JSON.stringify(++calls===1?review:{...review,action_payoff:STRONG_GAG_REVIEW.action_payoff}),
+    requestRepair:async prompt=>{assert.match(prompt,/STAGING PATCH JSON/);return JSON.stringify([{panel:4,field:'状況',value:'Aが作業を終える反動で大きくのけぞり、相手が両脚を踏ん張って受け止める。'}]);}});
+  assert.equal(result.status,'repaired');
+  const failure=(await readDiagnostics()).events.find(e=>e.errorCode==='SCENARIO_PAYOFF_QUALITY'
+    && e.failureContext?.validationError==='action_payoff_missing');
+  assert.equal(failure.failureContext.scenario,original);
+  assert.equal(JSON.parse(failure.failureContext.validationResponse).action_payoff.material_failure,true);
+  assert.equal(result.scenario,original.replace('Aが作業の段階4を進める。','Aが作業を終える反動で大きくのけぞり、相手が両脚を踏ん張って受け止める。'));
+  assert.equal(evaluateScenarioPayoffReview(review,{punchlineType:'GagAuto'}).ok,true);
+});
+
+test('action staging needs evidence, preserves explicit stillness and ignores unsupported reason codes', () => {
+  const review = { ...STRONG_GAG_REVIEW, action_continuity: { material_failure: false,
+    evidence: '動きの開始・変化・結果がつながる。', correction: '' } };
+  for (const punchlineType of ['SeriousAction', 'GagAction']) {
+    for (const action_staging of [undefined, { material_failure: false, evidence: '', correction: '' }]) {
+      const missing = { ...review, action_staging };
+      assert.deepEqual(evaluateScenarioPayoffReview(missing, { punchlineType }).reasonCodes, ['action_staging_unverified']);
+      assert.throws(() => parseScenarioPayoffReview(JSON.stringify(missing), { punchlineType }), /incomplete_payoff_review/);
+    }
+    const quiet = { ...review, action_staging: { material_failure: false,
+      evidence: 'ユーザー原文「全員座ったまま、手も動かさない」を優先する。', correction: '' }, reason_codes: ['flat_action_staging'] };
+    assert.equal(evaluateScenarioPayoffReview(quiet, { punchlineType }).ok, true);
+    assert.doesNotThrow(() => parseScenarioPayoffReview(JSON.stringify(quiet), { punchlineType }));
+  }
 });
 
 test('an action ending alone triggers a staging repair, but the same beat is allowed in a non-action mode', async () => {

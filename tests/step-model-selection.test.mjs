@@ -44,3 +44,16 @@ test('STEP1 vision and STEP3 prompt paths use their own selected models', async 
   assert.match(client, /getOpenAIVisionModelRoute\(options\.visionModelId\)/);
   assert.match(app, /<ModelSelectionPanel[\s\S]*?<Step1Panel/);
 });
+
+test('the actual STEP4 review request uses the selected vision model and its local no-fallback route', async () => {
+  const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
+  const start=source.indexOf('const reviewRequest=async(');
+  const end=source.indexOf('\n        if(experimentalPrepared)',start);
+  const make=new Function('callAI','analysisModelId','signal',`let reviewRequests=0;${source.slice(start,end)};return reviewRequest;`);
+  const received=[];
+  const request=make(async(...args)=>{received.push(args.at(-1));return {text:'review'};},'gpt-6-luna',new AbortController().signal);
+  await request('review',[{}],null,()=>{},{outputProfile:'image-quality-review'});
+  assert.equal(received[0].visionModelId,'gpt-6-luna');
+  assert.deepEqual(getOpenAIVisionModelRoute(received[0].visionModelId,true),['gpt-6-luna']);
+  await assert.rejects(request('review',[{}],null,()=>{}),/1回/);
+});

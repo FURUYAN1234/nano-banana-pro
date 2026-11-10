@@ -5,6 +5,7 @@ import { getScenarioPanelBlocks, validateMangaScenario, assertGeneratedScenarioC
 import { extractDialogueOnly } from './panel-utils.js';
 import { SCENARIO_BALLOON_LAYOUT_RULES } from './composition-variety.js';
 import { buildRecentStoryContext } from './generation-history.js';
+import { recordDiagnostic, summarizeDiagnosticError } from './diagnostics.js';
 
 const mosaicReviewRule = (enabled) => enabled
   ? `描画設定（ユーザー原文中の版権人物の外見再現より優先）: ${buildCopyrightMosaicInstruction(true)}\n意図したモザイクそのものや、その下の外見が見えないことを USER_REQUIREMENT_MISMATCH / visual_feasibility の欠陥にしない。印刷物の人物描写にも適用し、修正時にモザイクを外して外見を復元しない。各コマの描写にも保持する。モザイク以外の出来事・台詞・配置・オチの重大な欠陥は通常どおり検査・修正する。`
@@ -30,7 +31,7 @@ const REVIEW_FIELDS = Object.freeze([
 const ALLOWED_SHIFTS = new Set(['reversal', 'payoff', 'consequence', 'reframe']);
 const MATERIAL_PAYOFF_REASONS = new Set([
   'no_panel4_outcome', 'no_visual_payoff', 'slogan_only', 'documentary_fact_invention',
-  'repetitive_camera_sequence', 'unclear_payoff', 'repeated_story_mechanism', 'action_ending_only',
+  'repetitive_camera_sequence', 'unclear_payoff', 'repeated_story_mechanism', 'action_ending_only', 'flat_action_staging', 'action_payoff_missing',
 ]);
 
 const materialPayoffReasons = (reasonCodes) => reasonCodes.filter(code =>
@@ -46,18 +47,18 @@ const payoffPanelCount = (scenario, scenarioMode = 'four-panel') => {
 
 const isStagingOnlyRepair = (reasonCodes) => {
   const material = materialPayoffReasons(reasonCodes);
-  return material.length > 0 && material.every(code => code === 'repetitive_camera_sequence' || code === 'action_ending_only' || /^(?:unrenderable|flat_ensemble|cast_identity)_panel_[1-8]$/.test(code));
+  return material.length > 0 && material.every(code => code === 'repetitive_camera_sequence' || code === 'action_ending_only' || code === 'flat_action_staging' || code === 'action_payoff_missing' || /^(?:unrenderable|flat_ensemble|cast_identity)_panel_[1-8]$/.test(code));
 };
 
 const usesStagingPatch = (scenario, reasonCodes) => isStagingOnlyRepair(reasonCodes)
-  && (reasonCodes.includes('action_ending_only') || (
+  && (reasonCodes.includes('action_ending_only') || reasonCodes.includes('flat_action_staging') || reasonCodes.includes('action_payoff_missing') || (
     reasonCodes.some(code => code.startsWith('BALLOON_'))
     && reasonCodes.every(code => code.startsWith('BALLOON_') || /^unrenderable_panel_[1-8]$/.test(code))
     && getScenarioPanelBlocks(scenario).every(panel => panel.found && /^BalloonLayout\s*[:：]/m.test(panel.text))
   ));
 
 // Field edits preserve all other source bytes, including dialogue, metadata and panel order.
-export const applyScenarioStagingPatch = (scenario, response, castList = '', { scenarioMode = 'four-panel' } = {}) => {
+export const applyScenarioStagingPatch = (scenario, response, castList = '', { scenarioMode = 'four-panel', allowScenarioQualityWarning = false } = {}) => {
   const fail = message => { throw new Error(`invalid_staging_patch: ${message}`); };
   let edits;
   try { edits = JSON.parse(extractText(response).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')); }
@@ -100,7 +101,12 @@ export const applyScenarioStagingPatch = (scenario, response, castList = '', { s
   }
   try {
     for (const panel of getScenarioPanelBlocks(candidate)) extractDialogueOnly(panel.text, castList, { forImagePrompt: true });
-    if (scenarioMode === 'experimental-manga' && !validateMangaScenario(candidate, castList, { scenarioMode }).ok) return fail('invalid native scenario');
+    if (scenarioMode === 'experimental-manga') {
+      const valid=validateMangaScenario(candidate, castList, { scenarioMode });
+      // Layout-only recovery may preserve an already accepted warning, never create one or hide syntax/structure errors.
+      const layoutOnly=edits.every(edit=>edit.field==='BalloonLayout');
+      if (!valid.structuralValid || valid.invalidDialogue.length || (!valid.ok && !(allowScenarioQualityWarning && layoutOnly))) return fail('invalid native scenario');
+    }
   } catch (error) { return fail(error.message); }
   return candidate;
 };
@@ -115,6 +121,10 @@ const PAYOFF_REASON_LABELS = {
   unclear_payoff: '何が変わったのか読者に伝わらない',
   action_ending_only: '途中の動きと結末が絵でつながっていない',
   action_continuity_unverified: '途中の動きと結末のつながりを確認できない',
+  flat_action_staging: 'アクションの見せ場に身体の動勢が描かれていない',
+  action_payoff_missing: '選択したアクションの決着が結末にない',
+  action_payoff_unverified: 'アクションの結末を確認できない',
+  action_staging_unverified: 'アクションの身体演技を確認できない',
   documentary_fact_invention: '原文にない事実が追加された',
   cast_identity_unverified: '人物設定と台本の外見・話者対応を確認できない',
 };
@@ -171,6 +181,8 @@ ${experimental ? '互換JSON名 panel3_prediction は最終直前までの予測
 ${toneRule}
 ${policy.guidance ? `選択した結末の判定基準: ${policy.guidance}` : ''}
 ${policy.actionDirection ? `${policy.actionDirection}\n- action_continuity: 結末より前の別々のコマに、結末と因果でつながる動きの開始と、動きによる状態変化が描かれているか。コマ番号と台本にある動作・変化・結果を evidence に挙げる。最後のポーズだけ、会話中の身振りだけ、準備を口にするだけ、無関係な動作の羅列、同じ動作の別アングルだけであれば material_failure=true。元の題材と結末を保って途中の演技を直す案を correction に書く。明示された静止や固定のコマ割りが演技追加を禁じる場合は、ユーザー原文の該当指定を evidence に引用して false。動作の派手さや好みだけで不合格にしない。` : ''}
+${policy.actionDirection ? '- action_staging: 連続性とは別に、見せ場で人物が力を出す・受ける身体演技が具体化されているか。コマ番号と重心・身体軸・手足・接点・反動のうち実際に書かれた根拠をevidenceへ引用する。普通の立ち歩き、物の位置替え、手先の身振りだけで見せ場が終わり、元の動作で描ける全身の動勢が欠ける場合はmaterial_failure=true。単なる派手さの好みや軽微な差は失格にせず、全コマの大動作や跳躍・格闘は要求しない。明示された静止・固定姿勢・カメラ・身体条件は優先し、制約の原文を根拠にfalse。具体化された緊張・踏ん張り・反動も有効。correctionは同じ出来事・台詞・結末を保ち、必要な状況とCameraの演技だけを強める案。事故・暴力・新しい事件を創作して解消しない。' : ''}
+${policy.actionDirection ? '- action_stagingの判定基準: 手順紹介として整っていることや「ひねる・重心」という語の有無で合格にしない。上記【選択を満たす動きの強さ】を適用し、普通の姿勢に戻しても動きの意味が変わらない日常動作しかないならmaterial_failure=true。これは好みの評価ではなく、選択されたアクションの不足。falseにする場合は、どの身体部位がどの方向へ大きく振れ、何へ力を出す／受ける動作の頂点か、台本の具体文を引用する。話題・場所が穏やかという理由だけで免除しない。' : ''}
 ${factRule}
 ${buildRecentStoryContext(recentScenarios)}
 ${recentScenarios.length ? '追加JSONフィールド recent_repetition: {"status":"distinct|same_mechanism|intentional_repeat|uncertain","matched_index":null,"evidence":"過去と今回の具体的な種・行為・帰結の比較","correction":""}。matched_indexはRECENT配列の0始まり。型・題材・絵柄が同じだけならdistinct。名詞だけ変えた同じ仕掛けと帰結の再利用が明確で、新作の展開を失わせる場合だけsame_mechanismとして該当indexと指定結末を保つcorrectionを記す。明示された再現・続編・意図した反復はintentional_repeat。推測はuncertain。' : ''}
@@ -202,6 +214,7 @@ ${String(userTopic).trim()}
 - pass=true のとき reason_codes は必ず空配列にする。問題が1つでも残るときだけ pass=false として具体的なコードを入れる。
 
 以下のJSONのみを返してください。reason_codes は問題コードの配列です。
+${policy.actionDirection ? 'action_payoffは途中の動勢とは別に最終コマを検査する。GagActionは動きが生んだ予想外の着地・身体的な食い違い・受け手の反応で笑いが読めるか。SeriousActionは動きが決めた局面・人物の選択・具体的な結果が読めるか。途中で動いた後に通常の生活や静かな説明へ戻るだけならmaterial_failure=true。最後自体が静止していても、直前の動作の結果が身体・物・空間に明確に残れば許容する。ユーザー明示の静止指定は引用して保持する。evidenceに結末と前の動作の根拠、失敗時はcorrectionに同じ出来事・台詞を保つ改善を書く。アクションの結末の不一致を独自のreason_codesだけに書かず、必ずaction_payoffにも判定を書く。' : ''}
 全項目を検査し、成立している項目のevidenceは台本上の根拠を短い1文で示す。問題がある項目だけ具体的な欠落・理由・correctionを詳述し、同じ台本の長い言い換えを繰り返さない。
 {
   "pass": true,
@@ -210,8 +223,9 @@ ${String(userTopic).trim()}
   "panel4_outcome": "",
   "shift_kind": "reversal",
   "visual_payoff": true,
+${policy.actionDirection ? '  "action_payoff": {"material_failure":false,"evidence":"最後に読める動作の決着と受け手の反応、または明示制約","correction":""},\n' : ''}
   "payoff_clarity": {"material_failure":false,"evidence":"specific setup cue and visible final action explain what changes, or readable absurd contrast","correction":""},
-${policy.actionDirection ? '  "action_continuity": {"material_failure":false,"evidence":"コマ番号と具体的な開始・変化・結果、またはユーザーの明示制約","correction":""},\n' : ''}  "slogan_only": false,
+${policy.actionDirection ? '  "action_continuity": {"material_failure":false,"evidence":"コマ番号と具体的な開始・変化・結果、またはユーザーの明示制約","correction":""},\n  "action_staging": {"material_failure":false,"evidence":"見せ場の具体的な身体演技、またはユーザーの明示制約","correction":""},\n' : ''}  "slogan_only": false,
   "unseeded_fact": false,
   "visual_feasibility": ${JSON.stringify(Array.from({length:panelCount},(_,i)=>({panel:i+1,feasible:true,evidence:'camera, actor, and focal hand/prop relation at readable scale',correction:''})))},
   "ensemble_continuity": ${JSON.stringify(Array.from({length:panelCount},(_,i)=>({panel:i+1,material_break:false,evidence:'specific cast positions, actions and reactions or why stillness is intentional',correction:''})))},
@@ -254,61 +268,61 @@ const hasActionContinuityEvidence = (item) => typeof item?.material_failure === 
   && typeof item.correction === 'string' && (!item.material_failure || item.correction.trim());
 
 export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', panelCount = 4, punchlineType } = {}) => {
-  if (scenarioMode === 'four-panel' ? panelCount !== 4 : scenarioMode !== 'experimental-manga' || !Number.isInteger(panelCount) || panelCount < 5 || panelCount > 8) throw new Error('incomplete_payoff_review: invalid panel count');
+  const fail = message => { throw Object.assign(new Error(`incomplete_payoff_review: ${message}`),{
+    code:'SCENARIO_PAYOFF_REVIEW_INVALID',diagnosticContext:{stage:'scenario_payoff_review',
+      validationResponse:extractText(text),validationError:message,punchlineType,scenarioMode},
+  }); };
+  if (scenarioMode === 'four-panel' ? panelCount !== 4 : scenarioMode !== 'experimental-manga' || !Number.isInteger(panelCount) || panelCount < 5 || panelCount > 8) fail('invalid panel count');
   const source = extractText(text).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   const jsonText = source.match(/\{[\s\S]*\}/)?.[0];
-  if (!jsonText) throw new Error('incomplete_payoff_review: JSON object not found');
+  if (!jsonText) fail('JSON object not found');
 
   let parsed;
   try {
     parsed = JSON.parse(jsonText);
   } catch (error) {
-    throw new Error(`incomplete_payoff_review: ${error.message}`);
+    fail(error.message);
   }
 
   if (!parsed || REVIEW_FIELDS.some((field) => !Object.hasOwn(parsed, field))) {
-    throw new Error('incomplete_payoff_review: required fields are missing');
+    fail(`required fields are missing: ${REVIEW_FIELDS.filter(field=>!parsed || !Object.hasOwn(parsed,field)).join(', ')}`);
   }
-  if (
-    typeof parsed.pass !== 'boolean'
-    || typeof parsed.setup_seed !== 'string'
-    || typeof parsed.panel3_prediction !== 'string'
-    || typeof parsed.panel4_outcome !== 'string'
-    || typeof parsed.shift_kind !== 'string'
-    || typeof parsed.visual_payoff !== 'boolean'
-    || !parsed.payoff_clarity
-    || typeof parsed.payoff_clarity.material_failure !== 'boolean'
-    || typeof parsed.payoff_clarity.evidence !== 'string' || !parsed.payoff_clarity.evidence.trim()
-    || typeof parsed.payoff_clarity.correction !== 'string'
-    || (parsed.payoff_clarity.material_failure && !parsed.payoff_clarity.correction.trim())
-    || (getEndingModePolicy(punchlineType).actionDirection && !hasActionContinuityEvidence(parsed.action_continuity))
-    || typeof parsed.slogan_only !== 'boolean'
-    || typeof parsed.unseeded_fact !== 'boolean'
-    || !Array.isArray(parsed.visual_feasibility)
-    || parsed.visual_feasibility.length !== panelCount
+  const invalid = {
+    pass:typeof parsed.pass !== 'boolean',
+    setup_seed:typeof parsed.setup_seed !== 'string',
+    panel3_prediction:typeof parsed.panel3_prediction !== 'string',
+    panel4_outcome:typeof parsed.panel4_outcome !== 'string',
+    shift_kind:typeof parsed.shift_kind !== 'string',
+    visual_payoff:typeof parsed.visual_payoff !== 'boolean',
+    payoff_clarity:!hasActionContinuityEvidence(parsed.payoff_clarity),
+    action_continuity:!!getEndingModePolicy(punchlineType).actionDirection && !hasActionContinuityEvidence(parsed.action_continuity),
+    action_staging:!!getEndingModePolicy(punchlineType).actionDirection && !hasActionContinuityEvidence(parsed.action_staging),
+    action_payoff:!!getEndingModePolicy(punchlineType).actionDirection && !hasActionContinuityEvidence(parsed.action_payoff),
+    slogan_only:typeof parsed.slogan_only !== 'boolean',
+    unseeded_fact:typeof parsed.unseeded_fact !== 'boolean',
+    visual_feasibility:!Array.isArray(parsed.visual_feasibility) || parsed.visual_feasibility.length !== panelCount
     || parsed.visual_feasibility.some((item, index) => item?.panel !== index + 1
       || typeof item.feasible !== 'boolean'
       || (!item.feasible && typeof item.material_loss !== 'boolean')
       || typeof item.evidence !== 'string' || !item.evidence.trim()
       || typeof item.correction !== 'string'
-      || (!item.feasible && item.material_loss && !item.correction.trim()))
-    || !Array.isArray(parsed.ensemble_continuity)
-    || parsed.ensemble_continuity.length !== panelCount
+      || (!item.feasible && item.material_loss && !item.correction.trim())),
+    ensemble_continuity:!Array.isArray(parsed.ensemble_continuity) || parsed.ensemble_continuity.length !== panelCount
     || parsed.ensemble_continuity.some((item, index) => item?.panel !== index + 1
       || typeof item.material_break !== 'boolean'
       || typeof item.evidence !== 'string' || !item.evidence.trim()
       || typeof item.correction !== 'string'
-      || (item.material_break && !item.correction.trim()))
-    || !hasCastIdentityEvidence(parsed.cast_identity, panelCount)
-    || !hasCameraRhythmEvidence(parsed.camera_rhythm, panelCount)
-    || (scenarioMode === 'experimental-manga' && (!Array.isArray(parsed.panel_development) || parsed.panel_development.length !== panelCount
+      || (item.material_break && !item.correction.trim())),
+    cast_identity:!hasCastIdentityEvidence(parsed.cast_identity, panelCount),
+    camera_rhythm:!hasCameraRhythmEvidence(parsed.camera_rhythm, panelCount),
+    panel_development:scenarioMode === 'experimental-manga' && (!Array.isArray(parsed.panel_development) || parsed.panel_development.length !== panelCount
       || parsed.panel_development.some((item,index)=>item?.panel!==index+1 || typeof item.material_padding!=='boolean'
         || typeof item.evidence!=='string' || !item.evidence.trim() || typeof item.correction!=='string'
-        || (item.material_padding && !item.correction.trim()))))
-    || !Array.isArray(parsed.reason_codes)
-  ) {
-    throw new Error('incomplete_payoff_review: invalid field types');
-  }
+        || (item.material_padding && !item.correction.trim()))),
+    reason_codes:!Array.isArray(parsed.reason_codes),
+  };
+  const invalidFields=Object.keys(invalid).filter(key=>invalid[key]);
+  if(invalidFields.length) fail(`invalid field types: ${invalidFields.join(', ')}`);
   return parsed;
 };
 
@@ -322,6 +336,8 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
       .filter(code => !code.startsWith('flat_ensemble_panel_') && !code.startsWith('unrenderable_panel_')
         && code !== 'repetitive_camera_sequence' && code !== 'unclear_payoff'
         && code !== 'action_ending_only' && code !== 'action_continuity_unverified'
+        && code !== 'flat_action_staging' && code !== 'action_staging_unverified'
+        && code !== 'action_payoff_missing' && code !== 'action_payoff_unverified'
         && code !== 'repeated_story_mechanism' && code !== 'recent_comparison_unverified' && !code.startsWith('redundant_panel_')
         && !code.startsWith('cast_identity_panel_') && code !== 'cast_identity_unverified'));
 
@@ -352,6 +368,10 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
   if (policy.actionDirection) {
     if (!hasActionContinuityEvidence(review?.action_continuity)) reasons.add('action_continuity_unverified');
     else if (review.action_continuity.material_failure) reasons.add('action_ending_only');
+    if (!hasActionContinuityEvidence(review?.action_staging)) reasons.add('action_staging_unverified');
+    else if (review.action_staging.material_failure) reasons.add('flat_action_staging');
+    if (!hasActionContinuityEvidence(review?.action_payoff)) reasons.add('action_payoff_unverified');
+    else if (review.action_payoff.material_failure) reasons.add('action_payoff_missing');
   }
   if (!surrealMode && !ALLOWED_SHIFTS.has(review?.shift_kind)) reasons.add('no_payoff_shift');
   if (!surrealMode && review?.unseeded_fact) reasons.add('unseeded_fact');
@@ -385,12 +405,13 @@ export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, revie
     visual_feasibility: review?.visual_feasibility?.map(item => item.material_loss === false
       ? { ...item, correction: '' } : item) };
   if (usesStagingPatch(scenario, reasonCodes)) return `STAGING PATCH JSON
-${reasonCodes.includes('action_ending_only')
+${reasonCodes.includes('action_ending_only') || reasonCodes.includes('flat_action_staging') || reasonCodes.includes('action_payoff_missing')
     ? '監査で指摘された演技・配置・カメラを必要なコマだけ修正する。結末より前に、元からある人物・物を使って動きの開始と状態の変化を別々のコマで描き、元の帰結へつなぐ。まず状況を直し、変更した動作や話者位置に必要な場合だけCameraやBalloonLayoutを調整する。'
     : '監査で指摘された吹き出しの矛盾だけを修正する。'} 台本全文は再出力しない。
 ENDING MODE: ${punchlineType || 'Auto'}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
 監査結果: ${JSON.stringify(repairReview)}
+${getEndingModePolicy(punchlineType).actionDirection || ''}
 ${mosaicReviewRule(mosaicCopyrightedCharacters)}
 ${SCENARIO_BALLOON_LAYOUT_RULES}
 出来事、台詞の話者・文言・順序、タイトル、衣装、物の所有と接触を保持する。ユーザーが指定した配置・カメラ・動作を優先し、未指定の余白・前後・高さで尾の交差を解消する。既存のCameraや状況が成立するならBalloonLayoutだけを変更する。xだけの数値合わせではなく、話者位置とanchor/routeを一緒に確認する。
@@ -471,6 +492,9 @@ export const runScenarioPayoffGate = async ({
     })), { scenarioMode, panelCount, punchlineType });
     firstEvaluation = evaluateScenarioPayoffReview(firstReview, { punchlineType, recentScenarios, scenarioMode, panelCount });
   } catch (error) {
+    await recordDiagnostic('workflow.error',{...summarizeDiagnosticError(error),failureContext:{
+      scenario:original,castList,userTopic,punchlineType,scenarioMode,...error.diagnosticContext,
+    }});
     onProgress(`構成・画像化の検査結果: 判定できませんでした。理由: ${error.message}。元シナリオを保持します。`);
     return retained(original, `構成・画像化監査を完了できなかったため、元シナリオを保持しました（${error.message}）。`, null, true);
   }
@@ -480,6 +504,10 @@ export const runScenarioPayoffGate = async ({
     return { scenario: original, status: 'passed', review: firstReview, warning: null };
   }
   const firstMaterialReasons = materialPayoffReasons(firstEvaluation.reasonCodes);
+  await recordDiagnostic('workflow.error',{errorCode:'SCENARIO_PAYOFF_QUALITY',failureContext:{
+    stage:'scenario_payoff_review',scenario:original,castList,userTopic,punchlineType,scenarioMode,
+    validationResponse:JSON.stringify(firstReview),validationError:firstEvaluation.reasonCodes.join(', '),
+  }});
   if (!firstMaterialReasons.length) {
     onProgress(`構成・画像化の検査結果: ${formatPayoffReviewReasons(firstEvaluation, firstReview)}。重大欠陥ではないため再生成せず保持します。`);
     return retained(original, `構成上の軽微または未確認の指摘（${firstEvaluation.reasonCodes.join(', ')}）は再生成せず、元シナリオを保持しました。`, firstReview);
@@ -558,6 +586,9 @@ export const runScenarioPayoffGate = async ({
       if (materialCount < bestMaterialCount
         || (materialCount === bestMaterialCount && evaluation.reasonCodes.length < best.evaluation.reasonCodes.length)) best = current;
     } catch (error) {
+      await recordDiagnostic('workflow.error',{...summarizeDiagnosticError(error),failureContext:{
+        scenario:repaired || current.scenario,castList,userTopic,punchlineType,scenarioMode,...error.diagnosticContext,
+      }});
       lastError = error.message;
       current = best;
       onProgress(`改善案は採用せず、最良候補から再試行します（${attempt}/${maxRepairs}）。理由: ${error.message}`);
