@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.4.0** / 現在のソース版: **v7.4.0**
+> Current source version: **v7.4.1** / 現在のソース版: **v7.4.1**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -181,7 +181,7 @@ Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue 
 
 In standard Gemini four-panel mode, quality review compares the image transcription and balloon order against the dialogue in the final prompt, including edits made there before generation. / Geminiの通常4コマでは、画像から転記した台詞と吹き出しの読順を、生成に使った最終プロンプトと照合します。生成前に最終プロンプトで編集した台詞も照合対象です。
 
-Quality review checks visible surfaces for camera elevation and checks the direction of a balloon tail and nearby speakers. It distinguishes an explicitly vertical shot from a diagonal view, using visible cues such as receding edges on a level surface. Missing evidence remains unverified. STEP3 accepts an explicit silent beat in the action field. In OpenAI 5–8-panel STEP3, unsupported optional effects are omitted without changing panel order, camera or dialogue. / 画像検査では実画像の上面・下面からカメラの上下角を確認し、吹き出しの尾は向きと周囲の人物を調べます。水平面の平行な辺が奥に向かって狭まっているかなどを手がかりに、真俯瞰と斜め俯瞰を区別します。根拠が足りなければ未確認とします。STEP3では「状況」欄に明記した無言も認識します。OpenAIの5～8コマでは、使えない任意演出だけを除き、コマ順・カメラ・台詞は保持します。
+Quality review checks visible surfaces for camera elevation and checks the direction of a balloon tail and nearby speakers. It distinguishes an explicitly vertical shot from a diagonal view, using visible cues such as receding edges on a level surface. Missing evidence remains unverified. When a Japanese Camera instruction explicitly rejects one angle and chooses another, projection follows the chosen angle while retaining the original wording. STEP3 accepts an explicit silent beat in the action field. In OpenAI 5–8-panel STEP3, unsupported optional effects are omitted without changing panel order, camera or dialogue. If a returned layout is rejected, the diagnostic export records the response and validation reason under `failureContext` with its usual privacy and size limits. / 画像検査では実画像の上面・下面からカメラの上下角を確認し、吹き出しの尾は向きと周囲の人物を調べます。水平面の平行な辺が奥に向かって狭まっているかなどを手がかりに、真俯瞰と斜め俯瞰を区別します。根拠が足りなければ未確認とします。Cameraで「俯瞰ではなく、床近くから見上げる」と指定されたときは、元の文を保って、選ばれた角度で描画指示を組み立てます。STEP3では「状況」欄に明記した無言も認識します。OpenAIの5～8コマでは、使えない任意演出だけを除き、コマ順・カメラ・台詞は保持します。配置案の検査で止まった場合は、調査JSONの `failureContext` に応答と理由を記録します。秘匿処理と容量上限は従来どおり適用します。
 
 Quoted source text / 出典の引用: Wording identified as an article or document quotation, including a quoted passage followed by "という記述", remains scene text rather than a nearby character's speech. VisualEvidence labels and quoted sign text stay in visual action, never becoming a speaker or extra bubble. Explicit speaking or reading aloud still gets a bubble. Balloon-layout errors identify the panel and mismatch without assuming user error. Rebuild STEP3 for existing scripts. / 「という記述」などで資料の文言を示す引用は状況描写に残し、近くの人物の吹き出しへ入れません。VisualEvidence欄の看板文字も視覚描写として保持し、話者や余分な台詞として数えません。人物が実際に発話・音読する引用は台詞として保持します。配置エラーでは対象コマと不一致の内容を示し、入力の誤りと決めつけません。既存のシナリオへの反映にはSTEP3を作り直してください。
 
@@ -651,7 +651,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.3.8](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.3.8のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.4.1](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.1のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -711,7 +711,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -818,6 +818,11 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.4.1 (2026-11-10)
+
+- **[STEP3]** Keep the accepted camera directly from the script in 5–8-panel layouts. If the planner proposes a different shot, preserve the original staging in that panel. Invalid dialogue mappings still stop with a diagnostic reason. / 5～8コマのSTEP3では台本のカメラを直接引き継ぎます。配置案が別の撮影を指定したコマは元の状況も維持します。台詞の対応が不正な配置案は、理由を記録して引き続き拒否します。
+- **[Camera and diagnostics]** Use the chosen angle when the script rejects another angle, and include rejected layout responses and reasons in diagnostic JSON. / 否定された角度を描画指示に混ぜず、採用された角度を使います。採用できない配置案は応答と理由を調査JSONに残します。
 
 ### v7.4.0 (2026-11-10)
 

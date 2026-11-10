@@ -1,10 +1,23 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createServer } from 'vite';
-import { getPanelShotExecution } from '../src/lib/composition-variety.js';
+import { classifyCameraElevation, getPanelShotExecution } from '../src/lib/composition-variety.js';
 import { restoreReviewedShotExecution } from './helpers/prompt-policy-normalization.mjs';
 
 const assertStrength = cue => assert.match(cue, /指定角を弱めず強めない/);
+
+test('a rejected camera angle before ではなく does not override the chosen projection', () => {
+  const low = '作業台の右上から深く俯瞰するDominant Lowではなく、床に近い右奥から斜めに見上げるOver The Shoulder。';
+  assert.equal(classifyCameraElevation(low), 'low');
+  for (const compact of [false, true]) {
+    const cue = getPanelShotExecution(low, { compact });
+    assert.match(cue, /見上げて顎|look up: chin/);
+    assert.doesNotMatch(cue, /俯瞰:|look down from/);
+  }
+  assert.equal(classifyCameraElevation('床近くから見上げるのではなく、正面アイレベルから撮る。'), 'eye');
+  assert.equal(classifyCameraElevation('作業台の右上から見下ろす。手前には箱ではなく、紙を置く。'), 'high');
+  assert.equal(classifyCameraElevation('左上から見下ろす。左の人物ではなく、右の人物を主役にする。'), 'high');
+});
 const assertRoll = cue => {
   assertStrength(cue);
   assert.match(cue, /場面の鉛直\/水平.*光軸回り/);

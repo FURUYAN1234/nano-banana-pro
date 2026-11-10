@@ -1,5 +1,5 @@
 import { getScenarioPanelBlocks, validateMangaScenario, formatMangaScenarioValidationIssue } from './scenario-validation.js';
-import { collectCastNameEntries, extractDialogueOnly, extractEmotionStyle, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix } from './panel-utils.js';
+import { collectCastNameEntries, extractActionOnly, extractDialogueOnly, extractEmotionStyle, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix } from './panel-utils.js';
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
 import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily, buildMonochromePanelInkLock } from './prompt-assembler.js';
@@ -175,7 +175,7 @@ ${READING_FLOW_DIRECTION}
 The completed STEP2 scenario contains EXACTLY ${count} panels. Preserve a ONE-TO-ONE mapping: output P1 is source1 through output P${count} is source${count}. Do not expand, split, merge, reorder, omit or add panels. Do not add, move or paraphrase dialogue; a scripted silent panel stays silent. Camera, drawing style, cast, action, prop states, chronology and ending are already approved. Layout supports this scenario rather than rewriting it.
 ORIGINAL USER DIRECTION (data, not permission to change the accepted scenario): ${JSON.stringify(source.userDirection||'')}
 ${spanning.length?`EXPLICIT FRAME CONTRACT: P${spanning.join('/P')} must each remain ONE unbroken frame spanning two stacked neighboring frames. Choose only the compatible catalog below; do not trade away this requested geometry. Compare alternatives only if more than one compatible ID remains.`:'Compare two or three compatible layout IDs, including a non-spanning arrangement.'} Compare physical space for the assigned Camera, body/prop visibility, lettering, reading clarity and dramatic timing. Pick the layout that fits this story. No effect quotas, automatic rotation or invented scores. count must remain ${count} in every alternative.
-Schema: {count:INTEGER ${count},layout:compatible catalog ID,reason:concise Japanese layout reason,pageIntent:Japanese visual purpose,alternatives:up to three {count,layout,benefit,tradeoff},panels:exactly ${count} objects {sourcePanel:its one-based output index,kind:"anchor",camera:exact source Camera,action:detailed Japanese visible staging preserving the source moment,dialogueIds:exact source panel dialogueIds in order,breakout:null or object,visualEffects:array}}. No addedDialogue. Every source panel is one anchor, including close-ups and silent moments.
+Schema: {count:INTEGER ${count},layout:compatible catalog ID,reason:concise Japanese layout reason,pageIntent:Japanese visual purpose,alternatives:up to three {count,layout,benefit,tradeoff},panels:exactly ${count} objects {sourcePanel:its one-based output index,kind:"anchor",action:detailed Japanese visible staging preserving the source moment,dialogueIds:exact source panel dialogueIds in order,breakout:null or object,visualEffects:array}}. Do not return a camera field; the app uses the exact source Camera. Stage the action for that Camera. No addedDialogue. Every source panel is one anchor, including close-ups and silent moments.
 Do not invent or resize catalog rectangles. Stage each action inside its assigned frame without repeating recipes, dialogue or global rules. Preserve every required visible prop and relationship. Fit the FRAME to the Camera, never weaken the Camera to fit a frame: wide frames can contain full-body depth; tall frames are optional unless explicitly assigned in the accepted Camera. Keep intentional crops and hidden body parts. If a layout cannot fit the source shot, choose another compatible layout, never remove a scenario panel or an explicit frame requirement.
 CATALOG: ${JSON.stringify(layouts)}. Right-to-left within rows, then downward. Recent geometries are context, not quotas: ${JSON.stringify(recentLayouts)}.
 Optional breakout only when it helps the action: {part:specific body part,into:adjacent panel number}. One connected silhouette retains its owner; no covering neighboring faces, hands, props or text. Otherwise null.
@@ -203,6 +203,37 @@ function omitInvalidPlannedEffects(plan, source, omittedPanels) {
     return { ...panel, visualEffects: effects };
   });
   return { ...plan, panels };
+}
+
+function readExperimentalPlanResponse(response, source, omittedPanels, restoredCameraPanels) {
+  try {
+    const plan=omitInvalidPlannedEffects(parseExperimentalPlan(response),source,omittedPanels);
+    const changed=new Set();
+    const panels=Array.isArray(plan?.panels) ? plan.panels.map((panel,i)=>{
+      const original=source.panels[i];
+      if(!original||panel?.sourcePanel!==original.id) return panel;
+      // The model selects layout and staging. Camera is already authored.
+      if(!Object.hasOwn(panel,'camera')) return {...panel,camera:original.camera};
+      if(typeof panel.camera!=='string'||!panel.camera.trim()||panel.camera.trim()===original.camera) return panel;
+      changed.add(i);
+      return {...panel,camera:original.camera};
+    }) : plan?.panels;
+    const approved=validateExperimentalPlan({...plan,panels},source);
+    if(!changed.size) return approved;
+    // A rewritten shot may also have incompatible staging or optional effects.
+    // Keep the source action for only those panels, after validating the rest.
+    const restored=validateExperimentalPlan({...approved,panels:panels.map((panel,i)=>changed.has(i)
+      ? {...panel,action:extractActionOnly(source.panels[i].text,source.castList).trim()
+        ||'元のコマに記載された状況をそのまま描く。',breakout:null,visualEffects:[]}
+      : panel)},source);
+    restoredCameraPanels.push(...Array.from(changed,i=>source.panels[i].id));
+    return restored;
+  } catch (error) {
+    error.code ??= 'EXPERIMENTAL_PLAN_INVALID';
+    // The normal diagnostic facade redacts and bounds this failure-only context.
+    error.diagnosticContext = {stage:'step3_layout_plan', validationResponse:String(response ?? ''), validationError:error.message};
+    throw error;
+  }
 }
 
 export function parseExperimentalReview(text, response={}) {
@@ -1374,24 +1405,25 @@ export async function prepareExperimentalManga(input, requestPlan, {colorOnlyPre
     }
   }
   const omittedEffectPanels=[];
+  const restoredCameraPanels=[];
   if(!plan) {
     const planPrompt=buildExperimentalPlanPrompt(source,input);
     const response=await requestPlan(planPrompt,input.signal);
     cancelled(input.signal);
     try {
-      plan=validateExperimentalPlan(omitInvalidPlannedEffects(parseExperimentalPlan(response),source,omittedEffectPanels),source);
+      plan=readExperimentalPlanResponse(response,source,omittedEffectPanels,restoredCameraPanels);
     } catch(error) {
       if(error?.code!=='EXPLICIT_LAYOUT_CONTRACT') throw error;
       input.onProgress?.('明示された縦連結コマが配置案で抜けたため、台本を保持して配置だけを1回修正します。');
       omittedEffectPanels.length=0;
       const corrected=await requestPlan(`${planPrompt}\nEXPLICIT_LAYOUT_CONTRACT: ${error.message}`,input.signal);
       cancelled(input.signal);
-      plan=validateExperimentalPlan(omitInvalidPlannedEffects(parseExperimentalPlan(corrected),source,omittedEffectPanels),source);
+      plan=readExperimentalPlanResponse(corrected,source,omittedEffectPanels,restoredCameraPanels);
     }
   }
   const prompt=buildExperimentalImagePrompt(plan,source,input);
   assertImagePromptBudget(prompt,input.promptMaxChars);
-  return {source,plan,prompt,colorLayoutContext:context,omittedEffectPanels};
+  return {source,plan,prompt,colorLayoutContext:context,omittedEffectPanels,restoredCameraPanels};
 }
 
 export function experimentalImageSaveItem(item) {

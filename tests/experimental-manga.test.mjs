@@ -1601,7 +1601,16 @@ try {
     assert.deepEqual(result.omittedEffectPanels,[1,2]);
     assert.deepEqual(result.plan.panels.map(({visualEffects: _effects,...panel})=>panel),six.panels);
     generated.panels[0].camera='別のカメラ';
-    await assert.rejects(m.prepareExperimentalManga({...input,providerFamily:'chatgpt'},request),/Camera/);
+    const corruptedApprovedPlan=structuredClone(six);
+    corruptedApprovedPlan.panels[0].camera=generated.panels[0].camera;
+    assert.throws(()=>m.validateExperimentalPlan(corruptedApprovedPlan,m.readExperimentalSource(input)),/Camera/);
+    requests=0;
+    const restored=await m.prepareExperimentalManga({...input,providerFamily:'chatgpt'},request);
+    assert.equal(requests,1);
+    assert.deepEqual(restored.restoredCameraPanels,[1]);
+    assert.equal(restored.plan.panels[0].camera,six.panels[0].camera);
+    assert.deepEqual(restored.plan.expectedDialogue,result.plan.expectedDialogue);
+    assert.deepEqual(restored.plan.panels.slice(1),result.plan.panels.slice(1));
     generated.panels[0].camera=six.panels[0].camera;
     generated.panels[0].dialogueIds=[7];
     await assert.rejects(m.prepareExperimentalManga({...input,providerFamily:'chatgpt'},request),/台詞/);

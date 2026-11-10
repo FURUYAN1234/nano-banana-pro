@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-  "manualVersion": "7.4.0",
-  "manualSourceSha256": "d129756fc6cd768158949d7e7fdb3f08d7787cddce002b1e34e1bb6c08adcaed",
+  "manualVersion": "7.4.1",
+  "manualSourceSha256": "a7ffaf04d19e4b277ccec6397cac22b05acef6e9d59c8157a0ae0776dba416ca",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "86e1af6aa0dbc7eb8043c28c8a3286fa0640f96155cd6bcdb9d74312e40bc98e"
+      "sha256": "1e26d42780aaa4af03f1711da256708994c352d7e278ed51eebbcad3353d0c3f"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "c370ff7aa47e29bf79c369c88916735dbfcda93adadd4d9165a1436354662569"
+      "sha256": "0630b49a81b8a987a21a515cc1e483d2050dab52dfa9c22c5c334b83ca25f8cb"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "90c9ece1e31eb0952b8aa4cb12eb7842272992b7e8fa31ae4f5398ae0c674819"
+      "sha256": "bf40ed67b80f22a5d62134cbe903fcbe82ccac222a909b2f303397a58d97a0ef"
     }
   ],
-  "readmeSha256": "14976cffc8786b8d9c5baa731cdb99fb636e4cb7cb9115fec8968588fe5d26c2",
+  "readmeSha256": "05c7d2d06bd5287d54374d7367637969fadb91251e67b01ec04335e22388440e",
   "readmeLanguageGaps": [],
-  "sourceTree": "77f579b1cd85050c51794b63830e75d1521011c7",
-  "publicTree": "45fd7fbaa44926e5a99e064dff32f544f86bd228",
-  "packageSha256": "7b4297ad26e1580e50047c61fb953375adea04af372888cbeedea9f6048631f4",
+  "sourceTree": "4ef2f9bc4bc011c937ed679de73a60494b43bd55",
+  "publicTree": "c6f57815f8a0979081c1907167f64a0b92e6d2d0",
+  "packageSha256": "7648dcc33108eae07c4b4c5f161242f7613da84985a73d160beb139de020065c",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,20 +41,21 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-10T10:44:13.255Z",
-  "findings": "Reviewed the v7.4.0 bilingual README delta against the current diagnostic viewer and scenario review code. Recoverable review warnings retain evidence without triggering the terminal-error viewer; final review outcomes are separately recorded. Full exports remain complete while preview is capped and loading feedback is shown. Native page emotion interpretation now shares the existing four-panel normalizer, retaining authored acting. Absent emotion tags retain reference fallback. Action direction now rejects a large preparation pose followed only by tiny manipulation, while preserving news facts and explicit constraints. Reported clipping permits content recomposition within fixed panel bounds. Empty or partial valid local frame detection uses the existing single whole-page assessment, requiring observed geometry and keeping uncertainty unverified. The selected models, bounded retry and safety contracts remain unchanged. Luna image QA alone now explicitly uses documented high reasoning effort; ordinary routes retain defaults. The strict schema emits anonymous bodies/text before identity and verdicts, rather than corrections first. Lettering uses observed glyph columns and exact source corrections; tail ownership uses independent geometry. Local raster lettering was withdrawn after the user observed smaller, thinner, sparse text. Normal generation keeps exact API output pixels and the original plus repaired history candidates; only confirmed text defects are sent to the bounded API edit with source typeface, weight, size and density preserved. Edit prompts lead with corrections before the complete approved reference. Source/public tree IDs are the collector-provided committed HEAD trees; this candidate remains uncommitted and per-file evidence is kept in the bugfix work record. Causal speaker references are excluded only at that occurrence; independently visible action/camera/speech remains required. New-script camera geometry and short fact distribution are guided without rewriting existing dialogue. Explicitly passing evidenced unused correction fields are normalized across review items; failures and absent evidence remain invalid, replayed against the actual six-panel API response. Mixed-repair compaction covers lettering, camera and cast with all targets and original prompt retained. No deployment is claimed. The final additional README delta documents lossless multipart image uploads above the JSON URL limit; reviewed against normalizeOpenAIImageUpload and generateOpenAIImageEdit. Files remain below50MB; JSON retains20971520characters, same endpoint/model/quality/size, no recompression or request retry. This source change still needs actual API acceptance. Boundary repair permits page gutter movement only for evidenced boundary mismatches, preserving all cast/content/cameras; ordinary clipping retains its rectangle. Reviewed cast-review README delta against castInventoryIssues, experimentalRepairIssues and buildCastRepairConservation: grounded known out-of-panel bodies get remove_all while required identities are retained. Unknown names, uncertain/reused bindings and unobserved features cannot authorize removal. Actual API acceptance still pending. Frame-proportions change reviewed against observedFrameProportionIssues: measured complete nonoverlapping frames are normalized to their actual comic bounds, excluding outer margins/title/footer; more than0.04 normalized edge movement is material. Ambiguous geometry creates no inferred correction. Full original rect contracts remain in the approved appendix. Compact cast and boundary wording retains the same targets, counts, evidence and preservation conditions.",
-  "manualFindings": "Rebuilt all three v7.4.0 manuals dated 2026-11-10 and compared all 71 rendered pages above their footers to v7.3.9. Initial changed bodies: Gemini page1 and system pages18,32; OpenAI none, inspected without clipping. Latest rebuild compared all71 pages to that candidate; only system page14 changed, visually inspected without clipping or overlap. Page14 explains single whole-page assessment when local detection is incomplete. Page32 explains warning/error separation, final review evidence, floating loading feedback, bounded preview and full exports. Builder text bounds, links, version and privacy checks passed. The local-lettering manual rebuild compared all 52 rebuilt pages to the current public candidate: Gemini unchanged, only system page23 changed and visually inspected without clipping. That prior paragraph is superseded: the latest 52-page rebuild changes only system page23, visually inspected for clipping, and now documents preservation of API lettering, targeted corrections, and original plus repaired history. Local public/downloads copies match reviewed PDFs. No publication.",
+  "checkedAt": "2026-11-10T13:18:11.981Z",
+  "findings": "Compared the v7.4.1 README against the audited v7.4.0 body and the working candidate. STEP3 now derives Camera from STEP2 in 5–8-panel layout, restores source staging for a conflicting reply and records rejected layout evidence. Dialogue mapping, geometry, media, image models and retry boundaries remain unchanged. The version, changelog, FAQ, and candidate ZIP URL are synchronized. The existing custom-node ZIP hash is unchanged. Other README sections inherit the unchanged v7.4.0 behavior and the previous section review.",
+  "manualFindings": "Rebuilt and rendered 71 pages across the three v7.4.1 PDFs. Compared every page body to the previous local reviewed set; only Gemini p1 and system p18/p19 changed above the footer. Visually inspected these pages, the current diagnostic page 32 and the OpenAI guide cover; no overlap, missing glyphs or clipping. Checked all page footers, bounds, links and privacy text using the existing PDF verifier.",
   "pricingReview": {
-    "version": "7.4.0",
+    "version": "7.4.1",
     "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-    "checkedAt": "2026-11-10T12:11:29.705Z",
+    "checkedAt": "2026-11-10T13:18:11.981Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
+      "https://ai.google.dev/gemini-api/docs/pricing/",
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
-      "https://developers.openai.com/api/docs/changelog"
+      "https://developers.openai.com/api/docs/models/gpt-6-sol"
     ],
-    "findings": "Rechecked official pricing/model pages for v7.3.9. Standard input/output per million: Astra10/50, Sol6.1 and Sol6 2/10, Terra6.1 1/5, Luna6 0.10/0.50, Sol5.6 4/20, Terra5.6 2/12, Luna5.6 0.20/1.20. Sunburst/Flare2.6 image8/30 (cache2), text input5 (cache1.25). Google Standard Flash3.8 0.75/3.75 through 2026-12-31 and NanoBanana2.1 input1.50/text7.50/image30, 1K0.0336. Used Standard rates, excluding discounted Flex/Batch and Priority. Source prices match existing configuration; no rate changes required. Google direct open was unsupported markdown, so its official indexed Standard table and official latest-model page were used. Reopened official sources immediately before the authorized release on 2026-11-10; the Standard OpenAI tables and Google indexed Standard image table/latest-model pricing still match. No price changes. Applied to v7.4.0 using the same unchanged pricing source hash; original official-source check time is retained (within 24 hours), not a new upstream retrieval. Rechecked current official OpenAI Standard text/image pricing and Google Standard pricing on November 10 before v7.4.0 publication. The published Luna, Sunburst/Flare, Flash 3.8 and Nano Banana 2.1 standard rates match the configured rates. Batch and Flex prices are not used."
+    "findings": "Reviewed official OpenAI Standard and Google Standard rates, excluding Batch and Flex. Current primary rates match the UI and manual: GPT-6 Luna 0.10/0.50, Sunburst and Flare 2.6 image 8/30 with cache 2 and text input 5 with cache 1.25, Gemini 3.8 Flash text 0.75/3.75 through December 31, and Nano Banana 2.1 1K 0.0336 with input 1.50 and text/thinking output 7.50. Legacy model snapshot rates are retained."
   }
 }

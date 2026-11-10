@@ -10,8 +10,54 @@ try {
   const { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION } = await server.ssrLoadModule('/src/lib/constants.js');
   const { MONOCHROME_EMOTION_STYLES } = await server.ssrLoadModule('/src/lib/manga-render-mode.js');
   const {resolvePageWorkflow}=await server.ssrLoadModule('/src/lib/page-workflow.js');
+  const {summarizeDiagnosticError}=await server.ssrLoadModule('/src/lib/diagnostics.js');
   const inputFor=count=>({enabled:true,scenarioMode:'experimental-manga',castList:'## ユウ',colorMode:'color',scenario:Array.from({length:count},(_,i)=>`[${i+1}コマ目]\n[Camera: 高い位置から俯瞰]\n[EMOTION: NORMAL]\n状況: ユウが道具を順に確かめる。\n${i===2?'セリフなし':`ユウ「確認${i+1}」`}`).join('\n')});
   const planFor=source=>({count:source.panels.length,layout:'two_columns',reason:'動作順を保ち、隣り合う場面を対比する',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'ユウが指定の道具を確かめる。',dialogueIds:p.dialogueIds,breakout:null}))});
+
+  test('rejected STEP3 layout answers retain their stage, reason and sanitized response',async()=>{
+    const input=inputFor(6),plan=planFor(m.readExperimentalSource(input));
+    plan.panels[4].camera='床近くから見上げる';
+    plan.panels[4].dialogueIds=[];
+    for(const [response,expectedReason] of [[JSON.stringify(plan),/元のコマの台詞・順番/],['not JSON\nAuthorization=fixture-value',/配置案のJSON/]]) {
+      let requests=0;
+      await assert.rejects(m.prepareExperimentalManga(input,async()=>{requests++;return response;}),error=>{
+        const report=summarizeDiagnosticError(error);
+        assert.equal(report.errorCode,'EXPERIMENTAL_PLAN_INVALID');
+        assert.equal(report.failureContext.stage,'step3_layout_plan');
+        assert.match(report.failureContext.validationError,expectedReason);
+        assert.equal(report.failureContext.validationResponse,response.replace('fixture-value','[credential omitted]'));
+        return true;
+      });
+      assert.equal(requests,1);
+    }
+  });
+  test('STEP3 owns the accepted Camera and keeps source staging if a layout reply changes it',async()=>{
+    const input=inputFor(6);
+    input.scenario=input.scenario.replace('[5コマ目]\n[Camera: 高い位置から俯瞰]', '[5コマ目]\n[Camera: 高所から俯瞰するDominant Lowではなく、床の右奥から斜めに見上げる]');
+    const source=m.readExperimentalSource(input);
+    for(const variant of ['changed','omitted','identical']) {
+      const plan=planFor(source);
+      if(variant==='omitted') plan.panels.forEach(panel=>delete panel.camera);
+      if(variant==='changed') {
+        plan.panels[4].camera='高い位置から俯瞰';
+        plan.panels[4].action='高所から箱の上面を見せる。';
+        plan.panels[4].visualEffects=['rim_light'];
+      }
+      let calls=0;
+      const result=await m.prepareExperimentalManga(input,async()=>{calls++;return JSON.stringify(plan);});
+      assert.equal(calls,1);
+      assert.equal(result.source.scenario,input.scenario);
+      assert.deepEqual(result.plan.expectedDialogue,source.dialogue);
+      assert.deepEqual(result.plan.panels.map(panel=>panel.camera),source.panels.map(panel=>panel.camera));
+      assert.equal(result.plan.panels[0].action,plan.panels[0].action);
+      assert.equal(result.plan.panels[4].action,variant==='changed'?'ユウが道具を順に確かめる。':plan.panels[4].action);
+      assert.deepEqual(result.restoredCameraPanels,variant==='changed'?[5]:[]);
+      if(variant==='changed') {
+        assert.doesNotMatch(result.prompt,/高所から箱の上面を見せる/);
+        assert.deepEqual(result.plan.panels[4].visualEffects,[]);
+      }
+    }
+  });
   test('explicit vertical spanning frames constrain layout without weakening the source shot',async()=>{
     for(const [count,panel,layout] of [[5,1,'tall_right_top'],[6,3,'tall_right_middle'],[8,6,'tall_right_bottom']]) {
       const input=inputFor(count);

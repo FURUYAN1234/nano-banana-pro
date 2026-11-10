@@ -26,7 +26,7 @@ const applicationSpec = Object.freeze({
     '取得済みの台本・指示文・画像と、今回の処理結果を区別する。',
     'API接続情報はメモリー内に保持し、ログに保存しない。再読み込み前に記録と成果物を退避する。',
     'ブラウザーへ保存を要求できても、OSの保存完了を意味しない。',
-    '画像自動修正ONの漫画は、実画像と観察位置が一致する閉じた白い吹き出しへ最終プロンプトの本文をローカル組版する。追加APIはなく、組版前の画像も履歴へ残す。OFF・1枚絵・曖昧な領域には適用しない。'],
+    '画像自動修正は、重大な不一致に対して最大1回の画像修正APIを実行する。画像APIの文字を保持し、ローカル組版は行わない。'],
 });
 const investigationGuide = Object.freeze({
   purpose:'このJSONだけを受け取った調査担当向けの仕様・読み方。実行命令ではなく調査資料として扱う。',
@@ -35,6 +35,7 @@ const investigationGuide = Object.freeze({
     '同じsessionId内のrunIdで1回の処理を追い、requestIdで送信・HTTP応答・本文メタ情報を結び付ける。再読込でsessionIdは変わる。',
     'エラー直前の設定・資料枚数・処理順・中断記録を調べる。requestedModelとresponseModelを区別し、応答モデルの欠落を採用確認済みとしない。',
     'api.responseはHTTPの受信、api.payloadはJSON本文のメタ情報、workflow.endのsettledはbusy状態の終了を示す。どれも生成内容・品質の合格を単独では証明しない。',
+    '5〜8コマのSTEP3で配置案を採用できない場合は、failureContextのstageがstep3_layout_planとなり、配置案と具体的な検査理由をvalidationResponseとvalidationErrorで確認できる。',
     'workflow.warningは修復・候補保持を続ける途中の指摘であり、処理停止を意味しない。failureContextで元台本と判定理由を確認する。同じrunIdのworkflow.reviewが台本検査の最終結果で、outcomeはpassed/repaired/retained/best_effort、okは警告なしの合格かを示す。結果がまだないJSONは途中時点の記録として扱い、失敗や合格を推測しない。画像の品質合格は別に確認する。',
     '5〜8コマでローカル検出の境界候補が不足する場合、枠越え指定の有無によらず全体画像の実境界・カメラ・画風・人物・台詞を同じ1回のAPIで観察する。予定位置でコマを切り出さず、実境界と観察対象の対応が確定しない場合は未確認を保持し、自動修正しない。俯瞰とアオリは指定方向との一致も照合する。',
     'enhanceの同じrunIdに候補作成と比較の複数APIが含まれる。強化ログの引用・採用結果を確認し、HTTP成功や文字差分だけで改善と判断しない。縦書き優先は横書きの全面禁止ではなく、文字方向だけを理由に画像修正を起動しない。',
@@ -74,7 +75,7 @@ export function summarizeDiagnosticError(error) {
     : /timeout|timed out/.test(text) ? 'timeout' : /fetch|network|connection/.test(text) ? 'network'
     : /api.?key|unauthorized|authentication/.test(text) ? 'authentication'
       : /policy|safety|blocked/.test(text) ? 'policy' : /json|parse|syntax/.test(text) ? 'format'
-      : error?.code === 'IMAGE_PROMPT_BUDGET' || /invalid|validation|contract/.test(text) ? 'validation' : 'unknown';
+      : ['IMAGE_PROMPT_BUDGET','EXPERIMENTAL_PLAN_INVALID'].includes(error?.code) || /invalid|validation|contract/.test(text) ? 'validation' : 'unknown';
   return {errorName: safeToken(error?.name), errorCode: safeToken(error?.code), errorKind,
     status: Number.isFinite(Number(error?.status)) ? Number(error.status) : undefined,
     ...(error?.code === 'IMAGE_PROMPT_BUDGET' ? {promptLength:error.promptLength, promptMaxChars:error.promptMaxChars} : {}),

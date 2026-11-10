@@ -1453,7 +1453,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         setFinalPrompt(completePrompt);
         const effectNote = prepared.omittedEffectPanels.length
           ? `\n${prepared.omittedEffectPanels.join('・')}コマ目の使用できない任意演出を除外しました。` : '';
-        setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}\nSTEP2のコマ数・順序・台詞を保持しました。${effectNote}`);
+        const cameraNote = prepared.restoredCameraPanels.length
+          ? `\n${prepared.restoredCameraPanels.join('・')}コマ目は配置案と台本の撮影指定が異なるため、元のカメラと状況を保持しました。` : '';
+        setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}\nSTEP2のコマ数・順序・台詞を保持しました。${effectNote}${cameraNote}`);
         return completePrompt;
       }
       const activePunchlineType = resolvedPunchlineTypeRef.current || resolveScenarioEndingType(currentScenario, punchlineType);

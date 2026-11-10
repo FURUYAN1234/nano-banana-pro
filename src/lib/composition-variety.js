@@ -125,7 +125,13 @@ const NEGATED_ENGLISH_CAMERA_TERMS_RE = new RegExp([
   `\\b(?:no|not|without|avoid)\\s+(?:(?:using|use|any|a|an)\\s+)*${ENGLISH_CAMERA_TERM}(?:\\s*(?:/|\\bor\\b|\\band\\b)\\s*${ENGLISH_CAMERA_TERM})*`,
   `\\bnon[ -]?${ENGLISH_CAMERA_TERM}`,
 ].join('|'), 'gi');
+const CONTRASTED_CAMERA_CLAUSE_RE = /(^|[。;；\n、,])([^。;；\n、,]+?)(?:ではなく|でなく)(?=\s*[、,])/g;
+const CAMERA_CLAUSE_END_RE = /(?:俯瞰(?:する)?|アオリ|見下ろす|見上げる|撮る|撮影する)(?:\s*(?:Dominant Low|Innocent High|Epic Wide|Over The Shoulder|Hyper Perspective|Aesthetic Thirds|Cinematic Slant))?(?:\s*の)?\s*$/i;
 const affirmativeCameraText = (camera) => String(camera)
+  // A contrast can reject a whole placement, even when it ends in a shot name.
+  // Only strip a camera clause, leaving contrasts about actors and props intact.
+  .replace(CONTRASTED_CAMERA_CLAUSE_RE, (match, boundary, rejected) =>
+    CAMERA_CLAUSE_END_RE.test(rejected) && (HIGH_CAMERA_RE.test(rejected) || LOW_CAMERA_RE.test(rejected)) ? boundary : match)
   // A comma alone starts a new direction; a comma list needs a final and/or.
   .replace(NEGATED_ENGLISH_CAMERA_TERMS_RE, '')
   .replace(NEGATED_CAMERA_TERMS_RE, '');
