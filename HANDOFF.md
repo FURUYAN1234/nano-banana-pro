@@ -2049,4 +2049,3 @@ Current live delivery status: see root PLAN.md, Nano Banana four-panel quality r
 - Same reference sheets verified byte-identical across OpenAI and Gemini. OpenAI Sunburst/xhigh 2240x3168 kept original cast clear and masked the licensed desk toy in all four panels. General quality warnings retained.
 - Gemini 3.1 Flash Image first run and one explicitly authorized manual repair completed at A4 848x1200. Repair added the missing panel-1 toy mosaic; cast remains unmosaicked. Ears/tails still extend outside toy masks. User explicitly accepted this Gemini result on 2026-10-01; this is accepted with a disclosed limitation, not a full-silhouette visual pass. No further paid generation.
 - Private artifacts remain ignored under output_sol61. Official release and all note/X/Facebook announcements plus final full backup remain separate required stages.
-
