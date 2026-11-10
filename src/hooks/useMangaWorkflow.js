@@ -1,5 +1,5 @@
 import { useWorkflowDiagnostics } from './useWorkflowDiagnostics.js';
-import { diagnosticConsole as console } from '../lib/diagnostics.js';
+import { diagnosticConsole as console, recordImageQualityReview } from '../lib/diagnostics.js';
 import { resolveAutoScenarioMode } from '../lib/scenario-validation.js';
 import { getBuiltinPanelMediumReference } from '../lib/builtin-panel-medium-reference.js';
 import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
@@ -2585,6 +2585,12 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           finalReview:{...qualityOutcome.finalReview, pass:false, issues:[...(qualityOutcome.finalReview.issues||[]),
             {type:'unverified',panel:null,reason:'品質検査の合計待ち時間が上限に達しました。画像を保持しました。'}]}};
       }
+      // Preserve the image API's lettering pixels, including typeface, weight,
+      // size and spacing. Text defects belong to the bounded image repair above;
+      // a local font substitution must never restyle every correct balloon.
+      void recordImageQualityReview(qualityOutcome,{finalPrompt:currentPrompt,
+        observations:experimentalPrepared?originalCandidate.experimentalReview?.evidence||[]
+          :qualityOutcome.originalReview.bubbleInventory||qualityOutcome.originalReview.observations||[]});
       const qualityResult = qualityOutcome.finalReview;
       const hasDefiniteFinalFailure = qualityResult?.pass !== true
         && Array.isArray(qualityResult?.issues)

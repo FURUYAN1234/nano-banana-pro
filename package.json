@@ -2,7 +2,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "name": "nano-banana-pro",
   "private": true,
-  "version": "7.3.9",
+  "version": "7.4.0",
   "homepage": "https://FURUYAN1234.github.io/nano-banana-pro",
   "type": "module",
   "scripts": {
@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "budoux": "0.10.3",
     "clsx": "^2.1.1",
     "framer-motion": "^12.27.5",
     "lucide-react": "^0.562.0",

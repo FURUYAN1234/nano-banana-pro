@@ -1,3 +1,13 @@
+# v7.4.0 dialogue, action and diagnostic repairs — 2026-11-10
+
+ローカル候補版。修正内容は、修復中の品質指摘を停止エラーと誤表示する問題、ログ準備時の負荷と待機表示、空の検査欄が省略された際の結果破棄、複合修正指示の上限超過、元画像を縮小しない大容量編集送信、人物照合と台詞保持。ローカル文字上書きは撤回し、画像APIの書体・太さ・サイズを保持する。画風は場面ごとに選び、ニュースに沿う全身動作を設計する。モデル変更なし。
+
+全2,222テスト、lint、ビルド、配布Webセキュリティ検査が合格。GPT-6 Luna・フォールバックなし、GPT Image 2.6 Sunburst/maxの通常UIで実ニュースから2240×3168画像を生成。画像検査1回・自動修正1回が完了し、保存済み原寸PNGで台詞7件・話者・全コマの人数、しゃがむ／踏み込む動作、水彩・通常・劇画・POP_ARTの描き分けを確認した。最終判定は担当者の直接目視であり、未実施の2回目の自動検査への合格とは扱わない。
+
+ユーザーはコマと余白が収まっていることを確認し、内部の枠比率への厳密一致を理由に反復する判断を訂正した。収まり・読み順を合格とし、約31％対内部指定38％の差だけの再生成を終了。アプリの検査器やテストを弱めて合格にしたものではない。追加の位置ガイド機能は実装していない。
+
+実API実行は終了。接続済みの固定プレビューと画像履歴を保持し、再読み込み・キー再入力は不要。実行IDと失敗前後の証拠、最終PNGはprivate WSL作業記録に保持する。v7.4.0は公開・配布未実施で、版ごとのデプロイ直前承認待ち。旧版の公開承認を新しい候補版の承認として流用しない。
+
 # v7.3.9 action staging and STEP3 recovery candidate — 2026-11-10
 
 The user authorized v7.3.9 deployment, the existing note update, X and Facebook announcements, and one full backup on 2026-11-10. Run the official release transaction, verify the public article and posts, then run and independently verify the official full backup. Current receipts and operation status are kept in the private WSL task record; preparation is not publication completion.

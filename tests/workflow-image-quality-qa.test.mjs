@@ -242,6 +242,7 @@ test('adopting one automatic repair preserves the actual original image and its 
   const originalCandidate={base64Img:'original',mimeType:'image/png',metadataContext:{source:'original'},modelId:'source-model'};
   const acceptedHistoryItem={id:20,img:'data:image/png;base64,fixed',metadataContext:{source:'fixed'},selected:true};
   const context={originalCandidate,acceptedHistoryItem,acceptedImageStr:acceptedHistoryItem.img,finalImageStr:'data:image/png;base64,original',
+    lettering:{report:{applied:false}},preLetteringCandidate:null,
     timestamp:20,analysisModelId:'gpt-6-luna',experimentalPrepared:null,qualityOutcome:{candidate:{base64Img:'fixed'},originalReview:{pass:false}},addGenerationHistoryItem};
   const update=new Function(...Object.keys(context),'return prev=>{'+body+'};')(...Object.values(context));
   const history=update([{id:1,img:'older-user-image'},{id:19,img:context.finalImageStr}]);
@@ -249,6 +250,31 @@ test('adopting one automatic repair preserves the actual original image and its 
   assert.equal(history.filter(item=>item.img===acceptedHistoryItem.img).length,1);
   assert.ok(history.some(item=>item.img==='older-user-image'));
   assert.deepEqual(history.find(item=>item.img===context.finalImageStr).metadataContext,{source:'original'});
+});
+
+test('normal generation preserves API lettering without a raster font replacement',()=>{
+  assert.doesNotMatch(workflowSource,/applyMangaLettering|manga-lettering-renderer/);
+  assert.match(workflowSource,/const acceptedImageStr = `data:\$\{generatedMimeType\};base64,\$\{qualityOutcome\.candidate\.base64Img\}`/);
+});
+
+test('both comic paths retain original and repaired API pixels without a third relettered candidate',()=>{
+  const section=workflowSource.slice(workflowSource.indexOf('const acceptedHistoryItem ='));
+  const body=section.match(/setGenerationHistory\(prev => \{([\s\S]*?)\r?\n      \}\);/)[1];
+  const originalCandidate={base64Img:'original',mimeType:'image/png',metadataContext:{source:'original'},modelId:'source-model'};
+  const acceptedHistoryItem={id:20,img:'data:image/png;base64,raw-repair',metadataContext:{source:'raw-repair'},selected:true,qualityPass:false};
+  for(const experimental of [false,true]){
+    const context={originalCandidate,acceptedHistoryItem,acceptedImageStr:acceptedHistoryItem.img,
+      finalImageStr:'data:image/png;base64,original',timestamp:20,qualityResult:{pass:false},
+      previousExperimental:null,originalExperimental:{review:null},
+      experimentalPrepared:experimental?{groupId:'test'}:null,
+      qualityOutcome:{candidate:{base64Img:'raw-repair'},originalReview:{pass:false}},addGenerationHistoryItem};
+    const history=new Function(...Object.keys(context),'return prev=>{'+body+'};')(...Object.values(context))([]);
+    assert.equal(history.length,2);
+    assert.deepEqual(history.find(item=>item.img.endsWith('raw-repair')).metadataContext,{source:'raw-repair'});
+    assert.deepEqual(history.find(item=>item.img.endsWith('original')).metadataContext,{source:'original'});
+    assert.equal(history.filter(item=>item.selected).length,1);
+    assert.equal(history.find(item=>item.selected).qualityPass,false);
+  }
 });
 
 test('provider rejection stops the normal generation action without an automatic prompt retry',async()=>{

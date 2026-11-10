@@ -68,6 +68,7 @@ export const getApiErrorInfo = error => {
   if (status === 429 || /resource_exhausted|rate.?limit|quota exceeded/.test(text)) return info('rate', 'APIレート制限・使用量制限', 'APIの制限内容を確認してください。短時間の制限なら時間を置き、日次上限などは解除時刻を確認してください。');
   if (/timeout|timed out|deadline_exceeded/.test(text) || status === 408) return info('timeout', '応答待ちの時間切れ', '応答が制限時間内に完了しませんでした。混雑か接続問題かは、この情報だけでは確定できません。');
   if (/failed to fetch|fetch failed|networkerror|network error|network request failed|load failed|econnreset|enotfound/.test(text)) return info('network', 'ネットワーク接続エラー', 'ネットワーク接続・ブラウザーの通信制限を確認してください。HTTP応答を受け取れていません。');
+  if (error?.code === 'IMAGE_INPUT_TOO_LARGE') return info('image_input_limit', '画像ファイルの容量上限', '画像入力は1枚50 MB未満です。元画像は保持しています。容量を確認してから再実行してください。通信障害ではありません。');
   if (error?.code === 'OUTPUT_TOKEN_LIMIT') return info('output_limit', 'AIの出力トークン上限に到達', '推論と本文の生成が上限で途中終了しました。未完成の結果は採用せず停止しました。入力を整理するか、別のモデルで再実行してください。待機では解消しません。');
   if (error?.code === 'INCOMPLETE_RESPONSE') return info('response', 'AI応答が未完了', '応答の終了状態を確認してください。途中の本文は採用していません。');
   if (error?.code === 'EMPTY_RESPONSE') return info('empty', 'AIから空の応答', '応答本文がありませんでした。再試行しても続く場合は入力とモデルを確認してください。');

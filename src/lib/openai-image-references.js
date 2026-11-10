@@ -7,6 +7,9 @@ import { MONOCHROME_INK_ECONOMY } from './manga-render-mode.js';
 
 export { OPENAI_IMAGE_INPUT_LIMIT };
 export const OPENAI_IMAGE_DATA_URL_MAX_CHARS = 20971520;
+// JSON image_url has a character limit; multipart files have a separate byte
+// limit. A full-resolution generated PNG must not be resized to fit JSON.
+export const OPENAI_IMAGE_FILE_MAX_BYTES = 50_000_000;
 
 // Image syntax is shared by local decoding and uploads; only uploads have the
 // provider input limit. A returned PNG or local canvas can legitimately exceed it.
@@ -30,6 +33,18 @@ export function normalizeOpenAIImageDataUrl(value, label = '参照画像') {
   return dataUrl;
 }
 
+export function normalizeOpenAIImageUpload(value, label = '参照画像') {
+  const dataUrl = normalizeImageDataUrl(value, label);
+  const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+  const bytes = base64.length / 4 * 3 - (base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0);
+  if (bytes >= OPENAI_IMAGE_FILE_MAX_BYTES) {
+    const error = new Error(`${label}: APIの画像ファイル入力上限（50 MB未満）を超えています。元画像は保持しています。`);
+    error.code = 'IMAGE_INPUT_TOO_LARGE';
+    throw error;
+  }
+  return dataUrl;
+}
+
 export function buildOpenAIReferencePlan({
   characterImages = [], backgroundImage = null, backgroundEnabled = false,
   originalCandidate = null, colorMode = 'color',
@@ -49,7 +64,7 @@ export function buildOpenAIReferencePlan({
   const entries = [];
   const seen = new Map();
   const push = (role, value, label) => {
-    const image_url = normalizeOpenAIImageDataUrl(value, label);
+    const image_url = normalizeOpenAIImageUpload(value, label);
     if (seen.has(image_url)) {
       if (seen.get(image_url) !== role) throw new Error('同一画像が異なる用途で指定されています。キャラと背景の指定を確認してください。');
       return;

@@ -86,12 +86,12 @@ test('long-prompt compaction cannot interpret literal speech as a rendering dire
 test('both provider prompts fit vertical lettering first and protect the artwork when horizontal exceptions are needed', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = build('甲「待ってーっ！」', providerFamily);
-    assert.match(prompt, /正立文字は上→下、列は右→左/);
+    assert.match(prompt, /正立(?:文字は|で)上→下、列は右→左/);
     assert.match(prompt, /prefer_vertical/);
-    assert.match(prompt, /余白の改行\/列数\/吹出形を先に調整/);
+    assert.match(prompt, /文節改行\/列数\/吹出形を先に調整/);
     assert.match(prompt, /短句\/叫び\/横長も縦組/);
     assert.match(prompt, /横組は縦組の判読不能・絵の遮蔽時か明示指定のみ/);
-    assert.match(prompt, /人物描写保持。絵の縮小\/簡素化禁止/);
+    assert.match(prompt, /人物(?:描写)?保持。絵の縮小\/簡素化禁止/);
   }
 });
 

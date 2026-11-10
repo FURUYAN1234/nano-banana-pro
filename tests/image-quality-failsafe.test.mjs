@@ -28,7 +28,7 @@ test('long page repair budgets the sendable source and preserves every issue in 
     mode:'experimental-manga',allowRepair:true,originalCandidate:original,originalPrompt:full,
     repairPromptSource:body,repairPromptMaxChars:body.length+1500,
     reviewCandidate:async(_,prompt)=>{reviews++;assert.equal(prompt,full);return {pass:false,issues};},
-    generateRepairCandidate:async prompt=>{edits++;assert.ok(prompt.startsWith(body));assert.ok(prompt.length<=body.length+1500);assert.ok(prompt.includes(issues[0].reason));assert.ok(prompt.includes(issues[0].correction));assert.match(prompt,/6/);return fixed;},
+    generateRepairCandidate:async prompt=>{edits++;assert.ok(prompt.endsWith(body));assert.equal(prompt.split(body).length,2);assert.ok(prompt.length<=body.length+1500);assert.ok(prompt.indexOf(issues[0].correction)<prompt.indexOf(body));assert.ok(prompt.includes(issues[0].reason));assert.match(prompt,/6/);return fixed;},
   });
   assert.equal(reviews,1);assert.equal(edits,1);assert.equal(result.candidate,fixed);assert.equal(result.finalReview.notRechecked,true);
 });
@@ -40,6 +40,19 @@ test('oversize repair fails before API and reports its real reason without dropp
     reviewCandidate:async()=>({pass:false,issues:[{type:'bubble_text',panel:1,reason:'missing last word'}]}),
     generateRepairCandidate:()=>assert.fail('oversize prompt must not be sent'),onProgress:x=>progress.push(x)});
   assert.equal(result.candidate,image);assert.equal(result.stopReason,'repair_failed');assert.match(progress.join('\n'),/上限/);
+});
+
+test('source-image edits lead with the actual change and retain the full approved contract as reference',()=>{
+  const originalPrompt='Create ONE complete page.\nCAMERA exact.\nOriginal dialogue exact.';
+  for(const compact of [false,true]) {
+    const prompt=buildImageQualityRepairPrompt({originalPrompt,sourceMode:'source-image',compact,
+      issues:[{type:'bubble_text',panel:2,reason:'missing glyphs',correction:'Replace with the entire exact source sentence.'}]});
+    assert.ok(prompt.startsWith('IMAGE QUALITY CORRECTION ATTEMPT'));
+    assert.ok(prompt.indexOf('Replace with the entire exact source sentence.')<prompt.indexOf(originalPrompt));
+    assert.equal(prompt.split(originalPrompt).length,2,'retain every original byte exactly once');
+    assert.ok(prompt.endsWith(originalPrompt));
+    assert.match(prompt,/APPROVED CONTENT REFERENCE/);
+  }
 });
 
 test('page contract skips review when OFF and rejects cross-mode inputs before review', async () => {
@@ -1056,13 +1069,13 @@ test('single-image quality repair never turns the emotional illustration into a 
   assert.doesNotMatch(prompt, /panel order/i);
 });
 
-test('source-image repair states change preserve and verify without changing the approved prefix', () => {
+test('source-image repair states change preserve and verify while retaining the approved contract', () => {
   const prompt = buildImageQualityRepairPrompt({
     originalPrompt: 'APPROVED SCRIPT',
     sourceMode: 'source-image',
     issues: [{type: 'prop_ownership', panel: 2, subject: '人物Aの手', reason: '小道具が別人物の手に接続している'}],
   });
-  assert.ok(prompt.startsWith('APPROVED SCRIPT'));
+  assert.ok(prompt.endsWith('APPROVED SCRIPT'));
   for (const label of ['SOURCE IMAGE TO EDIT', 'CHANGE:', 'PRESERVE:', 'VERIFY:']) assert.ok(prompt.includes(label));
   assert.match(prompt, /prop_ownership/);
   assert.match(prompt, /exactly 4 separate visible panels/i);
@@ -1086,6 +1099,54 @@ test('source-image structural defects explicitly override source preservation on
       {type:'cast_count',panel:7,reason:'outside the page'},
       {type:'camera_geometry',panel:null,reason:'no observed panel'}]});
   assert.doesNotMatch(harmless, /CAST COUNT OVERRIDE|CAMERA OVERRIDE/);
+});
+
+test('camera correction permits full affected-panel reprojection rather than a local surface patch',()=>{
+  for(const compact of [false,true]) {
+    const prompt=buildImageQualityRepairPrompt({originalPrompt:'APPROVED',sourceMode:'source-image',panelCount:6,compact,
+      issues:[{type:'camera_geometry',panel:5,reason:'The top-facing table contradicts the approved low viewpoint.'}]});
+    assert.match(prompt,/Panel 5 CAMERA OVERRIDE/);
+    assert.match(prompt,/entire interior of this affected panel/);
+    assert.match(prompt,/screen positions, silhouettes, overlap and internal crop may change/);
+    assert.match(prompt,/same story moment/);
+    assert.match(prompt,/every unaffected panel/);
+  }
+});
+
+test('reported frame clipping can change the defective internal crop without moving page frames', () => {
+  for (const compact of [false, true]) {
+    const prompt = buildImageQualityRepairPrompt({ originalPrompt: 'APPROVED: panel 1 hands-only close-up; panel 3 includes complete heads.',
+      sourceMode: 'source-image', panelCount: 6, compact,
+      issues: [{ type: 'panel_layout', panel: 3, subject: 'upper frame', reason: 'Hair and heads are cut by the upper border.', correction: 'Keep complete head contours inside the frame.' }] });
+    assert.match(prompt, /Panel 3 FRAME CONTENT OVERRIDE/);
+    assert.match(prompt, /recompose inside the unchanged panel rectangle/);
+    assert.match(prompt, /Do not preserve the reported defective crop/);
+    assert.match(prompt, /Preserve explicit intentional crops and breakouts/);
+    assert.doesNotMatch(prompt, /Panel 1 FRAME CONTENT OVERRIDE/);
+    assert(prompt.endsWith('APPROVED: panel 1 hands-only close-up; panel 3 includes complete heads.'));
+  }
+});
+
+test('a reported page boundary defect must allow the requested gutter movement and adjacent-panel reflow', () => {
+  for (const compact of [false, true]) {
+    const prompt = buildImageQualityRepairPrompt({originalPrompt: 'APPROVED P1 bottom=38% of comic area; six panels and seven complete speeches.',
+      sourceMode: 'source-image', panelCount: 6, compact,
+      issues: [{type: 'panel_layout', panel: 1, subject: '上段の横長コマ',
+        reason: '上段コマの下辺が全ページのおよそ34%で、指定枠より短く、次段が早く始まる。',
+        correction: '上段の下枠を指定位置まで下げ、次段の二コマをその下から始める。六コマの内容は保持する。'}]});
+    assert.match(prompt, /Panel 1 PAGE BOUNDARY OVERRIDE/);
+    assert.match(prompt, /adjacent panels/);
+    assert.doesNotMatch(prompt, /unchanged panel rectangle|original page geometry|ページ溝は動かさない/);
+    assert.match(prompt, /comic-area coordinates/);
+    assert(prompt.endsWith('APPROVED P1 bottom=38% of comic area; six panels and seven complete speeches.'));
+  }
+});
+
+test('moving a clipped head inside a frame is not permission to move that frame', () => {
+  const prompt = buildImageQualityRepairPrompt({originalPrompt: 'APPROVED', sourceMode: 'source-image', compact: true,
+    issues: [{type: 'panel_layout', panel: 2, reason: '上枠で頭が切れている。', correction: '上枠を越えた頭を下げ、コマ内で頭の高さを調整する。'}]});
+  assert.match(prompt, /Panel 2 FRAME CONTENT OVERRIDE/);
+  assert.doesNotMatch(prompt, /PAGE BOUNDARY OVERRIDE/);
 });
 
 test('source-image single illustration repair does not invent a comic layout', () => {
@@ -1120,7 +1181,8 @@ test('spatial defects use the three-repair limit and retain the original when st
       reviewCandidate: async () => review,
       generateRepairCandidate: async prompt => {
         repairs++;
-        assert.ok(prompt.startsWith('APPROVED SURREAL EVENT'));
+        assert.ok(prompt.startsWith('IMAGE QUALITY CORRECTION ATTEMPT'));
+        assert.ok(prompt.includes('APPROVED SURREAL EVENT'));
         assert.ok(prompt.includes(type));
         assert.match(prompt, /Keep source-supported surreal events/);
         return candidate('repair');

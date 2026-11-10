@@ -1353,7 +1353,13 @@ const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = 
 // in this shot. Apply this only when both the explicit headcount and Camera
 // independently identify the current cast. Keep ambiguous continuing actions.
 const currentCastMentionText = (source, castList) => {
-  const text = String(source || '');
+  const lookup = buildCastLookup(castList);
+  const aliases = Object.keys(lookup).sort((a, b) => b.length - a.length);
+  // Receiving an earlier statement is not visual evidence that its author is
+  // in this shot. Mask only this reference occurrence; independent present
+  // action, Camera mentions and actual dialogue still establish that actor.
+  const causal = aliases.length ? new RegExp(`(${aliases.map(escapeRegex).join('|')})(?=の(?:言葉|発言|提案|説明|指示|呼びかけ)を受け(?:て|[、,\\s]|$))`, 'gu') : null;
+  const text = causal ? String(source || '').replace(causal, name => ' '.repeat(name.length)) : String(source || '');
   const evidence = text.replace(BALLOON_LAYOUT_LINE_RE, match => ' '.repeat(match.length))
     .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, match => ' '.repeat(match.length));
   const counts = [...evidence.matchAll(/(?:画面|画角|フレーム)内(?:は|には)[^。！？\n]*?([0-9０-９一二三四五六七八九十]+)人(?:だけ|のみ)?(?=[。！？\n]|$)/gu)]
@@ -1362,8 +1368,6 @@ const currentCastMentionText = (source, castList) => {
       return /^\d+$/.test(value) ? Number(value) : '一二三四五六七八九十'.indexOf(value) + 1;
     });
   if (!counts.length || counts[0] < 1 || new Set(counts).size !== 1) return text;
-  const lookup = buildCastLookup(castList);
-  const aliases = Object.keys(lookup).sort((a, b) => b.length - a.length);
   if (!aliases.length) return text;
   const camera = (evidence.match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
   const offscreen = readOffscreenCast(evidence, castList);

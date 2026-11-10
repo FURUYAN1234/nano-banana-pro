@@ -382,7 +382,7 @@ test('free edit preparation and composition use the same crop boundary and retai
   assert.deepEqual(env.registry.get(source), pixels);
 }));
 
-test('local source, returned PNG and PNG round-trip may exceed upload size while API inputs still reject it', async () => withCanvas(async env => {
+test('local source and returned PNG above the JSON limit retain pixels and remain eligible for multipart edits', async () => withCanvas(async env => {
   const pixels = image(2240, 3168, () => [90, 100, 110, 255]);
   const scanlines = Buffer.alloc((pixels.width * 4 + 1) * pixels.height);
   for (let y = 0; y < pixels.height; y++) scanlines.set(pixels.data.subarray(y * pixels.width * 4, (y + 1) * pixels.width * 4), y * (pixels.width * 4 + 1) + 1);
@@ -408,7 +408,7 @@ test('local source, returned PNG and PNG round-trip may exceed upload size while
   assert.equal(result.dataUrl, largeUrl, 'the oversized local PNG round-trip is retained');
   assert.equal(env.registry.get(result.after).data.length, region.width * region.height * 4);
   assert.throws(() => normalizeOpenAIImageDataUrl(largeUrl), /API.*上限/);
-  assert.throws(() => buildPanelStyleEditRequest(largeUrl, plan, { mode: 'free', instruction: '小物だけ修正する。' }), /API.*上限/);
+  assert.equal(buildPanelStyleEditRequest(largeUrl, plan, { mode: 'free', instruction: '小物だけ修正する。' }).imageInputs[0].image_url, largeUrl);
 }));
 
 test('local decoding still rejects unsafe MIME, malformed base64, failed decode and invalid dimensions', async () => withCanvas(async env => {

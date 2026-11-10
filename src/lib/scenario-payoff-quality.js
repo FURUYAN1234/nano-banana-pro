@@ -182,7 +182,7 @@ ${toneRule}
 ${policy.guidance ? `選択した結末の判定基準: ${policy.guidance}` : ''}
 ${policy.actionDirection ? `${policy.actionDirection}\n- action_continuity: 結末より前の別々のコマに、結末と因果でつながる動きの開始と、動きによる状態変化が描かれているか。コマ番号と台本にある動作・変化・結果を evidence に挙げる。最後のポーズだけ、会話中の身振りだけ、準備を口にするだけ、無関係な動作の羅列、同じ動作の別アングルだけであれば material_failure=true。元の題材と結末を保って途中の演技を直す案を correction に書く。明示された静止や固定のコマ割りが演技追加を禁じる場合は、ユーザー原文の該当指定を evidence に引用して false。動作の派手さや好みだけで不合格にしない。` : ''}
 ${policy.actionDirection ? '- action_staging: 連続性とは別に、見せ場で人物が力を出す・受ける身体演技が具体化されているか。コマ番号と重心・身体軸・手足・接点・反動のうち実際に書かれた根拠をevidenceへ引用する。普通の立ち歩き、物の位置替え、手先の身振りだけで見せ場が終わり、元の動作で描ける全身の動勢が欠ける場合はmaterial_failure=true。単なる派手さの好みや軽微な差は失格にせず、全コマの大動作や跳躍・格闘は要求しない。明示された静止・固定姿勢・カメラ・身体条件は優先し、制約の原文を根拠にfalse。具体化された緊張・踏ん張り・反動も有効。correctionは同じ出来事・台詞・結末を保ち、必要な状況とCameraの演技だけを強める案。事故・暴力・新しい事件を創作して解消しない。' : ''}
-${policy.actionDirection ? '- action_stagingの判定基準: 手順紹介として整っていることや「ひねる・重心」という語の有無で合格にしない。上記【選択を満たす動きの強さ】を適用し、普通の姿勢に戻しても動きの意味が変わらない日常動作しかないならmaterial_failure=true。これは好みの評価ではなく、選択されたアクションの不足。falseにする場合は、どの身体部位がどの方向へ大きく振れ、何へ力を出す／受ける動作の頂点か、台本の具体文を引用する。話題・場所が穏やかという理由だけで免除しない。' : ''}
+${policy.actionDirection ? '- action_stagingの判定基準: 手順紹介として整っていることや「ひねる・重心」という語の有無で合格にしない。上記【選択を満たす動きの強さ】【動作を選ぶ段階の確認】を適用し、普通の姿勢に戻しても動きの意味が変わらない日常動作しかないならmaterial_failure=true。準備で深くしゃがむだけ、決定的な操作は手先で小さく動かすだけ、カメラの近さで大きく見えるだけという組合せも不足。動作の頂点そのものに大きな身体の振れ幅・伸縮・反動が必要で、その力が対象へ届くかを確認する。これは好みの評価ではなく、選択されたアクションの不足。falseにする場合は、どの身体部位がどの方向へ大きく振れ、何へ力を出す／受ける動作の頂点か、台本の具体文を引用する。話題・場所が穏やかという理由だけで免除しない。ユーザーが明示した精密動作や静止は維持し、変更禁止なら原文を引用する。' : ''}
 ${factRule}
 ${buildRecentStoryContext(recentScenarios)}
 ${recentScenarios.length ? '追加JSONフィールド recent_repetition: {"status":"distinct|same_mechanism|intentional_repeat|uncertain","matched_index":null,"evidence":"過去と今回の具体的な種・行為・帰結の比較","correction":""}。matched_indexはRECENT配列の0始まり。型・題材・絵柄が同じだけならdistinct。名詞だけ変えた同じ仕掛けと帰結の再利用が明確で、新作の展開を失わせる場合だけsame_mechanismとして該当indexと指定結末を保つcorrectionを記す。明示された再現・続編・意図した反復はintentional_repeat。推測はuncertain。' : ''}
@@ -287,6 +287,34 @@ export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', p
   if (!parsed || REVIEW_FIELDS.some((field) => !Object.hasOwn(parsed, field))) {
     fail(`required fields are missing: ${REVIEW_FIELDS.filter(field=>!parsed || !Object.hasOwn(parsed,field)).join(', ')}`);
   }
+  // A passing, evidenced check has no corrective operation. Some providers
+  // omit that empty string. Preserve every other verdict (including failures)
+  // instead of discarding the whole review over a non-applicable blank field.
+  // Missing verdict/evidence or a failing check without a repair stays invalid.
+  const hasEvidence = item => typeof item?.evidence === 'string' && item.evidence.trim();
+  const fillUnusedCorrection = (item, passing) => {
+    if (passing && !Object.hasOwn(item, 'correction')) item.correction = '';
+  };
+  for (const field of ['payoff_clarity', 'action_continuity', 'action_staging', 'action_payoff']) {
+    const item = parsed[field];
+    fillUnusedCorrection(item, item?.material_failure === false && hasEvidence(item));
+  }
+  for (const [field, verdict] of [['visual_feasibility', 'feasible'], ['ensemble_continuity', 'material_break'], ['panel_development', 'material_padding']]) {
+    if (!Array.isArray(parsed[field])) continue;
+    for (const item of parsed[field]) {
+      fillUnusedCorrection(item, item?.[verdict] === (verdict === 'feasible') && hasEvidence(item));
+    }
+  }
+  if (Array.isArray(parsed.cast_identity)) for (const item of parsed.cast_identity) {
+    const evidenced = typeof item?.reference_evidence === 'string' && item.reference_evidence.trim()
+      && typeof item.scenario_evidence === 'string' && item.scenario_evidence.trim();
+    if (item?.status === 'consistent' && evidenced) {
+      fillUnusedCorrection(item, true);
+      if (!Object.hasOwn(item, 'change_basis')) item.change_basis = '';
+    }
+  }
+  const camera = parsed.camera_rhythm;
+  fillUnusedCorrection(camera, camera?.material_repeat === false && hasEvidence(camera));
   const invalid = {
     pass:typeof parsed.pass !== 'boolean',
     setup_seed:typeof parsed.setup_seed !== 'string',
@@ -474,6 +502,11 @@ export const runScenarioPayoffGate = async ({
   onProgress = () => {},
 } = {}) => {
   const original = String(scenario || '').trim();
+  const finish = async result => {
+    await recordDiagnostic('workflow.review', {outcome:result.status, ok:!result.warning && !result.renderabilityWarning,
+      scenarioLength:result.scenario.length});
+    return result;
+  };
   let firstReview;
   let firstEvaluation;
 
@@ -492,25 +525,25 @@ export const runScenarioPayoffGate = async ({
     })), { scenarioMode, panelCount, punchlineType });
     firstEvaluation = evaluateScenarioPayoffReview(firstReview, { punchlineType, recentScenarios, scenarioMode, panelCount });
   } catch (error) {
-    await recordDiagnostic('workflow.error',{...summarizeDiagnosticError(error),failureContext:{
+    await recordDiagnostic('workflow.warning',{...summarizeDiagnosticError(error),failureContext:{
       scenario:original,castList,userTopic,punchlineType,scenarioMode,...error.diagnosticContext,
     }});
     onProgress(`構成・画像化の検査結果: 判定できませんでした。理由: ${error.message}。元シナリオを保持します。`);
-    return retained(original, `構成・画像化監査を完了できなかったため、元シナリオを保持しました（${error.message}）。`, null, true);
+    return finish(retained(original, `構成・画像化監査を完了できなかったため、元シナリオを保持しました（${error.message}）。`, null, true));
   }
 
   if (firstEvaluation.ok) {
     onProgress(`${payoffPanelCount(original, scenarioMode)}コマの構成と画像化可能な配置が成立しています。`);
-    return { scenario: original, status: 'passed', review: firstReview, warning: null };
+    return finish({ scenario: original, status: 'passed', review: firstReview, warning: null });
   }
   const firstMaterialReasons = materialPayoffReasons(firstEvaluation.reasonCodes);
-  await recordDiagnostic('workflow.error',{errorCode:'SCENARIO_PAYOFF_QUALITY',failureContext:{
+  await recordDiagnostic('workflow.warning',{errorCode:'SCENARIO_PAYOFF_QUALITY',failureContext:{
     stage:'scenario_payoff_review',scenario:original,castList,userTopic,punchlineType,scenarioMode,
     validationResponse:JSON.stringify(firstReview),validationError:firstEvaluation.reasonCodes.join(', '),
   }});
   if (!firstMaterialReasons.length) {
     onProgress(`構成・画像化の検査結果: ${formatPayoffReviewReasons(firstEvaluation, firstReview)}。重大欠陥ではないため再生成せず保持します。`);
-    return retained(original, `構成上の軽微または未確認の指摘（${firstEvaluation.reasonCodes.join(', ')}）は再生成せず、元シナリオを保持しました。`, firstReview);
+    return finish(retained(original, `構成上の軽微または未確認の指摘（${firstEvaluation.reasonCodes.join(', ')}）は再生成せず、元シナリオを保持しました。`, firstReview));
   }
   onProgress(`構成・画像化の再検査理由: ${formatPayoffReviewReasons(firstEvaluation, firstReview)}。重大な指摘だけを修正します。`);
   const maxRepairs = isStagingOnlyRepair(firstEvaluation.reasonCodes) ? 1 : 3;
@@ -575,18 +608,18 @@ export const runScenarioPayoffGate = async ({
       current = { scenario: repaired, review, evaluation };
       if (evaluation.ok) {
         onProgress('改善案の構成と画像化可能な配置を確認しました。');
-        return { scenario: repaired, status: 'repaired', review, warning: null };
+        return finish({ scenario: repaired, status: 'repaired', review, warning: null });
       }
       if (!materialPayoffReasons(evaluation.reasonCodes).length) {
         onProgress('重大な構成・画像化の問題は解消しました。軽微な指摘は再生成せず保持します。');
-        return { scenario: repaired, status: 'repaired', review, warning: `軽微な構成指摘: ${evaluation.reasonCodes.join(', ')}` };
+        return finish({ scenario: repaired, status: 'repaired', review, warning: `軽微な構成指摘: ${evaluation.reasonCodes.join(', ')}` });
       }
       const materialCount = materialPayoffReasons(evaluation.reasonCodes).length;
       const bestMaterialCount = materialPayoffReasons(best.evaluation.reasonCodes).length;
       if (materialCount < bestMaterialCount
         || (materialCount === bestMaterialCount && evaluation.reasonCodes.length < best.evaluation.reasonCodes.length)) best = current;
     } catch (error) {
-      await recordDiagnostic('workflow.error',{...summarizeDiagnosticError(error),failureContext:{
+      await recordDiagnostic('workflow.warning',{...summarizeDiagnosticError(error),failureContext:{
         scenario:repaired || current.scenario,castList,userTopic,punchlineType,scenarioMode,...error.diagnosticContext,
       }});
       lastError = error.message;
@@ -597,11 +630,11 @@ export const runScenarioPayoffGate = async ({
   const renderabilityWarning = best.evaluation.reasonCodes.some(code => code.startsWith('unrenderable_panel_'));
   const warning = `修正試行${repairAttempts}回・再監査${rechecks}回で、最良の監査済み候補を警告付きで採用します（${best.evaluation.reasonCodes.join(', ')}${lastError ? `; ${lastError}` : ''}）。`;
   onProgress(warning);
-  return {
+  return finish({
     scenario: best.scenario,
     status: best.scenario === original ? 'retained' : 'best_effort',
     review: best.review,
     warning,
     renderabilityWarning,
-  };
+  });
 };

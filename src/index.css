@@ -649,6 +649,12 @@ body {
 .diagnostic-actions { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
 .diagnostic-json { box-sizing:border-box; margin:0; padding:12px; border:1px solid #94a3b8; background:#fff; color:#111; font:12px/1.5 monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
 .diagnostic-footer { margin-top:20px; padding-top:16px; border-top:1px solid #334155; }
+.diagnostic-loading { position:fixed; z-index:120; right:20px; bottom:24px; box-sizing:border-box; display:flex; align-items:center; gap:14px; max-width:min(420px,calc(100vw - 32px)); padding:16px 20px; border:1px solid #475569; border-radius:14px; background:linear-gradient(135deg,#172334,#0f1723); color:#e2e8f0; box-shadow:0 12px 36px #0006; pointer-events:none; }
+.diagnostic-loading strong { display:block; font-size:14px; font-weight:600; line-height:1.5; }
+.diagnostic-loading p { margin:4px 0 0; font-size:12px; line-height:1.5; color:#cbd5e1; }
+.diagnostic-loading-spinner { flex:none; width:22px; height:22px; border:2px solid #334155; border-top-color:#93c5fd; border-right-color:#93c5fd; border-radius:50%; animation:diagnostic-spin .8s linear infinite; }
+@keyframes diagnostic-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .diagnostic-loading-spinner { animation:none; } }
 @media (max-width:420px) { .workflow-progress-tools { gap:12px; width:100%; } .diagnostic-header, .diagnostic-content { padding:10px; } }
 .model-selection-panel { padding:16px; border:1px solid #334155; border-radius:12px; background:#0f1115; }
 .model-selection-panel h2 { margin:0 0 12px; color:#e0f2fe; font-size:14px; font-weight:700; }

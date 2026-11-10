@@ -7,6 +7,40 @@ import {
   observeDiagnosticRun,
 } from '../src/lib/diagnostics.js';
 
+test('lettering application and skip reasons survive diagnostic export without text or credentials',()=>{
+  const event=makeDiagnosticEvent('image.lettering',{applied:false,reason:'unresolved_frames',version:1,
+    balloonCount:0,skippedPanels:[4],outsideBalloonInteriorsUnchanged:true,text:'private dialogue',apiKey:'sk-secret'});
+  assert.equal(event.reason,'unresolved_frames');assert.equal(event.applied,false);
+  assert.equal(event.letteringVersion,1);assert.deepEqual(event.skippedPanels,[4]);
+  assert.doesNotMatch(JSON.stringify(event),/private dialogue|sk-secret/);
+});
+
+test('image repair outcomes retain failure inputs and review evidence without claiming edited pixels passed',async()=>{
+  const d=await import('../src/lib/diagnostics.js');
+  const events=[];const unsubscribe=d.subscribeDiagnosticErrors(e=>events.push(e));
+  for(const mode of ['repair_failed','single_repair_completed','passed','skipped']){
+    const run=d.beginDiagnosticRun('step4',{failureContext:{scenario:'失敗した同じ台本',castList:'人物設定',finalPrompt:'完全な描画指示'}});
+    const error=Object.assign(new Error('修正指示の上限超過'),{code:'IMAGE_PROMPT_BUDGET',promptLength:33000,promptMaxChars:30460});
+    const result={stopReason:mode,repairError:mode==='repair_failed'?error:null,candidate:{base64Img:'PRIVATE_PIXELS'},
+      originalReview:{pass:mode==='passed',skipped:mode==='skipped',issues:[{panel:6,type:'bubble_text',reason:'欠けた台詞',correction:'台詞全文を戻す'}]},
+      finalReview:{pass:mode==='passed',notRechecked:mode==='single_repair_completed'}};
+    await d.recordImageQualityReview(result,{observations:[{panel:6,dialogue:['検査で読んだ文']}],finalPrompt:'完全な描画指示'});
+    const row=(await d.readDiagnostics()).events.find(e=>e.runId===run.runId&&e.event==='image.review');
+    assert.equal(row.ok,mode==='passed');
+    if(mode==='repair_failed'){
+      assert.equal(row.errorCode,'IMAGE_PROMPT_BUDGET');assert.equal(row.promptLength,33000);assert.equal(row.promptMaxChars,30460);
+      assert.equal(row.failureContext.scenario,'失敗した同じ台本');assert.equal(row.failureContext.finalPrompt,'完全な描画指示');
+      assert.match(row.failureContext.validationResponse,/欠けた台詞/);assert.match(row.failureContext.validationResponse,/検査で読んだ文/);
+      assert.equal(row.failureContext.validationError,'修正指示の上限超過');
+    }
+    if(mode==='single_repair_completed')assert.equal(row.outcome,'repaired_unverified');
+    if(['passed','skipped'].includes(mode))assert.equal(row.failureContext,undefined);
+    assert.doesNotMatch(JSON.stringify(row),/PRIVATE_PIXELS/);
+    d.endDiagnosticRun(run,'settled');
+  }
+  unsubscribe();assert.equal(events.length,0,'image review findings do not open a terminal-error popup');
+});
+
 test('diagnostics discard unapproved fields and credentials rather than persisting payloads', () => {
   const event = makeDiagnosticEvent('api.request', {
     provider: 'openai', requestedModel: 'gpt-6-luna', step: 1, imageCount: 2,
@@ -123,7 +157,10 @@ test('only new failures notify the viewer, with persisted sanitized data and iso
   await d.recordDiagnostic('api.error', {errorName:'AbortError'});
   await d.recordDiagnostic('workflow.error', {errorCode:'CANCELLED'});
   await d.recordDiagnostic('workflow.error', summarizeDiagnosticError('処理を中断しました。必要なら現在の入力で再実行してください。'));
+  await d.recordDiagnostic('workflow.warning', {errorCode:'SCENARIO_PAYOFF_QUALITY',failureContext:{scenario:'修復前の台本',validationError:'flat_action_staging'}});
   assert.equal(received.length, 0, 'normal results and cancellation must not open the panel');
+  const warning=(await d.readDiagnostics()).events.find(e=>e.event==='workflow.warning');
+  assert.equal(warning?.failureContext.scenario,'修復前の台本','nonterminal findings must still preserve their evidence');
   await d.recordDiagnostic('api.error', {errorName:'TypeError', errorKind:'network', message:'private story sk-secret'});
   await d.recordDiagnostic('api.response', {ok:false, status:500});
   await d.recordDiagnostic('workflow.error', {errorName:'Error'});

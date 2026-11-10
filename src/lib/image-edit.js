@@ -1,4 +1,4 @@
-import { normalizeOpenAIImageDataUrl } from './openai-image-references.js';
+import { normalizeOpenAIImageUpload } from './openai-image-references.js';
 import { assertImagePromptBudget, OPENAI_IMAGE_PROMPT_MAX_CHARS } from './image-prompt-budget.js';
 import { LOCAL_ANATOMY_REPAIR } from './shared-image-quality.js';
 import { MONOCHROME_EDIT_MEDIUM } from './manga-render-mode.js';
@@ -22,7 +22,7 @@ export function getImageEditInstructionMaxChars(colorMode = 'color') {
 // 元の長い生成指示を再投入せず、表示中の画像と今回の変更を正本にする。
 export function buildImageEditRequest(sourceImage, instruction, { colorMode = 'color' } = {}) {
   getImageEditInstructionMaxChars(colorMode);
-  const source = normalizeOpenAIImageDataUrl(sourceImage, '修正元画像');
+  const source = normalizeOpenAIImageUpload(sourceImage, '修正元画像');
   const change = String(instruction || '').trim();
   if (!change) throw new Error('修正したい内容を入力してください。');
   const prompt = assertImagePromptBudget(EDIT_PROMPT_PREFIX + change

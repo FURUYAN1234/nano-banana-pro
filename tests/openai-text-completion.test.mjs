@@ -41,6 +41,18 @@ test('independent STEP1 and STEP3 selections reach the matching OpenAI requests'
   assert.doesNotMatch(JSON.stringify(bodies[1].messages), /image_url/);
 });
 
+test('Luna image QA reasons at high effort while ordinary routes keep their defaults', async () => {
+  const bodies = [], logs = [];
+  globalThis.fetch = async (_url, init) => { bodies.push(JSON.parse(init.body)); return Response.json(payload(false,{text:'complete'})); };
+  await client.callOpenAIText('review',['data:image/png;base64,fixture'],null,line=>logs.push(line),
+    {visionModelId:'gpt-6-luna',outputProfile:'image-quality-review'});
+  await client.callOpenAIText('analysis',['data:image/png;base64,fixture'],null,null,{visionModelId:'gpt-6-luna'});
+  assert.equal(bodies[0].model,'gpt-6-luna');
+  assert.equal(bodies[0].reasoning_effort,'high');
+  assert.equal(bodies[1].reasoning_effort,undefined);
+  assert.ok(logs.some(line=>line.includes('reasoning_effort=high')));
+});
+
 test('primary image QA uses model-specific headroom and reports the actual request limit', async () => {
   for (const target of ['gpt-6.1-sol', 'gpt-6-sol', 'gpt-5.6-luna']) {
     const bodies = [], logs = [];

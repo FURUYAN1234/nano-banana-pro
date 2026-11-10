@@ -1,0 +1,302 @@
+{
+  "panel": 4,
+  "head_inventory": [
+    {
+      "body_id": "body_1",
+      "bounds": [
+        0.36,
+        0.03,
+        0.34,
+        0.39
+      ]
+    },
+    {
+      "body_id": "body_2",
+      "bounds": [
+        0,
+        0.05,
+        0.27,
+        0.41
+      ]
+    },
+    {
+      "body_id": "body_3",
+      "bounds": [
+        0.16,
+        0.32,
+        0.18,
+        0.29
+      ]
+    }
+  ],
+  "physical_bodies": [
+    {
+      "id": "body_1",
+      "bounds": [
+        0.24,
+        0.03,
+        0.75,
+        0.95
+      ],
+      "head_bounds": [
+        0.36,
+        0.03,
+        0.34,
+        0.39
+      ],
+      "features": [
+        "短い黒髪",
+        "丸眼鏡"
+      ],
+      "gaze": {
+        "eye_visibility": "作業台の上に段",
+        "direction": "作業台の上に段ボ",
+        "eye_position": [
+          0.5,
+          0.2
+        ],
+        "eye_evidence": "作業台の上に段ボールを置",
+        "face_direction": "作業台の上に段ボール",
+        "visibility_basis": "作業台の上に段ボールを置",
+        "target": {
+          "description": "作業台の上に段ボール",
+          "position": [
+            0.39,
+            0.62
+          ]
+        },
+        "pupil_placement": "作業台の上に段ボールを置"
+      }
+    },
+    {
+      "id": "body_2",
+      "bounds": [
+        0,
+        0.05,
+        0.38,
+        0.73
+      ],
+      "head_bounds": [
+        0,
+        0.05,
+        0.27,
+        0.41
+      ],
+      "features": [
+        "長い三つ編み",
+        "縞模様の上着"
+      ],
+      "gaze": {
+        "eye_visibility": "作業台の上に段",
+        "direction": "作業台の上に段ボ",
+        "eye_position": [
+          0.14,
+          0.21
+        ],
+        "eye_evidence": "作業台の上に段ボールを置",
+        "face_direction": "作業台の",
+        "visibility_basis": "作業台の上に段ボールを置",
+        "target": {
+          "description": "作業台の上に段ボー",
+          "position": [
+            0.39,
+            0.57
+          ]
+        },
+        "pupil_placement": "作業台の上に段ボールを置"
+      }
+    },
+    {
+      "id": "body_3",
+      "bounds": [
+        0.12,
+        0.31,
+        0.27,
+        0.57
+      ],
+      "head_bounds": [
+        0.16,
+        0.32,
+        0.18,
+        0.29
+      ],
+      "features": [
+        "短い巻き毛",
+        "四角い眼鏡"
+      ],
+      "gaze": {
+        "eye_visibility": "作業台の上に段",
+        "direction": "作業台の上に段ボ",
+        "eye_position": [
+          0.23,
+          0.43
+        ],
+        "eye_evidence": "作業台の上に段ボールを置き、折",
+        "face_direction": "作業台の上に段ボ",
+        "visibility_basis": "作業台の上に段ボールを置",
+        "target": {
+          "description": "作業台の上に段ボール",
+          "position": [
+            0.3,
+            0.68
+          ]
+        },
+        "pupil_placement": "作業台の上に段ボールを置き、折"
+      }
+    }
+  ],
+  "text_regions": [
+    {
+      "region_kind": "作業台の上に段ボールを置き、",
+      "text": "作業台の上に段ボールを置き、折り",
+      "container_evidence": "作業台の上に段ボールを置き、折り目をつ",
+      "center_x": 0.87,
+      "reading_units": [
+        "作業台",
+        "作業台の",
+        "作業台",
+        "作業台の上に"
+      ],
+      "tail_targets": [
+        {
+          "root": [
+            0.74,
+            0.34
+          ],
+          "tip": [
+            0.68,
+            0.4
+          ],
+          "region": "作業台の",
+          "evidence": "作業台の上に段ボールを置き、折り目を"
+        }
+      ]
+    },
+    {
+      "region_kind": "作業台の上に段ボールを置",
+      "text": "作業台",
+      "container_evidence": "作業台の上に段ボールを置き、折り目をつけ",
+      "center_x": null,
+      "reading_units": null,
+      "tail_targets": null
+    }
+  ],
+  "story": "作業台の上に段ボールを置き、折り目をつけて箱を組み立てる。作業台の上に段ボールを置き、折り目",
+  "anatomy": "三人の胴体と見える腕脚はそれぞれ連続し、壁への接触も読める。",
+  "breakout": null,
+  "view": {
+    "elevation": "作業台",
+    "gaze": "作業台の上に段ボー",
+    "evidence": "作業台の上に段ボールを置き、折り目をつけて箱を組み立てる。作",
+    "assessment_gaze": "作業台の上に段ボ"
+  },
+  "style_observation": {
+    "medium": "作業台の上に段",
+    "status": "pass",
+    "evidence": "作業台の上に段ボールを置き、折り目をつけて箱を組み立てる。作業台の上に段ボ",
+    "actors": [
+      {
+        "body_id": "body_1",
+        "medium": "作業台の上に段",
+        "status": "pass",
+        "face_visibility": "作業台の上に段",
+        "face": "作業台の上に段ボールを置き、折り目をつけて",
+        "shading": "作業台の上に段ボールを置き、折り目を"
+      },
+      {
+        "body_id": "body_2",
+        "medium": "作業台の上に段",
+        "status": "pass",
+        "face_visibility": "作業台の上に段",
+        "face": "作業台の上に段ボールを置き、折り目を",
+        "shading": "作業台の上に段ボールを置き、折り目をつけ"
+      },
+      {
+        "body_id": "body_3",
+        "medium": "作業台の上に段",
+        "status": "pass",
+        "face_visibility": "作業台の上に段",
+        "face": "作業台の上に段ボールを置き、折り目をつ",
+        "shading": "作業台の上に段ボールを置き、折り目をつ"
+      }
+    ]
+  },
+  "cast_instances": [
+    {
+      "name": "人物Ａ",
+      "status": "ok",
+      "evidence": "作業台の上に段ボールを置き、折",
+      "instances": [
+        {
+          "body_id": "body_1",
+          "location": "作業台の上に段ボールを置",
+          "feature_indices": [
+            0,
+            2
+          ],
+          "matched_features": [
+            "短い黒髪",
+            "丸眼鏡"
+          ]
+        }
+      ],
+      "observed_count": 1
+    },
+    {
+      "name": "人物Ｃ",
+      "status": "ok",
+      "evidence": "作業台の上に段ボールを置き、折り目をつ",
+      "instances": [
+        {
+          "body_id": "body_2",
+          "location": "作業台の上に段ボールを",
+          "feature_indices": [
+            0,
+            2
+          ],
+          "matched_features": [
+            "長い三つ編み",
+            "縞模様の上着"
+          ]
+        }
+      ],
+      "observed_count": 1
+    },
+    {
+      "name": "人物Ｄ",
+      "status": "defect",
+      "evidence": "作業台の上に段ボールを置き、折り目をつけて箱",
+      "instances": [
+        {
+          "body_id": "body_3",
+          "location": "作業台の上に段ボールを置",
+          "feature_indices": [
+            0,
+            1
+          ],
+          "matched_features": [
+            "短い巻き毛",
+            "四角い眼鏡"
+          ]
+        }
+      ],
+      "observed_count": 1
+    }
+  ],
+  "body_dispositions": [],
+  "camera": "作業台の上に段ボールを置き、折り目をつけて箱を組み立てる。作",
+  "style": "鮮烈な黄地の赤い規則的ドットと太い黒輪郭で、接触場面が強く印刷調に見える。",
+  "center": [
+    0.7453125,
+    0.6652462121212122
+  ],
+  "bounds": [
+    0.503125,
+    0.5583964646464646,
+    0.484375,
+    0.21369949494949494
+  ],
+  "dialogue": [
+    "作業台の上に段ボールを置き、折り"
+  ]
+}

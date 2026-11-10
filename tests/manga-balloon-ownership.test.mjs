@@ -26,3 +26,42 @@ test('silent panels, rear head tails and explicitly shared balloons preserve the
   assert.deepEqual(inspectBalloonOwnership(input),[]);
   input.regions[0].tail_targets.pop();assert.equal(inspectBalloonOwnership(input)[0].type,'bubble_speaker');
 });
+
+test('anonymous tail geometry binds the visible head instead of a contradictory model name',()=>{
+  const input=fixture();
+  input.bodies[0].head_bounds=[.6,.12,.2,.2];
+  input.bodies[1].head_bounds=[.1,.12,.2,.2];
+  input.regions[0].tail_targets=[{root:[.72,.02],tip:[.7,.15],region:'head',evidence:'上の吹き出しから短い尾が右の頭の輪郭に接続する。',body_id:'b'}];
+  input.regions[1].tail_targets=[{root:[.2,.02],tip:[.2,.15],region:'head',evidence:'上の吹き出しから短い尾が左の頭の輪郭に接続する。'}];
+  assert.deepEqual(inspectBalloonOwnership(input),[],'pixels, not the contradictory semantic label, identify the head');
+  [input.regions[0].tail_targets,input.regions[1].tail_targets]=[input.regions[1].tail_targets,input.regions[0].tail_targets];
+  const failures=inspectBalloonOwnership(input);
+  assert.deepEqual(failures.map(issue=>issue.type),['bubble_speaker','bubble_speaker']);
+  assert.match(failures[0].correction,/甲/);
+  assert.match(failures[0].correction,/erase.*tail/i);
+  assert.match(failures[0].correction,/"headRectangle":\[0\.6,0\.12,0\.2,0\.2\]/);
+});
+
+test('geometry keeps natural tail gaps valid and rejects incomplete or competing head evidence',()=>{
+  const base=()=>{
+    const input=fixture();input.expected.pop();input.regions.pop();
+    input.bodies[0].head_bounds=[.6,.35,.2,.2];input.bodies[1].head_bounds=[.1,.35,.2,.2];
+    input.regions[0].tail_targets=[{root:[.7,.05],tip:[.7,.25],region:'head',evidence:'下向きの尾の延長上には右の頭だけが見える。'}];
+    return input;
+  };
+  assert.deepEqual(inspectBalloonOwnership(base()),[]);
+  for(const damage of [x=>x.regions[0].tail_targets[0].root=null,
+    x=>x.bodies[1].head_bounds=null,
+    x=>x.bodies[1].head_bounds=[.61,.36,.18,.18],
+    x=>x.regions[0].tail_targets[0].tip=[.7,.04]]) {
+    const input=base();damage(input);assert.equal(inspectBalloonOwnership(input)[0].type,'unverified');
+  }
+});
+
+test('a tail passing through a competing head cannot silently pass ownership',()=>{
+  const input=fixture();input.expected.pop();input.regions.pop();
+  input.bodies[0].head_bounds=[.6,.65,.2,.15];
+  input.bodies[1].bounds=[.55,.1,.4,.8];input.bodies[1].head_bounds=[.6,.25,.2,.15];
+  input.regions[0].tail_targets=[{root:[.7,.05],tip:[.7,.7],region:'head',evidence:'長い尾の途中に別の頭が重なり、先端は下の頭へ続く。'}];
+  assert.equal(inspectBalloonOwnership(input)[0].type,'unverified');
+});

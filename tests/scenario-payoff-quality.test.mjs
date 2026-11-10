@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import * as payoffQuality from '../src/lib/scenario-payoff-quality.js';
-import {readDiagnostics} from '../src/lib/diagnostics.js';
+import {readDiagnostics, subscribeDiagnosticErrors} from '../src/lib/diagnostics.js';
 
 import {
   buildScenarioPayoffRepairPrompt,
@@ -70,7 +70,9 @@ const nativeReview = count => ({ ...structuredClone(STRONG_GAG_REVIEW),
   panel_development: Array.from({ length: count }, (_, i) => ({ panel: i + 1, material_padding: false, evidence: '作業の変化または反応までの必要な間を示している。', correction: '' })),
 });
 
-test('incomplete review preserves its response and names the invalid evidence for the diagnostic export', async () => {
+test('incomplete review preserves its response without notifying a terminal failure', async t => {
+  const errors=[];
+  t.after(subscribeDiagnosticErrors(row=>errors.push(row)));
   const broken={...STRONG_GAG_REVIEW,action_continuity:{material_failure:false,evidence:'開始から結果まで接続',correction:''},action_staging:undefined};
   const raw=JSON.stringify(broken);
   assert.throws(()=>parseScenarioPayoffReview(raw,{punchlineType:'SeriousAction'}),error=>{
@@ -88,6 +90,30 @@ test('incomplete review preserves its response and names the invalid evidence fo
   const row=(await diagnostics.readDiagnostics()).events.find(row=>row.runId===runId&&row.errorCode==='SCENARIO_PAYOFF_REVIEW_INVALID');
   assert.equal(row.failureContext.scenario,original);
   assert.equal(row.failureContext.validationResponse,raw);
+  assert.equal(row.event,'workflow.warning');
+  assert.equal(errors.length,0);
+});
+
+test('omitted empty correction on passing checks must not discard an independently failing action check',async()=>{
+  const original=nativeScenario(6),review=nativeReview(6);
+  delete review.payoff_clarity.correction;
+  review.action_continuity={material_failure:false,evidence:'1コマで開始し4コマで物が移動、6コマに結果が残る。'};
+  review.action_staging={material_failure:true,evidence:'全身の重心移動がなく、手先だけの操作になっている。',correction:'同じ題材で足を踏み込み、胴をひねって支える瞬間を描く。'};
+  const options={scenarioMode:'experimental-manga',panelCount:6,punchlineType:'SeriousAction'};
+  const parsed=parseScenarioPayoffReview(JSON.stringify(review),options);
+  assert.equal(parsed.payoff_clarity.correction,'');
+  assert.equal(parsed.action_continuity.correction,'');
+  assert.deepEqual(evaluateScenarioPayoffReview(parsed,options).reasonCodes,['flat_action_staging']);
+  let repairs=0;
+  const result=await runScenarioPayoffGate({scenario:original,castList:'## A',...options,
+    requestReview:async()=>JSON.stringify(repairs?{...review,action_staging:STRONG_GAG_REVIEW.action_staging}:review),
+    requestRepair:async()=>{repairs++;return JSON.stringify([{panel:2,field:'状況',value:'Aが足を踏み込み、胴を大きくひねって模型を支える。'}]);}});
+  assert.equal(repairs,1);assert.equal(result.status,'repaired');
+  assert.match(result.scenario,/胴を大きくひねって/);
+  for(const failure of [true,'false',null]){
+    const invalid={...review,payoff_clarity:{material_failure:failure,evidence:'根拠の文章はあるが修正案がない。'}};
+    assert.throws(()=>parseScenarioPayoffReview(JSON.stringify(invalid),options),/incomplete_payoff_review/);
+  }
 });
 
 test('action selection rejects flat staging even when the movement is causally connected', async () => {
@@ -112,7 +138,9 @@ test('action selection rejects flat staging even when the movement is causally c
   assert.equal(evaluateScenarioPayoffReview(flat, { punchlineType: 'GagAuto' }).ok, true);
 });
 
-test('strong motion cannot hide an ending that abandons the selected action payoff', async () => {
+test('strong motion cannot hide an ending that abandons the selected action payoff', async t => {
+  const errors=[];
+  t.after(subscribeDiagnosticErrors(row=>errors.push(row)));
   const original=nativeScenario(4);
   const review={...STRONG_GAG_REVIEW,action_continuity:{material_failure:false,evidence:'途中の作業は接続。',correction:''},
     action_payoff:{material_failure:true,evidence:'最後は通常の着席に戻るだけで、途中の動きによる決着や受け手の反応がない。',correction:'同じ作業の最後に全身の反動と結果を見せる。'}};
@@ -125,6 +153,9 @@ test('strong motion cannot hide an ending that abandons the selected action payo
   const failure=(await readDiagnostics()).events.find(e=>e.errorCode==='SCENARIO_PAYOFF_QUALITY'
     && e.failureContext?.validationError==='action_payoff_missing');
   assert.equal(failure.failureContext.scenario,original);
+  assert.equal(failure.event,'workflow.warning');
+  assert.equal(errors.length,0,'a repaired quality finding must not open the fatal error panel');
+  assert((await readDiagnostics()).events.some(e=>e.event==='workflow.review'&&e.outcome==='repaired'&&e.ok===true));
   assert.equal(JSON.parse(failure.failureContext.validationResponse).action_payoff.material_failure,true);
   assert.equal(result.scenario,original.replace('Aが作業の段階4を進める。','Aが作業を終える反動で大きくのけぞり、相手が両脚を踏ん張って受け止める。'));
   assert.equal(evaluateScenarioPayoffReview(review,{punchlineType:'GagAuto'}).ok,true);
@@ -969,7 +1000,9 @@ test('gate retains the original when the repaired candidate fails review', async
   assert.match(result.warning, /修正試行2回・再監査1回.*unchanged_repair/);
 });
 
-test('gate retains the original when review, repair, or validation fails', async () => {
+test('gate retains the original when review, repair, or validation fails', async t => {
+  const errors=[];
+  t.after(subscribeDiagnosticErrors(row=>errors.push(row)));
   for (const options of [
     { requestReview: async () => { throw new Error('review offline'); }, requestRepair: async () => 'REPAIRED', validateRepair: () => true },
     { requestReview: async () => JSON.stringify(WEAK_SLOGAN_REVIEW), requestRepair: async () => { throw new Error('repair offline'); }, validateRepair: () => true },
@@ -980,7 +1013,11 @@ test('gate retains the original when review, repair, or validation fails', async
     assert.equal(result.scenario, 'ORIGINAL');
     assert.equal(result.status, 'retained');
     assert.ok(result.warning);
+    const final=(await readDiagnostics()).events.filter(e=>e.event==='workflow.review').at(-1);
+    assert.equal(final.outcome,'retained');
+    assert.equal(final.ok,false);
   }
+  assert.equal(errors.length,0,'retaining a candidate after a review issue is not a terminal failure');
 });
 
 test('STEP2 uses the selected scenario model for payoff review and never enables web search', async () => {

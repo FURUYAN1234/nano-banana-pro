@@ -174,13 +174,18 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
     }
 };
 
-export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate, outputTokenLimit = getTextOutputTokenLimit(modelId), responseFormat}) => {
+export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate, outputTokenLimit = getTextOutputTokenLimit(modelId), responseFormat, outputProfile}) => {
     const responseFormatConfig = getChatResponseFormat(responseFormat);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const reportTiming = createRequestTiming(modelId, onThinkingUpdate);
     try {
         const usesModernChatParameters = usesReasoningModel(modelId);
+        // A multi-panel pixel census is more demanding than ordinary text work.
+        // Keep the selected model and all non-QA defaults; no effort downgrade
+        // or fallback is used when this documented Luna setting is unavailable.
+        const reasoningEffort = outputProfile === 'image-quality-review' && modelId === 'gpt-6-luna' ? 'high' : null;
+        if (reasoningEffort) onThinkingUpdate?.(`> [API] 画像品質検査: reasoning_effort=${reasoningEffort}`);
         reportTiming('送信開始');
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -189,6 +194,7 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
                 model: modelId,
                 messages,
                 ...(responseFormatConfig ? { response_format: responseFormatConfig } : {}),
+                ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
                 ...(usesModernChatParameters
                     ? {max_completion_tokens: outputTokenLimit}
                     : {temperature: 0.7, max_tokens: outputTokenLimit}),
@@ -344,7 +350,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate, outputTokenLimit, responseFormat:options.responseFormat});
+            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate, outputTokenLimit, responseFormat:options.responseFormat, outputProfile:options.outputProfile});
 
             const choice = data.choices?.[0];
 

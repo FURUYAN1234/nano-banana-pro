@@ -62,7 +62,9 @@ test('initial and bounded repair compose the same references with the completed 
     assert.ok(calls.every(call => call.url.endsWith('/images/edits')));
     assert.deepEqual(calls[0].body.images, [ref, {image_url: backgroundImage}]);
     assert.deepEqual(calls[1].body.images, [{image_url: 'data:image/png;base64,' + originalBytes}, ...calls[0].body.images]);
-    assert.ok(calls.every(call => call.body.prompt.startsWith(approved)));
+    assert.ok(calls[0].body.prompt.startsWith(approved));
+    assert.ok(calls[1].body.prompt.startsWith('IMAGE QUALITY CORRECTION ATTEMPT'));
+    assert.ok(calls.every(call => call.body.prompt.split(approved).length === 2), 'both requests retain the complete original exactly once');
     assert.equal(result.candidate.base64Img, repairedBytes);
 
     const sixteenSheets = Array.from({length: 16}, (_, i) => 'data:image/png;base64,' + Buffer.from('sheet' + i).toString('base64'));

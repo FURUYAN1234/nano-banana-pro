@@ -6,7 +6,7 @@ import { assertPrintableDialogue } from './bubble-text.js';
 import { OPENAI_IMAGE_PROMPT_MAX_CHARS } from './image-prompt-budget.js';
 
 import { resolveOpenAIImageOption, normalizeOpenAIImageSize } from './openai-image-settings.js';
-import {OPENAI_IMAGE_INPUT_LIMIT, normalizeOpenAIImageDataUrl} from './openai-image-references.js';
+import {OPENAI_IMAGE_INPUT_LIMIT, OPENAI_IMAGE_DATA_URL_MAX_CHARS, normalizeOpenAIImageUpload} from './openai-image-references.js';
 const OPENAI_IMAGE_TIMEOUT_MS = 600000;
 const OPENAI_IMAGE_TIMEOUT_SECONDS = OPENAI_IMAGE_TIMEOUT_MS / 1000;
 
@@ -27,7 +27,7 @@ export function buildOpenAIImageRequest(prompt, {quality, size, stream = true, i
   if (!Array.isArray(imageInputs)) throw new Error('OpenAI参照画像は配列で指定してください。');
   if (imageInputs.length > OPENAI_IMAGE_INPUT_LIMIT) throw new Error('OpenAI画像入力は元画像を含めて最大16枚です。');
   const images = imageInputs.map((item, i) => ({
-    image_url: normalizeOpenAIImageDataUrl(item?.image_url, `送信画像${i + 1}`),
+    image_url: normalizeOpenAIImageUpload(item?.image_url, `送信画像${i + 1}`),
   }));
   const isEdit = images.length > 0;
   if (typeof panelEdit !== 'boolean' || (panelEdit && images.length !== 1)) {
@@ -46,10 +46,28 @@ async function generateOpenAIImageEdit(request, selectedOption, apiKey, statCall
   const timer = setTimeout(() => controller.abort(), OPENAI_IMAGE_TIMEOUT_MS);
   const signal = AbortSignal.any([controller.signal, workSignal]);
   try {
+    const multipart = request.body.images.some(image => image.image_url.length > OPENAI_IMAGE_DATA_URL_MAX_CHARS);
+    let body;
+    if (multipart) {
+      body = new FormData();
+      for (const [name, value] of Object.entries(request.body)) {
+        if (name !== 'images') body.append(name, String(value));
+      }
+      request.body.images.forEach(({image_url}, index) => {
+        const comma = image_url.indexOf(',');
+        const mime = image_url.slice(5, image_url.indexOf(';'));
+        const binary = atob(image_url.slice(comma + 1));
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        body.append('image[]', new Blob([bytes], {type: mime}), `image-${index + 1}.${mime.slice(6)}`);
+      });
+      statCallback('[OpenAI] 高解像度の元画像を、縮小・再圧縮せずファイル形式で送信します。');
+    } else body = JSON.stringify(request.body);
+    throwIfApiWorkCancelled(workSignal);
     const response = await fetch(request.url, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`},
-      body: JSON.stringify(request.body),
+      headers: {...(!multipart ? {'Content-Type': 'application/json'} : {}), 'Authorization': `Bearer ${apiKey}`},
+      body,
       signal,
     });
     if (!response.ok) {

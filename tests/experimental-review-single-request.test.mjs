@@ -15,9 +15,10 @@ try {
       if(mismatch)assert.equal(result.camera,'fail');
     }
   });
-  test('breakout pages inspect camera and lettering in the same request using observed frame bounds', async () => {
+  test('missing local frames use one whole-page inspection with or without a planned breakout', async () => {
     const frames=m.experimentalLayout(6,'tall_right_top').map((r,i)=>({panel:i+1,bounds:[.02+.96*r.x,.08+.88*r.y,.95*r.w,.87*r.h],edgeEvidence:'上下左右の実線と白い溝が連続して見える。'}));
-    const plan={count:6,layout:'tall_right_top',panels:frames.map((_,i)=>({breakout:i===1?{part:'hand',into:1}:null}))};
+    for(const requestedBreakout of [true,false]) for(const detected of [[],frames.slice(0,3)]) {
+    const plan={count:6,layout:'tall_right_top',panels:frames.map((_,i)=>({breakout:requestedBreakout&&i===1?{part:'hand',into:1}:null}))};
     let requests=0;
     const response={complete:true,observedFrames:frames,observedCount:6,status:'warning',camera:'fail',
       pageEvidence:'実際の題字を観察',issues:['後ろ姿の指定に対し、正面の両眼と口が見える。'],
@@ -26,10 +27,11 @@ try {
       async(prompt,images)=>{requests++;assert.match(prompt,/Expected source contract/);assert.match(prompt,/observedFrames/);
         assert.doesNotMatch(prompt,/Inspect only the physical comic frames/);assert.equal(images.length,3);
         return {text:JSON.stringify(response),model:'test-only'};},
-      {detect:async()=>[],inspect:async()=>({width:2240,height:3168}),crop:async(_image,rect)=>{assert.ok(rect.y>=3000,'only footer crops, never predicted panel slots');return {dataUrl:'footer'};}});
+      {detect:async()=>detected,inspect:async()=>({width:2240,height:3168}),crop:async(_image,rect)=>{assert.ok(rect.y>=3000,'only footer crops, never predicted panel slots');return {dataUrl:'footer'};}});
     assert.equal(requests,1);assert.equal(result.review.camera,'fail');assert.equal(result.review.evidence.length,6);
     assert.equal(result.review.inspectionKind,'whole-page-assessment');
     assert.deepEqual(result.review.evidence[1].bounds,frames[1].bounds);
+    }
   });
   test('ambiguous or mismatched whole-page observations never fabricate crops or permit repair', async () => {
     const plan={count:6,layout:'tall_right_top',panels:Array.from({length:6},(_,i)=>({breakout:i===1?{part:'hand',into:1}:null}))};
@@ -101,6 +103,10 @@ try {
       if(useStructuredOutput) {
         const schema=calls[0].options.responseFormat.json_schema.schema;
         const fields=schema.properties.evidence.items.properties;
+        assert.ok(Object.keys(schema.properties).indexOf('evidence') < Object.keys(schema.properties).indexOf('corrections'),
+          'strict decoding must observe bodies and lettering before prescribing corrections');
+        assert.deepEqual(Object.keys(fields).slice(0,4),['panel','head_inventory','physical_bodies','text_regions'],
+          'neutral pixel inventory precedes expected identities and semantic judgments');
         for(const key of ['physical_bodies','text_regions','cast_instances','style_observation','view'])assert.ok(fields[key],key);
         assert.equal(fields.dialogue,undefined,'speech ordering is calculated from observed text, not generated twice');
         assert.doesNotMatch(calls[0].prompt,/Each evidence object has this shape|REQUIRED ASSESSMENT FIELDS/,
@@ -154,6 +160,91 @@ try {
     assert.deepEqual(m.experimentalRepairIssues({...report,validationErrors:['missing evidence']},{count:6}),[]);
   });
 
+  test('four defective speech panels and two camera fixes fit beside a real-sized approved page without dropping targets',async()=>{
+    const texts=[
+      ['壁の骨組み、せーので立てるよ！','底を押さえる、傾けないで！'],
+      ['新しく補う部分は、元の壁と見分けられる形にしよう。','境目を隠さず、模型にも残すわ。'],
+      ['丸い窓はここ、四角い扉はその隣ね！','部品の配置が、模型の中でつながったわ。'],
+      ['模型は創作。元の遺構と補う部分の違いは、きちんと伝えるわ。','保存の現場にも、その区別が受け継がれていくのね。'],
+    ];
+    const panelNumbers=[2,4,5,6],expectedDialogue=[];
+    const panels=Array.from({length:6},()=>({dialogueIds:[]}));
+    for(const [i,number] of panelNumbers.entries()) for(const [j,text] of texts[i].entries()) {
+      const id=expectedDialogue.length+1;expectedDialogue.push({id,text,speaker:j?'乙':'甲'});panels[number-1].dialogueIds.push(id);
+    }
+    const plan={count:6,panels,expectedDialogue};
+    const report={readingOrder:'fail',corrections:[],evidence:panelNumbers.map(panel=>({panel,dialogue:['欠落した台詞','別の欠落'],
+      text_regions:['欠落した台詞','別の欠落'].map((text,i)=>({region_kind:'speech_balloon',text,center_x:.8-i*.6,container_evidence:'白い吹き出し内の文字を読んだ。'}))}))};
+    const issues=[...m.experimentalRepairIssues(report,plan),...[5,6].map(panel=>({type:'camera_geometry',panel,
+      reason:'上面を広く見下ろす投影。',correction:'指定の低い位置から人物と道具を同じ仰角で捉え、見える下面を描く。'}))];
+    assert.equal(issues.length,6);
+    const originalPrompt=('APPROVED CONTENT\n'+JSON.stringify(expectedDialogue)).padEnd(25408,'設');
+    let edits=0;
+    const result=await runPageImageQuality({kind:'experimental-manga',count:6},{mode:'experimental-manga',allowRepair:true,
+      originalCandidate:{base64Img:'original'},originalPrompt,repairPromptMaxChars:30460,
+      reviewCandidate:async()=>({pass:false,issues}),generateRepairCandidate:async prompt=>{
+        edits++;assert(prompt.length<=30460);assert(prompt.endsWith(originalPrompt));
+        for(const issue of issues.filter(x=>x.letteringTargets)) for(const target of issue.letteringTargets){
+          assert(prompt.includes(target.text));assert(prompt.includes(JSON.stringify(target.columnsRightToLeft)));
+        }
+        assert.match(prompt,/stroke weight/);assert.match(prompt,/Panel 5 CAMERA OVERRIDE/);assert.match(prompt,/Panel 6 CAMERA OVERRIDE/);
+        return {base64Img:'fixed'};
+      }});
+    assert.equal(edits,1);assert.equal(result.stopReason,'single_repair_completed');
+  });
+
+  test('independently transcribed missing, extra and reordered speech reaches the one repair without model corrections',async()=>{
+    const expected=['宮殿や僧院の跡が見つかったの。','なら、模型でも違いを残すわ。'];
+    const plan={count:6,panels:Array.from({length:6},(_,i)=>({dialogueIds:i?[]:[1,2]})),expectedDialogue:expected.map((text,i)=>({id:i+1,text,speaker:i?'乙':'甲'}))};
+    const report=spoken=>({inspectionVersion:11,readingOrder:'fail',corrections:[],evidence:[{panel:1,
+      dialogue:spoken,text_regions:spoken.map((text,i)=>({region_kind:'speech_balloon',text,center_x:.8-i*.3,container_evidence:'白い吹き出しの内側に文字がある。'}))}]});
+    for(const spoken of [[expected[0],'なら、違いを残すわ。'],['宮殿や僧院の跡が僧侶を見つかったの。',expected[1]],[],[...expected].reverse()]) {
+      const issues=m.experimentalRepairIssues(report(spoken),plan);
+      assert.equal(issues.length,1,'local text mismatch must not disappear into an advisory');
+      assert.equal(issues[0].type,'bubble_text');
+      if(spoken.length===expected.length) {
+        assert.deepEqual(issues[0].letteringTargets.map(target=>target.balloon),
+          expected.flatMap((text,index)=>text===spoken[index]?[]:[index+1]));
+      }
+      for(const target of issues[0].letteringTargets)assert.equal(target.columnsRightToLeft.join(''),target.text);
+      const second=issues[0].letteringTargets.find(target=>target.balloon===2);
+      if(second)assert.deepEqual(second.columnsRightToLeft,['なら、模型でも','違いを残すわ。']);
+      let repairs=0;
+      await runPageImageQuality({kind:'experimental-manga',count:6},{mode:'experimental-manga',allowRepair:true,
+        originalCandidate:{base64Img:'original'},originalPrompt:'approved',reviewCandidate:async()=>({pass:false,issues}),
+        generateRepairCandidate:async prompt=>{repairs++;for(const line of expected)assert.ok(prompt.includes(line));
+          for(const line of spoken.filter(text=>!expected.includes(text)))assert.ok(!prompt.includes(line),'incorrect lettering must not be offered as drawable text');
+          assert.match(prompt,/erase the complete existing lettering/i);
+          assert.match(prompt,/resize the balloon interior/i);
+          return {base64Img:'fixed'};}});
+      assert.equal(repairs,1);
+    }
+    for(const spoken of [expected,['宮殿や僧院の跡が\n見つかったの！','なら 模型でも違いを残すわ']])
+      assert.deepEqual(m.experimentalRepairIssues(report(spoken),plan),[],'punctuation and line wrapping are harmless');
+    const unknown=report(['読めない',expected[1]]);unknown.evidence[0].text_regions[0].text=null;
+    assert.deepEqual(m.experimentalRepairIssues(unknown,plan),[],'unreadable pixels cannot authorize repair');
+    const incomplete=report([expected[0],'欠落']);incomplete.validationErrors=['incomplete observation'];
+    assert.deepEqual(m.experimentalRepairIssues(incomplete,plan),[]);
+    const stale=report(['別の台詞',expected[1]]);stale.evidence[0].dialogue=expected;
+    assert.deepEqual(m.experimentalRepairIssues(stale,plan),[],'legacy mismatched transcription arrays stay unverified');
+  });
+
+  test('speech is assembled from visible reading units without correcting malformed lettering',async()=>{
+    const plan={count:6,layout:'mixed_rows',panels:Array.from({length:6},()=>({camera:'俯瞰',dialogueIds:[]}))};
+    const frames=m.experimentalLayout(6,plan.layout).map(r=>({bounds:[.01+.98*r.x,.05+.9*r.y,.98*r.w,.88*r.h]}));
+    const corrected='残すって、違いごと伝えることなんだね。';
+    for(const [units,expected] of [[['残すって、','違いごと','伝えること','伝んだね。'],['残すって、違いごと伝えること伝んだね。']],
+      [['右の列','左の列'],['右の列左の列']],[null,null],[['読める列',null],null],[[],null]]) {
+      const evidence=frames.map((_,i)=>({panel:i+1,physical_bodies:[],text_regions:i?[]:[{region_kind:'speech_balloon',
+        text:corrected,reading_units:units,center_x:.7,container_evidence:'丸い吹き出しに縦書きの列がある。'}]}));
+      const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan,prompt:'Blind source',useStructuredOutput:true},
+        async()=>{
+          return {text:JSON.stringify({status:'unverified',evidence}),model:'test-only'};
+        },{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-only-crop'})});
+      assert.deepEqual(result.review.evidence[0].dialogue,expected,'a fluent sentence must not overwrite observed glyph columns');
+    }
+  });
+
   test('compact review schema stores shared observations once and resolves only same-panel feature references',async()=>{
     const plan={count:6,layout:'mixed_rows',panels:Array.from({length:6},()=>({camera:'approved high view',dialogueIds:[]})),expectedCast:Array.from({length:6},(_,i)=>({panel:i+1,names:['人物甲']}))};
     const frames=m.experimentalLayout(6,plan.layout).map(r=>({bounds:[.01+.98*r.x,.05+.9*r.y,.98*r.w,.88*r.h]}));
@@ -166,6 +257,10 @@ try {
       const fields=options.responseFormat.json_schema.schema.properties.evidence.items.properties;
       for(const field of ['camera','style'])assert.equal(fields[field],undefined);
       assert.equal(fields.physical_bodies.items.properties.gaze.properties.pupil_placement,undefined);
+      assert.equal(fields.physical_bodies.items.properties.head_bounds.minItems,4);
+      const tail=fields.text_regions.items.properties.tail_targets.items.properties;
+      assert.equal(tail.body_id,undefined,'the API must not infer a semantic owner');
+      assert.equal(tail.root.minItems,2);assert.equal(tail.tip.minItems,2);
       assert.equal(fields.cast_instances.items.properties.observed_count,undefined);
       assert.ok(fields.cast_instances.items.properties.instances.items.properties.feature_indices);
       assert.equal(fields.cast_instances.items.properties.instances.items.properties.matched_features,undefined);

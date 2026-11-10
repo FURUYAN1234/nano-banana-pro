@@ -87,6 +87,7 @@ test('production final-selection block saves accepted snapshot before continuing
     const finalImageStr = `data:image/png;base64,${originalCandidate.base64Img}`;
     let autoMode = true, endlessMode = true;
     const ctx = { originalCandidate, finalImageStr, previousExperimental: null, originalExperimental: { review: null },
+      lettering:{report:{applied:false}},preLetteringCandidate:candidate,
       experimentalPrepared: mode === 'experimental-repaired' ? { plan: { panelCount: 6 }, groupId: 'test-group' } : null, qualityBudget:{exhausted:mode === 'review-timeout'},
       setIsFullAutoMode: value => {autoMode=value;}, setIsEndlessMode: value => {endlessMode=value;},
       generatedMimeType: 'image/png', generatedModelId: 'gpt-test',

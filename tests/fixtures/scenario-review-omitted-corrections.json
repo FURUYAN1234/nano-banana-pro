@@ -1,0 +1,241 @@
+{
+  "options": {
+    "scenarioMode": "experimental-manga",
+    "panelCount": 6,
+    "punchlineType": "SeriousAction"
+  },
+  "review": {
+    "pass": true,
+    "setup_seed": "紙箱の底に折り目がある。",
+    "panel3_prediction": "そのままでは底が閉じない。",
+    "panel4_outcome": "紙の端を押し込むと底が閉じる。",
+    "shift_kind": "reframe",
+    "visual_payoff": true,
+    "action_payoff": {
+      "material_failure": false,
+      "evidence": "腕で箱を支えて踏み込み、紙の端を押し込むと底が閉じる。",
+      "correction": ""
+    },
+    "payoff_clarity": {
+      "material_failure": false,
+      "evidence": "腕で箱を支えて踏み込み、紙の端を押し込むと底が閉じる。",
+      "correction": ""
+    },
+    "action_continuity": {
+      "material_failure": false,
+      "evidence": "腕で箱を支えて踏み込み、紙の端を押し込むと底が閉じる。",
+      "correction": ""
+    },
+    "action_staging": {
+      "material_failure": false,
+      "evidence": "腕で箱を支えて踏み込み、紙の端を押し込むと底が閉じる。",
+      "correction": ""
+    },
+    "slogan_only": false,
+    "unseeded_fact": false,
+    "visual_feasibility": [
+      {
+        "panel": 1,
+        "feasible": true,
+        "material_loss": false,
+        "evidence": "第1コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 2,
+        "feasible": true,
+        "material_loss": false,
+        "evidence": "第2コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 3,
+        "feasible": true,
+        "material_loss": false,
+        "evidence": "第3コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 4,
+        "feasible": true,
+        "material_loss": false,
+        "evidence": "第4コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 5,
+        "feasible": true,
+        "material_loss": false,
+        "evidence": "第5コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 6,
+        "feasible": true,
+        "material_loss": false,
+        "evidence": "第6コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      }
+    ],
+    "ensemble_continuity": [
+      {
+        "panel": 1,
+        "material_break": false,
+        "evidence": "第1コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 2,
+        "material_break": false,
+        "evidence": "第2コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 3,
+        "material_break": false,
+        "evidence": "第3コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 4,
+        "material_break": false,
+        "evidence": "第4コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 5,
+        "material_break": false,
+        "evidence": "第5コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      },
+      {
+        "panel": 6,
+        "material_break": false,
+        "evidence": "第6コマでは箱と手の接点が見え、前の動作からつながっている。",
+        "correction": ""
+      }
+    ],
+    "cast_identity": [
+      {
+        "panel": 1,
+        "status": "consistent",
+        "reference_evidence": "人物Ａは短髪で丸眼鏡をかけている。",
+        "scenario_evidence": "第1コマの人物Ａは短髪と丸眼鏡で識別できる。",
+        "change_basis": "",
+        "correction": ""
+      },
+      {
+        "panel": 2,
+        "status": "consistent",
+        "reference_evidence": "人物Ａは短髪で丸眼鏡をかけている。",
+        "scenario_evidence": "第2コマの人物Ａは短髪と丸眼鏡で識別できる。",
+        "change_basis": "",
+        "correction": ""
+      },
+      {
+        "panel": 3,
+        "status": "consistent",
+        "reference_evidence": "人物Ａは短髪で丸眼鏡をかけている。",
+        "scenario_evidence": "第3コマの人物Ａは短髪と丸眼鏡で識別できる。",
+        "change_basis": "",
+        "correction": ""
+      },
+      {
+        "panel": 4,
+        "status": "consistent",
+        "reference_evidence": "人物Ａは短髪で丸眼鏡をかけている。",
+        "scenario_evidence": "第4コマの人物Ａは短髪と丸眼鏡で識別できる。",
+        "change_basis": "",
+        "correction": ""
+      },
+      {
+        "panel": 5,
+        "status": "consistent",
+        "reference_evidence": "人物Ａは短髪で丸眼鏡をかけている。",
+        "scenario_evidence": "第5コマの人物Ａは短髪と丸眼鏡で識別できる。",
+        "change_basis": "",
+        "correction": ""
+      },
+      {
+        "panel": 6,
+        "status": "consistent",
+        "reference_evidence": "人物Ａは短髪で丸眼鏡をかけている。",
+        "scenario_evidence": "第6コマの人物Ａは短髪と丸眼鏡で識別できる。",
+        "change_basis": "",
+        "correction": ""
+      }
+    ],
+    "camera_rhythm": {
+      "shots": [
+        {
+          "panel": 1,
+          "signature": "斜め上からの手元の寄り",
+          "purpose": "紙の端と接点を見せる"
+        },
+        {
+          "panel": 2,
+          "signature": "正面より低い全身の引き",
+          "purpose": "重心の移動を見せる"
+        },
+        {
+          "panel": 3,
+          "signature": "斜め上からの手元の寄り",
+          "purpose": "紙の端と接点を見せる"
+        },
+        {
+          "panel": 4,
+          "signature": "正面より低い全身の引き",
+          "purpose": "重心の移動を見せる"
+        },
+        {
+          "panel": 5,
+          "signature": "斜め上からの手元の寄り",
+          "purpose": "紙の端と接点を見せる"
+        },
+        {
+          "panel": 6,
+          "signature": "正面より低い全身の引き",
+          "purpose": "重心の移動を見せる"
+        }
+      ],
+      "repeated_panels": [],
+      "material_repeat": false,
+      "intentional_repeat": false,
+      "evidence": "手元の寄りと全身の引きを分けて、動作と結果を見せている。",
+      "correction": ""
+    },
+    "panel_development": [
+      {
+        "panel": 1,
+        "material_padding": false,
+        "evidence": "第1コマでは箱と手の接点が見え、前の動作からつながっている。"
+      },
+      {
+        "panel": 2,
+        "material_padding": false,
+        "evidence": "第2コマでは箱と手の接点が見え、前の動作からつながっている。"
+      },
+      {
+        "panel": 3,
+        "material_padding": false,
+        "evidence": "第3コマでは箱と手の接点が見え、前の動作からつながっている。"
+      },
+      {
+        "panel": 4,
+        "material_padding": false,
+        "evidence": "第4コマでは箱と手の接点が見え、前の動作からつながっている。"
+      },
+      {
+        "panel": 5,
+        "material_padding": false,
+        "evidence": "第5コマでは箱と手の接点が見え、前の動作からつながっている。"
+      },
+      {
+        "panel": 6,
+        "material_padding": false,
+        "evidence": "第6コマでは箱と手の接点が見え、前の動作からつながっている。"
+      }
+    ],
+    "reason_codes": []
+  }
+}

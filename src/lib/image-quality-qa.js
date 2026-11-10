@@ -8,6 +8,7 @@ import { CHEEK_RENDERING } from './shared-image-quality.js';
 import { parseCollectiveSpeaker, collectiveMemberKeys } from './panel-utils.js';
 import { STYLE_DRAWING_CONTRACTS, EMOTION_STYLES, COMPACT_EMOTION_STYLES } from './constants.js';
 import { resolveOutfitForSubject } from './seasonal-outfit.js';
+import { buildCastRepairConservation } from './manga-cast-repair.js';
 
 const ISSUE_TYPES = new Set([
   'monochrome_rendering',
@@ -467,14 +468,34 @@ const inspectCastInventoryRecord = (inventory, name) => {
   return { record, instances, grounded };
 };
 
-export const castInventoryIssues = (inventory, panel, names) => names.flatMap(name => {
+export const castInventoryIssues = (inventory, panel, names, {knownNames=[],bodies=[]}={}) => {
+  // 台本内の別コマに登場する人物も、独立した身体と同定根拠が揃えば
+  // 「背景の未確認人物」へ落とさず、このコマでは余分な人物として扱う。
+  const extraNames=[...new Set(knownNames)].filter(name=>!names.includes(name)).filter(name=>{
+    const {record,instances,grounded}=inspectCastInventoryRecord(inventory,name);
+    return grounded&&record.status!=='uncertain'&&instances.length>0&&instances.every(instance=>{
+      const matches=bodies.filter(body=>body?.id===instance.body_id),body=matches[0];
+      const cues=instance.matched_features;
+      return matches.length===1&&Array.isArray(body.features)&&cues.every(cue=>typeof cue==='string'&&cue.trim())
+        &&new Set(cues.map(cue=>cue.normalize('NFKC').trim())).size>=2
+        &&cues.every(cue=>body.features.includes(cue))
+        &&inventory.flatMap(actor=>Array.isArray(actor?.instances)?actor.instances:[])
+          .filter(other=>other?.body_id===instance.body_id).length===1;
+    });
+  });
+  const conservation=buildCastRepairConservation(inventory,names,bodies,extraNames);
+  return [...names.flatMap(name => {
   const { record, instances, grounded } = inspectCastInventoryRecord(inventory, name);
   if (!grounded || record.status === 'uncertain') return [{ type: 'unverified', panel, subject: name,
     reason: 'Named-cast count lacks distinct body locations and two identity cues, or grounded absence evidence.' }];
   if (record.observed_count !== 1 || record.status === 'defect') return [{ type: 'cast_count', panel, subject: name,
+    castConservation:conservation,
     reason: `Expected exactly one physical instance; observed ${record.observed_count} at ${instances.map(instance => instance.location).join(' / ') || record.evidence}.` }];
   return [];
-});
+  }),...extraNames.map(name=>({type:'cast_count',panel,subject:name,castConservation:conservation,
+    reason:`本コマに指定のない既知人物を独立同定。観察数${inventory.find(actor=>actor.name===name).observed_count}、指定数0。`,
+    correction:'台帳の指定外身体だけを除去し露出背景を復元。必要人物・動作・台詞を保持。'}))];
+};
 
 // Bubble order is a spatial check, so harmless OCR punctuation drift must not
 // erase an otherwise unambiguous text-to-bubble match. Exact dialogue remains

@@ -38,13 +38,23 @@ try {
   const scenario = scenarioFor(6);
   const input = { enabled: true, scenario, castList: '人物A', colorMode: 'monochrome', images: [] };
   const source = m.readExperimentalSource(input);
+  test('native page media use the same emotion interpretation as four-panel rendering without changing the scenario',()=>{
+    for(const [tag,medium] of [['SURPRISE','NORMAL'],['TENSION','NORMAL'],['GEKIGA / DETERMINATION','GEKIGA']]){
+      const authored=scenario.replaceAll('[EMOTION: NORMAL]',`[EMOTION: ${tag}]`);
+      const parsed=m.readExperimentalSource({...input,scenario:authored});
+      assert.equal(parsed.scenario,authored);
+      assert(parsed.panels.every(panel=>panel.style===medium),`${tag} must resolve to a renderable medium`);
+      const prompt=m.buildExperimentalImagePrompt(six,parsed,{...input,providerFamily:'chatgpt'});
+      assert.match(prompt,new RegExp(`FRAME MEDIUM P1 — ${medium}:`));
+    }
+  });
   test('native pages apply the shared vertical-first policy for both providers without weakening art direction',()=>{
     for (const providerFamily of ['chatgpt', 'gemini']) {
       const prompt=m.buildExperimentalImagePrompt(six,source,{...input,providerFamily});
-      assert.match(prompt,/DIALOGUE WRITING POLICY: prefer_vertical: 正立文字は上→下、列は右→左/);
+      assert.match(prompt,/DIALOGUE WRITING POLICY: prefer_vertical: 正立(?:文字は|で)上→下、列は右→左/);
       assert.match(prompt,/短句\/叫び\/横長も縦組/);
       assert.match(prompt,/横組は縦組の判読不能・絵の遮蔽時か明示指定のみ/);
-      assert.match(prompt,/人物描写保持。絵の縮小\/簡素化禁止/);
+      assert.match(prompt,/人物(?:描写)?保持。絵の縮小\/簡素化禁止/);
       assert.match(prompt,/台詞は縦書き漫画明朝/);
       assert.match(prompt,/preserve camera strength, drawing quality, style, expression and dramatic energy/);
       assert.ok(prompt.length<=32000);
@@ -315,6 +325,19 @@ try {
     assert.ok(!checked.issues.some(issue=>/Expected exactly one|2体/.test(issue)),'unmapped does not prove duplication');
     const legacy={...report,inspectionVersion:7};
     assert.equal(m.validateExperimentalReview(legacy,castCoveragePlan).anatomy,'uncertain','old evidence cannot hide an unbound observed body');
+  });
+  test('native cast coverage retains a grounded known actor who is extra in this panel as a material defect',()=>{
+    const report=castCoverageReview(),panel=report.evidence[3];
+    panel.physical_bodies[1].features=['短い白髪','緑の作業着'];
+    panel.cast_instances.push({name:'人物B',observed_count:1,status:'defect',evidence:'白髪と緑の作業着の人物が台本外で見える。',
+      instances:[{body_id:'far',location:'右後列の独立した身体',matched_features:['短い白髪','緑の作業着']}]});
+    panel.body_dispositions=[];
+    const plan={...castCoveragePlan,expectedCast:castCoveragePlan.expectedCast.map(entry=>entry.panel===1?{...entry,names:['人物B']}:entry)};
+    const checked=m.validateExperimentalReview(report,plan);
+    assert.equal(checked.anatomy,'fail');
+    assert.equal(checked.status,'warning');
+    assert.ok(!checked.issues.some(issue=>/4コマ \/ far:.*未確認/.test(issue)));
+    assert.ok(m.experimentalRepairIssues({...checked,corrections:[]},plan).some(issue=>issue.panel===4&&issue.type==='cast_count'&&issue.subject==='人物B'));
   });
   test('native cast coverage allows grounded background bodies and preserves cropped identity uncertainty',()=>{
     const report=castCoverageReview(),panel=report.evidence[3];
@@ -595,6 +618,16 @@ try {
     const checks={original:plan.panels.map((_,i)=>({panel:i+1,status:'pass'})),repair:plan.panels.map((_,i)=>({panel:i+1,status:'pass'}))};
     return {plan,review,checks,original:{plan,review,image:{base64Img:'old'},prompt:'same',groupId:'same'}};
   };
+  test('independent head landmarks cannot disappear behind a passing named-cast inventory',()=>{
+    const {plan,review}=censusComparisonCase(),e=review.evidence[0];
+    e.physical_bodies[0].head_bounds=[.1,.1,.15,.15];
+    e.head_inventory=[{body_id:'body1',bounds:[.1,.1,.15,.15]}];
+    assert.equal(m.validateExperimentalReview(review,plan).anatomy,'pass');
+    e.head_inventory.push({body_id:'body2',bounds:[.6,.4,.15,.15]});
+    const checked=m.validateExperimentalReview(review,plan);
+    assert.equal(checked.anatomy,'uncertain');
+    assert.ok(checked.validationErrors.some(error=>error.includes('head_body_count_mismatch')));
+  });
   test('census quarantine permits comparison with intact independent reading without certifying anatomy',async()=>{
     for(const damage of [
       e=>e.physical_bodies.push({id:'outside',bounds:[.2,.55,.4,.72],features:['短い髪','青い服']}),
@@ -869,8 +902,8 @@ try {
       };
       check(format.json_schema.schema);return ajv.compile(format.json_schema.schema);
     });
-    const body={id:'p3b1',bounds:[.1,.1,.4,.7],features:['黒い長髪','灰色の上着'],gaze:blindGaze()};
-    const panel={panel:3,camera:'やや高い位置から台の上面が見える。',style:'淡い水彩の筆触が顔と衣服にも見える。',story:null,anatomy:null,breakout:null,
+    const body={id:'p3b1',bounds:[.1,.1,.4,.7],head_bounds:null,features:['黒い長髪','灰色の上着'],gaze:blindGaze()};
+    const panel={panel:3,head_inventory:[],camera:'やや高い位置から台の上面が見える。',style:'淡い水彩の筆触が顔と衣服にも見える。',story:null,anatomy:null,breakout:null,
       view:{elevation:'high',gaze:'in_scene',evidence:'人物は台の水平器へ視線を向ける。'},
       style_observation:{medium:'WATERCOLOR',status:'pass',evidence:'顔と衣服に淡彩と紙の白が見える。',actors:[{
         body_id:'p3b1',medium:'WATERCOLOR',status:'pass',face_visibility:'visible',face:'細い目と真っすぐな口の輪郭が見える。',shading:'頬に薄い水彩の重なりが見える。'}]},
@@ -1476,15 +1509,16 @@ try {
     await assert.rejects(m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>{requests++;return {text:'{}'};},{detect:async()=>frames.map(()=>frames[0])}),/境界|重な/);
     assert.equal(requests,0);
   });
-  test('fewer observed rectangles remain unverified because connected panels can undercount the page',async()=>{
+  test('fewer local rectangles use whole-page evidence and remain unverified if that evidence is ambiguous',async()=>{
     // Six visible panels with the first pair joined along top AND bottom can
     // produce these five closed rectangles; the two inner panels still exist.
     const frames=[{bounds:[.025,.05,.95,.2]},
       {bounds:[.025,.275,.45,.2]},{bounds:[.525,.275,.45,.2]},
       {bounds:[.025,.5,.45,.2]},{bounds:[.525,.5,.45,.2]}];
     let requests=0;
-    const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>{requests++;throw new Error('ambiguous count must not spend a review');},{detect:async()=>frames});
-    assert.equal(requests,0);assert.equal(result.requests,0);
+    const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async(_prompt,images)=>{requests++;assert.equal(images.length,3);return {text:JSON.stringify({complete:false,observedFrames:[]})};},
+      {detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async(_image,rect)=>{assert.ok(rect.y>=3000,'never fabricate panel crops');return {dataUrl:'footer'};}});
+    assert.equal(requests,1);assert.equal(result.requests,1);
     assert.equal(result.review.status,'unverified');assert.equal(result.review.observedCount,null);
     assert.equal(m.validateExperimentalReview(result.review,six).status,'unverified');
     const checked=m.validateExperimentalReview({inspectionKind:'frame-geometry',observedFrames:frames,observedCount:5},six);

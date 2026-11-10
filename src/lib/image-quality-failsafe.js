@@ -1,6 +1,8 @@
 import { buildRenderOptionsQa } from './render-options.js';
 import { isMonochromePrompt } from './manga-render-mode.js';
 import { LOCAL_ANATOMY_REPAIR } from './shared-image-quality.js';
+import { formatCastRepairConservation } from './manga-cast-repair.js';
+import { MANGA_LETTERING_REPAIR_RULES } from './bubble-text.js';
 import { assessMonochromeEvidence, extractBubbleContracts, extractCriticalRearCameraContracts, hasCriticalRearCameraContract } from './image-quality-qa.js';
 
 export const IMAGE_QUALITY_MAX_ATTEMPTS = 4;
@@ -115,8 +117,12 @@ const getRepairableIssues = (review) => (Array.isArray(review?.issues) ? review.
       && candidate?.type === issue.type && candidate?.panel === issue.panel)
   ) === index);
 
-const formatRepairIssue = (issue = {}) => (
-  `- panel ${issue.panel ?? 'unknown'} / ${issue.type || 'unverified'} / ${issue.subject || 'unspecified'}: ${issue.reason || 'visible issue'}${typeof issue.correction==='string'&&issue.correction.trim()?` Correction: ${issue.correction}`:''}`
+const hasStructuredLettering = issue => issue?.letteringRepair === 'exact_v1'
+  && Array.isArray(issue.letteringTargets) && issue.letteringTargets.length > 0
+  && Array.isArray(issue.approvedSpeech) && typeof issue.preserveOtherBalloons === 'boolean';
+const formatRepairIssue = (issue = {}) => hasStructuredLettering(issue)
+  ? `- panel ${issue.panel} / bubble_text: ${JSON.stringify({targets:issue.letteringTargets,approvedSpeech:issue.approvedSpeech,preserveOtherBalloons:issue.preserveOtherBalloons})}` : (
+  `- panel ${issue.panel ?? 'unknown'} / ${issue.type || 'unverified'} / ${issue.subject || 'unspecified'}: ${issue.type==='bubble_text'&&Array.isArray(issue.letteringTargets)&&typeof issue.correction==='string'&&issue.correction.trim()?'The independently read lettering differs from the approved dialogue.':issue.reason || 'visible issue'}${typeof issue.correction==='string'&&issue.correction.trim()?` Correction: ${issue.correction}`:''}`
 );
 
 const formatReviewProgress = (label, review) => {
@@ -279,8 +285,19 @@ export const parseImageFailureAnalysis = (text, { issues, history = [], original
   });
 };
 
+const isPageBoundaryRepair = issue => {
+  if (issue?.type !== 'panel_layout') return false;
+  const text = [issue.subject, issue.reason, issue.correction].filter(Boolean).join(' ');
+  return /(?:枠|溝|境界|下辺|上辺)(?:を|の位置を)(?:(?!頭|髪|人物|足|手)[^。\n]){0,25}(?:下げ|上げ|移動|広げ|狭め)/u.test(text)
+    || /(?:コマ|段|溝|境界)(?:の(?:高さ|幅|割合|比率|開始位置)|が(?:指定枠より)?短[いく])/u.test(text)
+    || /次段[^。\n]{0,20}下から始め/u.test(text)
+    || /(?:move|shift|resize|reposition|extend|lower|raise)[^.\n]{0,35}(?:border|gutter|boundary|frame|panel|row)/i.test(text)
+    || /(?:panel|row|gutter|boundary)[^.\n]{0,35}(?:too short|too tall|too wide|too narrow|height|width|position|proportion)/i.test(text);
+};
+
 export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode, panelCount = 4, sourceMode = 'regenerate', attempt = 2, maxAttempts = IMAGE_QUALITY_MAX_ATTEMPTS, compact = false } = {}) => {
   const anatomyRepair = issues.some(issue => issue?.type === 'anatomy') ? LOCAL_ANATOMY_REPAIR : '';
+  const letteringRules = issues.some(hasStructuredLettering) ? MANGA_LETTERING_REPAIR_RULES : '';
   const concreteIssues = issues
     .filter((issue) => issue?.type !== 'unverified')
     .map(formatRepairIssue)
@@ -294,32 +311,62 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
 
   const effectiveMode = mode || inferImageQualityMode(originalPrompt);
   if (sourceMode === 'source-image') {
+    const boundaryRepair = effectiveMode !== 'single-image' && issues.some(issue => Number.isInteger(issue.panel)
+      && issue.panel >= 1 && issue.panel <= panelCount && isPageBoundaryRepair(issue));
+    const pageReflow = boundaryRepair
+      ? 'PAGE REFLOW FIRST: 承認済みrectへ枠を置き、移動対象とadjacent panelsを再構図してから局所修正。誤った溝位置は保持しない。各時点/Camera/人数/全台詞/書体/画風を保ち、ページ全体の拡縮や人物・文字の切落としで合わせない。'
+      : '';
+    // Edits must start with the requested change, not the original 20k+ "Create
+    // a page" task. Keep the complete approved contract as a reference appendix.
+    const approvedReference=`\n\nAPPROVED CONTENT REFERENCE (retain all requirements; the original creation wording below describes the existing image, not a request to regenerate it):\n${String(originalPrompt)}`;
+    const sharedStructuralRules = new Set();
     const structuralOverrides = issues.filter(issue => Number.isInteger(issue.panel)
       && issue.panel >= 1 && issue.panel <= panelCount).flatMap(issue => {
-      if (issue.type === 'cast_count') return [`Panel ${issue.panel} CAST COUNT OVERRIDE: match the approved cast identities and counts. For an observed duplicate, retain the one body consistent with the scripted action/depth and remove only the observed extra body, restoring the exposed background. For an observed missing actor, restore that actor once. Do not change other actors or create a replacement clone.`];
-      if (issue.type === 'camera_geometry') return [`Panel ${issue.panel} CAMERA OVERRIDE: rebuild only this panel's reported incorrect projection to the approved Camera, including actors, props and setting in one coherent viewpoint. Preserve scripted action, identity, dialogue and framing; do not preserve the source's defective angle.`];
+      if (issue.type === 'cast_count') {
+        const includeRules=!sharedStructuralRules.has('cast');
+        const includeCountRules=!sharedStructuralRules.has('cast_count');
+        if(issue.castConservation)sharedStructuralRules.add('cast');
+        sharedStructuralRules.add('cast_count');
+        return [formatCastRepairConservation(issue.panel,issue.castConservation,{compact,includeRules}),compact&&issue.castConservation?'':compact
+        ? `Panel ${issue.panel} CAST COUNT OVERRIDE: ${includeCountRules?'全CAST COUNT OVERRIDE共通: 指定同一性/人数を満たす。重複は動作/奥行きに合う一体を保持し余分のみ除き背景を復元。欠員のみ一体復元。他の人物を変えず代替の分身を作らない。':'同じCAST COUNT OVERRIDE共通規則を適用。'}`
+        : `Panel ${issue.panel} CAST COUNT OVERRIDE: match the approved cast identities and counts. For an observed duplicate, retain the one body consistent with the scripted action/depth and remove only the observed extra body, restoring the exposed background. For an observed missing actor, restore that actor once. Do not change other actors or create a replacement clone.`];
+      }
+      if (issue.type === 'camera_geometry') {
+        if(compact&&sharedStructuralRules.has('camera'))return [`Panel ${issue.panel} CAMERA OVERRIDE: 同じCAMERA OVERRIDE共通規則を適用。`];
+        sharedStructuralRules.add('camera');
+        return [compact
+        ? `Panel ${issue.panel} CAMERA OVERRIDE: reproject the entire interior of this affected panel. screen positions, silhouettes, overlap and internal crop may change. Keep the same story moment; ${boundaryRepair ? 'use the corrected frame scaffold.' : 'every unaffected panel unchanged.'} 指定Cameraから全人物/道具/場を再投影。局所修正限定を解除し、元の誤った角度/座標を保持しない。上面を全て見せるため視点を上げず、可視の下面/端/遮蔽で表す。同じ動作/接触/人数/同一性/全文/画風/指定画角${boundaryRepair ? 'を新しい枠内で保持。' : 'とページ枠を保持。'}`
+        : `Panel ${issue.panel} CAMERA OVERRIDE: reconstruct the entire interior of this affected panel from the approved Camera, including actors, props and setting in one coherent viewpoint. This is a projection change, not a background tilt or local surface patch: screen positions, silhouettes, overlap and internal crop may change as required by that viewpoint. Keep the same story moment, world-space action/contact, identities, counts, exact speech, medium and approved shot extent. Fix the camera position first; project all near/far edges, visible upper/lower surfaces and bodies from it. Do not raise the camera merely to expose every horizontal object top; retain the required object through its physically visible edges and surfaces. ${boundaryRepair ? 'Use the corrected frame scaffold, including adjacent-panel reflow.' : 'Keep page borders and every unaffected panel unchanged.'} The whole affected interior is exempt from the local-contact-only preservation rule; do not preserve the source's defective angle.`];
+      }
+      if (isPageBoundaryRepair(issue)) return [compact
+        ? `Panel ${issue.panel} PAGE BOUNDARY OVERRIDE: approved comic-area coordinates（画布x/yは換算目標）。指摘境界とadjacent panelsを再配置。他境界保持、切落とし禁止。`
+        : `Panel ${issue.panel} PAGE BOUNDARY OVERRIDE: restore the reported boundary to the approved comic-area coordinates, not whole-page percentages. Move the affected gutter and reflow adjacent panels as needed. コマ数/読順/分割構造と全内容を保持。指摘された枠位置/寸法は変更し、隣接コマも新しい枠へ移動・再配置する。各Camera/画角/動作/人数/全台詞/書体を保ち、人物や文字を切らない。枠移動に必要な範囲では他の局所保持指示より本規則を優先し、無関係な境界は保持。`];
+      if (issue.type === 'panel_layout') return [compact
+        ? `Panel ${issue.panel} FRAME CONTENT OVERRIDE: recompose inside the ${boundaryRepair ? 'corrected' : 'unchanged'} panel rectangle. Do not preserve the reported defective crop. Preserve explicit intentional crops and breakouts. 指摘された頭/髪/手足/道具の欠けを直す。配置前に枠との明瞭な余白を予約し、必要な内部構図変更を許容。指定Camera/動作を弱めず、${boundaryRepair ? '修正後の枠へ収める' : 'ページ溝は動かさない'}。全人物/台詞/対象外コマを保持。`
+        : `Panel ${issue.panel} FRAME CONTENT OVERRIDE: when the reported defect is clipping or a severed contour, recompose inside the ${boundaryRepair ? 'corrected' : 'unchanged'} panel rectangle to restore the specifically required head, hair, limb or prop contour with visible clearance from the border. Do not preserve the reported defective crop. Reserve that clearance before placing the actors; shift the internal framing as needed without flattening the approved camera${boundaryRepair ? ' or shrinking the action into a static pose' : ', shrinking the action into a static pose, or moving page gutters'}. Preserve explicit intentional crops and breakouts, all required cast and dialogue, and ${boundaryRepair ? 'the content of adjacent panels in their corrected frames' : 'every unaffected panel'}.`];
       return [];
     }).join('\n');
     const sourceLayout = effectiveMode === 'single-image'
       ? 'Edit the same single illustration. Do not introduce panels, a comic page, a collage, additional scenes, unrequested characters, or a new setting.'
-      : `Edit the same manga page. Preserve exactly ${panelCount} separate visible panels and the original page geometry. Do not merge, omit, duplicate, or reorder panels.`;
-    if (compact) return `${String(originalPrompt)}
-IMAGE QUALITY CORRECTION ATTEMPT ${attempt}/${maxAttempts}: 添付1は修正元。${effectiveMode==='single-image'?'同じ一枚絵、コマ/別場面を追加しない。':`同じ${panelCount}コマ、数/配置/読順を保持。統合/欠落/重複/並替え禁止。`}
+      : `Edit the same manga page. Preserve exactly ${panelCount} separate visible panels and ${boundaryRepair ? 'the approved panel topology, allowing the reported boundary corrections and adjacent reflow' : 'the original page geometry'}. Do not merge, omit, duplicate, or reorder panels.`;
+    if (compact) return `IMAGE QUALITY CORRECTION ATTEMPT ${attempt}/${maxAttempts}: 添付1は修正元。${effectiveMode==='single-image'?'同じ一枚絵、コマ/別場面を追加しない。':`同じ${panelCount}コマ、数/${boundaryRepair?'分割構造':'配置'}/読順を保持。統合/欠落/重複/並替え禁止。`}
+${pageReflow}
 修正対象（描画しない）:
 ${concreteIssues || '- 具体的な指摘なし。変更しない。'}
+${letteringRules}
 ${structuralOverrides}
 ${anatomyRepair}
 ${bubbleOrderRepair}
 ${bubbleMoves}
-指定は誤った元画像より優先。指摘箇所だけ最小限に直し、ページを描き直さず、参照シートの配置を転載しない。既に正しい全台詞/話者/尾/人物同一性/人数/衣装/動作/表情/Camera/画角/書体/画風/仕上げを保持。${isMonochromePrompt(originalPrompt)?'白黒・正しい墨と網点を維持し、指摘された色/灰色/全体の色被りだけを除去。':'正しい色を保持。'}修正に必要な接触/遮蔽/局所影だけ整合させ、衣装修正で演技や構図を平坦化しない。欠員の指摘がある場合だけ指定人物を指定枠へ一人戻し、他の人物を追加しない。修正箇所と全ての台詞/話者/人数/手足・道具の所有/Camera/変更外の絵を検証。物と人体の遮蔽境界、印字の実面・天地を辿り、文字を画布へ直立させない。脚本のシュールな出来事と正しい隣接面を保持。話者ラベル/メタデータ/翻訳/注釈/余計な文字を描かない。`;
-    return `${String(originalPrompt)}
-
-  IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${maxAttempts}):
+指定は誤った元画像より優先。${boundaryRepair?'修正後の枠へ絵を再構図し、必要な隣接コマの変更を許容。':'指摘箇所だけ最小限に直し、ページを描き直さず、'}参照シートの配置を転載しない。既に正しい全台詞/話者/尾/人物同一性/人数/衣装/動作/表情/Camera/画角/書体/画風/仕上げを保持。${isMonochromePrompt(originalPrompt)?'白黒・正しい墨と網点を維持し、指摘された色/灰色/全体の色被りだけを除去。':'正しい色を保持。'}${boundaryRepair?'新しい枠内で接触/遮蔽/影を再構成し、':'修正に必要な接触/遮蔽/局所影だけ整合させ、'}衣装修正で演技や構図を平坦化しない。欠員の指摘がある場合だけ指定人物を指定枠へ一人戻し、他の人物を追加しない。修正箇所と全ての台詞/話者/人数/手足・道具の所有/Camera/変更外の絵を検証。物と人体の遮蔽境界、印字の実面・天地を辿り、文字を画布へ直立させない。脚本のシュールな出来事と正しい隣接面を保持。話者ラベル/メタデータ/翻訳/注釈/余計な文字を描かない。${approvedReference}`;
+    return `IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${maxAttempts}):
   SOURCE IMAGE TO EDIT: the first attached image is the current retained candidate, not a character sheet.
   ${sourceLayout}
+  ${pageReflow}
   CHANGE:
   Correct only the concrete visible defects listed below, using the smallest coherent edit:
   ${concreteIssues || '- No concrete issue was supplied; do not introduce any change.'}
+  ${letteringRules}
   ${structuralOverrides}
   ${anatomyRepair}
   ${bubbleOrderRepair}
@@ -327,13 +374,13 @@ ${bubbleMoves}
   PRESERVE:
   Preserve the approved dialogue, cast identities and counts, story action, canonical clothing, reading order, camera, crop, typography, ${isMonochromePrompt(originalPrompt) ? 'and already-correct ink/tone assignments. Preserve the monochrome medium; remove the reported forbidden color or grey wherever visible, including page-wide tint if reported, without altering correct shapes, text or acting' : 'colors, and already-correct content outside the defects'}.
   Approved requirements take priority over incorrect source pixels: preservation never locks the reported defect. The listed corrections override source preservation only for their identified targets; everything else remains protected.
-  Keep the original as the visual baseline. Never redraw the page from scratch or copy the reference-sheet layout.
+  Keep the original as the visual baseline. ${boundaryRepair ? 'Recompose the affected and adjacent panels into the corrected frame scaffold; preserve their complete content and visual finish. Do not copy the reference-sheet layout.' : 'Never redraw the page from scratch or copy the reference-sheet layout.'}
   Keep correct acting, expressions, camera dynamism and visual finish; a costume correction must not flatten poses or staging.
-  Allow only necessary local contact and shadow changes caused by fixing the listed defect; do not freeze the defective geometry itself.
+  ${boundaryRepair ? 'Reconstruct contacts, overlaps and shadows within the corrected panel rectangles; do not retain the source gutter positions.' : 'Allow only necessary local contact and shadow changes caused by fixing the listed defect; do not freeze the defective geometry itself.'}
   VERIFY:
   Check the corrected defect against the approved prompt and reference sheets. Check every dialogue line, its speaker, cast identity, hand and prop ownership, camera and unchanged regions for regressions.
   Trace repaired object/body occlusion boundaries and text alignment to the actual printed face. Keep source-supported surreal events; do not straighten text to the canvas or alter correct neighboring surfaces.
-  Do not add speaker names, metadata, translations, annotations or extra text. Do not invent unrequested characters; only a listed missing approved actor may be restored, once in its reported panel.`;
+  Do not add speaker names, metadata, translations, annotations or extra text. Do not invent unrequested characters; only a listed missing approved actor may be restored, once in its reported panel.${approvedReference}`;
   }
 
   const preservationLock = effectiveMode === 'single-image'
@@ -350,6 +397,7 @@ IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${maxAttempts}):
 ${preservationLock}
 Correct only these concrete visible issues:
 ${concreteIssues || '- No concrete issue was supplied; preserve the approved page without adding content.'}
+${letteringRules}
 ${anatomyRepair}
 ${bubbleOrderRepair}
 ${bubbleMoves}
@@ -404,7 +452,8 @@ export async function runPageImageQuality(contract, options) {
       repairPrompt=buildImageQualityRepairPrompt({originalPrompt:repairPromptSource,issues,mode:contract.kind,
         panelCount:contract.count,sourceMode:repairSourceMode,maxAttempts:2,compact:true});
     }
-    if(repairPrompt.length>repairPromptMaxChars)throw Error('修正指示が画像APIの上限を超えます。指摘を切り捨てず元画像を保持します。');
+    if(repairPrompt.length>repairPromptMaxChars)throw Object.assign(new Error('修正指示が画像APIの上限を超えます。指摘を切り捨てず元画像を保持します。'),
+      {code:'IMAGE_PROMPT_BUDGET',promptLength:repairPrompt.length,promptMaxChars:repairPromptMaxChars});
     onProgress('総合検査の指摘をまとめて1回修正します。修正後の再検査・自動再修正は行いません。');
     const repaired=await generateRepairCandidate(repairPrompt,originalCandidate);
     if(!repaired?.base64Img)throw Error('修正画像を取得できませんでした。元画像を保持します。');

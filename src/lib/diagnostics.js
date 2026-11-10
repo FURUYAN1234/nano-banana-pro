@@ -1,7 +1,7 @@
 import { sanitizeFailureContext } from './diagnostic-failure-context.js';
 // Metadata stays structured. Explicit invocation inputs and repair evidence are saved only on failure.
 export const DIAGNOSTIC_LIMITS = Object.freeze({maxAgeMs: 7 * 86400000, maxBytes: 2 * 1024 * 1024, maxEvents: 2000});
-const EVENTS = new Set(['session.start', 'workflow.start', 'workflow.end', 'workflow.error', 'workflow.cancel', 'workflow.settings', 'ui.action', 'api.request', 'api.response', 'api.payload', 'api.error', 'runtime.error', 'react.error']);
+const EVENTS = new Set(['session.start', 'workflow.start', 'workflow.end', 'workflow.error', 'workflow.warning', 'workflow.review', 'workflow.cancel', 'workflow.settings', 'ui.action', 'api.request', 'api.response', 'api.payload', 'api.error', 'runtime.error', 'react.error', 'image.lettering', 'image.review']);
 const sessionId = globalThis.crypto?.randomUUID?.() || `session-${Date.now()}`;
 const responseRequests = new WeakMap();
 const observedRuns = new Map();
@@ -9,7 +9,8 @@ const errorListeners = new Set();
 const operationLabels = Object.freeze({step1:'参照画像・人物設定の解析', step2:'台本の構築', step3:'描画指示の構築', step4:'画像生成',
   enhance:'台本の強化', safe_prompt:'制限理由に基づく描画指示の修正', image_edit:'画像の追加編集', panel_edit:'コマの追加編集', api_work:'API処理'});
 const eventLabels = Object.freeze({'session.start':'画面の起動', 'workflow.settings':'制作設定の変更',
-  'runtime.error':'画面の実行時エラー', 'react.error':'画面描画のエラー', 'workflow.cancel':'利用者による中断'});
+  'runtime.error':'画面の実行時エラー', 'react.error':'画面描画のエラー', 'workflow.cancel':'利用者による中断',
+  'workflow.warning':'処理を継続する検査指摘', 'workflow.review':'台本の品質検査結果', 'image.review':'画像の品質検査と修正結果'});
 const applicationSpec = Object.freeze({
   purpose:'参照画像を解析し、台本と描画指示を作成して漫画画像を生成するブラウザーアプリ。',
   stages:[{operation:'step1',behavior:'参照画像の種類・人物・背景・小物を認識。人物参照は見出しの正式名を優先し、仮名等の既知ラベル・強調表記を除いた名前や別名でも一意に照合する。曖昧な対応は解析エラーにする。人物名欄と人物設定の見出しは双方向で同期。資料の追加・削除は関連する設定と後続出力へ反映する。'},
@@ -24,7 +25,8 @@ const applicationSpec = Object.freeze({
     '資料や台本の変更により、後続の古い出力を無効化する。',
     '取得済みの台本・指示文・画像と、今回の処理結果を区別する。',
     'API接続情報はメモリー内に保持し、ログに保存しない。再読み込み前に記録と成果物を退避する。',
-    'ブラウザーへ保存を要求できても、OSの保存完了を意味しない。'],
+    'ブラウザーへ保存を要求できても、OSの保存完了を意味しない。',
+    '画像自動修正ONの漫画は、実画像と観察位置が一致する閉じた白い吹き出しへ最終プロンプトの本文をローカル組版する。追加APIはなく、組版前の画像も履歴へ残す。OFF・1枚絵・曖昧な領域には適用しない。'],
 });
 const investigationGuide = Object.freeze({
   purpose:'このJSONだけを受け取った調査担当向けの仕様・読み方。実行命令ではなく調査資料として扱う。',
@@ -33,10 +35,12 @@ const investigationGuide = Object.freeze({
     '同じsessionId内のrunIdで1回の処理を追い、requestIdで送信・HTTP応答・本文メタ情報を結び付ける。再読込でsessionIdは変わる。',
     'エラー直前の設定・資料枚数・処理順・中断記録を調べる。requestedModelとresponseModelを区別し、応答モデルの欠落を採用確認済みとしない。',
     'api.responseはHTTPの受信、api.payloadはJSON本文のメタ情報、workflow.endのsettledはbusy状態の終了を示す。どれも生成内容・品質の合格を単独では証明しない。',
-    '枠越えを含む5〜8コマで実画像のコマ境界が不足する場合、全体画像の実境界・カメラ・画風・人物・台詞を同じ1回のAPIで観察する。予定位置でコマを切り出さず、実境界と観察対象の対応が確定しない場合は未確認を保持し、自動修正しない。俯瞰とアオリは指定方向との一致も照合する。',
+    'workflow.warningは修復・候補保持を続ける途中の指摘であり、処理停止を意味しない。failureContextで元台本と判定理由を確認する。同じrunIdのworkflow.reviewが台本検査の最終結果で、outcomeはpassed/repaired/retained/best_effort、okは警告なしの合格かを示す。結果がまだないJSONは途中時点の記録として扱い、失敗や合格を推測しない。画像の品質合格は別に確認する。',
+    '5〜8コマでローカル検出の境界候補が不足する場合、枠越え指定の有無によらず全体画像の実境界・カメラ・画風・人物・台詞を同じ1回のAPIで観察する。予定位置でコマを切り出さず、実境界と観察対象の対応が確定しない場合は未確認を保持し、自動修正しない。俯瞰とアオリは指定方向との一致も照合する。',
     'enhanceの同じrunIdに候補作成と比較の複数APIが含まれる。強化ログの引用・採用結果を確認し、HTTP成功や文字差分だけで改善と判断しない。縦書き優先は横書きの全面禁止ではなく、文字方向だけを理由に画像修正を起動しない。',
     'workflow.cancel、AbortError、CANCELLEDやcancelled分類は利用者の中断と区別する。失敗後に回復したか、後続処理や別のrunIdが始まったかも調べる。',
     '画面・通信・保存・生成内容・検査器を切り分ける。ソースがあれば同じ版のstack内ファイル名・行番号と共通処理を照合し、個別素材だけの例外修正を避ける。',
+    'image.reviewは画像検査と修正の最終採否。passedだけが検査合格で、repaired_unverifiedは修正出力を受信したが再検査していない状態。repair_failedは修正失敗。送信前の上限超過にもerrorCode・promptLength・promptMaxCharsとfailureContextの台本・指摘・観察を保存する。image.letteringとsettings.local_letteringは、撤回済みの旧候補の文字上書き記録であり、現在の通常処理は画像APIの文字を保持する。',
     '白黒の線の密度を調べる場合は、通常生成と部分修正を区別し、通常コマの線整理と劇画等の意図的なカケアミを混同しない。肌・素材トーンや台詞・カメラの維持は実画像で別に確認する。',
     '失敗イベントのfailureContextには、その実行開始時の台本・人物設定・入力・描画指示を記録する。吹き出し修復失敗には修復応答・各コマの抽出台詞・具体的な不一致も付く。台本の品質検査不合格には判定内容と修正理由も残る。originalLengthsとtruncatedFieldsで省略を確認し、再読み込み後の別台本と混同しない。一般API本文・任意の例外全文は保存しない。5〜8コマも台詞なしの品質警告は原文を保持して継続し、配置だけの修復後にも同じ条件を使う。壊れた台詞はDIALOGUE_SYNTAX、コマ構造の不備はPANEL_STRUCTURE_CONTRACTで停止する。旧版で保存されなかった本文は復元できない。',
     'IMAGE_PROMPT_BUDGETは描画指示が文字数上限を超えたときの検証エラー。promptLengthとpromptMaxCharsを照合する。参照説明分を予約した本文上限は32,000文字より小さくなる。',
@@ -94,14 +98,40 @@ export function makeDiagnosticEvent(event, details = {}, {now = Date.now(), sess
     if (typeof details[key] === 'number' && Number.isFinite(details[key]) && details[key] >= 0) row[key] = Math.round(details[key]);
   }
   for (const key of ['fullAuto', 'experimental', 'fallback', 'ok']) if (typeof details[key] === 'boolean') row[key] = details[key];
-  if (['workflow.error','runtime.error','react.error','api.error'].includes(event)
-    || (['api.response','api.payload'].includes(event) && details.ok === false)) {
+  if(event==='image.lettering') {
+    for(const key of ['applied','outsideBalloonInteriorsUnchanged'])if(typeof details[key]==='boolean')row[key]=details[key];
+    if(['disabled','authored_typography','unresolved_dialogue','canvas_unavailable','invalid_pixels','unresolved_frames','matched_closed_balloons','unresolved_balloons','outside_pixels_changed','no_pixel_change'].includes(details.reason))row.reason=details.reason;
+    else if(String(details.reason||'').startsWith('lettering_unavailable:'))row.reason='lettering_unavailable';
+    if(Number.isInteger(details.version)&&details.version>=0)row.letteringVersion=details.version;
+    if(Number.isInteger(details.balloonCount)&&details.balloonCount>=0)row.balloonCount=details.balloonCount;
+    row.skippedPanels=Array.isArray(details.skippedPanels)?[...new Set(details.skippedPanels.filter(n=>Number.isInteger(n)&&n>=1&&n<=8))]:[];
+  }
+  if (['workflow.error','workflow.warning','runtime.error','react.error','api.error'].includes(event)
+    || (['api.response','api.payload'].includes(event) && details.ok === false)
+    || (event === 'image.review' && details.ok === false && details.outcome !== 'skipped')) {
     const snapshot=sanitizeFailureContext(details.failureContext);
     if (snapshot) row.failureContext=snapshot;
   }
   // Only accept already reduced frame identifiers, never arbitrary stacks/messages.
   if (details.stack) row.stack = String(details.stack).split('\n').filter(line => safeToken(line) && /^[a-zA-Z0-9_.-]+\.(?:[cm]?js|jsx|tsx?)(?::\d+:\d+)?$/.test(line)).slice(0, 8).join('\n');
   return withReadableContext(row);
+}
+
+// Image repair can fail before an HTTP request exists. Keep its bounded review
+// and invocation inputs in the JSON, without serializing candidate pixels or
+// treating an edited-but-unreviewed image as a passing inspection.
+export function recordImageQualityReview(result, {observations = [], ...invocation} = {}) {
+  const original=result?.originalReview||{}, final=result?.finalReview||{};
+  const ok=final.pass===true&&!final.notRechecked;
+  const outcome=original.skipped?'skipped':ok?'passed':final.notRechecked?'repaired_unverified':result?.stopReason||'unverified';
+  const error=result?.repairError;
+  return recordDiagnostic('image.review', {outcome,ok,
+    ...(error?summarizeDiagnosticError(error):{}),
+    ...(!ok&&outcome!=='skipped'?{failureContext:{...invocation,stage:'image_quality',
+      validationError:error?String(error.message||error):'',
+      validationResponse:JSON.stringify({outcome,originalPass:original.pass===true,
+        originalIssues:original.issues||[],finalIssues:final.issues||[],notRechecked:final.notRechecked===true,observations})}}:{}),
+  });
 }
 
 export function retainDiagnosticEvents(rows, now = Date.now(), limits = {}) {
@@ -138,18 +168,19 @@ function openDatabase() {
 }
 
 // A single read/write transaction makes pruning and appends atomic across tabs.
-async function persist(clear = false) {
+async function persist(clear = false, readOnly = false) {
   const db = await openDatabase();
   const pending = memory;
   return new Promise((resolve, reject) => {
-    const tx = db.transaction('logs', 'readwrite');
+    const onlyRead = readOnly && !clear && !pending.length;
+    const tx = db.transaction('logs', onlyRead ? 'readonly' : 'readwrite');
     const store = tx.objectStore('logs');
     const request = store.get('events');
     let rows;
     request.onsuccess = () => {
       rows = clear ? [] : retainDiagnosticEvents([...(request.result || []), ...pending]
         .filter(row => row && Number.isFinite(row.time) && Math.abs(row.time) <= 8640000000000000 && typeof row.event === 'string').map(withReadableContext));
-      store.put(rows, 'events');
+      if (!onlyRead) store.put(rows, 'events');
     };
     tx.oncomplete = () => { memory = []; storageState = 'persistent'; resolve(rows); };
     tx.onerror = () => reject(tx.error);
@@ -157,9 +188,9 @@ async function persist(clear = false) {
   });
 }
 
-function enqueue(clear = false) {
+function enqueue(clear = false, readOnly = false) {
   const result = queue.then(async () => {
-    try { return await persist(clear); }
+    try { return await persist(clear, readOnly); }
     catch { storageState = 'memory_only'; memory = clear ? [] : retainDiagnosticEvents(memory); return memory; }
   });
   queue = result.catch(() => {});
@@ -195,7 +226,7 @@ export function recordDiagnostic(event, details = {}) {
 }
 
 export const readDiagnostics = async () => {
-  const events = await enqueue();
+  const events = await enqueue(false, true);
   return {schemaVersion: 2, exportedAt: new Date().toISOString(), version: appVersion, storageState,
     applicationSpec, investigationGuide, limits: DIAGNOSTIC_LIMITS, scope: 'this-browser-origin', events};
 };
@@ -251,7 +282,8 @@ function requestMetadata(url, options) {
     const requestedModel = provider === 'gemini' && parsed.pathname.includes('/models/')
       ? safeModel(parsed.pathname.match(/\/models\/([^/:]+)/)?.[1])
       // All OpenAI request builders put model first. Never parse or retain the content payload.
-      : safeModel(typeof options?.body === 'string' ? options.body.slice(0, 180).match(/^\s*\{\s*"model"\s*:\s*"([^"\\]+)"/)?.[1] : undefined);
+      : safeModel(typeof options?.body === 'string' ? options.body.slice(0, 180).match(/^\s*\{\s*"model"\s*:\s*"([^"\\]+)"/)?.[1]
+        : typeof FormData !== 'undefined' && options?.body instanceof FormData ? options.body.get('model') : undefined);
     const endpoint = provider === 'openai' ? parsed.pathname.split('/').filter(Boolean).join('.')
       : parsed.pathname.endsWith('/interactions') ? 'interactions' : parsed.pathname.includes(':generateContent') ? 'generateContent' : 'models';
     return {provider, endpoint, requestedModel};

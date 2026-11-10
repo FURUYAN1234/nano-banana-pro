@@ -49,7 +49,7 @@ def new(title,kicker='操作ガイド',sources=''):
  c.setFont('JPB',21); c.setFillColor(INK); c.drawString(M,H-73,title)
  c.setStrokeColor(HexColor('#cfdddf')); c.line(M,H-89,W-M,H-89)
  c.bookmarkPage(f'p{page}'); c.addOutlineEntry(title,f'p{page}',0,False)
- c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.3.9対応 | 2026年11月10日更新 | A4 日本語版')
+ c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.4.0対応 | 2026年11月10日更新 | A4 日本語版')
  c.drawRightString(W-M,31,f'{page:02d} / 19')
  if sources: c.setFont('JP',7.5); c.drawString(M,45,'根拠: '+sources+'（出典一覧は19ページ）')
  transcript.append('\n\n'+str(page)+'. '+title)
