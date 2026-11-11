@@ -1828,6 +1828,29 @@ const extractDiegeticReplicaNames = (text, allPanelCharacters) => {
   return wholeCast ? [...allPanelCharacters] : explicit;
 };
 
+// PageCompositionの名前だけでは登場を確定しない。元コマの肯定的な描画指示を
+// 照合し、無言のゲストと画中人物を分ける。引用・名前の表示・不在は根拠にしない。
+const scriptedFigurePresence = (panelText, castList, candidates) => {
+  if (!candidates.length) return [];
+  const action = extractActionOnly(panelText, castList)
+    .replace(/^\s*\[(?:Camera|EMOTION):[^\n]*$/gim, '')
+    .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, '');
+  const absent = readOffscreenCast(action, castList, candidates);
+  const clauses = action.split(/[。！？\n]/u);
+  const figure = '(?:風刺)?(?:再現像|肖像|人物像|イラスト|姿|像)';
+  return [...new Set(candidates)].flatMap(name => {
+    if (!name || absent.has(name)) return [];
+    const escaped = escapeRegex(name);
+    const subject = new RegExp(`${escaped}(?:の${figure})?(?:だけ|のみ)?(?:は|が|も|を)`, 'u');
+    const depiction = new RegExp(`(?:${escaped}の${figure}|(?:再現像|肖像|人物像)の${escaped}|(?:画面(?:の中|内)|映像(?:の中|内)|写真(?:の中|内)|絵(?:の中|内))の${escaped})`, 'u');
+    const visible = clauses.filter(clause => subject.test(clause)
+      && /立[つちっ]|座[るりっ]|歩[くきい]|走[るりっ]|踊|笑|振|見上|見下|頷|うなず|掲|持|傾|下ろ|伸|ひね|見守|待[つっ]|ポーズ|構え|手を|腕を|膝を|腰を|身を|顔を|体を|身体を|見える|映[るしっ]|写[るしっ]|描[くきい]|見せ|保持/u.test(clause)
+      && !/(?:描かない|描かず|描くな|表示しない|映さない|写さない|姿を見せない|姿を見せず|不在|登場しない|消えている)/u.test(clause));
+    if (!visible.length) return [];
+    return [{name, kind: visible.some(clause => !depiction.test(clause)) ? 'physical' : 'depicted'}];
+  });
+};
+
 export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   fullPanelText = stripSourceMetadata(fullPanelText);
   const compact = Boolean(options.compact);
@@ -1842,10 +1865,15 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   );
   // An authored foreground crossing is owned and counted in its source frame.
   // It is neither a new local actor nor an absent character to erase here.
-  const incomingCast=new Set((options.incomingCast||[]).map(name=>flatCharLookup[name]).filter(Boolean));
-  const overlayCast=new Set((options.overlayCast||[]).map(name=>flatCharLookup[name]).filter(Boolean));
+  const scriptedNames = (options.scriptedNames || []).filter(name => typeof name === 'string' && name.trim());
+  const scriptedFigures = scriptedFigurePresence(fullPanelText, castList, scriptedNames);
+  const scriptedDepictions = scriptedFigures.filter(figure => figure.kind === 'depicted').map(figure => figure.name);
+  const resolvePageName = name => flatCharLookup[name] || (scriptedNames.includes(name) ? name : null);
+  const incomingCast=new Set((options.incomingCast||[]).map(resolvePageName).filter(Boolean));
+  const overlayCast=new Set((options.overlayCast||[]).map(resolvePageName).filter(Boolean));
   const pageCast=new Set([...incomingCast,...overlayCast]);
-  const castScope=pageCast.size?`LOCAL CAST SCOPE: 以下はこの場面の独立人物のみ。${[...pageCast].map(name=>`[${name}]`).join(', ')}の越境身体は元コマで一度だけ数え、この人数・不在・描法の規則から除外。別身体を追加せず一続きの前景を保持。${overlayCast.size?'この小コマ自身の別時点の登場は下記人数に含み、前景と混同して消さない。':''}\n`:'';
+  const castScope=(pageCast.size?`LOCAL CAST SCOPE: 以下はこの場面の独立人物のみ。${[...pageCast].map(name=>`[${name}]`).join(', ')}の越境身体は元コマで一度だけ数え、この人数・不在・描法の規則から除外。別身体を追加せず一続きの前景を保持。${overlayCast.size?'この小コマ自身の別時点の登場は下記人数に含み、前景と混同して消さない。':''}\n`:'')
+    +(scriptedDepictions.length?`SCRIPTED DEPICTED FIGURES: ${scriptedDepictions.map(name=>`[${name}]`).join(', ')}. 画面/絵の中の描像。指定の大きさ/ポーズ/連続性を保持。現場の身体数・ABSENT対象外で、来館者化/消去/小さな複製化は禁止。PAGE DOMINANT FIGUREは指定境界だけを一体で越え、別の身体を増やさない。\n`:'');
 
   // The bubble parser is the source of truth for speakers, including multiple
   // utterances on one line and speakers written after the quote.
@@ -1947,6 +1975,13 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       allPanelCharacters.push(canonicalName);
     }
   });
+  for (const figure of scriptedFigures) {
+    if (figure.kind === 'physical' && !allPanelCharacters.includes(figure.name)) allPanelCharacters.push(figure.name);
+  }
+  // 画中だけの登場を、参照があるという理由で現場の身体として追加しない。
+  for (let i=allPanelCharacters.length-1;i>=0;i--) {
+    if (scriptedDepictions.includes(allPanelCharacters[i])) allPanelCharacters.splice(i,1);
+  }
   // A guest introduced by dialogue remains a person when later acting silently.
   // Infer a shortened subject only when it identifies one known story guest.
   const storyGuestsByName = [...new Set(extractDialogueOnly(validCharacters.length ? options.storyText || '' : '', castList, { asEntries: true })
@@ -1957,6 +1992,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     const candidates = storyGuestsByName.filter(name => name === subject || name.endsWith(subject));
     if (candidates.length !== 1) continue;
     const guest = candidates[0];
+    if (scriptedDepictions.includes(guest)) continue;
     const offscreen = new RegExp(escapeRegex(subject) + '(?:は|が)(?:引き続き)?(?:画面外|画角外|フレーム外)(?:にいる|に居る|に残|で待機|[。\\n])').test(visibleGuestText);
     if (!offscreen && !allPanelCharacters.includes(guest)) allPanelCharacters.push(guest);
   }
@@ -1981,7 +2017,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const panelActors = speakers.filter(speaker => !offscreenCast.has(speaker)&&!incomingCast.has(speaker)).slice(0, 3).map(s => `[${s}]`);
   const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject)&&!incomingCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
-  const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, [...new Set([...allPanelCharacters,...canonicalValidCharacters])]);
+  const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, [...new Set([...allPanelCharacters,...canonicalValidCharacters])]).filter(name=>!scriptedDepictions.includes(name));
   const replicaBrackets = replicaNames.map(c => `[${c}]`);
   // 肩越しの手前人物と、奥で注目される話者を混同しない。
   // 無言コマでもActionに明記された登場人物をキャスト制約へ残す。
@@ -1992,7 +2028,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
   // このコマに一切登場しないキャラ（No-Show）を特定
-  const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c)&&!pageCast.has(c));
+  const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c)&&!pageCast.has(c)&&!scriptedDepictions.includes(c));
 
   const storyGuests = allPanelCharacters.filter(c => !canonicalValidCharacters.includes(c));
 
@@ -2084,7 +2120,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
     let negativeConstraint = "";
     if (canonicalValidCharacters.length > 0) {
-      const allNames = canonicalValidCharacters.filter(c=>!incomingCast.has(c)).map(c => `[${c}]`).join(', ');
+      const allNames = canonicalValidCharacters.filter(c=>!pageCast.has(c)&&!scriptedDepictions.includes(c)).map(c => `[${c}]`).join(', ');
       negativeConstraint = compact
         ? `\nABSENT unless explicitly required: ${allNames}.`
         : `\nDo NOT draw ${allNames} unless explicitly required.`;

@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.4.6** / 現在のソース版: **v7.4.6**
+> Current source version: **v7.4.7** / 現在のソース版: **v7.4.7**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -98,6 +98,9 @@ Four- to eight-panel generation authors the required panels from STEP2. It does 
 Four- to eight-panel image prompts separate printable dialogue from speaker, balloon-tail and placement instructions. The same contract applies to API generation and Web copy. Names spoken in dialogue, such as an address or self-introduction, remain printable text. For example, 'Akari, how are you feeling?' keeps the spoken name. Because the image model may miss an instruction, check the actual lettering after generation. / 4～8コマの画像指示文は、吹き出しに印字する台詞本文と、話者・吹き出しの尻尾・配置の指示を分けます。API生成とWeb貼り付けで共通です。「アカリ、顔色はどう？」のような呼びかけや名乗りは本文として残します。画像モデルが指示を外す可能性はあるため、生成後は実際の文字も確認してください。
 
 In free-layout mode, STEP2 designs the whole page from an ordinary topic: a dominant full or half figure, smaller story panels, connected overlaps across several panels and suitable full bleed. Four-panel pages can use this too. The script authors its own frame proportions instead of being limited to fixed layouts; STEP3 keeps the story, cameras and dialogue. The image can adjust boundaries naturally while preserving readability and the large/small contrast. A numerical ratio mismatch alone does not trigger regeneration. Foreground continuity is checked from visible evidence, separately from later appearances of the same character. Legacy scenarios and the fixed four-strip mode remain supported. / 「4～8コマ生成」では、題材だけの通常入力から、ページを大きく占める全身・半身、周囲の小コマ、複数コマに重なる一続きの人物、タチキリを設計します。4コマでも使用できます。固定配置だけに限定せず、シナリオがコマの位置と比率を決め、STEP3が物語・カメラ・台詞とともに保持します。大小の対比と可読性を保つ自然な境界調整を許容し、数値比率の差だけでは再生成しません。前景の身体の連続性と、同じ人物の別時点の登場を区別して検査します。旧台本と従来の横長4段も使用できます。
+
+A foreground figure can be a silent guest without a reference sheet when the source panel explicitly stages that person. A figure inside a screen or picture stays a depicted figure, separate from live visitors and tiny replicas. Quoted names, text-only labels and explicitly absent people do not establish a foreground. / 前景には、参照シートがなくても元コマに描画が明記された無言のゲストを指定できます。画面や絵の中の人物は、現場の来館者や小さな複製像と区別して保持します。引用中の名前・文字表示だけ・明示された不在は、前景人物の根拠にしません。
+
 
 In four-panel mode, enter directions such as 'Panel 2 POP, panel 4 GEKIGA.' The four-panel count takes priority even if you also request six panels. Story numbers inside dialogue ('This manga had five panels') or props ('eight sheets') remain intact. In four- to eight-panel mode, you can request 'Six panels; panel 2 watercolor and panel 5 GEKIGA.' Without a count, AI plans four to eight panels from the topic. / 「4コマ生成（横長コマ）レガシー」では「2コマ目はPOP、4コマ目は劇画」のように指定できます。「全6コマで」と併記しても4コマ固定を優先します。台詞中の「この漫画は5コマだった」や、小物の「8枚」といった物語の数値は、そのまま扱います。「4～8コマ生成」なら「全6コマ。2コマ目は水彩、5コマ目は劇画」のように書けます。コマ数を書かず題材だけ入力しても4～8コマの範囲で構成します。
 
@@ -659,7 +662,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.4.6](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.6のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.4.7](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.6のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -719,7 +722,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.6 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.6 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.7 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.7 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -826,6 +829,10 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.4.7 (2026-11-12)
+- **[Fix & UX]** Fixed STEP3 foreground rejection for silent guests and depicted figures; distinguish visible staging from quoted or absent names. / STEP3で無言のゲストや画中人物を前景から誤って除外する不具合を修正。人物の実描画と引用・不在を区別。
+- **[Fix]** Kept repeated depiction rules concise so multi-panel image corrections retain the complete approved content within the API prompt budget. / 複数コマで繰り返す画中人物の説明を整理し、承認済みの内容を保持した画像修正指示がAPIの文字数上限に収まるよう調整。
 
 ### v7.4.6 (2026-11-11)
 - **[Fix & UX]** Fix false camera rejections and page-composition retry misclassification in STEP2; retain the rejected candidate and validation reasons in diagnostics. / STEP2の日本語カメラ指定の誤検出と、ページ構成エラーがコマ数修正へ誤分類される問題を修正。不合格の生成候補と判定理由を不具合ログへ保存。

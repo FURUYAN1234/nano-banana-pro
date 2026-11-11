@@ -1,0 +1,130 @@
+{
+  "enabled": true,
+  "scenarioMode": "experimental-manga",
+  "scenario": "## タイトル: ポーズより一票\nLogline: 選挙に関する要約と経歴をめぐる主張・否定を見た五人は、画面の中でポーズを決め続ける展示役の再現像をよそに、模擬投票の一票へ目を向ける。\nLocation: 市民会館の選挙情報・模擬投票展示室\nVisualEvidence: 模擬投票箱と投票用紙、選挙情報モニター、制作室在籍時の役割をめぐる主張と解説員の否定を示す画面\nOutfit: ナオはコーラル色のスウェットと濃色スカート、ユキは淡色ブラウスと紺色カーディガン・スラックス、カナタは明るい色の短丈ジャケットとカジュアルパンツ、コハルはモーブ色のゆったりカーディガンとスカート、マコトは黒のロングコートと落ち着いた色のパンツ。全員、展示室を訪れた一般来館者の私服。展示役の風刺再現像は濃紺のジャケットと無地のシャツ、スラックス姿。\nPunchline: 静寂型 (シュール)\n\nPageComposition: {\"layout\":\"free\",\"frames\":[{\"x\":0.52,\"y\":0,\"w\":0.48,\"h\":0.2},{\"x\":0,\"y\":0,\"w\":0.48,\"h\":0.2},{\"x\":0.52,\"y\":0.22,\"w\":0.48,\"h\":0.22},{\"x\":0,\"y\":0.22,\"w\":0.48,\"h\":0.48},{\"x\":0.52,\"y\":0.46,\"w\":0.48,\"h\":0.24},{\"x\":0,\"y\":0.72,\"w\":1,\"h\":0.28}],\"reason\":\"選挙情報を読む小コマから、役割をめぐる主張と否定を示す中段へ進み、4コマ目で展示役の風刺再現像を最大に見せる。後半で模擬投票へ視線を移し、最下段の静かな一票で帰結させる。\",\"heroPanels\":[4],\"foregrounds\":[{\"panel\":4,\"character\":\"展示役\",\"over\":[3],\"placement\":\"画面内の風刺再現像をpanel4で頭から靴まで大きく描き、右肩と上腕だけをpanel3右下の余白へ連続して重ねる。panel3のモニター文字は隠さない。\"}],\"breakouts\":[],\"bleed\":[{\"panel\":4,\"edges\":[\"left\"]},{\"panel\":6,\"edges\":[\"bottom\"]}]}\n[1コマ目: 導入]\n[EMOTION: NORMAL]\n[Camera: 左前斜め上方、展示室の天井近くから約30度の俯瞰。モニターの表示面と来館者の頭頂、模擬投票箱の上面を一緒に収める中景。]\nBalloonLayout: [{\"speaker\":\"ナオ\",\"x\":0.72,\"anchor\":\"画面右手前、内巻きボブの頭の輪郭\",\"route\":\"モニター下の余白から頭側へ短く尾を通す\"}]\n状況: 市民会館の選挙情報・模擬投票展示室。施設備品の大型モニターには、要約の一節「選挙不参加を『洗脳』と発言」と表示。画面内の展示役の風刺再現像は、片足を引き片手を腰に置いたモデルポーズ。赤みのあるオレンジのボブのナオはモニターへ肩を向け、眉を寄せて表示を読み、口を少し開く。隣のユキは丸眼鏡越しに画面を見て、眉を上げながら模擬投票箱の位置も確かめる。模擬投票箱は施設備品として二人の前に置かれ、まだ空。柔らかな色面と明瞭な輪郭のアニメ作画。\nナオ「投票の時間を『俺稼げるから』って？」\n[2コマ目: 提案の話題]\n[EMOTION: POP_ART]\n[Camera: 右後方の床近くから約15度の緩いアオリ。モニターの側面と画面内のポーズ像、来館者カナタの斜め横顔を近景で捉え、背景の展示パネルを奥へ圧縮する。]\nBalloonLayout: [{\"speaker\":\"カナタ\",\"x\":0.69,\"anchor\":\"画面右寄り、ウェーブヘアの頬と頭の輪郭\",\"route\":\"左上の空きから頭側へ尾を通し、モニターを横切らない\"}]\n状況: 同じ展示室で、施設備品のモニターには「選挙権の売買提案も話題」と要約された表示。画面内の展示役の風刺再現像は、片手を胸元に添え、もう片手を腰に置く雑誌風のポーズ。日焼け肌と明るい金髪のウェーブヘアのカナタは表示へ顔を向け、片眉を上げて口を尖らせる。ナオは横で模擬投票箱を見たまま、カナタの言葉に目だけを向ける。黒い太線と鮮やかな網点で人物とモニター枠を印刷ポップ風に描く。\nカナタ「選挙権の売買提案まで話題なの？」\n[3コマ目: 主張と否定]\n[EMOTION: SKETCH]\n[Camera: モニター左後方の高所から約45度の俯瞰、コハルの肩越し。タブレット状の表示面を斜めに見下ろし、頭頂と画面の透視を強調する。]\nBalloonLayout: [{\"speaker\":\"コハル\",\"x\":0.73,\"anchor\":\"画面右奥、小柄なツインテールの頭の輪郭\",\"route\":\"画面上端の余白から後頭部側へ尾を結ぶ\"}]\n状況: 展示室の大型モニターに「制作室在籍時の役割をめぐる主張」と「解説員『事実無根』と否定」の二つの表示が並ぶ。風刺再現像の展示役は、片肩を引いて片手を襟元に添えるポーズ。モーブブラウンのツインテールとアンダーリム眼鏡のコハルは表示を見比べ、眉を寄せ、唇を結んで首を少し傾ける。小柄なコハルの手元には施設備品の案内端末があり、画面を指で隠さず保持している。鉛筆の線と紙目を生かしたスケッチ調で、画面の文字は読み取れるよう鮮明にする。\nコハル「役割をめぐる主張に、否定動画か。」\n[4コマ目: 懸念が示される]\n[EMOTION: GEKIGA]\n[Camera: 展示室の床すれすれ、展示役の風刺再現像を左前斜めから仰角約20度で見上げる。頭から靴までの全身と模擬投票箱の前面を入れ、背後の展示壁の縦線を上へ収束させる。]\nBalloonLayout: [{\"speaker\":\"マコト\",\"x\":0.2,\"anchor\":\"画面左下、長い黒髪の頭部輪郭\",\"route\":\"左上の余白から後頭部側へ尾を通す\"}]\n状況: モニターの表示には「支持層の離反が懸念」とある。画面内の展示役の風刺再現像は、片膝をゆるめ、腰をひねり、片手を腰に置いた大きなポーズ。再現像の右肩と上腕がpanel3右下の余白へはみ出すが、表示文字にはかからない。マコトは模擬投票箱の横でモニターを見上げ、眉間にしわを寄せ、目を表示へ向け、口を引き結ぶ。黒髪は背中へまっすぐ垂れ、片手は展示台の縁に置く。劇画調の彫りの深い顔と細かな斜線で、主役の全身と展示室の奥行きを描く。\nマコト「支持が離れる懸念も、ここに出ているわ。」\n[5コマ目: 一票へ向かう]\n[EMOTION: NORMAL]\n[Camera: 展示室右上から約35度の俯瞰。模擬投票箱の投入口と、用紙を持つナオの手を中景に置き、奥にユキとモニター上の展示役のポーズ像を小さく収める。]\nBalloonLayout: [{\"speaker\":\"ユキ\",\"x\":0.7,\"anchor\":\"画面右奥、丸眼鏡とボブの頭の輪郭\",\"route\":\"右上の余白から頭側へ短く尾を通す\"}]\n状況: ナオは施設備品の模擬投票用紙を左手で持ち、右手を投入口へ伸ばしかけている。ユキはナオの肩越しに投入口を見て、眉をやわらげ、口元を小さく開いて案内する。ナオは用紙から投入口へ目を移し、体重を前足へ移す。モニターの展示役の風刺再現像は、片腕を胸元に沿わせたポーズのまま。背景には展示室の案内パネルと模擬投票箱の側面を残し、人物と手元を読みやすく色分けする。\nユキ「ナオ、箱の投入口はこっちだよ。」\n[6コマ目: 静かな帰結]\n[EMOTION: WATERCOLOR]\n[Camera: 展示室の左後方、高い位置から約40度の俯瞰で引く。模擬投票箱の上面、投票用紙を入れるナオ、周囲の来館者、壁面モニターを一枚に収め、床の目地で視線を箱へ導く。]\nBalloonLayout: []\n状況: ナオの右手から模擬投票用紙が施設備品の箱へ入る瞬間。ナオ、ユキ、カナタ、コハル、マコトはそれぞれ箱の投入口を見ており、誰もモニターを振り返らない。モニター内の展示役の風刺再現像だけは、片手を腰に置いたポーズを保っている。模擬投票箱の周囲に余白を残し、落ちる用紙と静かな視線の集まりを主役にする。人物・展示物・背景を淡い透明水彩の薄塗りで描き、文字や手元は判読できる濃さに保つ。\nセリフなし ",
+  "castList": "STYLE_TAG: COLOR\n\n## 1. ナオ\n\n| カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |\n| :--- | :--- | :--- |\n| **基本(Base)** | 性別: 女性<br>年齢感: 若い成人相当のキャラクターデザイン（学生） | **[WEIGHTS]: (female:1.6), (woman:1.4), (young adult:1.2)** |\n| **髪(Hair)** | 色: 赤みのあるオレンジ（ジンジャー）<br>長さ: ミディアム相当<br>構造: 毛先が内側に入るボブ。毛先は顎から首元あたり。頭頂とサイドに丸みがある。結んでいない。<br>前髪: 分け目のある前髪 | **[WEIGHTS]: (ginger hair:1.4), (medium-length internal round bob:1.5), (chin-to-neck-length hair:1.3), (parted bangs:1.2), (untied hair:1.2)** |\n| **顔(Face)** | 目: 茶色、丸みのある目<br>肌: 明るい肌色<br>髭: なし<br>眼鏡: なし | **[WEIGHTS]: (brown eyes:1.2), (fair skin:1.1), (no facial hair:1.2), (no glasses:1.5)** |\n| **服装(Outfit)** | 白いセーラー襟の半袖制服、赤いスカーフ、紺色のプリーツスカート、黒に近い紺のハイソックス、茶色のローファー | **[WEIGHTS]: (Japanese sailor school uniform:1.3), (white short-sleeved blouse:1.2), (red neckerchief:1.2), (navy pleated skirt:1.2), (dark knee socks:1.1)** |\n| **性格(Mind)** | **[OCR抽出]**: 「設定・元気で少しドジな少女。甘いものが大好きで、いつも何か食べている。誰とでも仲良くなれる。」髪は結んでいない。髪の長さに注意。ロングヘア厳禁、眼鏡厳禁。内巻きのミディアムボブ厳守。 | **[WEIGHTS]: (cheerful:1.3), (energetic:1.2), (clumsy:1.2), (loves sweets:1.2), (always snacking:1.1), (friendly:1.2)** |\n\n## 2. ユキ\n\n| カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |\n| :--- | :--- | :--- |\n| **基本(Base)** | 性別: 女性<br>年齢感: 若い成人相当のキャラクターデザイン（学生） | **[WEIGHTS]: (female:1.6), (woman:1.4), (young adult:1.2)** |\n| **髪(Hair)** | 色: 金髪<br>長さ: ボブ<br>構造: まっすぐなストレートボブ。毛先は顎から首元あたり。頭頂とサイドに丸みがある。<br>前髪: 分け目のある前髪 | **[WEIGHTS]: (blonde hair:1.4), (straight chin-length bob:1.5), (rounded bob silhouette:1.2), (parted bangs:1.2)** |\n| **顔(Face)** | 目: 青色<br>肌: 明るい肌色<br>髭: なし<br>眼鏡: 透明レンズの丸い眼鏡 | **[WEIGHTS]: (blue eyes:1.2), (fair skin:1.1), (no facial hair:1.2), (round glasses:1.3), (clear-lens glasses:1.2)** |\n| **服装(Outfit)** | 白いセーラー襟の半袖制服、赤いスカーフ、紺色のプリーツスカート、濃色のハイソックス、茶色のローファー | **[WEIGHTS]: (Japanese sailor school uniform:1.3), (white short-sleeved blouse:1.2), (red neckerchief:1.2), (navy pleated skirt:1.2), (dark knee socks:1.1)** |\n| **性格(Mind)** | **[OCR抽出]**: 「設定・読書好きな優等生。ナオの幼馴染で、いつも彼女の世話を焼いている。少し恥ずかしがり屋。」髪型はストレートボブ。ロングヘア厳禁。 | **[WEIGHTS]: (studious:1.3), (book lover:1.2), (diligent student:1.2), (caring:1.2), (childhood friend:1.1), (shy:1.2)** |\n\n## 3. カナタ\n\n| カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |\n| :--- | :--- | :--- |\n| **基本(Base)** | 性別: 女性<br>年齢感: 若い成人相当のキャラクターデザイン（学生） | **[WEIGHTS]: (female:1.6), (woman:1.4), (young adult:1.2)** |\n| **髪(Hair)** | 色: 明るい金髪<br>長さ: 肩から鎖骨付近に届く長さ<br>構造: ボリュームのあるウェーブヘア。サイドにふくらみがあり、毛先は緩くカール。<br>前髪: 分け目のある前髪 | **[WEIGHTS]: (blonde hair:1.4), (shoulder-length wavy hair:1.4), (voluminous hair:1.2), (loose curls:1.2), (parted bangs:1.1)** |\n| **顔(Face)** | 目: 明るい茶色から琥珀色<br>肌: 日焼けした褐色肌<br>髭: なし<br>眼鏡: なし | **[WEIGHTS]: (amber-brown eyes:1.2), (tanned skin:1.4), (no facial hair:1.2), (no glasses:1.5)** |\n| **服装(Outfit)** | 白い襟付きブラウス。胸元に赤いリボン。袖をまくり、ブラウスの裾を結んでいる。茶色系のプリーツスカート、ベルト、濃色のニーハイソックス、茶色の靴 | **[WEIGHTS]: (white tied blouse:1.3), (red bow:1.2), (rolled-up sleeves:1.1), (brown pleated skirt:1.2), (belt:1.1), (dark thigh-high socks:1.1)** |\n| **性格(Mind)** | **[OCR抽出]**: 「設定・陽気で流行に敏感なギャル。都市伝説ネタ厳禁。表現が豊か。」資料には明るく感情豊かな表情の指定もある。 | **[WEIGHTS]: (cheerful:1.3), (fashion-conscious:1.2), (gyaru:1.2), (expressive:1.3), (sociable:1.1)** |\n\n## 4. コハル\n\n| カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |\n| :--- | :--- | :--- |\n| **基本(Base)** | 性別: 女性<br>年齢感: 若い成人相当のキャラクターデザイン（学生）。資料上、ナオ・ユキ・カナタ・マコトよりひとまわり背が低い。 | **[WEIGHTS]: (female:1.6), (woman:1.4), (young adult:1.2), (petite:1.2)** |\n| **髪(Hair)** | 色: 灰みのある明るい茶色、モーブ系<br>長さ: ロング。左右の高い位置で結んだツインテールで、結び目にピンクの飾りがある。<br>構造: サイドに広がるツインテール。前髪は短めで、額に沿う。 | **[WEIGHTS]: (mauve-brown hair:1.3), (long hair:1.4), (twintails:1.5), (pink hair ties:1.2), (short bangs:1.1)** |\n| **顔(Face)** | 目: 青緑系に見える目<br>肌: 明るい肌色<br>髭: なし<br>眼鏡: 透明レンズの丸い、アンダーリム風の眼鏡 | **[WEIGHTS]: (blue-green eyes:1.1), (fair skin:1.1), (no facial hair:1.2), (glasses:1.2), (round under-rim glasses:1.4)** |\n| **服装(Outfit)** | ベージュのカーディガン、白い襟付きシャツ、赤いリボン、紺色のプリーツスカート、濃色の靴下。資料中にはゲーム機を持つ姿も描かれている。 | **[WEIGHTS]: (beige cardigan:1.3), (white collared shirt:1.1), (red ribbon:1.1), (navy pleated skirt:1.2), (dark socks:1.1)** |\n| **性格(Mind)** | **[OCR抽出]**: 「お金ネタ・レトロネタ・現金ネタ。都市伝説ネタ厳禁。夢見がち。」「アンダーリムの特徴ある眼鏡必須。ナオ・ユキ・カナタ・マコトよりひとまわり背が低い。」 | **[WEIGHTS]: (dreamy:1.3), (otaku:1.2), (whimsical:1.1), (shy:1.1), (shorter than her classmates:1.1)** |\n\n## 5. マコト\n\n| カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |\n| :--- | :--- | :--- |\n| **基本(Base)** | 性別: 女性<br>年齢感: 若い成人相当のキャラクターデザイン（学生）。ナオ・ユキ・カナタ・コハルと同級生。 | **[WEIGHTS]: (female:1.6), (woman:1.4), (young adult:1.2)** |\n| **髪(Hair)** | 色: 黒髪<br>長さ: ロング。資料の注記では腰までの長さ。<br>構造: まっすぐなストレートヘア。頭頂は比較的平らで、長い髪が肩から背中へ落ちる。<br>前髪: 分け目のある前髪。サイドの髪が頬に沿う。 | **[WEIGHTS]: (black hair:1.4), (long straight hair:1.5), (waist-length hair:1.3), (parted bangs:1.1), (long sidelocks:1.1)** |\n| **顔(Face)** | 目: 青色、やや鋭い目つき<br>肌: 明るい肌色<br>髭: なし<br>眼鏡: なし | **[WEIGHTS]: (blue eyes:1.2), (sharp eyes:1.2), (fair skin:1.1), (no facial hair:1.2), (no glasses:1.5)** |\n| **服装(Outfit)** | 濃紺のブレザー制服、白いシャツ、赤いリボン、紺色のプリーツスカート、濃色の靴下、茶色の靴 | **[WEIGHTS]: (navy school blazer:1.3), (white shirt:1.1), (red bow:1.2), (navy pleated skirt:1.2), (dark socks:1.1)** |\n| **性格(Mind)** | **[OCR抽出]**: 「厳格な風紀委員長。校則違反には容赦なく、現金を没収しようとする。真面目すぎる性格。」「眼鏡不可。マコトの髪型は腰の長さまである長髪である。ナオ・ユキ・カナタ・コハルと同級生である。」 | **[WEIGHTS]: (strict:1.3), (student council discipline committee chair:1.2), (serious:1.3), (rule-enforcer:1.2), (stern:1.2), (no-nonsense:1.1)** |",
+  "colorMode": "color",
+  "providerFamily": "chatgpt",
+  "showWatermarks": true,
+  "showTitle": true,
+  "mosaicCopyrightedCharacters": true,
+  "imageEngineLabel": "ChatGPT Images 2.6",
+  "scenarioModelLabel": "GPT-6 Luna",
+  "promptMaxChars": 30390,
+  "referenceContext": "[REFERENCE MATERIAL DATA]\n[{\"materialId\":\"M1\",\"items\":[{\"kind\":\"character\",\"name\":\"ナオ\"},{\"kind\":\"character\",\"name\":\"ユキ\"}]},{\"materialId\":\"M2\",\"items\":[{\"kind\":\"character\",\"name\":\"カナタ\"},{\"kind\":\"character\",\"name\":\"コハル\"},{\"kind\":\"character\",\"name\":\"マコト\"}]}]\nM番号はSTEP1の素材番号。API添付のImage番号との対応は末尾の参照一覧を使う。人物参照は年齢・髪・肌色・眼鏡等の識別特徴の資料。衣装・画風/顔構造・演技/表情・Cameraは承認済み台本と該当コマ指定を優先。同じ連続場面の台本にも衣装指定がない人物、または資料準拠を明示した範囲は参照衣装を使う。後続コマで衣装の記述が省略されても参照衣装へ戻さない。コマ限定指定と明示の着替えはその範囲を保つ。背景/小物の形状は参照を保ち、用途・動作・配置・所有・状態は台本に従う。素材番号を絵に印字しない。",
+  "reviewIssues": [
+    {
+      "type": "bubble_text",
+      "panel": 2,
+      "subject": "吹き出しの台詞",
+      "materialImpact": "material",
+      "impactReason": "独立転記した台詞が元台本の完全な台詞と一致しない。",
+      "letteringTargets": [
+        {
+          "balloon": 1,
+          "speaker": "カナタ",
+          "text": "選挙権の売買提案まで話題なの？",
+          "glyphCount": 15,
+          "columnsRightToLeft": [
+            "選挙権の売買",
+            "提案まで話題なの？"
+          ]
+        }
+      ],
+      "reason": "Observed speech in physical right-to-left order: [\"選挙権の売買提案も話題なの？\"].",
+      "letteringRepair": "exact_v1",
+      "approvedSpeech": [
+        {
+          "speaker": "カナタ",
+          "text": "選挙権の売買提案まで話題なの？"
+        }
+      ],
+      "preserveOtherBalloons": true,
+      "correction": "LETTERING REPLACEMENT RULES（全targets共通・非印字）: balloon番号はコマ内右から。対象の既存文字を全文消し、textを全文描く。一部文字の継ぎ足し禁止。元の書体・太さ(stroke weight)・見かけの文字サイズ・密度を保持し、小型化/細字化/余白拡大禁止。自然な文節改行。必要な場合だけresize the balloon interiorを最小限に行い、顔を覆わない。columnsRightToLeftは上→下の列を右→左に並べた全文で、連結結果をtextと一致させ、省略/重複/並替え禁止。preserveOtherBalloons=trueなら対象外は不変、falseならapprovedSpeechの全文/数を復元。尾は指定話者へ。正しい演技/Camera/同一性/枠/絵を保持。助詞/繰返し音も全字照合し、短縮/言換え禁止。話者名/数/この指示は描かない。 Targets: [{\"balloon\":1,\"speaker\":\"カナタ\",\"text\":\"選挙権の売買提案まで話題なの？\",\"glyphCount\":15,\"columnsRightToLeft\":[\"選挙権の売買\",\"提案まで話題なの？\"]}]. approvedSpeech: [{\"speaker\":\"カナタ\",\"text\":\"選挙権の売買提案まで話題なの？\"}]. preserveOtherBalloons: true."
+    },
+    {
+      "type": "art_style",
+      "panel": 1,
+      "subject": "P1の人物と背景",
+      "materialImpact": "material",
+      "impactReason": "指定されたコマ媒体と画面全体の印刷調表現が明確に異なる。",
+      "reason": "Observed: 人物や背景に広い網点とポップな印刷調の色面があり、通常の滑らかな描画よりポップアートに寄っている。; expected: NORMAL.",
+      "correction": "P1の人物・背景の強い網点表現を通常の細い輪郭と滑らかな色面へ整え、顔や台詞の可読性は保つ。",
+      "styleEvidence": {
+        "status": "defect",
+        "materialImpact": "requested_medium_missing",
+        "visibleRegion": "face",
+        "expectedStyle": "NORMAL",
+        "observedStyle": "POP_ART",
+        "subject": "P1の人物と背景",
+        "location": "panel 1",
+        "observed": "丸眼鏡の奥に大きめのアニメ目と簡略化した鼻が見える。 髪と顔に点描があり、頬の影は細かな密集ハッチではなく色点で表される。"
+      }
+    },
+    {
+      "type": "camera_geometry",
+      "panel": 2,
+      "subject": "P2の視点",
+      "materialImpact": "material",
+      "impactReason": "指定されたカメラ高の差が観察できる画面に反映されていない。",
+      "reason": "Observed: 人物の顔とモニターをほぼ同じ高さから見る構図で、低い位置からの見上げやモニター側面の強い投影が弱い。; expected: 床近くからの緩いアオリ.",
+      "correction": "人物の顔や動作を変えず、床近くから見上げる投影とモニター筐体の側面を局所的に明瞭にする。"
+    },
+    {
+      "type": "art_style",
+      "panel": 3,
+      "subject": "P3の人物・背景",
+      "materialImpact": "material",
+      "impactReason": "指定媒体の鉛筆・紙の特徴が十分に観察できない。",
+      "reason": "Observed: 滑らかなカラー塗りと整った輪郭が中心で、鉛筆線や紙目によるスケッチ表現が見えにくい。; expected: SKETCH.",
+      "correction": "P3の独立した人物と背景に鉛筆線、紙目、線のかすれを加え、モニター文字の鮮明さは維持する。",
+      "styleEvidence": {
+        "status": "defect",
+        "materialImpact": "requested_medium_missing",
+        "visibleRegion": "face",
+        "expectedStyle": "SKETCH",
+        "observedStyle": "NORMAL",
+        "subject": "P3の人物・背景",
+        "location": "panel 3",
+        "observed": "眼鏡越しに大きめのアニメ目と簡略な鼻が見え、鉛筆で組み立てた顔面線は乏しい。 髪と服は滑らかな色面と少数の線で、紙目や顔面の鉛筆ハッチが目立たない。"
+      }
+    },
+    {
+      "type": "art_style",
+      "panel": 4,
+      "subject": "P4の人物の顔",
+      "materialImpact": "material",
+      "impactReason": "指定された劇画の顔構造と主要な顔面ハッチが欠けている。",
+      "reason": "Observed: 大きなアニメ目、簡略な鼻、滑らかな色影が見え、顔面に密な交差ハッチや劇画的な骨格面が確認できない。; expected: GEKIGA.",
+      "correction": "P4の二人の顔だけを、狭い目・明瞭な鼻梁と頬顎の面・細い交差ハッチで局所的に描き直し、表情と人物の大きさを保つ。",
+      "styleEvidence": {
+        "status": "defect",
+        "materialImpact": "requested_medium_missing",
+        "visibleRegion": "face",
+        "expectedStyle": "GEKIGA",
+        "observedStyle": "NORMAL",
+        "subject": "P4の人物の顔",
+        "location": "panel 4",
+        "observed": "大きな瞳と簡略化した鼻のアニメ顔で、頬骨や顎の面を狭い目と厚い瞼で構築していない。 顔の主な影は滑らかな色面で、眼窩・鼻側面に細い交差線と白い隙間が連続しない。"
+      }
+    },
+    {
+      "type": "page_composition",
+      "panel": 4,
+      "subject": "P4左端",
+      "materialImpact": "material",
+      "impactReason": "必須指定された左辺のフルブリードがない。",
+      "reason": "Observed: 左側に白い外余白と枠線が残り、背景が画布端まで連続しない。; expected: 左辺のフルブリード.",
+      "correction": "P4左端の背景を画布左端まで延長し、指定辺の外余白と外枠線だけを除く。"
+    },
+    {
+      "type": "page_composition",
+      "panel": 6,
+      "subject": "P6下端",
+      "materialImpact": "material",
+      "impactReason": "必須指定された下辺のフルブリードがない。",
+      "reason": "Observed: 絵の下に白いフッター余白が帯状に残る。; expected: 下辺のフルブリード.",
+      "correction": "P6の床と背景を画布下端まで連続させ、フッター文字の可視状態は変更しない。"
+    }
+  ]
+}
