@@ -75,8 +75,8 @@ test('STEP2 help uses the selected panel-count names without old experimental ON
   for (const experimentEnabled of [false, true]) {
     const html = renderStep2({ experimentEnabled });
     assert.match(html, experimentEnabled ? /4～8コマ<!-- -->のストーリー設定|4～8コマのストーリー設定/ : /4コマ<!-- -->のストーリー設定|4コマのストーリー設定/);
-    assert.match(html, /「4コマ生成」は4コマ固定/);
-    assert.match(html, /「自由コマ割り（4～8コマ）」では4～8コマで指定でき/);
+    assert.match(html, /「4コマ生成（横長コマ）レガシー」は横長4コマの縦一列固定/);
+    assert.match(html, /「4～8コマ生成」では4～8コマで指定でき/);
     assert.doesNotMatch(html, /実験的コマ割り|通常モードは4コマ固定/);
   }
 });

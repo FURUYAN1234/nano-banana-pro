@@ -11,8 +11,8 @@ const evidence = collectReadmeBodyEvidence(appRoot);
 test('current README explains the default page mode and scoped technique guide', () => {
   const current = readFileSync(new URL('../README.md', import.meta.url), 'utf8').split(/^## .*ChangeLog/m)[0];
   for (const expected of [
-    /初期状態は右の「自由コマ割り（4～8コマ）」です/,
-    /再読み込み後は右の「自由コマ割り（4～8コマ）」です/,
+    /右・緑色の「4～8コマ生成」は自由配置で、初期選択です/,
+    /再読み込み後は右の「4～8コマ生成」です/,
     /reload resets the switch to the right, 4–8-panel position/,
     /カラーのPOP・水彩・劇画/,
     /白黒、カスタム画風.*SeriousDocumentary.*添付しません/,

@@ -1658,10 +1658,10 @@ try {
     const props={currentStep:3,onModeChange:()=>{}};
     const html=renderToStaticMarkup(React.createElement(Panel,{...props,enabled:false}));
     assert.match(html,/role="switch" aria-checked="false"/);
-    assert.match(html,/右に切り替えると「自由コマ割り（4～8コマ）」になり、最初から4～8コマのシナリオ/);assert.doesNotMatch(html,/4コマ生成へ戻す|乱れる場合|元の4コマ台本/);
+    assert.match(html,/右に切り替えると「4～8コマ生成」になり、最初から4～8コマのシナリオ/);assert.doesNotMatch(html,/左のレガシーへ戻す|乱れる場合|元の4コマ台本/);
     assert.doesNotMatch(html,/実験画像を1枚生成/);
     const active=renderToStaticMarkup(React.createElement(Panel,{...props,enabled:true}));
-    assert.match(active,/4コマ生成へ戻す/);assert.match(active,/乱れる場合/);
+    assert.match(active,/左のレガシーへ戻す/);assert.match(active,/乱れる場合/);
     assert.doesNotMatch(active,/実験画像を1枚生成|実験を停止|Web貼付用プロンプトをコピー|実験プロンプトと画像/);
     assert.doesNotMatch(active,/通常と同じSTEP4|合計120秒|60秒まで|API 2回/);
     assert.doesNotMatch(active,/<details|<summary/);
@@ -1715,14 +1715,14 @@ try {
       const html=renderToStaticMarkup(React.createElement(Panel,{enabled,currentStep:3,onModeChange:()=>{},normalBusy:false},React.createElement('button',null,'STEP3 sentinel')));
       assert.match(html,/aria-controls="experimental-manga-description"/);
       assert.match(html,/<div id="experimental-manga-description" style="color:#cbd5e1;font-size:11.5px">/);
-      const short='スイッチが左のときは「4コマ生成」です。右に切り替えると「自由コマ割り（4～8コマ）」になり、最初から4～8コマのシナリオを作成して、内容に合ったコマ配置で漫画にします。';
+      const short='スイッチが左のときは「4コマ生成（横長コマ）レガシー」です。右に切り替えると「4～8コマ生成」になり、最初から4～8コマのシナリオを作成して、内容に合ったコマ配置で漫画にします。';
+      assert.ok(html.includes(short));
       if(enabled) {
-        assert.ok(!html.includes(short));
-        for(const sentence of ['ページ大の人物と複数の小コマ','シナリオのコマ数・順序・カメラ・画風・台詞を保ち','左の4コマ生成へ戻す：','作成済みの4コマの台本と生成結果へ戻ります。','左の「4コマ生成」に戻してご利用ください。']) assert.ok(html.includes(sentence));
+        for(const sentence of ['右側は4コマでも自由なコマ割り','ページ大の人物と複数の小コマ','シナリオのコマ数・順序・カメラ・画風・台詞を保ち','左のレガシーへ戻す：','作成済みの横長4コマの台本と生成結果へ戻ります。','左の「4コマ生成（横長コマ）レガシー」に戻してご利用ください。']) assert.ok(html.includes(sentence));
       } else {
-        assert.ok(html.includes(short));
+        assert.ok(html.includes('横長の4コマを縦一列に並べる従来の形式を厳守'));
         assert.ok(!html.includes('左右2列'));
-        assert.ok(!html.includes('4コマ生成へ戻す：'));
+        assert.ok(!html.includes('左のレガシーへ戻す：'));
       }
       assert.doesNotMatch(html,/STEP3 sentinel|元の4コマ台本/);
       assert.equal((html.match(/<button/g)||[]).length,1,'no separate disclosure button');

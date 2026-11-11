@@ -1,3 +1,13 @@
+## v7.4.4 mode labels — API verified, stop before deployment (2026-11-11)
+
+The current request explicitly authorizes Astra Max through implementation, real API image verification and release preparation, with a model switch immediately before deployment. Do not deploy, push, publish social posts or start another full backup during this preparation. The preceding four-app v7.4.3 retirement/release/social/backup task is complete; older pending statements below are historical.
+
+Left is `4コマ生成（横長コマ）レガシー`, strictly four full-width horizontal strips in one vertical column. Right is `4～8コマ生成`, including free composition for four scenes. Updated the switch, shared explanation, input help, README and three bundled manuals. Existing scenario/generation/quality logic is unchanged. Focused mode/composition tests and lint passed; final documentation evidence and release checks are tracked in the private owner record.
+
+Normal UI, GPT-6 Luna without fallback, and GPT Image 2.6 Sunburst/max generated a new 2240×3168 four-scene page from an ordinary puddle-jump/frog story. Neither scenario nor final prompt was hand-edited. Direct visual review confirmed a page-dominant low-angle jump, three smaller story scenes, continuous hand/coat overlaps, artwork at the outer edge, readable dialogue and distinct media. One image request, one quality review, zero image repairs. The automated review returned insufficient panel-level evidence, so it remains unverified; this is direct visual acceptance, not an automated all-checks pass. Switching left and back retained both the free-mode scenario and generated image.
+
+Private record: `/home/furu/Codex/work/furu-mode-labels-20261111/task.json`. STEP4 run `fb5f2c45-afc1-436e-a286-4e22b6d87e8f` ended at 2026-11-11T07:19:56.912Z. Authenticated v7.4.4 IAB tab 20 and local preview on port 5173 are retained. Do not reload the tab or request another API key.
+
 ## GPT Image 2.0 route retirement candidate v7.4.3 — 2026-11-11
 
 - Authorized existing-app fix, official deployment and existing note/X/Facebook updates. Full backup is deferred until every app update and announcement is complete.

@@ -74,7 +74,7 @@ try {
   test('native mode describes whole-page figures and free composition even with four beats',()=>{
     const html=renderToStaticMarkup(React.createElement(Panel,{enabled:true,currentStep:2,onModeChange:()=>{}}));
     assert.match(html,/ページ大の人物と複数の小コマ/);
-    assert.match(html,/4コマでも自由配置を使えます/);
+    assert.match(html,/右側は4コマでも自由なコマ割り/);
     assert.match(html,/シナリオのコマ数・順序・カメラ・画風・台詞を保ち/);
   });
   test('mode switch is available before STEP2 and explains native scenario creation in both states',()=>{
@@ -93,7 +93,7 @@ try {
       const track=React.Children.toArray(button.props.children).find(child=>child.props?.['aria-hidden']==='true');
       const thumb=track.props.children;
       const html=renderToStaticMarkup(element);
-      assert.match(html,enabled?/<strong>自由コマ割り（4～8コマ）<\/strong>/:/<strong>4コマ生成<\/strong>/);
+      assert.match(html,enabled?/<strong>4～8コマ生成<\/strong>/:/<strong>4コマ生成（横長コマ）レガシー<\/strong>/);
       assert.doesNotMatch(html,/ON|OFF|実験的コマ割り/);
       assert.equal(button.props['aria-label'],'コマ数切り替え');
       assert.equal(button.props['aria-checked'],enabled);
