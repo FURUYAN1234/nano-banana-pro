@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-  "manualVersion": "7.4.3",
-  "manualSourceSha256": "b8506afbdc0fe8396f3f35429f42a03cac3b89f587119d92c60f45f5d4643d26",
+  "manualVersion": "7.4.4",
+  "manualSourceSha256": "cc33011ca885f358cb937ca4e596c598a2927173cabb56098f78ce63f9716a35",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "7ffd7c290f57db27c262809b9d743d98ee84242f011bb93f3fb4ba55dbb6bb47"
+      "sha256": "67ef70f3cf6d9a69d970e0b55879a4c4dcf68e1ca853ec3d5d9ddcbc58659f15"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "b9e270d409cf12f7385ecd006147219fadb46fe01d84e3033abfdf0aab9a9658"
+      "sha256": "2c868dcaaa6bb6edbf27a23747fa803599e5a783fcb19c7b1185103a9a1f2e00"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "9b47a6cda36e061fde95f9ca5e09db51430da63ee455c6884736c7cae9fbe525"
+      "sha256": "dee2073da5d6a655eabb54a41b812f33433e8ea8234a70388d020d937fee6c15"
     }
   ],
-  "readmeSha256": "dbbde92d298fcde7c742fcf81798b7c4ae557622bfe7af8fc9af19d56385cf84",
+  "readmeSha256": "3ceb311b96d032de4d3ea99f2d4fc781cd9d009d9fb422e6d56f3673e230eef8",
   "readmeLanguageGaps": [],
-  "sourceTree": "c603257d10784e5e43cc871e3c7778872b5c1639",
-  "publicTree": "4b59f3d24783d8cc2cf14f2edeb6552312dc9016",
-  "packageSha256": "906be21cc1f96b2759ff31a5bccafa989c9c99fff32dc16379911a26808e93ee",
+  "sourceTree": "59c7681aad7895f9c44f0cde8a67ca1a7130f9a7",
+  "publicTree": "e43c6d0f8fed9739e2a931206053b2c06dfb9fa2",
+  "packageSha256": "8de435c96891c871a4a58f200aab767980b06afe52a52b846c300cf8a40dec1a",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,11 +41,11 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-11T05:35:12.719Z",
-  "findings": "Reviewed v7.4.3 current-body delta against implementation: removed GPT Image 2.0 choice, initial discovery fallback and dated historical price display; legacy selections normalize to the visible 2.6 default. Supported 2.5 alternatives, 4–8-panel composition, fixed four-panel mode, input references, quality, sizes and one bounded repair remain. Compared every unchanged section with the reviewed v7.4.2 README and checked the new bilingual changelog and current links. This review does not assert a new API generation. Generated diagram diffs change only the same-width v7.4.2 to v7.4.3 label; layout and explanatory content remain unchanged.",
-  "manualFindings": "Rebuilt and rendered all 71 pages for v7.4.3. Existing page counts, bounds, links, privacy/naming and footer checks pass. Extracted body comparison with the reviewed v7.4.2 manuals changes only full-manual p22 and OpenAI p12, excluding version footers. Visually inspected both full renders: old 2.0 selection/price/permission advice is removed, text and table remain legible without overlap or clipping. Other page bodies and their prior visual review are retained.",
+  "checkedAt": "2026-11-11T07:24:24.169Z",
+  "findings": "Reviewed the v7.4.4 README delta against the mode UI and unchanged runtime: left is four full-width horizontal strips in one vertical column; right accepts four to eight scenes with free composition even at four. Updated all current mode names, the bilingual mode explanation, the four-to-eight lower bound in the English table, changelog and matching release-link labels. Every other section remains the reviewed v7.4.3 content. The only src changes are mode/help text and version; no scenario, rendering, review or model route changed. Real normal-UI/API four-scene output was directly inspected for the page-dominant action, readable smaller scenes, continuous overlaps, outer-edge artwork, dialogue and media. The automatic image review remained unverified due to insufficient panel evidence. Diagram diffs only update the version label.",
+  "manualFindings": "Rebuilt and rendered all 71 pages for v7.4.4; A4, text bounds, privacy/naming and footer checks pass. Compared all page bodies to reviewed v7.4.3 excluding the version: only full-manual pages 3, 14 and 15 change. Visually inspected those complete renders: long legacy labels wrap correctly, the two-mode explanation and table are legible without overlap or clipping. Gemini and OpenAI guide bodies are unchanged; prior visual review reused. All three verified PDFs are copied to public/downloads.",
   "pricingReview": {
-    "version": "7.4.3",
+    "version": "7.4.4",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
     "checkedAt": "2026-11-11T04:29:04.844Z",
     "sources": [
@@ -57,6 +57,6 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Reused the official Standard-rate review performed today immediately before v7.4.2 deployment, within 24 hours, with the same official source URLs and checkedAt. v7.4.3 removes only the legacy 2.0 pricing record and dated display; supported image and text model rates are unchanged. Standard image 2.6 input/output 8/30, cached input 2; text input 5/cache 1.25 USD per million tokens. Batch/Flex discounts are excluded. No new rate was inferred from the model retirement notice."
+    "findings": "Reused the same-day official Standard-rate review at the retained checkedAt, within 24 hours. The pricing-source SHA256 is identical to reviewed v7.4.3. v7.4.4 only changes mode names and explanations; models, rates, request quality and sizes are unchanged. Standard image 2.6 input/output 8/30, cached input 2; text input 5/cache 1.25 USD per million tokens. Batch/Flex discounts are excluded. This reuse is not a new official-site visit."
   }
 }
