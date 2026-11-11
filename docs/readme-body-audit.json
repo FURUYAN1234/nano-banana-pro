@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "3e0d5ca34e097b8c964b03ff078dadaaee4da126d9477714aabc0aa69b4d1d7d",
   "readmeLanguageGaps": [],
-  "sourceTree": "cb4ef17f9b368438cc3416a4572a3231b1a5386a",
-  "publicTree": "6a1370ee004222de2f13af7ced5b3cd5bec22261",
+  "sourceTree": "29e56e36824da7a4bbc5086ffc1e27e5d13ef69f",
+  "publicTree": "ac3576bd5fc3a2d4515f7edf16f0dd499870771f",
   "packageSha256": "d088d7e88ad907d9d7db386d1ac1991146d048c8acfb890fe2ff57305c7e6001",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,7 +41,7 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-11T12:30:48.656Z",
+  "checkedAt": "2026-11-11T12:31:43.331Z",
   "findings": "Reviewed the v7.4.6 README body against the scoped implementation diff. STEP2 retains typed page-composition failures, sends schema-specific repair guidance, recognizes approximate Japanese camera pitch and bird-eye placement, and records the rejected candidate. Existing modes, models, prices, image compilation, safeguards, licensing and other body sections retain the same-day reviewed v7.4.5 behavior. Both reported inputs completed normal-route API image generation and final visual review. Automated image review statuses remain repaired_unverified and unverified; these are not represented as automated passes. Detailed run evidence is retained outside the distributable repository.",
   "manualFindings": "Rebuilt all 71 A4 pages and passed version, bounds, naming and text privacy checks. Extracted body comparison after normalizing only v7.4.5/v7.4.6 identifies full-manual page32 as the sole changed body. Inspected its complete render: rejected STEP2 candidate explanation is readable, without clipping or overlap. Other bodies are identical to the same-day reviewed v7.4.5 PDFs, whose visual review is reused. All three final PDFs copied to public/downloads.",
   "pricingReview": {
