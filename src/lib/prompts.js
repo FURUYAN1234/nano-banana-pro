@@ -1,4 +1,4 @@
-import {SCENARIO_PAGE_COMPOSITION} from './manga-page-composition.js';
+import {SCENARIO_PAGE_COMPOSITION, buildRecentPageCompositionContext} from './manga-page-composition.js';
 import { buildCopyrightMosaicInstruction, NO_PAGE_TITLE } from './render-options.js';
 import { SCENARIO_SFX_CONTRACT } from './manga-sfx.js';
 import { buildScenarioPanelCountInstruction } from './scenario-validation.js';
@@ -280,6 +280,7 @@ ${scenario}
  */
 export const getScenarioPrompt = ({
   recentScenarios = [],
+  recentPageCompositions = [],
   documentarySourceText,
   scenarioMode = 'four-panel',
   autoSelectPanelCount = false,
@@ -366,7 +367,7 @@ export const getScenarioPrompt = ({
          ${contextRebootLock}
          ${documentarySourceBoundary}
          ${panelStructure}
-         ${experimental ? SCENARIO_PAGE_COMPOSITION : ''}
+         ${experimental ? SCENARIO_PAGE_COMPOSITION+'\n'+buildRecentPageCompositionContext(recentPageCompositions) : ''}
          ${autoSelectPanelCount ? '全4〜8コマを1から欠番・重複なく書く。決定後の監査・修正ではコマ数を保持する。' : buildScenarioPanelCountInstruction(scenarioMode)}
          ${buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters)}
 

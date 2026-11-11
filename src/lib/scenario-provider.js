@@ -1,5 +1,5 @@
 import { callAI } from './ai-provider';
-import {readPageComposition, assertGeneratedPageComposition, SCENARIO_PAGE_COMPOSITION} from './manga-page-composition.js';
+import {readPageComposition, assertGeneratedPageComposition, SCENARIO_PAGE_COMPOSITION, buildRecentPageCompositionContext} from './manga-page-composition.js';
 import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 import {
   splitSnsExplanation,
@@ -319,6 +319,7 @@ export async function generateScenario({
   scenarioMode = 'four-panel',
   autoSelectPanelCount = false,
   recentScenarios = [],
+  recentPageCompositions = [],
   referenceAssetContext = '',
   mosaicCopyrightedCharacters = true,
   castList,
@@ -465,6 +466,7 @@ export async function generateScenario({
     scenarioMode,
     autoSelectPanelCount,
     recentScenarios,
+    recentPageCompositions,
     mosaicCopyrightedCharacters,
     randomCategory,
     targetDate,
@@ -538,7 +540,7 @@ export async function generateScenario({
       ].filter(Boolean).join('\n')
     }),
     retryInstruction: ({ code, message }) => [
-      code === 'PAGE_COMPOSITION_CONTRACT' ? SCENARIO_PAGE_COMPOSITION : '',
+      code === 'PAGE_COMPOSITION_CONTRACT' ? SCENARIO_PAGE_COMPOSITION+'\n'+buildRecentPageCompositionContext(recentPageCompositions) : '',
       code === 'AUTO_PANEL_CHOICE' ? 'Return PanelCountReason before Scenario, explaining why this specific story requires its chosen 4–8 panels. Preserve the topic.' : code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${autoSelectPanelCount ? '4–8 selected from story content' : scenarioMode === 'experimental-manga' ? '4–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
       message ? `FAILED CHECK (correct every listed item): ${String(message).slice(0, 1400)}` : '',
       code === 'DOCUMENTARY_SOURCE_FIDELITY' && documentarySourceText

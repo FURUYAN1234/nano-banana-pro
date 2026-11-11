@@ -155,12 +155,15 @@ const reviewFor = (count) => ({
 
 test('new native generation cannot silently lose page composition and uses the bounded retry',async()=>{
  let generations=0;
+ const recentPageCompositions=[{count:5,family:'right-full-height',heroPanel:1,heroBeat:'opening',smallPanels:'left-stack'}];
  setFixtureResponse(async prompt=>{
   if(prompt.includes('構成監査'))return {text:JSON.stringify(reviewFor(5)),model:'fixture'};
+  assert.match(prompt,/RECENT PAGE STRUCTURES/,'both initial provider call and structural retry retain recent layout context');
+  assert.match(prompt,/"right-full-height":1/);
   generations++;
   return {text:'Topic: 札\nScenario:\n'+(generations===1?panels(5).replace(/^PageComposition:.*\n/,''):panels(5)),model:'fixture'};
  });
- const recovered=await provider.generateScenario({...args,...mode,scenarioModelId:'gpt-6-luna'});
+ const recovered=await provider.generateScenario({...args,...mode,scenarioModelId:'gpt-6-luna',recentPageCompositions});
  assert.equal(generations,2);
  assert.match(recovered.scenario,/^PageComposition:/);
  generations=0;

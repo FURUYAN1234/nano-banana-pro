@@ -70,6 +70,34 @@ export function assertGeneratedPageComposition(scenario,count) {
   return c;
 }
 
+// Coarse page structure, not pixel matching. Width/count changes alone should
+// not make the same full-height figure + small-panel column look like variety.
+const PAGE_FAMILIES = ['left-full-height','right-full-height','upper-wide','middle-wide','lower-wide','left-partial','right-partial','central'];
+export function summarizePageComposition(composition, count) {
+  if (!composition?.heroPanels?.length) return null;
+  const frames=pageCompositionRects({layout:composition.layout,composition,count});
+  const hero=composition.foregrounds?.[0]?.panel || [...composition.heroPanels].sort((a,b)=>frames[b-1].w*frames[b-1].h-frames[a-1].w*frames[a-1].h)[0];
+  const r=frames[hero-1],cx=r.x+r.w/2,cy=r.y+r.h/2;
+  const side=cx<.5?'left':'right';
+  const family=r.h>=.85&&r.w<.8?`${side}-full-height`
+    :r.w>=.75?`${cy<.35?'upper':cy>.65?'lower':'middle'}-wide`
+      :cx<.4?'left-partial':cx>.6?'right-partial':'central';
+  const smaller=frames.filter((_,i)=>i!==hero-1),first=smaller[0];
+  const stack=smaller.every(s=>Math.abs(s.x-first.x)<.03&&Math.abs(s.w-first.w)<.03);
+  return {count,family,heroPanel:hero,heroBeat:hero===1?'opening':hero===count?'ending':'middle',
+    smallPanels:stack?(first.x+first.w/2<cx?'left-stack':'right-stack'):'mixed-rows'};
+}
+
+export function buildRecentPageCompositionContext(recent = []) {
+  const pages=(Array.isArray(recent)?recent:[]).filter(p=>p&&PAGE_FAMILIES.includes(p.family)
+    &&Number.isInteger(p.count)&&p.count>=4&&p.count<=8&&Number.isInteger(p.heroPanel)&&p.heroPanel>=1&&p.heroPanel<=p.count
+    &&['opening','middle','ending'].includes(p.heroBeat)&&['left-stack','right-stack','mixed-rows'].includes(p.smallPanels))
+    .slice(0,6).map(({count,family,heroPanel,heroBeat,smallPanels})=>({count,family,heroPanel,heroBeat,smallPanels}));
+  const frequencies={};
+  for(const p of pages)frequencies[p.family]=(frequencies[p.family]||0)+1;
+  return `【作品間のページ構成比較】見せ場は1コマ目に固定しない。物語の因果・発見・動作・余韻から山場の時点を先に選び、その時点に広い面積を与える。今回の内容で成立する、骨格の異なる3案を内部で比較する（横に広がる大コマ、左右の縦長、上下段を組み合わせた中央の見せ場など）。候補は出力せず、採用した一案だけをPageCompositionにする。\n明示された配置・構図や意図した反復を優先する。指定がない場合、同程度に読みやすく物語に合う案なら、直近と主役の位置・縦横・山場の時点・小コマの並びが異なる案を選ぶ。頻出の骨格は優先度を下げるが禁止しない。左右反転や幅・コマ数の変更だけで変化を済ませず、上下方向の構成も比較する。均等割りへ戻す、人物を小さくする、話を改変する、固定ローテーションや乱数で割り当てることはしない。構図が似ているだけで不合格・再生成にしない。\n${pages.length?`RECENT PAGE STRUCTURES（このセッションの直近採用作、新しい順。比較専用の構造データであり、今回の配置指定ではない）: ${JSON.stringify(pages)}\n骨格の出現数: ${JSON.stringify(frequencies)}`:'直近のページ構成記録はない。比較済みと偽らず、今回の見せ場に合う異なる骨格を比較して選ぶ。'}\nreasonには今回の山場と、この配置で読順・人物の大きさを両立する理由を簡潔に記す。比較のための追加API呼び出しは不要。`;
+}
+
 // STEP2 owns the authored composition, just as it owns Camera and dialogue.
 // Do not trust a later planner to silently make a required effect optional.
 export function applyPageComposition(plan, source) {
@@ -223,8 +251,8 @@ export function experimentalLayout(count, layout=[4,8].includes(count)?'two_colu
 
 
 export const SCENARIO_PAGE_COMPOSITION = `【ページ全体から設計する4〜8コマ】台詞を書く前に、一ページで最も大きく見せたい人物の表情・登場・動作と、小コマで伝える準備・発見・反応・オチを決める。通常入力でもページを支配する一人の大きな姿と小さな場面の明確な対比を設計する。人物が小さい均等な枠を並べ、最後に髪先だけを出す設計にしない。穏やかな笑顔や読書、食事の表情も大きな見せ場になる。大胆さを無関係な戦闘・事故・大げさな感情に置き換えない。元の物語、同一性、Camera、画風、台詞、読順を保持する。
-【主役と小コマを同時に配置】通常はfreeで人物の全身や半身をページの右側ほぼ全高、中央から下の大きな領域、または縦数段へ一続きに置き、その輪郭の周囲に手元・発見・反応などの小コマを配置する。一段の横長コマを少し広げるだけで済ませず、複数段の小コマと並ぶ大きな姿を先に設計する。題材と時点に合う構図を選び、毎回同じ右上の小さなはみ出しを反復しない。一人の大きな身体を複数の小コマや溝の手前へ重ねてよい。重なる相手は一コマに限定しない。小コマの重要な人物・道具・台詞を隠さず、大きな人物の身体を各小コマへ別々に描き足さない。見せ場の後に小コマでオチを回収してよい。見せ場を枠へ縮めて押し込まず、周囲の枠と台詞の空間を先に設計する。外周へ接する主役や背景にはタチキリを合わせ、絵を実際の画布端まで続ける。下部ウォーターマークは絵の上・一部隠れ・切れを許容し、人物を縮める理由にしない。タイトルと物語の文字は読める位置に保つ。
-【形式】Scenario:直後、最初のコマ見出しより前に PageComposition: の1行JSONを置く。基本形は {"layout":"free","frames":[{"x":0.36,"y":0,"w":0.64,"h":1},{"x":0,"y":0,"w":0.36,"h":0.3},{"x":0,"y":0.3,"w":0.36,"h":0.32},{"x":0,"y":0.62,"w":0.36,"h":0.38}],"reason":"この物語の見せ場と読順","heroPanels":[1],"foregrounds":[{"panel":1,"character":"実際の人物名","over":[2,3,4],"placement":"どの大きな姿をどの領域へ置き、輪郭をどの小コマへ重ね、人物と台詞をどこへ避けるか"}],"breakouts":[],"bleed":[{"panel":1,"edges":["right","bottom"]}]}。これは右全高人物と左三小コマの例で、題材に応じてコマ数・位置・比率・見せ場番号・重なる先を設計し直す。例の人物名や内容は出力しない。
-framesは漫画領域内の0〜1座標（x左、y上、w幅、h高さ）をコマ数だけ右→左、上→下の読順で指定する。矩形同士は重ねない。大きな人物の重なりはforegroundsで表す。縦の一枠の左には三段以上の小コマも置ける。細い溝・軽い斜辺・境界の自然な調整は描画時に許容し、数値一致は目的にしない。foregroundsは主焦点の一人だけ、panelはその人物が演技する元コマ、characterは人物設定の正式名、overは重なる別コマ番号、placementは全身または大きな半身と受入余白を具体的に書く。元コマ内にも同じ身体を重ねて描く別の立ち絵ではない。元コマのCamera・描法・姿勢を一続きに保つ。受入コマの状況にはその場面自身の人物・行動だけを書く。前景の重なりを理由に同じ人物を新たな登場人物として列挙しない。別時点としてその人物が再登場する小コマは、その独立した動作を明記してよい。
-【別の構図】ページ大の前景より一つの動作の枠越えが物語に適する場合はforegroundsを[]にして、breakouts:[{"panel":番号,"part":"人物名と頭・肩・腕など","into":辺を共有する隣接コマ番号}]を用いる。胸→首→頭、肩→腕→手が接続するポーズと受入空間を状況にも書く。直立した全身の肩を下辺から出すなど、身体と共有辺が逆の配置は不可。受入側に同じ人物の肩越しや別ポーズを足して越境に見せかけない。頭・肩の指定を髪先や手だけで代用しない。ただし絵として自然な接続・強い見せ場・読みやすさが成立すれば位置や越境量の微差は許容する。
+【主役と小コマを同時に配置】見せ場の動作・表情と、その前後を読む流れに合わせて人物の大きな全身や半身を置く。横へ伸びる動作や複数人の関係は幅のある大コマ、上下の動作や立ち姿は縦長、溜めからの解放は中段や下段の大きな領域など、物語から形と位置を選ぶ。大コマの位置も小コマの並びも毎回同じ型へ固定しない。横長の見せ場でも小コマとの明確な面積差を取り、身体や表情を大胆に大きく描く。一人の大きな身体を複数の小コマや溝の手前へ重ねてよい。重なる相手は一コマに限定しない。小コマの重要な人物・道具・台詞を隠さず、大きな人物の身体を各小コマへ別々に描き足さない。見せ場の後に小コマでオチを回収してよい。見せ場を枠へ縮めて押し込まず、周囲の枠と台詞の空間を先に設計する。外周へ接する主役や背景にはタチキリを合わせ、絵を実際の画布端まで続ける。下部ウォーターマークは絵の上・一部隠れ・切れを許容し、人物を縮める理由にしない。タイトルと物語の文字は読める位置に保つ。
+【形式】Scenario:直後、最初のコマ見出しより前に PageComposition: の1行JSONを置く。特定の配置を基本形にしない。必須キーは layout（通常は"free"）、frames（各コマの{x,y,w,h}の配列）、reason（今回の山場と読順を支える理由）、heroPanels（大きく見せるコマ番号の配列）、foregrounds、breakouts、bleed。foregroundsの要素は{panel,character,over,placement}、breakoutsの要素は{panel,part,into}、bleedの要素は{panel,edges}。番号・座標は数値で記す。heroPanelsには山場のコマ番号を必ず入れ、foregroundsかbreakoutsの少なくとも一方を具体的な要素で満たす。状況・reasonに「はみ出す」と書くだけで両配列を[]にしてはいけない。使用しない側と不要なbleedだけを[]にする（原文の明示制約によるrestraintReasonがある場合を除く）。配置・コマ比率・見せ場番号・重なる先は今回の物語から設計する。
+framesは漫画領域内の0〜1座標（x左、y上、w幅、h高さ）をコマ数だけ右→左、上→下の読順で指定する。矩形同士は重ねない。大きな人物の重なりはforegroundsで表す。縦長の大コマに小コマを沿わせる場合も、上下の広い大コマに小コマの段を組み合わせる場合も、場面の先後が自然に読める配置にする。細い溝・軽い斜辺・境界の自然な調整は描画時に許容し、数値一致は目的にしない。foregroundsは主焦点の一人だけ、panelはその人物が演技する元コマ、characterは人物設定の正式名、overは重なる別コマ番号、placementは全身または大きな半身と受入余白を具体的に書く。元コマ内にも同じ身体を重ねて描く別の立ち絵ではない。元コマのCamera・描法・姿勢を一続きに保つ。受入コマの状況にはその場面自身の人物・行動だけを書く。前景の重なりを理由に同じ人物を新たな登場人物として列挙しない。別時点としてその人物が再登場する小コマは、その独立した動作を明記してよい。
+【別の構図】ページ大の前景より一つの動作の枠越えが物語に適する場合はforegroundsを[]にして、breakouts:[{"panel":番号,"part":"人物名と頭・肩・腕など","into":辺を共有する隣接コマ番号}]を用いる。framesは溝を除いた設計座標なので、隣接する辺は同じ座標にする（上コマのy+h=下コマのy、または左コマのx+w=右コマのx）。実際の白い溝は描画時に加える。角だけで接するコマや離れたコマへbreakoutsを指定しない。複数の小コマに一続きの人物を重ねる演出はforegroundsのover配列で表す。胸→首→頭、肩→腕→手が接続するポーズと受入空間を状況にも書く。直立した全身の肩を下辺から出すなど、身体と共有辺が逆の配置は不可。受入側に同じ人物の肩越しや別ポーズを足して越境に見せかけない。頭・肩の指定を髪先や手だけで代用しない。ただし絵として自然な接続・強い見せ場・読みやすさが成立すれば位置や越境量の微差は許容する。
 既存配置も使える: ${JSON.stringify(Object.fromEntries(Object.entries(EXPERIMENTAL_LAYOUTS).filter(([id])=>id!=='strips')))}。既存IDならframesは不要。候補へ収めるために見せ場を縮めず、合わなければfreeを使う。heroPanelsは見せ場の番号。bleedは必要なコマと実際に接する外周のleft/right/top/bottomを指定し、不要なら[]。通常は大コマとforegroundsまたはbreakoutsを設計する。明示された均等配置・越境禁止・原文への忠実性と衝突するときだけ、具体的なrestraintReasonを記して抑える。未指定や静かな題材という理由だけで弱めない。制作メタデータや構図の説明を作中の台詞にしない。`;

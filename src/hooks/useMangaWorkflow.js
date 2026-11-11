@@ -40,7 +40,7 @@ import {
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
-import { addGenerationHistoryItem, collectRecentScenarioOutcomes, createScenarioSourceKey, findScenarioSourceKey, getWorkflowStep } from '../lib/generation-history';
+import { addGenerationHistoryItem, collectRecentScenarioOutcomes, collectRecentPageCompositions, createScenarioSourceKey, findScenarioSourceKey, getWorkflowStep } from '../lib/generation-history';
 import { createFinalImageSaver } from '../lib/generated-image-save.js';
 import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus, finalizeMonochromeCandidate } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
@@ -1084,6 +1084,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       const result = await generateScenario({
         scenarioMode:getScenarioMode(),
         autoSelectPanelCount,
+        recentPageCompositions: collectRecentPageCompositions([previousScenario, ...recentSources]),
         recentScenarios: collectRecentScenarioOutcomes([
           { scenario: previousScenario, sourceKey: findScenarioSourceKey(previousScenario, recentSources) }, ...recentSources,
         ], { sourceKey, currentScenario: previousScenario,

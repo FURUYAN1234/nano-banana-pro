@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { beginApiWork, cancelApiWork } from '../src/lib/api-work-cancellation.js';
-import { collectRecentScenarioOutcomes } from '../src/lib/generation-history.js';
+import { collectRecentScenarioOutcomes, collectRecentPageCompositions } from '../src/lib/generation-history.js';
 import * as scenarioHistory from '../src/lib/generation-history.js';
 import { retryImagePolicyGeneration } from '../src/lib/image-policy-retry.js';
 import { assertRenderOptions, buildRenderOptionsContract } from '../src/lib/render-options.js';
@@ -46,7 +46,7 @@ function harness(overrides = {}) {
     promptAssemblyAbortRef: { current: null }, fullAutoAbortRef: { current: false },
     isFullAutoModeRef: { current: false }, qualityRetryAbortRef: { current: false },
     resolvedPunchlineTypeRef: { current: '' }, scenarioUsedModelRef: { current: null },
-    recentScenarioTextsRef: { current: [] }, generationHistory: [], collectRecentScenarioOutcomes,
+    recentScenarioTextsRef: { current: [] }, generationHistory: [], collectRecentScenarioOutcomes, collectRecentPageCompositions,
     createScenarioSourceKey: async () => '', findScenarioSourceKey: (...args) => scenarioHistory.findScenarioSourceKey(...args),
     lastPolicyErrorRef: { current: '' }, isEndlessModeRef: { current: false },
     step2Ref: { current: null }, step3Ref: { current: null }, imageResultRef: { current: null },

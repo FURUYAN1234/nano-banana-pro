@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.4.4** / 現在のソース版: **v7.4.4**
+> Current source version: **v7.4.5** / 現在のソース版: **v7.4.5**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -139,6 +139,8 @@ Sound effects are drawn as part of the manga artwork, outside speech balloons. T
 GEKIGA panels request exaggerated facial relief through dense multidirectional fine pen hatching: deep eye sockets, a projecting nose and carved cheek/jaw planes, including calm or smiling faces. Line density builds the shadows; solid black supports only local occlusions. Color sits under the pen drawing; monochrome remains black and white. Other panel styles retain their own rendering. This is a drawing instruction, not a guarantee; inspect the generated faces. / 劇画コマでは、目のくぼみ・鼻梁・頬骨・顎の彫りを強め、顔や首に細い斜線を何方向にも重ねる濃いカケアミを指定します。影は線の密度で作り、黒ベタは局所を締める補助に留めます。穏やかな顔や笑顔も描き込みを弱めず、年齢や表情は保ちます。カラーはペンの描線の下に着色し、白黒は無彩色を保ちます。他の画風には適用しません。指示どおりになる保証ではなく、生成後の顔を確認してください。
 
 POP panels redraw faces, hair, clothes, props and backgrounds with extra-bold black contours, vivid opaque flat colors and clearly separated large Ben-Day dots. Monochrome uses bold black/white shapes and dots only in permitted shadow/material regions. Camera, acting, identity and dialogue stay intact; inspect the actual output. / POPでは顔・髪・服・小物・背景に極太の黒い輪郭、鮮烈で不透明な平面色、大粒で明瞭な網点を指定します。白黒では大胆な白黒面と、許可された影・素材面の網点へ置き換えます。カメラ・演技・同一性・台詞を保つ指示ですが、実際の出方は生成画像で確認してください。
+
+**Story-led page composition / シナリオに合うページ構成**: STEP2 first chooses the most effective story moment, then compares distinct page structures in the same request. The last six accepted session scripts provide geometry-only comparison data. Story impact and legibility take priority; novelty only breaks ties between suitable alternatives. Explicit layouts and meaningful repetition remain valid. No extra layout API call or similarity-only regeneration is added. The comparison resets on reload or full reset. / STEP2はシナリオの動き・表情・間・オチから最も効果的な見せ場を選び、上下の横長大コマ、左右の縦長、中央の見せ場などを同じリクエスト内で比較します。この画面で採用した直近6作品の構図を参考にしますが、内容への効果と読順を優先します。同程度に適した案があるときに偏りを抑え、違う構図にするためだけに話を変えたり、人物を小さくしたりしません。明示された配置や物語に必要な反復は使えます。比較専用のAPI呼び出しや、構図の類似だけを理由とする再生成は追加しません。比較履歴は再読み込み・全設定リセットで消去されます。横長4段のレガシーはこの変更の対象外です。
 
 **Panel-count switch / 4コマ生成・4～8コマ生成**: The switch above STEP2 defaults to the right-hand 4–8-panel mode and retains the selection until reload. Four-panel mode shows a short guide; 4–8-panel mode shows detailed direction and operation guidance. Four-panel STEP2 creates four panels and ignores total-count requests such as "six panels", while preserving valid style and direction requests for panels 1–4. The other mode writes 4–8 panels from the start. STEP3 retains that script’s count and order while preparing layouts and drawing instructions. It may use large and small panels, tall panels and actors extending into adjacent panels. The last six layouts provide comparison material, including alternatives without merged panels. Story-motivated repetition is allowed; layout repetition alone never triggers paid regeneration. Candidates must have a clear reading order; arbitrary layouts are not guaranteed. / STEP2の上にあるスイッチは初期状態が右の「4～8コマ生成」で、選択はリロードまで保持します。4コマ生成では短い案内、4～8コマ生成では演出と操作の詳しい説明を表示します。4コマ生成はSTEP2で通常の4コマを作り、自由入力の「6コマ」などの総コマ数指定は採用しません。1〜4コマへの有効な画風・演出指定は保持します。4～8コマ生成は最初から4～8コマのシナリオを作ります。STEP3では台本と同じコマ数・順番を保って配置と描画指示を作ります。大小のコマ、縦のぶち抜き、隣のコマへの身体の枠越えを必要に応じて試します。直近6枚の配置を比較資料にし、結合コマを使わない構成も比較します。物語上必要な反復は許容し、配置の重複だけで有料再生成はしません。配置は読む順番が明確な候補から選び、自由な配置全般を保証する機能ではありません。
 
@@ -657,7 +659,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.4.4](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.4のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.4.5](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.5のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -717,7 +719,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.5 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.5 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -824,6 +826,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.4.5 (2026-11-11)
+- **[Fix & UX]** Free page authoring now compares story peaks and the structures of six recent session works, preserving bold hero scenes, breakouts and bleed without diversity-only retries. / 自由配置の固定例を見直し、物語の山場と直近6作品の構図を比較してページを設計。大コマ・枠越え・タチキリを保持し、構図の類似だけでは再生成しません。
 
 ### v7.4.4 (2026-11-11)
 - **[Fix & UX]** Clarify the fixed horizontal four-panel legacy mode and the free-layout four-to-eight-panel mode. / 横長4コマを厳守するレガシーと、4コマから自由配置する4～8コマ生成の名称・説明を明確化。
