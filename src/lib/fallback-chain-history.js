@@ -22,8 +22,7 @@ import {
 } from './gemini-model-routes.js';
 import {
   DEFAULT_OPENAI_IMAGE_QUALITY,
-  FALLBACK_OPENAI_IMAGE_QUALITY,
-  OPENAI_IMAGE_MODEL,
+  OPENAI_IMAGE_OPTIONS,
   resolveOpenAIImageOption,
 } from './openai-image-settings.js';
 
@@ -65,12 +64,13 @@ const describeGeminiRoute = (modelIds) => modelIds.map((id, index) => ({
 }));
 
 const defaultOpenAIImageOption = resolveOpenAIImageOption(DEFAULT_OPENAI_IMAGE_QUALITY);
-const fallbackOpenAIImageOption = resolveOpenAIImageOption(FALLBACK_OPENAI_IMAGE_QUALITY);
-const describeOpenAIImageRoute = () => [
-  { id: defaultOpenAIImageOption.model, role: 'Default', note: `認証済み時の初期選択・${defaultOpenAIImageOption.quality}` },
-  { id: OPENAI_IMAGE_MODEL, role: 'Selectable', note: '品質設定から明示選択' },
-  { id: fallbackOpenAIImageOption.model, role: 'Fallback', note: `2.5が利用不可のときの初期選択・${fallbackOpenAIImageOption.quality}` },
-].filter((entry, index, entries) => entries.findIndex(({ id }) => id === entry.id) === index);
+const describeOpenAIImageRoute = () => [defaultOpenAIImageOption, ...OPENAI_IMAGE_OPTIONS].map(option => ({
+  id: option.model,
+  role: option.model === defaultOpenAIImageOption.model ? 'Default' : 'Selectable',
+  note: option.model === defaultOpenAIImageOption.model
+    ? `初期選択・${defaultOpenAIImageOption.quality}。失敗時の自動モデル切替なし`
+    : '品質設定から明示選択',
+})).filter((entry, index, entries) => entries.findIndex(({ id }) => id === entry.id) === index);
 
 // OpenAI実行ルートを更新すれば、表示用Model Chainも同じ定義から組み立てられる。
 export const FALLBACK_CHAIN_SOURCE_IDS = {

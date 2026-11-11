@@ -98,10 +98,10 @@ test('edits request carries image data without changing the selected model or qu
   assert.equal('input_fidelity' in request.body, false);
 });
 
-test('explicit 2.0 remains 2.0 and accepts the same reference path', () => {
+test('legacy 2.0 selection uses the current default and keeps its reference', () => {
   const request = buildOpenAIImageRequest('approved', {quality: 'gpt-image-2-high', imageInputs: [ref]});
-  assert.equal(request.body.model, 'gpt-image-2');
-  assert.equal(request.body.quality, 'high');
+  assert.equal(request.body.model, 'gpt-image-2.6-sunburst');
+  assert.equal(request.body.quality, 'max');
   assert.equal(request.isEdit, true);
 });
 

@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.4.2** / 現在のソース版: **v7.4.2**
+> Current source version: **v7.4.3** / 現在のソース版: **v7.4.3**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -532,7 +532,7 @@ To update, save needed images and text, stop the old launcher, extract a fresh s
 
 Generation prompts retain a per-person limb ownership check even after Web-copy compaction: trace hands to shoulders and feet to hips, distinguish natural occlusion or cropping from missing limbs, and reject ownerless limbs near furniture or other bodies while preserving the scripted pose and camera. This is a drawing instruction, not an independent inspection of the finished Web image. / 生成指示には、Web貼り付け用の短縮後も人物ごとの手足確認を残します。手から肩、足から骨盤への接続を確認し、自然な遮蔽・画角外と欠損を区別し、指定した演技・構図を保ちながら家具や他人の身体の付近に出る所属不明の手足を防ぐよう指示します。これは作画指示であり、Web完成画像を独立して検査する機能ではありません。
 
-STEP4 selects GPT Image 2.6 Sunburst / max when the connected OpenAI project lists it, then 2.5 Sunburst / max or 2.0 / high as the initial choice. The quality menu also offers 2.6 Sunburst / high and xhigh and retains the previous manual options. An image request error does not switch the model automatically. Choose A4 large (2240×3168) or standard (1120×1584); the app normalizes the returned page to the selected 210:297 canvas. ChatGPT Web output does not run through this normalizer. As of 2026-11-05, the 2.6 Sunburst reference rates are $8 image input ($2 cached), $30 image output, and $5 text input ($1.25 cached) per million tokens. The 2.0 display retains its October 23 reference. Actual charges vary with token usage and any additional inspection or repair calls. / STEP4の初期選択は、OpenAIの接続先で使えるモデルに応じて GPT Image 2.6 Sunburst / max、2.5 Sunburst / max、2.0 / high の順です。プルダウンでは2.6 Sunburstのhigh・xhighや従来の選択肢も使えます。画像APIがエラーになっても、モデルを自動で切り替えません。A4大（2240×3168）と標準（1120×1584）を選べ、受け取った画像は210:297の指定寸法に揃えます。ChatGPT Webの画像にはこの調整がかかりません。2026-11-05時点の2.6 Sunburstの参考単価は、100万トークンあたり画像入力8ドル（キャッシュ2ドル）、画像出力30ドル、テキスト入力5ドル（キャッシュ1.25ドル）です。2.0は10月23日の参考単価を表示します。実際の料金はトークン数や追加の検査・修正で変わります。 [OpenAI model pricing / モデル単価](https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst)
+STEP4 selects GPT Image 2.6 Sunburst / max when the connected OpenAI project lists it, then 2.5 Sunburst / max or 2.5 Flare / xhigh as the initial choice. If model discovery has no supported result, the visible 2.6 default is retained; a provider refusal stops the request. GPT Image 2.0 is no longer selectable. The quality menu also offers 2.6 Sunburst / high and xhigh and retains the previous manual options. An image request error does not switch the model automatically. Choose A4 large (2240×3168) or standard (1120×1584); the app normalizes the returned page to the selected 210:297 canvas. ChatGPT Web output does not run through this normalizer. As of 2026-11-05, the 2.6 Sunburst reference rates are $8 image input ($2 cached), $30 image output, and $5 text input ($1.25 cached) per million tokens. Actual charges vary with token usage and any additional inspection or repair calls. / STEP4の初期選択は、OpenAIの接続先で使えるモデルに応じて GPT Image 2.6 Sunburst / max、2.5 Sunburst / max、2.5 Flare / xhigh の順です。候補を取得できなければ2.6の既定値を表示し、利用できない場合はエラーを表示して停止します。2.0は選択できません。プルダウンでは2.6 Sunburstのhigh・xhighや従来の選択肢も使えます。画像APIがエラーになっても、モデルを自動で切り替えません。A4大（2240×3168）と標準（1120×1584）を選べ、受け取った画像は210:297の指定寸法に揃えます。ChatGPT Webの画像にはこの調整がかかりません。2026-11-05時点の2.6 Sunburstの参考単価は、100万トークンあたり画像入力8ドル（キャッシュ2ドル）、画像出力30ドル、テキスト入力5ドル（キャッシュ1.25ドル）です。実際の料金はトークン数や追加の検査・修正で変わります。 [OpenAI model pricing / モデル単価](https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst)
 
 On the Gemini route, STEP2 starts with Gemini 3.8 Flash; failure-only fallback proceeds through the models shown in Model Chain. STEP4 uses Nano Banana 2.1 (`gemini-nano-banana-2.1`) through the Interactions API with `1K / 3:4`, then normalizes the full page to A4. There is no separate Gemini quality selector. As of 2026-10-23, the official reference prices are $0.0336 per 1K image, $1.50 input and $7.50 text/thinking output per million tokens. QA and repair requests can add charges; these are reference prices, not live billing. / GeminiのSTEP2はGemini 3.8 Flashから開始し、失敗時だけModel Chainの候補へ切り替えます。STEP4はNano Banana 2.1 (`gemini-nano-banana-2.1`) のInteractions APIへ`1K / 3:4`で送信し、ページ全体をA4へ正規化します。Geminiに独立した品質選択はありません。2026-10-23時点の公式参考価格は1K画像$0.0336／枚、入力$1.50、テキスト・思考出力$7.50／100万トークンです。精査と修正にも料金がかかり、表示は実際の請求額ではありません。
 
@@ -657,7 +657,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.4.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.4.3](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.3のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -717,7 +717,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -824,6 +824,10 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.4.3 (2026-11-11)
+
+- Removed active GPT Image 2.0 selections and fallback routes. GPT Image 2.6 remains the default; provider failures do not silently switch to the retired model. / GPT Image 2.0の選択肢と代替経路を除去しました。既定のGPT Image 2.6を維持し、失敗時に旧モデルへ自動切替しません。
 
 ### v7.4.2 (2026-11-11)
 - **[Fix & UX]** Design free page geometry, page-dominant figures across small panels and full bleed from ordinary 4–8-panel scenarios and retain them through rendering and review. Fix conflicting body containment and offscreen cast detection. Allow bottom credits to overlap artwork or remain obscured. / 通常の4～8コマ台本から自由配置・複数小コマに重なる大きな人物・タチキリを設計し、描画と検査へ保持。全身の枠内固定と画面外人物の誤検出を修正。下部クレジットは絵との重なりや遮蔽を許容。

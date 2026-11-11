@@ -25,7 +25,7 @@ test('chooses Sunburst max only when the verified model list contains Sunburst',
   );
   assert.equal(
     settings.selectInitialOpenAIImageQuality(['gpt-image-2.5-flare', 'gpt-image-2']),
-    'gpt-image-2-high',
+    'xhigh',
   );
 });
 
@@ -48,11 +48,11 @@ test('selection starts at max and never reads or writes browser storage', () => 
   }
 });
 
-test('2.0 is an explicit high-quality option, not an automatic fallback', () => {
+test('legacy 2.0 selections resolve to the current default', () => {
   const request = buildOpenAIImageRequestBody('same prompt', { quality: 'gpt-image-2-high' });
-  assert.equal(request.model, 'gpt-image-2');
-  assert.equal(request.quality, 'high');
-  assert.equal(settings.OPENAI_IMAGE_OPTIONS.length, 9);
+  assert.equal(request.model, 'gpt-image-2.6-sunburst');
+  assert.equal(request.quality, 'max');
+  assert.equal(settings.OPENAI_IMAGE_OPTIONS.length, 8);
 });
 
 test('A4 manga output defaults to the large manuscript tier and keeps the same ratio', () => {
@@ -76,7 +76,7 @@ test('formats the current quality and size for the collapsed STEP4 settings butt
   );
   assert.equal(
     settings.formatOpenAIImageSettingsSummary('gpt-image-2-high', '2240x3168'),
-    'GPT Image 2.0 / high・A4大：2240×3168',
+    'GPT Image 2.6 Sunburst / max・A4大：2240×3168',
   );
   assert.equal(
     settings.formatOpenAIImageSettingsSummary('invalid', 'invalid'),
@@ -92,7 +92,7 @@ test('formats the official image API token prices for the selected STEP4 model',
   );
   assert.equal(
     settings.formatOpenAIImagePricingSummary('gpt-image-2-high'),
-    'GPT Image 2.0｜画像 入力 $8（キャッシュ $2）/ 出力 $30・テキスト 入力 $5（キャッシュ $1.25） USD / 100万トークン',
+    'GPT Image 2.6 Sunburst｜画像 入力 $8（キャッシュ $2）/ 出力 $30・テキスト 入力 $5（キャッシュ $1.25） USD / 100万トークン',
   );
   assert.equal(
     settings.formatOpenAIImagePricingSummary('invalid'),
@@ -106,7 +106,7 @@ test('only explicit organization verification failures on Sunburst and Flare sho
   assert.equal(settings.isOpenAIImageVerificationError(message, 'xhigh'), true);
   assert.equal(settings.isOpenAIImageVerificationError(
     message.replace('2.5-flare', '2.6-sunburst'), 'sunburst-26-max'), true);
-  assert.equal(settings.isOpenAIImageVerificationError(message, 'gpt-image-2-high'), false);
+  assert.equal(settings.isOpenAIImageVerificationError(message, 'gpt-image-2-high'), true);
   for (const error of ['403 permission denied', '401 invalid key', '429 insufficient_quota', 'network error']) {
     assert.equal(settings.isOpenAIImageVerificationError(error, 'xhigh'), false);
   }

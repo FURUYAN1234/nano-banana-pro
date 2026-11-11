@@ -1328,7 +1328,7 @@ No explanations. No partial results.`;
                         {isOpenAIImageMode ? formatOpenAIImagePricingSummary(openAIImageQuality) : formatGeminiImagePricingSummary()}
                       </span>
                       <span className="text-[9px] font-normal opacity-70">
-                        {isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).model === 'gpt-image-2' ? 'OpenAI公式参考料金 2026-10-23時点' : `OpenAI公式料金 ${OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点` : `Google公式料金 ${GEMINI_IMAGE_PRICE_SNAPSHOT_DATE}時点`}
+                        {isOpenAIImageMode ? `OpenAI公式料金 ${OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点` : `Google公式料金 ${GEMINI_IMAGE_PRICE_SNAPSHOT_DATE}時点`}
                       </span>
                     </>
                   )}

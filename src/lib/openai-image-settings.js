@@ -32,21 +32,12 @@ const OPENAI_IMAGE_PRICING_USD_PER_M = Object.freeze({
     textInput: 5,
     cachedTextInput: 1.25,
   }),
-  'gpt-image-2': Object.freeze({
-    imageInput: 8,
-    cachedImageInput: 2,
-    imageOutput: 30,
-    textInput: 5,
-    cachedTextInput: 1.25,
-  }),
 });
 export const OPENAI_IMAGE_SIZE_OPTIONS = MANGA_MANUSCRIPT_SIZE_OPTIONS;
 export function normalizeOpenAIImageSize(value) {
   return OPENAI_IMAGE_SIZE_OPTIONS.some(option => option.value === value) ? value : DEFAULT_OPENAI_IMAGE_SIZE;
 }
-export const FALLBACK_OPENAI_IMAGE_QUALITY = 'gpt-image-2-high';
 export const OPENAI_IMAGE_OPTIONS = [
-  { value: 'gpt-image-2-high', label: 'GPT Image 2.0 / high', model: 'gpt-image-2', quality: 'high' },
   { value: 'high', label: 'GPT Image 2.5 Flare / high', model: OPENAI_IMAGE_MODEL, quality: 'high' },
   { value: 'xhigh', label: 'GPT Image 2.5 Flare / xhigh', model: OPENAI_IMAGE_MODEL, quality: 'xhigh' },
   { value: 'sunburst-high', label: 'GPT Image 2.5 Sunburst / high', model: OPENAI_IMAGE_25_SUNBURST, quality: 'high' },
@@ -79,10 +70,13 @@ export function normalizeOpenAIImageQuality(value) {
 }
 
 export function selectInitialOpenAIImageQuality(availableModelIds) {
-  if (!Array.isArray(availableModelIds)) return FALLBACK_OPENAI_IMAGE_QUALITY;
+  if (!Array.isArray(availableModelIds)) return DEFAULT_OPENAI_IMAGE_QUALITY;
   if (availableModelIds.includes(OPENAI_IMAGE_26_SUNBURST)) return DEFAULT_OPENAI_IMAGE_QUALITY;
   if (availableModelIds.includes(OPENAI_IMAGE_25_SUNBURST)) return LEGACY_SUNBURST_QUALITY;
-  return FALLBACK_OPENAI_IMAGE_QUALITY;
+  if (availableModelIds.includes(OPENAI_IMAGE_MODEL)) return 'xhigh';
+  // Model-list discovery may omit image access. Keep the visible current default;
+  // a provider refusal is shown without switching to a retired model.
+  return DEFAULT_OPENAI_IMAGE_QUALITY;
 }
 
 export const OPENAI_IMAGE_VERIFICATION_MESSAGE = '選択したGPT Imageモデルを使うにはOpenAIの組織認証が必要です。組織設定を確認し、承認済みなら反映を待ってください。プルダウンから利用可能な別モデルも選べます。';

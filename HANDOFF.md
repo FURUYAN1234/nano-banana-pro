@@ -1,3 +1,9 @@
+## GPT Image 2.0 route retirement candidate v7.4.3 — 2026-11-11
+
+- Authorized existing-app fix, official deployment and existing note/X/Facebook updates. Full backup is deferred until every app update and announcement is complete.
+- Removed active 2.0 routes while preserving the accepted 2.6 normal request/output behavior. Provider-error regression failed before correction and passes after correction. Focused 38 tests pass; the full run passed 2279/2280 with the stale exact-README audit as the remaining failure to refresh. All 71 manual pages render and pass bounds/privacy/version checks; only system p22 and OpenAI p12 change beyond the version footer and were visually reviewed. Existing accepted 2.6 live manga results are retained; current UI selection verification and official delivery remain pending.
+- The existing private task record owns cross-app progress; no credentials are stored in this file.
+
 # v7.4.2 whole-page composition candidate — 2026-11-11
 
 Local v7.4.2 candidate verified with ordinary action and café stories. The user authorized commit, deployment, note/X/Facebook announcements with the generated images attached, and a subsequent full backup on 2026-11-11. Then audit and remove deprecated GPT Image 2.0 choices/routes across Nano, Character Sheet Maker, Comic Translation and PanoForge, deploy and announce each app, and perform a final full backup. No subagents. Preserve authenticated local tabs and generated-image history. Current private owner record: /home/furu/Codex/work/4koma-free-layout-20261111/task.json.

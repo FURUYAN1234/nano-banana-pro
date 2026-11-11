@@ -49,7 +49,7 @@ def new(title,kicker='操作ガイド',sources=''):
  c.setFont('JPB',21); c.setFillColor(INK); c.drawString(M,H-73,title)
  c.setStrokeColor(HexColor('#cfdddf')); c.line(M,H-89,W-M,H-89)
  c.bookmarkPage(f'p{page}'); c.addOutlineEntry(title,f'p{page}',0,False)
- c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.4.2対応 | 2026年11月11日更新 | A4 日本語版')
+ c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.4.3対応 | 2026年11月11日更新 | A4 日本語版')
  c.drawRightString(W-M,31,f'{page:02d} / 19')
  if sources: c.setFont('JP',7.5); c.drawString(M,45,'根拠: '+sources+'（出典一覧は19ページ）')
  transcript.append('\n\n'+str(page)+'. '+title)
@@ -206,7 +206,7 @@ new('⑨ モデルの利用権限を確認する','難所 2 / 課金・本人確
 steps([('漫画用Projectを選び「Settings → Limits」','まず左上で③のProjectを選択します。組織全体のLimitsとは別の、Project SettingsのLimitsを開きます。'),('「Model usage」の「Allow or block models」へ','その説明に対応する<b>Select models</b>を押します。同じページにRate limits用のSelect modelsもあるので、取り違えないでください。'),('対象モデルが禁止されていないか確認する','設定の選択肢は下表の3つです。すでに許可されているなら変更不要です。会社・共有組織の制限は管理者へ依頼します。')])
 table([['モデルの許可設定','意味'],['Allow all models','現在と将来のモデルをProject側で許可。OpenAI側の制限を解除する操作ではありません。'],['Allow all except selected models','選択したモデルだけ禁止。Astraや画像モデルが禁止リストにないか確認。'],['Allow only selected models','選択したモデルだけ許可。画像モデルだけ許可しても解析・シナリオ処理は動きません。']])
 box('最低限、どの名前を探す？','本アプリの標準の文章・画像解析用モデルは<b>gpt-6-luna</b>です。<b>gpt-6.1-terra</b>、<b>gpt-6.1-sol</b>、<b>gpt-6-astra</b>を選ぶ場合は、そのモデルも許可します。画像生成にはまず<b>gpt-image-2.6-sunburst</b>を確認します。別の画像モデルを選ぶ場合は、そのモデルも許可します。')
-p('<b>許可範囲を絞る場合：</b>選択したシナリオモデル、解析・検査モデル、画像モデルを確認します。アプリのModel Chainで失敗時の代替モデルも確認し、必要な範囲を管理者と相談してください。画像の2.0を使う場合はgpt-image-2も対象です。','small')
+p('<b>許可範囲を絞る場合：</b>選択したシナリオモデル、解析・検査モデル、画像モデルを確認します。アプリのModel Chainで失敗時の代替モデルも確認し、必要な範囲を管理者と相談してください。画像は2.6または明示選択した2.5が対象です。終了予定の2.0は使用しません。','small')
 p('許可設定を変更する場合はSaveで保存し、反映を待ちます。AllowedはProject内の設定です。OpenAI側の制限を解除する購入ボタンではありません。キー権限、残高、要求された認証の完了も確認します。','small')
 
 # 13

@@ -13,7 +13,7 @@ import {
 } from '../src/lib/gemini-model-routes.js';
 import {
   DEFAULT_OPENAI_IMAGE_QUALITY,
-  FALLBACK_OPENAI_IMAGE_QUALITY,
+  OPENAI_IMAGE_OPTIONS,
   OPENAI_IMAGE_MODEL,
   resolveOpenAIImageOption,
 } from '../src/lib/openai-image-settings.js';
@@ -57,14 +57,10 @@ test('the Gemini Model Chain entries use their active routes', () => {
 
 test('the STEP4 OpenAI snapshot distinguishes its default model from selectable alternatives', () => {
   const chain = FALLBACK_CHAINS.find((candidate) => candidate.id === 'step4-openai');
-  assert.deepEqual(chain.models.map(({ id }) => id), [
-    resolveOpenAIImageOption(DEFAULT_OPENAI_IMAGE_QUALITY).model,
-    OPENAI_IMAGE_MODEL,
-    resolveOpenAIImageOption(FALLBACK_OPENAI_IMAGE_QUALITY).model,
-  ]);
-  assert.equal(chain.models[0].role, 'Default');
-  assert.equal(chain.models[1].role, 'Selectable');
-  assert.equal(chain.models[2].role, 'Fallback');
+  assert.deepEqual(chain.models.map(({ id }) => id), [...new Set([resolveOpenAIImageOption(DEFAULT_OPENAI_IMAGE_QUALITY), ...OPENAI_IMAGE_OPTIONS].map(x => x.model))]);
+  assert.equal(chain.models.find(x => x.id === resolveOpenAIImageOption(DEFAULT_OPENAI_IMAGE_QUALITY).model).role, 'Default');
+  assert.equal(chain.models.find(x => x.id === OPENAI_IMAGE_MODEL).role, 'Selectable');
+  assert.equal(chain.models.some(x => x.role === 'Fallback'), false);
   assert.deepEqual(FALLBACK_CHAIN_SOURCE_IDS['step4-openai'], chain.models.map(({ id }) => id));
 });
 
