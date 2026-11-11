@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "6f8263b0da6d776364d00f791126fd1b86400aab2fc12cef088243f95c3bbfe5",
   "readmeLanguageGaps": [],
-  "sourceTree": "59c7681aad7895f9c44f0cde8a67ca1a7130f9a7",
-  "publicTree": "e43c6d0f8fed9739e2a931206053b2c06dfb9fa2",
+  "sourceTree": "cb4ef17f9b368438cc3416a4572a3231b1a5386a",
+  "publicTree": "6a1370ee004222de2f13af7ced5b3cd5bec22261",
   "packageSha256": "900f89d977eb9122f6c053da34c0284125a26aa3b5854417c81ed19059f60f72",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-11T09:06:56.711Z",
+  "checkedAt": "2026-11-11T09:51:05.311Z",
   "findings": "Reviewed v7.4.5 README changes against STEP2 prompt selection, history collection and unchanged STEP3 composition preservation. Story suitability precedes novelty. Existing session history provides six geometry-only summaries; resets and reload clear history. No additional API or diversity-only retry; legacy strips excluded. Models, image dimensions, pricing and all other body sections retain same-day reviewed v7.4.4 content. Normal UI/API verification is complete: three ordinary-topic scenarios and two image works, preserving authored counts and titles; images directly inspected. Automatic QA limits are recorded separately in the task record. This field records documentation review, not an automatic image-quality pass.",
   "manualFindings": "Rebuilt and rendered all 71 pages. A4, text bounds, footer version, naming and privacy gates pass. Exact extracted-body comparison excluding version shows only full-manual page14 changed. Inspected its complete render: content-first selection, recent-six scope and no similarity-only retry are readable without overlap or clipping. Other page bodies match reviewed v7.4.4; reuse that visual review. All three PDFs copied to public/downloads.",
   "pricingReview": {
     "version": "7.4.5",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-    "checkedAt": "2026-11-11T04:29:04.844Z",
+    "checkedAt": "2026-11-11T09:51:05.314Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -57,6 +57,6 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Reused the same-day official Standard-rate review at the retained checkedAt, within 24 hours. The pricing-source SHA256 is identical to reviewed v7.4.3. v7.4.4 only changes mode names and explanations; models, rates, request quality and sizes are unchanged. Standard image 2.6 input/output 8/30, cached input 2; text input 5/cache 1.25 USD per million tokens. Batch/Flex discounts are excluded. This reuse is not a new official-site visit. v7.4.5 retains the identical pricing source; this is reuse of the same-day review, not a new price check."
+    "findings": "Reopened official OpenAI pricing and model pages and Gemini Developer API pricing immediately before v7.4.5 release. Standard, not Batch/Flex: Astra 10/50; Sol6.1 2/10; Terra6.1 1/5; Luna6 0.1/0.5; Sol6 2/10; Sol5.6 4/20; Terra5.6 2/12; Luna5.6 0.2/1.2 USD per million input/output tokens. Image2.6 image 8/30, cached2; text5/cache1.25. Gemini3.8Flash 0.75/3.75 through 2026-12-31; NanoBanana2.1 input1.5, text/thinking7.5, image30; 1K0.0336 per image. All displayed rate values match; existing displayed snapshot dates correctly identify the earlier unchanged rate snapshot. No rate or model changes."
   }
 }
