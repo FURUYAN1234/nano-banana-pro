@@ -19,7 +19,7 @@
   "readmeSha256": "dbbde92d298fcde7c742fcf81798b7c4ae557622bfe7af8fc9af19d56385cf84",
   "readmeLanguageGaps": [],
   "sourceTree": "c603257d10784e5e43cc871e3c7778872b5c1639",
-  "publicTree": "015abd958f7de44f65851df46b72beb6c44ceaef",
+  "publicTree": "4b59f3d24783d8cc2cf14f2edeb6552312dc9016",
   "packageSha256": "906be21cc1f96b2759ff31a5bccafa989c9c99fff32dc16379911a26808e93ee",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -42,7 +42,7 @@
     "📋 ChangeLog / 更新履歴"
   ],
   "checkedAt": "2026-11-11T05:35:12.719Z",
-  "findings": "Reviewed v7.4.3 current-body delta against implementation: removed GPT Image 2.0 choice, initial discovery fallback and dated historical price display; legacy selections normalize to the visible 2.6 default. Supported 2.5 alternatives, 4–8-panel composition, fixed four-panel mode, input references, quality, sizes and one bounded repair remain. Compared every unchanged section with the reviewed v7.4.2 README and checked the new bilingual changelog and current links. This review does not assert a new API generation.",
+  "findings": "Reviewed v7.4.3 current-body delta against implementation: removed GPT Image 2.0 choice, initial discovery fallback and dated historical price display; legacy selections normalize to the visible 2.6 default. Supported 2.5 alternatives, 4–8-panel composition, fixed four-panel mode, input references, quality, sizes and one bounded repair remain. Compared every unchanged section with the reviewed v7.4.2 README and checked the new bilingual changelog and current links. This review does not assert a new API generation. Generated diagram diffs change only the same-width v7.4.2 to v7.4.3 label; layout and explanatory content remain unchanged.",
   "manualFindings": "Rebuilt and rendered all 71 pages for v7.4.3. Existing page counts, bounds, links, privacy/naming and footer checks pass. Extracted body comparison with the reviewed v7.4.2 manuals changes only full-manual p22 and OpenAI p12, excluding version footers. Visually inspected both full renders: old 2.0 selection/price/permission advice is removed, text and table remain legible without overlap or clipping. Other page bodies and their prior visual review are retained.",
   "pricingReview": {
     "version": "7.4.3",
