@@ -264,3 +264,19 @@ test('later repair request failure retains the already received scenario, while 
   assert.match(result.validationWarning.message, /repair timeout/);
   await assert.rejects(requestSafeScenario({ initialPrompt: 'BASE', requestScenario: async () => { throw new Error('network unavailable'); }, parseScenario: x => x }), /network unavailable/);
 });
+
+
+test('rejected STEP2 candidates carry their own scenario and validation reasons into diagnostics', async () => {
+  let attempt=0;
+  await assert.rejects(requestSafeScenario({
+    initialPrompt:'topic',requestScenario:async()=>({text:'candidate '+ ++attempt}),
+    parseScenario:response=>({location:'library',scenario:response.text}),
+    validateScenario:()=>{throw Object.assign(new Error('wrong frame count'),{code:'PANEL_STRUCTURE_CONTRACT',qualityIssues:[{code:'PANEL_STRUCTURE_CONTRACT',message:'wrong frame count'}]});},
+    fatalValidationCodes:['PANEL_STRUCTURE_CONTRACT'],maxAttempts:2
+  }),error=>{
+    assert.equal(error.diagnosticContext.stage,'step2_scenario_validation');
+    assert.equal(error.diagnosticContext.scenario,'candidate 2');
+    assert.match(error.diagnosticContext.validationError,/PANEL_STRUCTURE_CONTRACT.*wrong frame count/);
+    return true;
+  });
+});

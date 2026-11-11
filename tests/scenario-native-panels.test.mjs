@@ -346,3 +346,39 @@ test('blank selection reason cannot consume the following Scenario field',()=>{
   assert.throws(()=>validation.resolveAutoScenarioMode(parsed),{code:'AUTO_PANEL_CHOICE'});
  }
 });
+
+
+test('invalid page geometry keeps its own error code and repair guidance through STEP2',async()=>{
+ const bad={layout:'free',frames:Array.from({length:5},()=>({x:0,y:0,w:1,h:.2})),reason:'場面の流れと人物を大きく見せる',heroPanels:[3],foregrounds:[{panel:3,character:'A',over:[2],placement:'大きな人物の腕を上段の空いた領域に連続して描く。'}],breakouts:[],bleed:[]};
+ const candidate='PageComposition: '+JSON.stringify(bad)+'\n'+panels(5).replace(/^PageComposition:.*\n/,'');
+ let calls=0; const notices=[];
+ setFixtureResponse(async prompt=>{
+  calls++;
+  if(calls>1)assert.match(prompt,/【ページ全体から設計する4〜8コマ】[\s\S]*FAILED CHECK/);
+  return {text:'Topic: 札\nScenario:\n'+candidate,model:'fixture'};
+ });
+ await assert.rejects(provider.generateScenario({...args,...mode,onProgress:message=>notices.push(message)}),error=>{
+  assert.equal(error.code,'PAGE_COMPOSITION_CONTRACT');
+  assert.equal(error.diagnosticContext.scenario,candidate);
+  assert.match(error.diagnosticContext.validationError,/物語のコマ同士を重ねず/);
+  assert.doesNotMatch(error.diagnosticContext.validationError,/CAMERA_CONTRACT|STYLE_CONTRACT/);
+  return true;
+ });
+ assert.equal(calls,3);
+ assert(notices.some(message=>message.includes('ページ演出')));
+});
+
+test('a malformed breakout retries its own schema and accepts the corrected bold composition',async()=>{
+ const good={layout:'tall_right_middle',reason:'札を持ち上げる動作を大きく見せ、周囲の反応をつなぐ',heroPanels:[3],breakouts:[{panel:3,part:'Aの頭髪',into:1}],bleed:[{panel:3,edges:['right','bottom']}]};
+ const bad={...good,breakouts:[{panel:3,part:'Aの頭髪',into:[1]}]};
+ let generations=0; const notices=[];
+ setFixtureResponse(async prompt=>{
+  if(prompt.includes('構成監査'))return {text:JSON.stringify(reviewFor(5)),model:'fixture'};
+  generations++;
+  if(generations===2){assert.match(prompt,/breakouts\[0\]\.into/);assert.match(prompt,/【ページ全体から設計する4〜8コマ】/);}
+  return {text:'Topic: 札\nScenario:\nPageComposition: '+JSON.stringify(generations===1?bad:good)+'\n'+panels(5).replace(/^PageComposition:.*\n/,''),model:'fixture'};
+ });
+ const result=await provider.generateScenario({...args,...mode,onProgress:m=>notices.push(m)});
+ assert.equal(generations,2);assert.match(result.scenario,/"part":"Aの頭髪","into":1/);
+ assert(notices.some(m=>m.includes('ページ演出')));
+});

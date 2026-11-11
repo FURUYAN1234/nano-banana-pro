@@ -158,7 +158,7 @@ const assertScenarioCheck = (code, check) => {
   try {
     check();
   } catch (error) {
-    error.code = code;
+    error.code ||= code;
     throw error;
   }
 };
@@ -205,17 +205,25 @@ const validateScenarioForRetry = ({
     ['DIALOGUE_CONTRACT', () => assertMangaScenarioDialogueContract(scenario.scenario, castList, { scenarioMode })]
   ];
   const failures = [];
+  let skipped = 0;
+  const structureDependent = new Set(['PAGE_COMPOSITION_CONTRACT', 'CAMERA_CONTRACT', 'STYLE_CONTRACT', 'DIALOGUE_CONTRACT']);
   for (const [code, check] of checks) {
+    // These inspectors also parse page geometry. Report that cause once, rather
+    // than presenting the same malformed JSON as camera/style/dialogue errors.
+    if (structureDependent.has(code) && failures.some(f => ['PANEL_STRUCTURE_CONTRACT', 'PAGE_COMPOSITION_CONTRACT'].includes(f.code))) {
+      skipped += 1;
+      continue;
+    }
     try {
       assertScenarioCheck(code, check);
     } catch (error) {
-      failures.push({ code, message: error?.message || code });
+      failures.push({ code: error.code, message: error?.message || code });
     }
   }
   if (failures.length > 0) {
     const error = new Error(failures.map(({ message }) => message).join(' / '));
     error.code = failures[0].code;
-    error.qualityScore = checks.length - failures.length;
+    error.qualityScore = checks.length - failures.length - skipped;
     error.qualityIssues = failures;
     error.scenario = scenario.scenario;
     throw error;

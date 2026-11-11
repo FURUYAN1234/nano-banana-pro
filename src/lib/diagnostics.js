@@ -49,7 +49,7 @@ const investigationGuide = Object.freeze({
     '画面・通信・保存・生成内容・検査器を切り分ける。ソースがあれば同じ版のstack内ファイル名・行番号と共通処理を照合し、個別素材だけの例外修正を避ける。',
     'image.reviewは画像検査と修正の最終採否。passedだけが検査合格で、repaired_unverifiedは修正出力を受信したが再検査していない状態。repair_failedは修正失敗。送信前の上限超過にもerrorCode・promptLength・promptMaxCharsとfailureContextの台本・指摘・観察を保存する。image.letteringとsettings.local_letteringは、撤回済みの旧候補の文字上書き記録であり、現在の通常処理は画像APIの文字を保持する。',
     '白黒の線の密度を調べる場合は、通常生成と部分修正を区別し、通常コマの線整理と劇画等の意図的なカケアミを混同しない。肌・素材トーンや台詞・カメラの維持は実画像で別に確認する。',
-    '失敗イベントのfailureContextには、その実行開始時の台本・人物設定・入力・描画指示を記録する。吹き出し修復失敗には修復応答・各コマの抽出台詞・具体的な不一致も付く。台本の品質検査不合格には判定内容と修正理由も残る。originalLengthsとtruncatedFieldsで省略を確認し、再読み込み後の別台本と混同しない。一般API本文・任意の例外全文は保存しない。4〜8コマも台詞なしの品質警告は原文を保持して継続し、配置だけの修復後にも同じ条件を使う。壊れた台詞はDIALOGUE_SYNTAX、コマ構造の不備はPANEL_STRUCTURE_CONTRACTで停止する。旧版で保存されなかった本文は復元できない。',
+    '失敗イベントのfailureContextには、その実行開始時の台本・人物設定・入力・描画指示を記録する。吹き出し修復失敗には修復応答・各コマの抽出台詞・具体的な不一致も付く。STEP2の品質検査不合格には、step2_scenario_validationとして実際に不合格になった生成候補とvalidationErrorの判定理由を残す。実行開始時に表示されていた前の台本とは区別する。originalLengthsとtruncatedFieldsで省略を確認し、再読み込み後の別台本と混同しない。一般API本文・任意の例外全文は保存しない。4〜8コマも台詞なしの品質警告は原文を保持して継続し、配置だけの修復後にも同じ条件を使う。壊れた台詞はDIALOGUE_SYNTAX、コマ構造の不備はPANEL_STRUCTURE_CONTRACTで停止する。旧版で保存されなかった本文は復元できない。',
     'IMAGE_PROMPT_BUDGETは描画指示が文字数上限を超えたときの検証エラー。promptLengthとpromptMaxCharsを照合する。参照説明分を予約した本文上限は32,000文字より小さくなる。',
     'REFERENCE_ANALYSIS_INVALIDは素材解析結果の対応検証で発生する。HTTP成功後にも起こり得る。ログのコードだけでは具体的な不一致を断定せず、画面の解析エラーと対象版の人物名・画像番号等の検証処理を照合する。',
     'DOCUMENTARY_SOURCE_FIDELITYは事実本文の数値・重要語句・語句網羅の検査で発生する。自由入力の制作指示を本文と誤認していないか、実入力と画面の失敗理由を対象版の本文選択処理へ照合する。コードだけで生成物の事実欠落と断定しない。',
@@ -81,7 +81,7 @@ export function summarizeDiagnosticError(error) {
     : /timeout|timed out/.test(text) ? 'timeout' : /fetch|network|connection/.test(text) ? 'network'
     : /api.?key|unauthorized|authentication/.test(text) ? 'authentication'
       : /policy|safety|blocked/.test(text) ? 'policy' : /json|parse|syntax/.test(text) ? 'format'
-      : ['IMAGE_PROMPT_BUDGET','EXPERIMENTAL_PLAN_INVALID'].includes(error?.code) || /invalid|validation|contract/.test(text) ? 'validation' : 'unknown';
+      : (['IMAGE_PROMPT_BUDGET','EXPERIMENTAL_PLAN_INVALID'].includes(error?.code) || /_CONTRACT$/.test(error?.code || '')) || /invalid|validation|contract/.test(text) ? 'validation' : 'unknown';
   return {errorName: safeToken(error?.name), errorCode: safeToken(error?.code), errorKind,
     status: Number.isFinite(Number(error?.status)) ? Number(error.status) : undefined,
     ...(error?.code === 'IMAGE_PROMPT_BUDGET' ? {promptLength:error.promptLength, promptMaxChars:error.promptMaxChars} : {}),

@@ -103,12 +103,12 @@ const FLOOR_CAMERA_RE = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ
 // Require a camera origin or explicit camera placement, not "behind the head"
 // in an occlusion, a panel border or an in-scene character position.
 const REAR_CAMERA_RE = /(?:^|[、。;；\s]|の(?:左|右)?|(?:左|右))(?:後方|後ろ|背中側|背後)(?:[左右]?[上下](?:方)?|[左右])?(?=\s*(?:から|より|へ(?:引[くい]|カメラを移|視点を移)|の(?:[高低]い|[高低]めの?)?(?:撮影)?(?:位置|視点)|(?:に|で)(?:カメラ|視点|撮|構え|見上げ|見下ろ)|[、,]|$))|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i;
-const HIGH_CAMERA_RE = /overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平)))|高め(?:から|より|に(?:撮|捉え))|高く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?高(?:い|め|く)|高所から|上方から|見下ろ[すし]/i;
+const HIGH_CAMERA_RE = /overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|バード(?:ズ)?アイ|(?:天井|天頂)(?:近く|付近)?から(?:真下|鉛直下向き)|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平)))|高め(?:から|より|に(?:撮|捉え))|高く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?高(?:い|め|く)|高所から|上方から|見下ろ[すし]/i;
 const LOW_CAMERA_RE = /low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|下から|見上げ|低(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平))|[、。]|$)|低(?:い|めの?)斜め|低め(?:から|より|に(?:撮|捉え))|低く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?低(?:い|め|く)|低所(?:から|の|に|より)?|(?:[^\s、。]+上|[^\s、。]+面)すれすれ(?:から|より|[、。]|$)/i;
 
 // Strip only named camera terms under a prohibition, including Japanese lists;
 // keep affirmative directions in the same sentence for every camera consumer.
-const CAMERA_TERM = '(?:魚眼|フィッシュアイ|超広角|広角|望遠|長焦点|長い焦点距離|アイレベル|目線の高さ|目の高さ|俯瞰|アオリ|煽り|ローアングル|ハイアングル|ダッチ(?:アングル)?|ズームイン|ズームアウト|アップ|接写|全身|全景|遠景|ワイドショット)(?:レンズ)?(?:の歪み)?';
+const CAMERA_TERM = '(?:魚眼|フィッシュアイ|超広角|広角|望遠|長焦点|長い焦点距離|アイレベル|目線の高さ|目の高さ|俯瞰|バード(?:ズ)?アイ|アオリ|煽り|ローアングル|ハイアングル|ダッチ(?:アングル)?|ズームイン|ズームアウト|アップ|接写|全身|全景|遠景|ワイドショット)(?:レンズ)?(?:の歪み)?';
 const CAMERA_PROHIBITION = '(?:なし|無し|使わない|使わず|使用しない|使用せず|用いない|用いず|追加しない|追加せず|描かない|描かず|描写しない|描写せず|禁止|避ける|避け|不可)';
 const CAMERA_NEGATION = `(?:(?:は|を|も)?${CAMERA_PROHIBITION}|にしない|ではなく|ではない|でなく|でない)`;
 const NEGATED_CAMERA_TERMS_RE = new RegExp([
@@ -141,13 +141,13 @@ export const isFisheyeCamera = (camera = '') => /fish[ -]?eye|魚眼|フィッ�
 // Classify camera placement, not a tall actor, raised head or low prop. An explicit
 // eye-level viewpoint can be physically near the floor for a seated/chibi subject.
 export const classifyCameraElevation = (camera = '') => {
-  const text = affirmativeCameraText(camera)
+  const text = affirmativeCameraText(camera).normalize('NFKC')
     .replace(/(?:^|[。;；\n、])([^。;；\n、]*?)(?:が|は)[^。;；\n、]*/g, (clause, subject) =>
       /カメラ|撮影(?:者|位置)|視点|\bcamera\b/i.test(subject) ? clause : clause.replace(/見上げ|見下ろ[すし]/g, ''));
   const eyeLevelText = text.replace(/(?:above|below)\s+(?:the\s+)?eye[ -]?level/gi, '');
   if (/(?:アイレベル|eye[ -]?level|(?:目(?:線)?|視線)(?:の高さ|と同じ高さ))(?!より(?:も)?(?:高|低|上|下))/i.test(eyeLevelText)) return 'eye';
   const placement = text.match(/\bcamera\s+(?:(?:is\s+)?(?:positioned|placed|set)\s+)?(?:is\s+)?(?:slightly\s+)?(above|below)\b/i)?.[1]?.toLowerCase();
-  const pitch = text.match(/(俯角|仰角)\s*[:：]?\s*\+?(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)\s*(?:度|°)/)?.[1];
+  const pitch = text.match(/(俯角|仰角)\s*[:：]?\s*(?:約|およそ|おおよそ)?\s*\+?(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)\s*(?:度|°)/)?.[1];
   const lateralHeight = text.match(/より(?:も)?(高|低)い(?:左|右)(?:前|後(?:ろ|方)?|側面)?(?:斜め)?(?:から|より)/)?.[1];
   if (placement === 'above' || pitch === '俯角' || lateralHeight === '高' || HIGH_CAMERA_RE.test(text)) return 'high';
   if (placement === 'below' || pitch === '仰角' || lateralHeight === '低' || FLOOR_CAMERA_RE.test(text) || LOW_CAMERA_RE.test(text)) return 'low';

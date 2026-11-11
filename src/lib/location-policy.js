@@ -155,6 +155,12 @@ export const requestSafeScenario = async ({
       validateScenario?.(parsed);
       return { response, parsed, attempts: attempt + 1, validationWarning: null };
     } catch (error) {
+      error.diagnosticContext = {
+        ...error.diagnosticContext,
+        stage: 'step2_scenario_validation',
+        scenario: parsed.scenario,
+        validationError: JSON.stringify(error.qualityIssues || [{ code: error.code, message: error.message }])
+      };
       const qualityScore = Number.isFinite(error?.qualityScore) ? error.qualityScore : 0;
       if (
         !bestQualityCandidate

@@ -13,6 +13,21 @@ try {
   const inputFor=(c=composition)=>({enabled:true,scenarioMode:'experimental-manga',castList:'## ユウ',colorMode:'monochrome',scenario:(c?`PageComposition: ${JSON.stringify(c)}\n`:'')+body});
   const planFor=source=>({count:5,layout:'two_columns',reason:'全体の動作を読む',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'ユウが幕を支える。',dialogueIds:p.dialogueIds,breakout:null,visualEffects:[]}))});
 
+  test('breakout schema failures identify the exact field while valid crossing stays intact',()=>{
+    for(const [broken,field] of [
+      [{part:'ユウの頭髪',into:1},'panel'],
+      [{panel:3,part:'ユウの頭髪'},'into'],
+      [{panel:3,part:'ユウの頭髪',into:[1]},'into'],
+      [{panel:3,part:'ユウの頭髪',into:3},'into'],
+      [{panel:3,into:1},'part']
+    ]) assert.throws(()=>c.readPageComposition(inputFor({...composition,breakouts:[broken]}).scenario,5),error=>{
+      assert.equal(error.code,'PAGE_COMPOSITION_CONTRACT');
+      assert.ok(error.message.includes('breakouts[0].'+field));
+      return true;
+    });
+    assert.deepEqual(c.readPageComposition(inputFor().scenario,5).breakouts,composition.breakouts);
+  });
+
   test('new scenarios require bold default composition or an explicit story-grounded restraint reason',()=>{
     const missing={layout:'hero_bottom',reason:'最後の幕を大きく見せる',heroPanels:[5],breakouts:[],bleed:[{panel:5,edges:['bottom']}]};
     assert.throws(()=>c.assertGeneratedPageComposition(inputFor(missing).scenario,5),/restraintReason/);

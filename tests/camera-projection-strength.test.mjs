@@ -155,3 +155,12 @@ test('ordinary and native assembly preserve exact camera strengths, numeric angl
     assert.equal(prepared.source.scenario, input.scenario);
   } finally { await server.close(); }
 });
+
+
+test('physical approximate pitch and ceiling bird-eye from rejected live scenarios are accepted',()=>{
+ assert.equal(classifyCameraElevation('ソファ座面ほどの低さから左前方へ仰角約25度、広角の全身ショット。アカリの支持脚からひねった胴体までを大きく捉え、床や家具の直線が彼女の回る動きを囲む。'),'low');
+ assert.equal(classifyCameraElevation('リビングの天井近くから真下へ見るバードアイ。低いテーブル上のタブレットを中央に置き、五人がその周りに作る輪を一目で読める全景にする。'),'high');
+ for(const [s,e] of [['俯角およそ３０度で撮る。','high'],['仰角 約 20° の全身ショット。','low'],['天井付近から鉛直下向きに撮る。','high'],['バードアイで机上を写す。','high']])assert.equal(classifyCameraElevation(s),e,s);
+ for(const s of ['人物が天井を見上げる。','机の上の模型を真下へ動かす。','仰角0度。','肩越しの広角。'])assert.equal(classifyCameraElevation(s),'unspecified',s);
+ assert.equal(classifyCameraElevation('バードアイは使わず、アイレベルで撮る。'),'eye');
+});

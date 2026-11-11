@@ -38,8 +38,11 @@ export function readPageComposition(scenario, count) {
   for(const key of ['heroPanels','breakouts','bleed'])if(!Array.isArray(c[key]))compositionError(`${key}は配列で指定してください。`);
   if(c.heroPanels.some(n=>!validPanel(n))||new Set(c.heroPanels).size!==c.heroPanels.length)compositionError('大きく見せるコマの番号が不正です。');
   for(const key of ['breakouts','bleed'])if(new Set(c[key].map(v=>v?.panel)).size!==c[key].length)compositionError(`${key}のコマ指定が重複しています。`);
-  for(const b of c.breakouts) {
-    if(!validPanel(b?.panel)||!validPanel(b.into)||b.panel===b.into||typeof b.part!=='string'||!b.part.trim())compositionError('枠越えの人物・部位・隣接先が必要です。');
+  for(const [index,b] of c.breakouts.entries()) {
+    const field=`breakouts[${index}]`;
+    if(!validPanel(b?.panel))compositionError(`${field}.panelには枠越え元のコマ番号を1〜${count}の整数で指定してください。`);
+    if(!validPanel(b.into)||b.panel===b.into)compositionError(`${field}.intoには辺を共有する別のコマ番号を1〜${count}の整数一つで指定してください。配列ではありません。`);
+    if(typeof b.part!=='string'||!b.part.trim())compositionError(`${field}.partには枠を越える人物と身体部位を空でない文字列で指定してください。`);
     const a=rects[b.panel-1],t=rects[b.into-1],near=(x,y)=>Math.abs(x-y)<1e-6;
     const adjacent=((near(a.x+a.w,t.x)||near(t.x+t.w,a.x))&&Math.min(a.y+a.h,t.y+t.h)>Math.max(a.y,t.y)+.001)
       ||((near(a.y+a.h,t.y)||near(t.y+t.h,a.y))&&Math.min(a.x+a.w,t.x+t.w)>Math.max(a.x,t.x)+.001);

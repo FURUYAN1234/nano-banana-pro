@@ -1,3 +1,11 @@
+## v7.4.6 STEP2修正候補（2026-11-11・実API画像検証済み／未公開）
+
+- 構成エラーをコマ数エラーへ付け替える不具合、正当な日本語の俯角・仰角／バードアイ指定の誤検出、不合格候補が調査ログへ残らない問題を修正。
+- 元のNHK LIFE・大屋根リング入力を無編集で通常経路へ投入。GPT-6 Luna固定・フォールバックなし、GPT Image 2.6 Sunburst/max・2240×3168で2件とも5コマ画像まで生成。構成・カメラ検査は両件とも最初の候補が通過。最終画像は台詞・人物・話の流れと大胆な構図を目視確認。
+- 自動画像検査の状態はNHKがrepaired_unverified（通常の修正1回後は再検査なし）、大屋根リングがunverified（はみ出しの境界確定不可）。自動合格とは記録せず、目視確認と区別。追加の微差リトライは行っていない。
+- 全2,263テスト合格、lint・本番ビルド成功。元の拒否された万博台本は無編集でカメラ検査を通過。README・仕様書・3冊71ページのPDFを同期し、変更本文の全体表示と非変更本文の一致を確認。
+- 最新指示はAPI画像検証後、デプロイ直前まで。push・公開・Release・SNS・バックアップは実施しない。公開前検査結果・実行ID・画像証拠はWSL作業記録furu-step2-contract-20261111に保持。
+
 ## v7.4.5 story-led page composition — local API verified, before deployment (2026-11-11)
 
 Current task: choose effective page composition from the scenario instead of repeatedly using a right full-height opening figure with a left stack. Preserve bold large figures, bleed, overlaps, story, camera and media; legacy four-panel mode remains four horizontal strips. The task-specific Astra instruction applies; no subagents. The v7.4.4 release, social updates and final backup are complete; its older pending statements below are historical. On 2026-11-11 the user authorized v7.4.5 deployment, existing note update, X/Facebook with these generated examples, and one final full backup after all publication checks. Use the established release and backup routes.

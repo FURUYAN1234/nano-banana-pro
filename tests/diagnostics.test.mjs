@@ -187,3 +187,10 @@ test('every complete export includes a generic app contract, investigation guide
   assert.doesNotMatch(JSON.stringify([report.applicationSpec, report.investigationGuide]), /Super FURU|OpenAI|Gemini|sk-/);
   assert(report.events.every(e => typeof e.timeISO === 'string' && typeof e.operationLabel === 'string'));
 });
+
+test('typed Japanese contract failures remain validation errors with rejected candidate context',()=>{
+ const event=summarizeDiagnosticError(Object.assign(new Error('枠越え元が必要です。'),{code:'PAGE_COMPOSITION_CONTRACT',diagnosticContext:{stage:'step2_scenario_validation',scenario:'生成候補',validationError:'breakouts[0].panel'}}));
+ assert.equal(event.errorKind,'validation');
+ assert.equal(event.failureContext.scenario,'生成候補');
+ assert.equal(event.failureContext.validationError,'breakouts[0].panel');
+});
