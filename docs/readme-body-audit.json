@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "55f43cfcba0fb79e85f93d64e29bb0f56c09c8899ce3c81873dfdae72173b52b",
   "readmeLanguageGaps": [],
-  "sourceTree": "29e56e36824da7a4bbc5086ffc1e27e5d13ef69f",
-  "publicTree": "ac3576bd5fc3a2d4515f7edf16f0dd499870771f",
+  "sourceTree": "e1796d8beb18f4753669705c74d2bd32fae9c985",
+  "publicTree": "0ac5df2f9f7e4f72b9d068a3a70ae8fe0faaa234",
   "packageSha256": "4479627c3f7986a6ec92400f3915cfa367457190ade43543b713d1b873f6f40e",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -47,7 +47,7 @@
   "pricingReview": {
     "version": "7.4.7",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-    "checkedAt": "2026-11-11T09:51:05.314Z",
+    "checkedAt": "2026-11-11T22:53:50.457Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -57,6 +57,6 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Reopened official OpenAI pricing and model pages and Gemini Developer API pricing immediately before v7.4.5 release. Standard, not Batch/Flex: Astra 10/50; Sol6.1 2/10; Terra6.1 1/5; Luna6 0.1/0.5; Sol6 2/10; Sol5.6 4/20; Terra5.6 2/12; Luna5.6 0.2/1.2 USD per million input/output tokens. Image2.6 image 8/30, cached2; text5/cache1.25. Gemini3.8Flash 0.75/3.75 through 2026-12-31; NanoBanana2.1 input1.5, text/thinking7.5, image30; 1K0.0336 per image. All displayed rate values match; existing displayed snapshot dates correctly identify the earlier unchanged rate snapshot. No rate or model changes. Reused the same-day verified rates for v7.4.6: pricing source hash is unchanged; no model or price edits. v7.4.7 also reuses these checked rates: exact pricing source hash unchanged. No new rate observation is claimed; checkedAt remains the original official review time. v7.4.7 also reuses these checked rates: exact pricing source hash unchanged. No new rate observation is claimed; checkedAt remains the original official review time."
+    "findings": "Reopened official OpenAI Standard pricing, legacy model pricing pages, and Gemini Standard pricing on 2026-11-12 before v7.4.7 deployment. Current Astra/Sol6.1/Terra6.1/Luna6 and Image2.6, Gemini3.8Flash 0.75/3.75 through December31 and NanoBanana2.1 1.5 input,7.5 text output,30 image output match the existing UI/README/manual rates. Batch/Flex discount rates are excluded; no price configuration change."
   }
 }
