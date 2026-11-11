@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-  "manualVersion": "7.4.2",
-  "manualSourceSha256": "b20c554af9555c4fc6237417f45521c62be68bfcba4528f6ead56e56edb6cc5b",
+  "pricingSourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
+  "manualVersion": "7.4.3",
+  "manualSourceSha256": "b8506afbdc0fe8396f3f35429f42a03cac3b89f587119d92c60f45f5d4643d26",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "21a66f080cb84bbb7459468ea7eaab9f2a41b42f9c46c6beb158499998795b7c"
+      "sha256": "7ffd7c290f57db27c262809b9d743d98ee84242f011bb93f3fb4ba55dbb6bb47"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "15097a06c9400c4fc97d50ba93a2fad6d777ec87d4b964908e055ce4e59f352d"
+      "sha256": "b9e270d409cf12f7385ecd006147219fadb46fe01d84e3033abfdf0aab9a9658"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "276319808b01121e59e7391ae860198664daa12e82249265e1df72282ceb4e9b"
+      "sha256": "9b47a6cda36e061fde95f9ca5e09db51430da63ee455c6884736c7cae9fbe525"
     }
   ],
-  "readmeSha256": "da16170d60fc0ed248c73085e21f516fa7c9aecd5885b350a3cab61cebf37d1d",
+  "readmeSha256": "dbbde92d298fcde7c742fcf81798b7c4ae557622bfe7af8fc9af19d56385cf84",
   "readmeLanguageGaps": [],
-  "sourceTree": "81d6c719a23366a6759429f5160b220fe3c191c9",
-  "publicTree": "3153636c383103f72deef7cc77d46d0c8fa5788e",
-  "packageSha256": "54eb2032d47f26d12a4a83d6cb44f6b13ca2b551fab84587145138a86c0159ff",
+  "sourceTree": "c603257d10784e5e43cc871e3c7778872b5c1639",
+  "publicTree": "015abd958f7de44f65851df46b72beb6c44ceaef",
+  "packageSha256": "906be21cc1f96b2759ff31a5bccafa989c9c99fff32dc16379911a26808e93ee",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,12 +41,12 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-11T02:47:02.003Z",
-  "findings": "Local v7.4.2 candidate: compared the changed README body with the audited v7.4.1 body and implementation. Added ordinary-topic hero/breakout/bleed authoring, source-to-prompt retention, grounded required-composition review and footer occlusion permission. Four-panel strip layout, image/text model selection and bounded repair remain unchanged. Reviewed panel-mode, render-options and page-envelope paragraphs, version/release-link labels and the latest 15 changelog entries. Other sections retain the reviewed v7.4.1 behavior. Public app/note remain v7.4.1; release and note publishing have not been performed. This document review does not assert real API quality of the candidate. Revision 60 adds one foreground body across source/receiver frames and narrows receiving media to local actors. Reviewed the README safeguard paragraph against implementation: incomplete observations remain unverified, while independently grounded required-composition failures retain the existing single repair limit. Revision 61: reviewed the changed body against source. Free layout accepts four to eight authored frames and a page-dominant foreground over multiple panels; fixed four-strip mode remains separate. Updated labels, bilingual descriptions and internal links. Natural coherent layout adjustment is accepted; a numerical ratio difference alone does not authorize repair. This is document verification; revised real API output is still pending. Revision 62: compiler removes duplicate composition serialization and contradictory containment while preserving authored fields; ordinary action and newly authored café API workflows are now complete. Both initial compositions received positive user feedback; incomplete automated observations remain unverified. Release authorized on 2026-11-11.",
-  "manualFindings": "Rendered all 71 pages across the three v7.4.2 PDFs and passed existing page count, bounds, footer version/date, links, naming and privacy scans. Compared extracted page bodies against the reviewed v7.4.1 PDFs after removing version/date changes: only system p14/p18 changed. Visually inspected these two pages and the OpenAI cover; text, table, whitespace and footers are legible without overlap or clipping. The system p18 title-off paragraph now preserves the explicitly authored bleed exception. Other body content is unchanged; prior visual evidence is reused. Revision 60 rebuilt the system/Gemini manuals and passed all existing 52-page automatic checks. Text comparison with the already reviewed candidate changed only system page 23; visually inspected its complete render with no overlap/clipping. Gemini and OpenAI body content and their previous visual evidence are unchanged. Revision 61: rebuilt 52 pages with automatic bounds, footer, naming, privacy and links checks. Compared page text with the reviewed revision 60 manuals: Gemini unchanged; system pages 1,3,9,14,15,16,19,20,22,23,27,32 changed. Reviewed every changed page in a rendered contact sheet and complete page 14/15 renders: no clipping or overlap. Most changes are labels/counts; page 14/15 and 27 explain whole-page composition and free four-panel routing. OpenAI manual unchanged; prior evidence reused.",
+  "checkedAt": "2026-11-11T05:35:12.719Z",
+  "findings": "Reviewed v7.4.3 current-body delta against implementation: removed GPT Image 2.0 choice, initial discovery fallback and dated historical price display; legacy selections normalize to the visible 2.6 default. Supported 2.5 alternatives, 4–8-panel composition, fixed four-panel mode, input references, quality, sizes and one bounded repair remain. Compared every unchanged section with the reviewed v7.4.2 README and checked the new bilingual changelog and current links. This review does not assert a new API generation.",
+  "manualFindings": "Rebuilt and rendered all 71 pages for v7.4.3. Existing page counts, bounds, links, privacy/naming and footer checks pass. Extracted body comparison with the reviewed v7.4.2 manuals changes only full-manual p22 and OpenAI p12, excluding version footers. Visually inspected both full renders: old 2.0 selection/price/permission advice is removed, text and table remain legible without overlap or clipping. Other page bodies and their prior visual review are retained.",
   "pricingReview": {
-    "version": "7.4.2",
-    "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
+    "version": "7.4.3",
+    "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
     "checkedAt": "2026-11-11T04:29:04.844Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
@@ -57,6 +57,6 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Reviewed official Standard rates, excluding Batch and Flex, for the local v7.4.2 candidate. Current rates match the unchanged pricing sources and manual: GPT-6 Astra 10/50, GPT-6.1 Sol 2/10, GPT-6.1 Terra 1/5, GPT-6 Luna 0.10/0.50, GPT-6 Sol 2/10, GPT-5.6 Sol 4/20, GPT-5.6 Terra 2/12, GPT-5.6 Luna 0.20/1.20 USD per million input/output tokens. Sunburst and Flare 2.6 image 8/30 with cache 2 and text input 5 with cache 1.25. Gemini 3.8 Flash text 0.75/3.75 applies through December 31, 2026; Nano Banana 2.1 1K is 0.0336 with input 1.50 and text/thinking output 7.50. No model selection or fallback route changed as part of this pricing review. Publishing is still awaiting user approval. Reopened official pricing pages immediately before this release: current 2.6 standard image/text rates and GPT-6.1/GPT-6 Luna rates remain unchanged. Legacy 2.0 has separately dated historical UI pricing; its selection and routes are scheduled for removal in the next explicitly authorized migration stage."
+    "findings": "Reused the official Standard-rate review performed today immediately before v7.4.2 deployment, within 24 hours, with the same official source URLs and checkedAt. v7.4.3 removes only the legacy 2.0 pricing record and dated display; supported image and text model rates are unchanged. Standard image 2.6 input/output 8/30, cached input 2; text input 5/cache 1.25 USD per million tokens. Batch/Flex discounts are excluded. No new rate was inferred from the model retirement notice."
   }
 }
