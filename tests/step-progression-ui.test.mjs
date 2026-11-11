@@ -103,7 +103,7 @@ test('STEP4 empty image area describes the selected four-panel or five-to-eight-
       }));
       const message = html.match(/<p[^>]*>(ここに生成された[\s\S]*?漫画が表示されます)<\/p>/)?.[1];
       assert.equal(message, experimentalEnabled
-        ? 'ここに生成された5～8コマ漫画が表示されます'
+        ? 'ここに生成された4～8コマ漫画が表示されます'
         : 'ここに生成された4コマ漫画が表示されます');
     }
   } finally {

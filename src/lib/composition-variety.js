@@ -186,7 +186,7 @@ export const sharePanelShotExecution = (prompt) => {
 };
 
 // Turn a shot label into observable framing cues; never replace explicit crop/angle.
-export const getPanelShotExecution = (camera = '', { compact = false } = {}) => {
+export const getPanelShotExecution = (camera = '', { compact = false, breakout = null, foreground = null } = {}) => {
   const text = affirmativeCameraText(camera);
   const cues = [];
   const full = FULL_BODY_SHOT_RE.test(text);
@@ -205,7 +205,11 @@ export const getPanelShotExecution = (camera = '', { compact = false } = {}) => 
   if (close) cues.push(compact ? '主対象を寄りで切取' : 'tight crop on focal subject');
   else if (full) {
     const mixedCrop = /(?:腰|胸|膝|ひざ|肩)(?:から上|まで)|(?:waist|chest|knee)[ -]up|close[ -]up|bust|portrait|アップ|接写/i.test(text);
-    cues.push(compact
+    cues.push(foreground
+      ? `全身は頭から両靴まで一続きのPAGE DOMINANT FIGUREとしてページ内に大きく保持。元の矩形へ縮小せず、小コマを身体の周囲と背後へ配置。${mixedCrop ? '他の指定クロップは保持。' : ''}Camera・自然な遮蔽を保ち、隠れた四肢を露出しない`
+      : breakout
+      ? `全身は頭から両靴まで同じ身体としてページ内に保持。${breakout.part}は隣接P${breakout.into}へ一続きで越境し、元コマ内への全身縮小はしない。枠線と溝は身体の背後に隠す。${mixedCrop ? '他の指定クロップは保持。' : ''}Camera・自然な遮蔽を保ち、隠れた四肢を露出しない`
+      : compact
       ? `${mixedCrop ? '全身指定の被写体のみ: ' : ''}頭から両靴とその先の床/頭上余白を枠内に。${mixedCrop ? '他の切取り保持。' : ''}自然な遮蔽/Camera/人物を保持、隠れた四肢は露出しない`
       : `${mixedCrop ? '全身指定の被写体のみ: ' : ''}head-to-feet inside panel with headroom and floor beyond BOTH shoes; ${mixedCrop ? '他の指定クロップは保持; ' : ''}natural occlusion allowed; keep Camera/cast, never expose hidden limbs`);
   }

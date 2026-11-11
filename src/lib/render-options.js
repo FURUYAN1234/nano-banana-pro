@@ -124,11 +124,22 @@ export const setMangaBackgroundSimplification = (prompt, enabled) => {
   return `${MANGA_BACKGROUND_SIMPLIFICATION}\n\n${directed}`;
 };
 
-export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true, showTitle = true } = {}) => [
+export const WATERMARK_ART_PRIORITY = 'WATERMARK ART PRIORITY: 下部注記のみ重なり/全隠れ/見切れ/判読不能可。可視文言保持。絵/台詞/題字/タチキリ優先、露出用縮小/白帯/修復禁止。';
+export const allowsWatermarkOverlap = (prompt='') => String(prompt).includes('WATERMARK ART PRIORITY:');
+export const isPermittedWatermarkOverlapIssue = (issue,prompt='') => {
+  if(!allowsWatermarkOverlap(prompt)||!readRenderOptions(prompt).showWatermarks||!['panel_layout','title_text','surface_text','unverified'].includes(issue?.type)) return false;
+  const subject=String(issue.subject||'');
+  if(!/watermark|footer|credit|ウォーターマーク|ウオーターマーク|フッター|クレジット/i.test(subject)||/dialogue|balloon|title|台詞|セリフ|吹き出し|題字|タイトル/i.test(subject)) return false;
+  const observation=String(issue.observed||issue.reason||'');
+  return /occlu|hidden|overlap|clip|crop|truncat|missing|unreadable|not visible|隠|重な|見切|切れ|欠け|欠落|見え|読め|未表示/i.test(observation);
+};
+
+export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true, showTitle = true, bottomBleed = false } = {}) => [
   `[RENDER OPTIONS: copyrighted_mosaic=${mosaicCopyrightedCharacters ? 'on' : 'off'}; watermarks=${showWatermarks ? 'on' : 'off'}${showTitle ? '' : '; title=off'}]`,
   buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters),
   showTitle ? '' : NO_PAGE_TITLE,
-  showWatermarks ? '' : `FOOTER: leave the bottom margin blank. Do not draw either footer watermark, credit, signature or attribution URL. Preserve ${showTitle ? 'the title, ' : ''}dialogue and scripted in-scene lettering.`,
+  showWatermarks ? WATERMARK_ART_PRIORITY : '',
+  showWatermarks ? '' : `FOOTER: ${bottomBleed ? 'continue the authored bleed artwork to the canvas bottom; no blank footer band.' : 'leave the bottom margin blank.'} Do not draw either footer watermark, credit, signature or attribution URL. Preserve ${showTitle ? 'the title, ' : ''}dialogue and scripted in-scene lettering.`,
 ].filter(Boolean).join('\n');
 
 // Read the contract attached to this image's prompt, not a later UI selection.
@@ -139,7 +150,8 @@ export const readRenderOptions = (prompt = '') => {
 };
 
 export const assertRenderOptions = (prompt, options) => {
-  if (!String(prompt).includes(buildRenderOptionsContract(options))) {
+  const bottomBleed=options.bottomBleed??/^FULL BLEED P\d+:.*on [^;\n]*\bbottom\b/m.test(String(prompt));
+  if (!String(prompt).includes(buildRenderOptionsContract({...options,bottomBleed}))) {
     throw new Error('タイトル／モザイク／ウオーターマークの設定が指示文と一致しません。STEP3で再構築してください。');
   }
   if (options.showTitle === false && /^(?:- )?(?:Top title EXACTLY|Top page:.*text title:|Page title: render|TYPE: title EXTRA-BOLD)/m.test(String(prompt))) {
@@ -161,7 +173,7 @@ export const buildRenderOptionsQa = (prompt = '') => {
     options.mosaicCopyrightedCharacters ? 'UNAUTHORIZED MOSAIC CHECK: inspect every registered cast face and body for coarse square censorship blocks. Report visible unrequested masking as action_fidelity with panel, subject and localized pixel evidence; do not excuse it as intentional copyright masking. Distinguish natural shadows, physical masks/helmets, sunglasses and depth blur from pixel blocks. An explicit scripted region mask remains allowed.' : '',
     options.mosaicCopyrightedCharacters ? `${COPYRIGHT_MOSAIC_TARGET_SCOPE}\nMOSAIC CHECK: inspect only authorized target depictions in the generated candidate, including printed artwork; reference sheets are comparison evidence, never output areas to mask. Large opaque square blocks must obscure facial details. Pixel-art styling or tiny pixels leaving eyes and mouth legible are insufficient; report clearly visible missing/insufficient masking as action_fidelity with panel and pixel evidence. Intentional mosaic on copyrighted characters is not a defect. Do not restore or invent their concealed face, clothing or anatomy. Inspect visible story actions and unaffected characters normally; hidden details remain unverified and are not repair targets. Mosaic on unrelated original characters or required text is not authorized. A reference's likeness alone is insufficient evidence to demand added masking or a paid repair.` : '',
     options.showWatermarks
-      ? 'WATERMARK EDGE CHECK: inspect the complete left and right footer text from pixels, including the first/last glyphs and their top/bottom strokes. Record cropped or missing required watermark text as panel_layout, and unreadable text as unverified. A clipped URL or credit is not an acceptable decorative-text fallback. Do not infer missing glyphs from the supplied prompt.'
+      ? allowsWatermarkOverlap(prompt) ? 'WATERMARK VISIBILITY CHECK: footer credits may overlay artwork; partly/fully hidden, occluded, clipped or unreadable footer credits are allowed. Record only what is visible; do not infer hidden lettering. Their visibility alone is not a defect, uncertainty gate or reason for repair. Do not add a blank strip, shrink the art, or restore hidden credits. This exception applies ONLY to footer credits: title, speech and story-required text remain protected.' : 'WATERMARK EDGE CHECK: inspect the complete left and right footer text from pixels, including the first/last glyphs and their top/bottom strokes. Record cropped or missing required watermark text as panel_layout, and unreadable text as unverified. A clipped URL or credit is not an acceptable decorative-text fallback. Do not infer missing glyphs from the supplied prompt.'
       : `FOOTER CHECK: no footer watermarks are requested. Their absence is correct, not missing required text or a layout defect. Do not add credits during repair. Inspect ${options.showTitle ? 'the title, ' : ''}dialogue and scripted in-scene text normally.`,
   ].filter(Boolean).join('\n');
 };

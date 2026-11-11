@@ -1,3 +1,4 @@
+import {SCENARIO_PAGE_COMPOSITION} from './manga-page-composition.js';
 import { buildCopyrightMosaicInstruction, NO_PAGE_TITLE } from './render-options.js';
 import { SCENARIO_SFX_CONTRACT } from './manga-sfx.js';
 import { buildScenarioPanelCountInstruction } from './scenario-validation.js';
@@ -99,7 +100,7 @@ const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `TYPE: title EXTRA-BOLD condensed Jap
 
 const MANGA_PAGE_ENVELOPE = `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); canvas ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value}; title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.
 PANELS: 4 full-width horizontal strips stacked vertically in ONE column; no 2x2/side-by-side. Give body action/perspective enough panel height; never zoom to portraits to fit equal bands.`;
-const MANGA_FOOTER_EXCLUSIVITY = 'FOOTER ONLY: both exact watermarks once outside panels; no watermark/credit inside panels or on in-scene paper.';
+const MANGA_FOOTER_EXCLUSIVITY = 'FOOTER ONLY: both intended credits once near page bottom; not on in-scene paper. WATERMARK ART PRIORITY applies.';
 
 const pageEnvelope = showTitle => showTitle ? MANGA_PAGE_ENVELOPE
   : MANGA_PAGE_ENVELOPE.replace('title6.5%/font5.5%; panels+gutters91.3%', 'no title/header band; panels+gutters97.8% minus the small outer top safety inset');
@@ -302,7 +303,7 @@ export const getScenarioPrompt = ({
 }) => {
   const experimental = autoSelectPanelCount || scenarioMode === 'experimental-manga';
   if (!experimental && scenarioMode !== 'four-panel') throw new Error('Unknown scenario mode: ' + scenarioMode);
-  const panelTotal = autoSelectPanelCount ? '4〜8' : experimental ? '5〜8' : '4';
+  const panelTotal = autoSelectPanelCount ? '4〜8' : experimental ? '4〜8' : '4';
   const lastPanel = experimental ? '最終コマ' : '4コマ目';
   const beforeEnding = experimental ? '最終コマより前の各コマ' : '1〜3コマ目';
   // Adapt only internal rule text; user input and reference data remain verbatim.
@@ -312,9 +313,9 @@ export const getScenarioPrompt = ({
   const panelFormat = experimental
     ? '[1コマ目: 導入]から選んだN（' + panelTotal + '）の[Ｎコマ目: 結末]まで、半角数字で連番の見出しを出力する。各コマに以下の全項目を必ず書く。途中を省略したり、この例のＮをそのまま出力しない。\n[nコマ目: そのコマの役割]\n[EMOTION: XXX]\n[Camera: XXX]\nBalloonLayout: (台詞順のJSON配列)\n状況: (場面内の人物・物の相対関係と変化、そのCamera投影、働きかけと反応)\nキャラ名「短いセリフ。」（発話のない演出ならセリフなし）'
     : [1, 2, 3, 4].map((n, index) => '[' + n + 'コマ目: ' + ['起', '承', '転', '結'][index] + ']\n[EMOTION: XXX]\n[Camera: XXX]\nBalloonLayout: (上記の形式のJSON配列、台詞順)\n状況: (場面内の人物・物の相対関係と変化、そのCamera投影、働きかけと反応)\nキャラ名「短いセリフ。」').join('\n\n');
-  const autoPanelInstruction = '【内容に基づくコマ数の自動選択】まず今回の題材・出来事・オチまでの流れを読み、必要な行動・判断・会話・場面転換を整理する。4コマで因果と結末を省略せず読みやすく伝えられるなら4コマを選ぶ。4コマでは必要な展開を省略するか台詞を詰め込む場合だけ5〜8コマの必要最小数を選ぶ。短い原文でも展開が多い場合、長い原文でも単純な流れの場合があるため、文字数・カテゴリ名・偶然・交互選択で決めない。コマ数を増やすための出来事や同じ反応を足さない。PanelCountReasonに今回の具体的な展開と選択理由を一文で書き、台本と一致させる。4コマなら起承転結の横長4段、5〜8コマならネイティブ1ページとして最初から完成形を設計する。';
+  const autoPanelInstruction = '【内容に基づくコマ数の自動選択】まず今回の題材・出来事・オチまでの流れを読み、必要な行動・判断・会話・場面転換を整理する。4コマで因果と結末を省略せず読みやすく伝えられるなら4コマを選ぶ。4コマでは必要な展開を省略するか台詞を詰め込む場合だけ5〜8コマの必要最小数を選ぶ。短い原文でも展開が多い場合、長い原文でも単純な流れの場合があるため、文字数・カテゴリ名・偶然・交互選択で決めない。コマ数を増やすための出来事や同じ反応を足さない。PanelCountReasonに今回の具体的な展開と選択理由を一文で書き、台本と一致させる。4〜8コマのいずれもページ全体の自由配置を設計できる。コマ数を増やすことを大胆な構図の条件にしない。';
   const panelStructure = autoSelectPanelCount ? autoPanelInstruction : experimental
-    ? '【ネイティブ5〜8コマ構成】最初から5〜8コマの完成した1ページとして設計する。題材の因果・行動・判断・掛け合い・帰結を読める必要数Nを選び、1からNまで欠番や重複なく書く。各コマで新しい行動、情報、関係または感情の変化を進める。コマ数を埋めるだけの無言の反応や同じ状況の再掲を足さない。無言は、その瞬間の動作・ためらい・発見・余韻に固有の役割があるときに使い、無言数のノルマや全面禁止は設けない。構成とセリフと画風をこの段階で確定する。'
+    ? '【ネイティブ4〜8コマ構成】最初から4〜8コマの完成した1ページとして設計する。題材の因果・行動・判断・掛け合い・帰結を読める必要数Nを選び、1からNまで欠番や重複なく書く。各コマで新しい行動、情報、関係または感情の変化を進める。コマ数を埋めるだけの無言の反応や同じ状況の再掲を足さない。無言は、その瞬間の動作・ためらい・発見・余韻に固有の役割があるときに使い、無言数のノルマや全面禁止は設けない。構成とセリフと画風をこの段階で確定する。'
     : '【四コマ構成】ちょうど4コマを起承転結で構成する。';
   const punchlineType = requestedPunchlineType === 'PsychoHorror' ? 'Surreal' : requestedPunchlineType;
   const endingPolicy = getEndingModePolicy(punchlineType);
@@ -365,6 +366,7 @@ export const getScenarioPrompt = ({
          ${contextRebootLock}
          ${documentarySourceBoundary}
          ${panelStructure}
+         ${experimental ? SCENARIO_PAGE_COMPOSITION : ''}
          ${autoSelectPanelCount ? '全4〜8コマを1から欠番・重複なく書く。決定後の監査・修正ではコマ数を保持する。' : buildScenarioPanelCountInstruction(scenarioMode)}
          ${buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters)}
 
@@ -718,6 +720,7 @@ ${buildAddedEndingGuidance(GAG_ENDING_OPTIONS)}` :
           Punchline: [${punchlineType === 'SeriousAuto' ? `選択したシリアス結末の方向性を、${seriousEndingLabels}のいずれかで記載せよ` : !['Auto', 'GagAuto'].includes(punchlineType) ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : `選択した具体的な結末名を、${gagEndingLabels}のいずれかで記載せよ`}]
           ${autoSelectPanelCount ? 'PanelCountReason: [今回の内容に基づき、そのコマ数が必要な理由。漫画の台詞や画面文字には入れない]' : ''}
           Scenario:
+          ${experimental ? '（自由コマ割りでは4コマでも、ここにPageComposition: 実際のページ演出JSONを1行で記載。括弧内の説明は出力しない）' : ''}
           ${panelFormat}
 
           シナリオ本文の要件:
@@ -728,7 +731,7 @@ ${buildAddedEndingGuidance(GAG_ENDING_OPTIONS)}` :
           - (禁止事項): AIが勝ために架空のオリジナルキャラクターを独自に創作して出演させることは禁止する。指定されたCastListのキャラクターのみをメインキャストとして扱うこと。
           - (許可事項): 題材の当事者（スポーツ選手、政治家、怪人、動物、虫など）や名もなきモブキャラは、物語を面白くするために必要であれば自由に登場・発言させて構わない。
           - (ハルシネーション防止): ゲストを登場させる場合でも、画像生成時のVisual Actionに「意味不明な文字」や「描画不可能な複雑すぎる行動」が混入しないよう、シンプルで視覚的にわかりやすい行動に留めること。
-          - 構成: ${autoSelectPanelCount ? '4コマなら起承転結の4段、5〜8コマなら導入・展開・変化・帰結を選んだコマ数へ配分する' : experimental ? '導入・展開・変化・帰結を選んだコマ数へ配分する。固定の4段へ押し込まない' : '起承転結（4段）'}。
+          - 構成: ${autoSelectPanelCount ? '導入・展開・変化・帰結を選んだ4〜8コマへ配分し、大きな人物と小コマでページ全体を設計する' : experimental ? '導入・展開・変化・帰結を選んだコマ数へ配分する。固定の4段へ押し込まない' : '起承転結（4段）'}。
            - 内容: ${isSeriousDocumentary ? `原文の事実を変えない真摯な再構成。${lastPanel}だけ、事実に対するシリアスな反応または結論で締める。` : isGeneralSerious ? `人物の感情と出来事の因果を保つシリアスな構成。${lastPanel}は選択した余韻、決意、警告、問題提起、救い、または喪失で締める。` : '題材に対する辛辣な風刺や、キャラの個性を活かしたドタバタ劇。'}
           - 文体: 各コマの「状況」「セリフ」が明確にわかる文章。
 
@@ -1091,7 +1094,7 @@ Do NOT add quote marks around the title or invent extra punctuation. Preserve th
 ${pageTypography(showTitle)}
 ${showWatermarks ? `Draw tiny English watermark in the footer below panel 4, on the right: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
 Draw tiny Japanese watermark in the footer below panel 4, on the left: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark). ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words. Copy character-by-character.
-Watermarks standard horizontal, fully inside the footer with visible safe margins. Keep left/right text separate; never touch, overlap or clip against the image edges.
+Watermarks horizontal. Apply WATERMARK ART PRIORITY.
 ${MANGA_FOOTER_EXCLUSIVITY}` : ''}
 
 GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST NOT touch.
@@ -1184,7 +1187,7 @@ ${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
 - Follow SCENE LETTERING: keep scripted scene text exact; other physical surfaces may freely contain natural context-appropriate lettering with no amount, density or readability cap.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
-${showWatermarks ? '- Keep every watermark glyph fully inside the footer, inset from the image edges. The text must be oriented horizontally (left-to-right).' : ''}
+${showWatermarks ? '- Footer credits: horizontal; apply WATERMARK ART PRIORITY.' : ''}
 - CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
 ${isMonochrome ? `CHARACTER QA: identity and stable skin bases in light: light=paper, dark/tanned=screen; no source hue.\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
       `;

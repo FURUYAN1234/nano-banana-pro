@@ -914,8 +914,10 @@ try {
     delete panel.camera;delete panel.style;delete panel.cast_instances[0].observed_count;
     delete panel.cast_instances[0].instances[0].matched_features;
     panel.cast_instances[0].instances[0].feature_indices=[0,1];
-    const report={corrections:[],status:'unverified',observedCount:null,readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'not_requested',issues:['細部を確認できない。'],pageEvidence:null,evidence:[panel],wardrobe_observation:null};
+    const report={compositionChecks:[],corrections:[],status:'unverified',observedCount:null,readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'not_requested',issues:['細部を確認できない。'],pageEvidence:null,evidence:[panel],wardrobe_observation:null};
     assert.equal(assessment(report),true,JSON.stringify(assessment.errors));
+    const missingComposition=structuredClone(report);delete missingComposition.compositionChecks;
+    assert.equal(assessment(missingComposition),false,'authored page effects must be represented, using [] when none were requested');
     const missingWardrobe=structuredClone(report);delete missingWardrobe.wardrobe_observation;
     assert.equal(assessment(missingWardrobe),false,'clothing observation cannot silently disappear from the native review schema');
     const missingCoverage=structuredClone(report);delete missingCoverage.evidence[0].body_dispositions;
@@ -923,6 +925,8 @@ try {
     const background=structuredClone(report);background.evidence[0].body_dispositions=[backgroundDisposition()];
     delete background.evidence[0].body_dispositions[0].observed_features;
     background.evidence[0].body_dispositions[0].feature_indices=[0,1];
+    background.evidence[0].body_dispositions[0].source_panel=null;
+    background.evidence[0].body_dispositions[0].source_body_id=null;
     assert.equal(assessment(background),true,JSON.stringify(assessment.errors));
     background.evidence[0].body_dispositions[0].kind='ignore';
     assert.equal(assessment(background),false,'unexamined census bodies cannot be dismissed with an arbitrary label');
@@ -1163,14 +1167,14 @@ try {
   test('experimental pages require five to eight panels at planning and rendering boundaries', async () => {
     const four=planFor(4);
     assert.throws(()=>m.validateExperimentalPlan(four,source),/コマ数/);
-    assert.throws(()=>m.experimentalLayoutOptions(4),/コマ数/);
+    assert.throws(()=>m.experimentalLayoutOptions(3),/コマ数/);
     assert.throws(()=>m.buildExperimentalImagePrompt(four,source,input),/コマ数/);
     await assert.rejects(m.prepareExperimentalManga(input,async()=>JSON.stringify(four)),/コマ数/);
     for(let count=5;count<=8;count++) {
       const nativeSource=m.readExperimentalSource({...input,scenario:scenarioFor(count)});
       assert.equal(m.validateExperimentalPlan({...planFor(count),layout:'mixed_rows'},nativeSource).count,count);
     }
-    assert.throws(()=>m.readExperimentalSource({...input,scenario:scenarioFor(4)}),/5〜8|5～8|5–8|コマ/);
+    assert.throws(()=>m.readExperimentalSource({...input,scenario:scenarioFor(4)}),/4〜8|4～8|4–8|コマ/);
     assert.match(m.buildExperimentalPlanPrompt(source),/EXACTLY 6 panels/);
     assert.doesNotMatch(m.buildExperimentalPlanPrompt(source),/4\.\.8|count4=/);
     const oldHistory=[{plan:four},{plan:six}];
@@ -1649,12 +1653,12 @@ try {
   test('shared STEP3 visibly names the selected route; switch itself exposes no automatic API action',()=>{
     for(const experimentEnabled of [false,true]) {
       const html=renderToStaticMarkup(React.createElement(Step3,{currentStep:3,experimentEnabled}));
-      assert.match(html,experimentEnabled?/5～8コマ用の指示文/:/4コマ用の指示文/);
+      assert.match(html,experimentEnabled?/4～8コマ用の指示文/:/4コマ用の指示文/);
     }
     const props={currentStep:3,onModeChange:()=>{}};
     const html=renderToStaticMarkup(React.createElement(Panel,{...props,enabled:false}));
     assert.match(html,/role="switch" aria-checked="false"/);
-    assert.match(html,/右に切り替えると「5～8コマ生成」になり、最初から5～8コマのシナリオ/);assert.doesNotMatch(html,/4コマ生成へ戻す|乱れる場合|元の4コマ台本/);
+    assert.match(html,/右に切り替えると「自由コマ割り（4～8コマ）」になり、最初から4～8コマのシナリオ/);assert.doesNotMatch(html,/4コマ生成へ戻す|乱れる場合|元の4コマ台本/);
     assert.doesNotMatch(html,/実験画像を1枚生成/);
     const active=renderToStaticMarkup(React.createElement(Panel,{...props,enabled:true}));
     assert.match(active,/4コマ生成へ戻す/);assert.match(active,/乱れる場合/);
@@ -1711,10 +1715,10 @@ try {
       const html=renderToStaticMarkup(React.createElement(Panel,{enabled,currentStep:3,onModeChange:()=>{},normalBusy:false},React.createElement('button',null,'STEP3 sentinel')));
       assert.match(html,/aria-controls="experimental-manga-description"/);
       assert.match(html,/<div id="experimental-manga-description" style="color:#cbd5e1;font-size:11.5px">/);
-      const short='スイッチが左のときは「4コマ生成」です。右に切り替えると「5～8コマ生成」になり、最初から5～8コマのシナリオを作成して、内容に合ったコマ配置で漫画にします。';
+      const short='スイッチが左のときは「4コマ生成」です。右に切り替えると「自由コマ割り（4～8コマ）」になり、最初から4～8コマのシナリオを作成して、内容に合ったコマ配置で漫画にします。';
       if(enabled) {
         assert.ok(!html.includes(short));
-        for(const sentence of ['左右2列、横長と分割の組み合わせ','シナリオのコマ数・順序・カメラ・画風・台詞を保ち','左の4コマ生成へ戻す：','作成済みの4コマの台本と生成結果へ戻ります。','左の「4コマ生成」に戻してご利用ください。']) assert.ok(html.includes(sentence));
+        for(const sentence of ['ページ大の人物と複数の小コマ','シナリオのコマ数・順序・カメラ・画風・台詞を保ち','左の4コマ生成へ戻す：','作成済みの4コマの台本と生成結果へ戻ります。','左の「4コマ生成」に戻してご利用ください。']) assert.ok(html.includes(sentence));
       } else {
         assert.ok(html.includes(short));
         assert.ok(!html.includes('左右2列'));

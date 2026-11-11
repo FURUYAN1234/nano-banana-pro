@@ -1536,7 +1536,7 @@ No explanations. No partial results.`;
                 <BrainCircuit size={80} className="mx-auto" />
                 <div className="space-y-2 text-center">
                   <p className="text-sm font-black uppercase tracking-[0.5em] text-slate-500">Ready to Start</p>
-                  <p className="text-[10px] font-bold text-slate-600">{experimentalEnabled ? 'ここに生成された5～8コマ漫画が表示されます' : 'ここに生成された4コマ漫画が表示されます'}</p>
+                  <p className="text-[10px] font-bold text-slate-600">{experimentalEnabled ? 'ここに生成された4～8コマ漫画が表示されます' : 'ここに生成された4コマ漫画が表示されます'}</p>
                 </div>
               </div>
             </div>

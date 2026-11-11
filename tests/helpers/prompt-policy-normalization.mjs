@@ -5,9 +5,26 @@ import { readFileSync } from 'node:fs';
 // unknown recipe or prompt line: an unlisted change must fail.
 const selectionContracts = JSON.parse(readFileSync(new URL('../fixtures/selection-shared-contract-normalization.json', import.meta.url), 'utf8'));
 
+// v7.4.2: the user permits hidden/overlaid footer credits. Invert only the
+// reviewed compiler clauses so older art/actor hashes still detect any other
+// change. Keep the frozen baselines and real prompt budgets unchanged.
+const reviewedFooterPriority = 'WATERMARK ART PRIORITY: 下部注記のみ重なり/全隠れ/見切れ/判読不能可。可視文言保持。絵/台詞/題字/タチキリ優先、露出用縮小/白帯/修復禁止。';
+const reviewedFooterLines = new Map([
+  ["PANEL RENDERING MAP: 各PnのStyleが媒体を指定。コマ順保持。", "PANEL RENDERING MAP: each Pn's Style field assigns its medium; never reorder frames."],
+  ['FOOTER ONLY: both intended credits once near page bottom; not on in-scene paper. WATERMARK ART PRIORITY applies.', 'FOOTER ONLY: both exact watermarks once outside panels; no watermark/credit inside panels or on in-scene paper.'],
+  ['Watermarks horizontal. Apply WATERMARK ART PRIORITY.', 'Watermarks standard horizontal, fully inside the footer with visible safe margins. Keep left/right text separate; never touch, overlap or clip against the image edges.'],
+  ['- Footer credits: horizontal; apply WATERMARK ART PRIORITY.', '- Keep every watermark glyph fully inside the footer, inset from the image edges. The text must be oriented horizontally (left-to-right).'],
+]);
+export const restoreFooterPolicyBefore742 = value => String(value).split('\n').flatMap(line => {
+  if(line === reviewedFooterPriority) return [];
+  if(reviewedFooterLines.has(line)) return [reviewedFooterLines.get(line)];
+  const native = line.match(/^FOOTER ONLY: (Bottom-left EXACTLY .+\. Bottom-right EXACTLY .+\.) 横書き各1回、作中道具転載禁止。$/);
+  return [native ? `FOOTER ONLY, below the last panel: 両クレジットを一度ずつ、小さな横書きで安全域内に全文読めるよう重なりなく配置。${native[1]} コマ内/道具上への転載禁止。` : line];
+}).join('\n');
+
 // v7.2.9 changes only the shared lettering policy. Keep the frozen actor-media
 // snapshots useful by inverting these exact compiler clauses, not art recipes.
-export const restoreWritingPolicyBefore729 = value => String(value)
+export const restoreWritingPolicyBefore729 = value => restoreFooterPolicyBefore742(value)
   .replace(/^(Create ONE complete Japanese manga page with EXACTLY [5-8] framed panels\.[^\n]*)コマ間は白溝で明瞭に分離し、外余白で代用しない。$/m, '$1Internal white gutters は明瞭に分離し、外余白で代用しない。')
   .replace('\nPHYSICAL READING PATH（非印字）:', '\nPHYSICAL READING PATH (not printed):')
   .replace(`${VERTICAL_DIALOGUE_GEOMETRY}\nPHYSICAL READING PATH (not printed):`, 'PHYSICAL READING PATH (not printed):')
@@ -172,7 +189,7 @@ export const restorePreSelectionContracts = (value, context = {}) => {
 // These older snapshots freeze art-style isolation. The user has since changed
 // the shared writing policy and required physical-cast allocation. Normalize ONLY
 // those accepted shared contracts; all other prompt bytes remain frozen.
-export const restorePrePolicyContracts = value => String(value)
+export const restorePrePolicyContracts = value => restoreFooterPolicyBefore742(value)
   // Exact inverse of the separately tested rear-anchor correction. Preserve the
   // media-isolation baseline; unknown cue or authored-content changes still fail.
   .replaceAll('rear view: 後方は基準対象に対して保持。背面指定の人物だけ背面を描く。場所/道具の向きで全員を回さない。距離/切取り保持、肩越し接写を強制しない', 'show back planes of the scripted subject; preserve crop/distance, no forced close OTS')

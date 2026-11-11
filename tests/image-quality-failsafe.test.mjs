@@ -73,16 +73,16 @@ test('page contract skips review when OFF and rejects cross-mode inputs before r
   assert.equal(calls,0);
 });
 
-test('experimental quality contract accepts only five to eight without changing normal four panels', async () => {
+test('experimental quality contract accepts four to eight without changing fixed four panels', async () => {
   let calls=0;
   const options={mode:'experimental-manga',allowRepair:true,originalCandidate:{base64Img:'fixture'},originalPrompt:'approved',
     reviewCandidate:async()=>{calls++;return {pass:true,issues:[]};}};
-  for(const count of [1,4,9,5.5]) await assert.rejects(()=>pageWorkflow.runPageImageQuality({kind:'experimental-manga',count},options));
+  for(const count of [1,3,9,5.5]) await assert.rejects(()=>pageWorkflow.runPageImageQuality({kind:'experimental-manga',count},options));
   assert.equal(calls,0);
-  for(const count of [5,6,7,8]) await pageWorkflow.runPageImageQuality({kind:'experimental-manga',count},options);
-  assert.equal(calls,4);
-  await pageWorkflow.runPageImageQuality({kind:'four-panel',count:4},{...options,mode:'four-panel'});
+  for(const count of [4,5,6,7,8]) await pageWorkflow.runPageImageQuality({kind:'experimental-manga',count},options);
   assert.equal(calls,5);
+  await pageWorkflow.runPageImageQuality({kind:'four-panel',count:4},{...options,mode:'four-panel'});
+  assert.equal(calls,6);
 });
 
 test('experimental page uses its own count and cannot invoke separate camera or analysis audits', async () => {

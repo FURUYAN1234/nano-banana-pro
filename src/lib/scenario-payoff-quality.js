@@ -41,7 +41,8 @@ const payoffPanelCount = (scenario, scenarioMode = 'four-panel') => {
   if (scenarioMode === 'four-panel') return 4;
   if (scenarioMode !== 'experimental-manga') throw new Error('invalid_scenario_mode');
   const panels = getScenarioPanelBlocks(scenario).filter(panel => panel.found);
-  if (panels.length < 5 || panels.length > 8 || panels.some((panel, index) => panel.num !== index + 1)) throw new Error('invalid_native_panel_count: 5–8 consecutive panels required');
+  if (panels.length < 4 || panels.length > 8 || panels.some((panel, index) => panel.num !== index + 1)
+    || panels.length===4&&!/^\s*PageComposition\s*[:：]/m.test(scenario)) throw new Error('invalid_native_panel_count: 4–8 consecutive panels required; four-panel free pages need PageComposition');
   return panels.length;
 };
 
@@ -272,7 +273,7 @@ export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', p
     code:'SCENARIO_PAYOFF_REVIEW_INVALID',diagnosticContext:{stage:'scenario_payoff_review',
       validationResponse:extractText(text),validationError:message,punchlineType,scenarioMode},
   }); };
-  if (scenarioMode === 'four-panel' ? panelCount !== 4 : scenarioMode !== 'experimental-manga' || !Number.isInteger(panelCount) || panelCount < 5 || panelCount > 8) fail('invalid panel count');
+  if (scenarioMode === 'four-panel' ? panelCount !== 4 : scenarioMode !== 'experimental-manga' || !Number.isInteger(panelCount) || panelCount < 4 || panelCount > 8) fail('invalid panel count');
   const source = extractText(text).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   const jsonText = source.match(/\{[\s\S]*\}/)?.[0];
   if (!jsonText) fail('JSON object not found');

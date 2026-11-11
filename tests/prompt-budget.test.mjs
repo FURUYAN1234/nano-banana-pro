@@ -97,8 +97,9 @@ test('dense four-panel prompts preserve core requirements ahead of optional embe
       assert.match(prompt, /title6\.5%\/font5\.5%; panels\+gutters91\.3%/);
       assert.match(prompt, /footer2\.2%, inset0\.6%, no clipping/);
       assert.match(prompt, /variable heights/i);
-      assert.match(prompt, /FOOTER ONLY: both exact watermarks once outside panels/i);
-      assert.match(prompt, /no watermark\/credit inside panels or on in-scene paper/i);
+      assert.match(prompt, /FOOTER ONLY: both intended credits once near page bottom/i);
+      assert.match(prompt, /not on in-scene paper/);
+      assert.match(prompt, /WATERMARK ART PRIORITY:.*重なり\/全隠れ\/見切れ/);
       assert.match(prompt, /EXTRA-BOLD condensed Japanese Gothic/);
       assert.doesNotMatch(prompt, /4 equal|four equal|4 EQUAL|EXACT SAME height|equal four-panel|y120\/460\/800\/1140/i);
       assert.match(prompt, /PANEL STYLE LOCK: (?:GLITTER|IMPACT|GEKIGA)/);

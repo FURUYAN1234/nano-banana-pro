@@ -8,7 +8,7 @@ import {renderToStaticMarkup} from 'react-dom/server';
 const hook=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
 const app=await readFile(new URL('../src/App.jsx',import.meta.url),'utf8');
 
-test('new sessions start in native five-to-eight-panel mode and preserve an explicit four-panel choice',()=>{
+test('new sessions start in native free-page mode and preserve an explicit four-panel choice',()=>{
   const selection=app.match(/const \[experimentEnabled, setExperimentEnabled\] = useState\([^;]+;/)?.[0];
   assert.ok(selection);
   const initialize=new Function('useState',`${selection} return {enabled:experimentEnabled,setEnabled:setExperimentEnabled};`);
@@ -71,14 +71,16 @@ test('title changes invalidate cached prompts while retaining each mode image an
 const server=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
 try {
   const {default:Panel}=await server.ssrLoadModule('/src/components/ExperimentalMangaPanel.jsx');
-  test('native mode description covers the horizontal-strip exclusion for every supported count',()=>{
+  test('native mode describes whole-page figures and free composition even with four beats',()=>{
     const html=renderToStaticMarkup(React.createElement(Panel,{enabled:true,currentStep:2,onModeChange:()=>{}}));
-    assert.match(html,/5・6・7・8コマでは全コマ横長の縦積みを選びません/);
+    assert.match(html,/ページ大の人物と複数の小コマ/);
+    assert.match(html,/4コマでも自由配置を使えます/);
+    assert.match(html,/シナリオのコマ数・順序・カメラ・画風・台詞を保ち/);
   });
   test('mode switch is available before STEP2 and explains native scenario creation in both states',()=>{
     for(const enabled of [false,true]) {
       const html=renderToStaticMarkup(React.createElement(Panel,{enabled,currentStep:2,onModeChange:()=>{}}));
-      assert.match(html,/role="switch"/);assert.match(html,/最初から5～8コマ/);assert.doesNotMatch(html,/元の4コマ台本|保存していた4コマ用プロンプトへ戻り/);
+      assert.match(html,/role="switch"/);assert.match(html,/最初から4～8コマ/);assert.doesNotMatch(html,/元の4コマ台本|保存していた4コマ用プロンプトへ戻り/);
     }
     assert.equal(renderToStaticMarkup(React.createElement(Panel,{currentStep:1})), '');
   });
@@ -91,7 +93,7 @@ try {
       const track=React.Children.toArray(button.props.children).find(child=>child.props?.['aria-hidden']==='true');
       const thumb=track.props.children;
       const html=renderToStaticMarkup(element);
-      assert.match(html,enabled?/<strong>5～8コマ生成<\/strong>/:/<strong>4コマ生成<\/strong>/);
+      assert.match(html,enabled?/<strong>自由コマ割り（4～8コマ）<\/strong>/:/<strong>4コマ生成<\/strong>/);
       assert.doesNotMatch(html,/ON|OFF|実験的コマ割り/);
       assert.equal(button.props['aria-label'],'コマ数切り替え');
       assert.equal(button.props['aria-checked'],enabled);
@@ -105,7 +107,7 @@ try {
       modes.push({track:track.props.style,thumb:thumb.props.style});
     }
     assert.equal(modes[0].track.background,'#38bdf8','four-panel mode uses a light-blue track');
-    assert.equal(modes[1].track.background,'#059669','five-to-eight panels retain the green track');
+    assert.equal(modes[1].track.background,'#059669','free-page mode retains the green track');
     assert.notEqual(modes[0].thumb.transform,modes[1].thumb.transform);
     for(const enabled of [false,true]) {
       const html=renderToStaticMarkup(React.createElement(Panel,{enabled,currentStep:2,normalBusy:true}));

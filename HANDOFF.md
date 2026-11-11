@@ -1,3 +1,11 @@
+# v7.4.2 whole-page composition candidate — 2026-11-11
+
+Local v7.4.2 candidate verified with ordinary action and café stories. The user authorized commit, deployment, note/X/Facebook announcements with the generated images attached, and a subsequent full backup on 2026-11-11. Then audit and remove deprecated GPT Image 2.0 choices/routes across Nano, Character Sheet Maker, Comic Translation and PanoForge, deploy and announce each app, and perform a final full backup. No subagents. Preserve authenticated local tabs and generated-image history. Current private owner record: /home/furu/Codex/work/4koma-free-layout-20261111/task.json.
+
+STEP2 now authors free frame geometry and a dominant foreground spanning several small panels, including four-beat pages. Fixed four-strip mode and legacy five-to-eight-panel scenarios remain supported. STEP3 retains the authored composition. Incoming foreground fragments remain in the independent physical census and need a visible continuity link plus grounded source identity to be exempted from local actor counts/style. Distinct later story appearances remain required. Numerical frame-ratio differences alone cannot authorize a paid repair. Bottom credits retain the allowed overlap/occlusion policy.
+
+The complete candidate index-Bc50L3P-.js passed 2,279 Node tests, lint, build and built-web security. Normal UI/API with GPT-6 Luna (no fallback) and GPT Image 2.6 produced a page-dominant action figure and a café page with four small scenes above a large emotional scene. The user positively assessed both initial compositions. The café page retained its story after one automatic composition repair and reaches the bottom edge. Incomplete automated panel observations remain unverified; this is direct visual acceptance, not an automated all-checks pass. No additional paid generation is needed for minor geometry differences. Public deployment and announcements are pending; use the official root release transaction, then standalone backup after social publication.
+
 # v7.4.1 STEP3 camera and layout diagnostics — 2026-11-10
 
 5～8コマのSTEP3は、配置案からカメラを再取得せず、採用済みの台本から直接引き継ぐ。配置案が違う撮影を返したコマは元の状況も採用し、台詞の対応、コマ順、レイアウトの既存検査は継続する。拒否された配置案は調査JSONに理由と一緒に保存する。モデル・画像編集・文字の描画方式に変更なし。

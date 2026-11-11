@@ -20,6 +20,13 @@ test('a past object modifier cannot add a body beyond the explicit current shot'
     assert.doesNotMatch(buildPanelEyeLineRule(source, cast), /\[丙\]/, 'context-only actor is not manufactured as a current listener');
   }
 });
+test('space reserved for a later breakout does not add another local body',()=>{
+ const reservation='下半分には後続コマから丙が大きく入る空間を残す。';
+ const source=`${camera}\n状況: 甲と乙が本を片づける。${reservation}\n甲「できた。」`;
+ assert.deepEqual(names(extractCastLimitRule(source,cast,{compact:true})),['乙','甲']);
+ assert.ok(extractActionOnly(source,cast).includes(reservation),'the required receiving space stays in the drawing instructions');
+ assert.deepEqual(names(extractCastLimitRule(source+'\n状況: 丙の手が画面内に見える。',cast,{compact:true})),['丙','乙','甲']);
+});
 
 test('the rule follows cast aliases, different objects and numeric current-body counts', () => {
   const source = '[Camera: ユウとナギを斜め上から見下ろす。]\n状況: ユキが描いた設計図は壁にある。画面内は２人。ユウとナギが会話する。\nユウ「見よう。」';

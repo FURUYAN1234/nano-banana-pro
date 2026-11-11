@@ -1,4 +1,5 @@
 import { callAI } from './ai-provider';
+import {readPageComposition, assertGeneratedPageComposition, SCENARIO_PAGE_COMPOSITION} from './manga-page-composition.js';
 import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 import {
   splitSnsExplanation,
@@ -76,7 +77,8 @@ const scenarioRetryLabels = {
   CAMERA_CONTRACT: '自動構成の非アイレベル・カメラ投影',
   STYLE_CONTRACT: '自動構成で使用できる画風',
   AUTO_PANEL_CHOICE: '内容に基づくコマ数の選択理由',
-  PANEL_STRUCTURE_CONTRACT: '選択モードのコマ数と連番'
+  PANEL_STRUCTURE_CONTRACT: '選択モードのコマ数と連番',
+  PAGE_COMPOSITION_CONTRACT: 'シナリオで決めたページ演出'
 };
 
 const getManualTopicAnchor = (manualTopic = '') => {
@@ -175,6 +177,9 @@ const validateScenarioForRetry = ({
 }) => {
   const checks = [
     ['PANEL_STRUCTURE_CONTRACT', () => assertScenarioPanelStructure(scenario.scenario, { scenarioMode })],
+    ['PAGE_COMPOSITION_CONTRACT', () => {
+      if(scenarioMode==='experimental-manga')assertGeneratedPageComposition(scenario.scenario,getScenarioPanelBlocks(scenario.scenario).length);
+    }],
     ['CAMERA_CONTRACT', () => assertGeneratedScenarioCameraContract(scenario.scenario, manualTopic, { scenarioMode })],
     ['STYLE_CONTRACT', () => assertGeneratedScenarioStyleContract(scenario.scenario, { scenarioMode })],
     ['SCENARIO_CONTENT', () => assertSafeScenarioContent(scenario)],
@@ -295,6 +300,10 @@ export const parseScenarioResponse = (result, {
     parsedData.topic = fallbackTopic;
   }
 
+  const authoredComposition = result.text.match(/^[ \t]*PageComposition[ \t]*[:：][^\r\n]+/m)?.[0]?.trim();
+  if (authoredComposition && !/^[ \t]*PageComposition[ \t]*[:：]/m.test(parsedData.scenario)) {
+    parsedData.scenario = authoredComposition + '\n' + parsedData.scenario;
+  }
   if (inputMode === 'manual') {
     parsedData.scenario = applyManualStagingLocks(parsedData.scenario, manualTopic);
   }
@@ -529,14 +538,15 @@ export async function generateScenario({
       ].filter(Boolean).join('\n')
     }),
     retryInstruction: ({ code, message }) => [
-      code === 'AUTO_PANEL_CHOICE' ? 'Return PanelCountReason before Scenario, explaining why this specific story requires its chosen 4–8 panels. Preserve the topic.' : code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${autoSelectPanelCount ? '4–8 selected from story content' : scenarioMode === 'experimental-manga' ? '5–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
+      code === 'PAGE_COMPOSITION_CONTRACT' ? SCENARIO_PAGE_COMPOSITION : '',
+      code === 'AUTO_PANEL_CHOICE' ? 'Return PanelCountReason before Scenario, explaining why this specific story requires its chosen 4–8 panels. Preserve the topic.' : code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${autoSelectPanelCount ? '4–8 selected from story content' : scenarioMode === 'experimental-manga' ? '4–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
       message ? `FAILED CHECK (correct every listed item): ${String(message).slice(0, 1400)}` : '',
       code === 'DOCUMENTARY_SOURCE_FIDELITY' && documentarySourceText
         ? `ORIGINAL SOURCE TO PRESERVE:\n${documentarySourceText}\n\nREPAIR METHOD: distribute the original source clauses across the Situation and dialogue lines of all panels before the final panel. Copy the listed missing factual terms exactly. Do not leave a source cause, action, measure, affected party, or outcome only in Topic, Logline, Location, VisualEvidence, Outfit, Punchline, or thought trace; it must occur inside Scenario.`
         : ''
     ].filter(Boolean).join('\n\n'),
     onRetry: (retry) => onProgress(formatScenarioRetryProgress(retry)),
-    fatalValidationCodes: ['AUTO_PANEL_CHOICE', 'PANEL_STRUCTURE_CONTRACT', 'CAMERA_CONTRACT', 'STYLE_CONTRACT', ...(isDocumentaryEnding(activePunchlineType)
+    fatalValidationCodes: ['AUTO_PANEL_CHOICE', 'PANEL_STRUCTURE_CONTRACT', 'PAGE_COMPOSITION_CONTRACT', 'CAMERA_CONTRACT', 'STYLE_CONTRACT', ...(isDocumentaryEnding(activePunchlineType)
       ? ['DOCUMENTARY_SOURCE_FIDELITY'] : [])],
     maxAttempts: 3
   });
@@ -592,6 +602,11 @@ export async function generateScenario({
     }),
     validateRepair: (candidate) => {
       let normalizedCandidate = candidate;
+      const originalComposition=readPageComposition(parsedData.scenario,getScenarioPanelBlocks(parsedData.scenario).length);
+      const revisedComposition=readPageComposition(candidate,getScenarioPanelBlocks(candidate).length);
+      if(originalComposition&&JSON.stringify(originalComposition)!==JSON.stringify(revisedComposition)) {
+        throw Object.assign(new Error('PageComposition: 構成監査の修正で決定済みのページ演出を削除・変更できません。'),{code:'PAGE_COMPOSITION_CONTRACT'});
+      }
       if (isDocumentaryEnding(resolvedEndingType)) {
         normalizedCandidate = normalizeDocumentaryScenarioTimeline(
           normalizedCandidate,

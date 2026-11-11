@@ -1,31 +1,31 @@
 {
   "pricingSourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-  "manualVersion": "7.4.1",
-  "manualSourceSha256": "a7ffaf04d19e4b277ccec6397cac22b05acef6e9d59c8157a0ae0776dba416ca",
+  "manualVersion": "7.4.2",
+  "manualSourceSha256": "b20c554af9555c4fc6237417f45521c62be68bfcba4528f6ead56e56edb6cc5b",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "1e26d42780aaa4af03f1711da256708994c352d7e278ed51eebbcad3353d0c3f"
+      "sha256": "21a66f080cb84bbb7459468ea7eaab9f2a41b42f9c46c6beb158499998795b7c"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "0630b49a81b8a987a21a515cc1e483d2050dab52dfa9c22c5c334b83ca25f8cb"
+      "sha256": "15097a06c9400c4fc97d50ba93a2fad6d777ec87d4b964908e055ce4e59f352d"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "bf40ed67b80f22a5d62134cbe903fcbe82ccac222a909b2f303397a58d97a0ef"
+      "sha256": "276319808b01121e59e7391ae860198664daa12e82249265e1df72282ceb4e9b"
     }
   ],
-  "readmeSha256": "05c7d2d06bd5287d54374d7367637969fadb91251e67b01ec04335e22388440e",
+  "readmeSha256": "da16170d60fc0ed248c73085e21f516fa7c9aecd5885b350a3cab61cebf37d1d",
   "readmeLanguageGaps": [],
   "sourceTree": "4ef2f9bc4bc011c937ed679de73a60494b43bd55",
   "publicTree": "c6f57815f8a0979081c1907167f64a0b92e6d2d0",
-  "packageSha256": "7648dcc33108eae07c4b4c5f161242f7613da84985a73d160beb139de020065c",
+  "packageSha256": "54eb2032d47f26d12a4a83d6cb44f6b13ca2b551fab84587145138a86c0159ff",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
     "Single-page design approach / 1ページ制作の設計方針",
-    "Panel modes / 4コマと5〜8コマの選び方",
+    "Panel modes / 固定4コマと自由コマ割りの選び方",
     "Art styles / コマごとの絵柄",
     "Visual direction and reading / 演出と読みやすさ",
     "A4 workflow map / A4縦フローチャート",
@@ -41,21 +41,22 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-10T13:18:11.981Z",
-  "findings": "Compared the v7.4.1 README against the audited v7.4.0 body and the working candidate. STEP3 now derives Camera from STEP2 in 5–8-panel layout, restores source staging for a conflicting reply and records rejected layout evidence. Dialogue mapping, geometry, media, image models and retry boundaries remain unchanged. The version, changelog, FAQ, and candidate ZIP URL are synchronized. The existing custom-node ZIP hash is unchanged. Other README sections inherit the unchanged v7.4.0 behavior and the previous section review.",
-  "manualFindings": "Rebuilt and rendered 71 pages across the three v7.4.1 PDFs. Compared every page body to the previous local reviewed set; only Gemini p1 and system p18/p19 changed above the footer. Visually inspected these pages, the current diagnostic page 32 and the OpenAI guide cover; no overlap, missing glyphs or clipping. Checked all page footers, bounds, links and privacy text using the existing PDF verifier.",
+  "checkedAt": "2026-11-11T02:47:02.003Z",
+  "findings": "Local v7.4.2 candidate: compared the changed README body with the audited v7.4.1 body and implementation. Added ordinary-topic hero/breakout/bleed authoring, source-to-prompt retention, grounded required-composition review and footer occlusion permission. Four-panel strip layout, image/text model selection and bounded repair remain unchanged. Reviewed panel-mode, render-options and page-envelope paragraphs, version/release-link labels and the latest 15 changelog entries. Other sections retain the reviewed v7.4.1 behavior. Public app/note remain v7.4.1; release and note publishing have not been performed. This document review does not assert real API quality of the candidate. Revision 60 adds one foreground body across source/receiver frames and narrows receiving media to local actors. Reviewed the README safeguard paragraph against implementation: incomplete observations remain unverified, while independently grounded required-composition failures retain the existing single repair limit. Revision 61: reviewed the changed body against source. Free layout accepts four to eight authored frames and a page-dominant foreground over multiple panels; fixed four-strip mode remains separate. Updated labels, bilingual descriptions and internal links. Natural coherent layout adjustment is accepted; a numerical ratio difference alone does not authorize repair. This is document verification; revised real API output is still pending.",
+  "manualFindings": "Rendered all 71 pages across the three v7.4.2 PDFs and passed existing page count, bounds, footer version/date, links, naming and privacy scans. Compared extracted page bodies against the reviewed v7.4.1 PDFs after removing version/date changes: only system p14/p18 changed. Visually inspected these two pages and the OpenAI cover; text, table, whitespace and footers are legible without overlap or clipping. The system p18 title-off paragraph now preserves the explicitly authored bleed exception. Other body content is unchanged; prior visual evidence is reused. Revision 60 rebuilt the system/Gemini manuals and passed all existing 52-page automatic checks. Text comparison with the already reviewed candidate changed only system page 23; visually inspected its complete render with no overlap/clipping. Gemini and OpenAI body content and their previous visual evidence are unchanged. Revision 61: rebuilt 52 pages with automatic bounds, footer, naming, privacy and links checks. Compared page text with the reviewed revision 60 manuals: Gemini unchanged; system pages 1,3,9,14,15,16,19,20,22,23,27,32 changed. Reviewed every changed page in a rendered contact sheet and complete page 14/15 renders: no clipping or overlap. Most changes are labels/counts; page 14/15 and 27 explain whole-page composition and free four-panel routing. OpenAI manual unchanged; prior evidence reused.",
   "pricingReview": {
-    "version": "7.4.1",
+    "version": "7.4.2",
     "sourceSha256": "7d8d33f896ff0e40c34881b3a104504da7a9727807352ebbe0652923c17c1ee3",
-    "checkedAt": "2026-11-10T13:18:11.981Z",
+    "checkedAt": "2026-11-11T01:40:08.3642813Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
-      "https://ai.google.dev/gemini-api/docs/pricing/",
+      "https://aistudio.google.com/docs/pricing",
+      "https://developers.openai.com/api/docs/models/gpt-6-sol",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
-      "https://developers.openai.com/api/docs/models/gpt-6-sol"
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Reviewed official OpenAI Standard and Google Standard rates, excluding Batch and Flex. Current primary rates match the UI and manual: GPT-6 Luna 0.10/0.50, Sunburst and Flare 2.6 image 8/30 with cache 2 and text input 5 with cache 1.25, Gemini 3.8 Flash text 0.75/3.75 through December 31, and Nano Banana 2.1 1K 0.0336 with input 1.50 and text/thinking output 7.50. Legacy model snapshot rates are retained."
+    "findings": "Reviewed official Standard rates, excluding Batch and Flex, for the local v7.4.2 candidate. Current rates match the unchanged pricing sources and manual: GPT-6 Astra 10/50, GPT-6.1 Sol 2/10, GPT-6.1 Terra 1/5, GPT-6 Luna 0.10/0.50, GPT-6 Sol 2/10, GPT-5.6 Sol 4/20, GPT-5.6 Terra 2/12, GPT-5.6 Luna 0.20/1.20 USD per million input/output tokens. Sunburst and Flare 2.6 image 8/30 with cache 2 and text input 5 with cache 1.25. Gemini 3.8 Flash text 0.75/3.75 applies through December 31, 2026; Nano Banana 2.1 1K is 0.0336 with input 1.50 and text/thinking output 7.50. No model selection or fallback route changed as part of this pricing review. Publishing is still awaiting user approval."
   }
 }

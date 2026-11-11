@@ -243,7 +243,7 @@ test('STEP3 quality warnings never return early or disappear during prompt assem
     assert.match(statuses.pop(), /品質警告のままSTEP4へ/);
     context.validateMangaScenario = () => ({ ok: false, structuralValid: false });
     assert.equal(run(), null, 'wrong mode counts must stop before API work');
-    assert.match(statuses.pop(), scenarioMode === 'four-panel' ? /4コマ/ : /5〜8コマ/);
+    assert.match(statuses.pop(), scenarioMode === 'four-panel' ? /4コマ/ : /4〜8コマ/);
   }
   assert.match(source, /allowScenarioQualityWarning: true/);
   assert.doesNotMatch(source, /error\?\.code === 'DIALOGUE_CONTRACT'/);

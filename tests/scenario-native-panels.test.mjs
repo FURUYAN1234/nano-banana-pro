@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'vite';
 let server, validation, provider, prompts, enhancement, staging, documentary, payoff, setFixtureResponse;
 const mode = { scenarioMode: 'experimental-manga' };
-const panels = (count) => Array.from({ length: count }, (_, i) => `[${i + 1}コマ目: 展開]
+const panels = (count) => (count>=5&&count<=8?'PageComposition: '+JSON.stringify({layout:'two_columns',reason:'札の配置と反応を左右の順に読む',heroPanels:[],breakouts:[],bleed:[],restraintReason:'札の順序を一つずつ読む説明が中心で、均等な枠の静かな間を保つ。'})+'\n':'')+Array.from({ length: count }, (_, i) => `[${i + 1}コマ目: 展開]
 [EMOTION: NORMAL]
 [Camera: 左上から俯瞰の中景]
 状況: Aが札を動かす。
@@ -41,17 +41,17 @@ test('late native panels receive camera, style and dialogue validation', () => {
  assert.throws(() => validation.assertGeneratedScenarioStyleContract(eight.replace('[8コマ目: 展開]\n[EMOTION: NORMAL]', '[8コマ目: 展開]\n[EMOTION: PASTEL]'), mode), { code: 'STYLE_CONTRACT' });
  assert.throws(() => provider.assertMangaScenarioDialogueContract(eight.replace('A「8枚目です。」', ''), 'A', mode));
 });
-test('native prompt selects complete 5–8 panels without rewriting user material or four-panel ending instructions', () => {
+test('native prompt selects complete 4–8 panels without rewriting user material or four-panel ending instructions', () => {
  const topic = '古い4コマ漫画を8コマ目の机に置く。';
  for (const punchlineType of ['Surreal', 'SeriousAuto', 'EmotionalClosure', 'Resolve', 'Documentary', 'SeriousDocumentary', 'RunningGag', 'CanceledEnding', 'Dream']) {
   const prompt = prompts.getScenarioPrompt({ ...args, ...mode, manualTopic: topic, punchlineType });
-  assert.match(prompt, /5[〜～–-]8コマ/);
+  assert.match(prompt, /4[〜～–-]8コマ/);
   assert.match(prompt, /最終コマ/);
-  assert.match(prompt, /最初から5〜8コマの完成した1ページ/);
+  assert.match(prompt, /最初から4〜8コマの完成した1ページ/);
   assert.match(prompt, /無言数のノルマや全面禁止は設けない/);
   assert.ok(prompt.includes(topic));
   const withoutTopic = prompt.replaceAll(topic, 'USER_SOURCE');
-  assert.doesNotMatch(withoutTopic, /4コマ目|全4コマ|4コマの|4コマ漫画|1〜3コマ目/, punchlineType);
+  assert.doesNotMatch(withoutTopic, /全4コマ|四コマモードは常に|1〜3コマ目/, punchlineType);
  }
  assert.match(prompts.getScenarioPrompt(args), /\[4コマ目: 結\]/);
 });
@@ -71,14 +71,25 @@ test('four-panel mode ignores only total-count requests across generation, revie
   assert.match(prompt, /コマ数指定[^\n]*不一致[^\n]*しない/);
  }
 });
-test('native count selection keeps explicit 5–8 count requests and chooses a count only when unspecified', () => {
+test('native count selection keeps explicit 4–8 count requests and chooses a count only when unspecified', () => {
  for (const topic of ['全5コマで札を揃える。', '8コマで札を揃える。', '札を揃える。']) {
   const prompt = prompts.getScenarioPrompt({ ...args, ...mode, manualTopic: topic });
   assert.ok(prompt.includes(topic));
-  assert.match(prompt, /5〜8[^\n]*総コマ数[^\n]*指定[^\n]*従/);
+  assert.match(prompt, /4〜8[^\n]*総コマ数[^\n]*指定[^\n]*従/);
   assert.match(prompt, /未指定[^\n]*内容[^\n]*選/);
   assert.doesNotMatch(prompt, /自由入力[^\n]*総コマ数[^\n]*無視/);
  }
+});
+test('ordinary native topics receive automatic bold page direction without needing layout keywords',()=>{
+ for(const inputMode of ['manual','news']) {
+  const prompt=prompts.getScenarioPrompt({...args,...mode,inputMode,manualTopic:'放課後に衣装を片づける。'});
+  assert.match(prompt,/通常入力でもページを支配する/);
+  assert.match(prompt,/頭・肩|腕全体/);
+  assert.match(prompt,/小コマ.*台詞.*空間/);
+  assert.match(prompt,/restraintReason/);
+  assert.match(prompt,/穏やかな笑顔や読書、食事の表情も大きな見せ場/);
+ }
+ assert.doesNotMatch(prompts.getScenarioPrompt(args),/通常入力でもページを支配する/);
 });
 test('native followup editing sees all panels and rejects late deletion', () => {
  const original = panels(8), candidate = original.replace('A「8枚目です。」', 'A「揃いました。」');
@@ -119,6 +130,15 @@ ${panels(count)}`, JSON.stringify({ topic: '札', scenario: panels(count) })]) {
   }
  }
 });
+test('provider keeps page composition even when returned before the Scenario heading', () => {
+ const composition='PageComposition: '+JSON.stringify({layout:'hero_bottom',reason:'最後の人物の決意を大きく見せる',heroPanels:[5],breakouts:[],bleed:[{panel:5,edges:['bottom']}]});
+ const body=panels(5).replace(/^PageComposition:.*\n/,'');
+ for(const text of [`Topic: 決意\n${composition}\nScenario:\n${body}`,`Topic: 決意\nScenario:\n${composition}\n${body}`]) {
+  const parsed=provider.parseScenarioResponse({text},{...args,...mode});
+  assert.equal(parsed.scenario,composition+'\n'+body);
+  assert.equal(validation.validateMangaScenario(parsed.scenario,'A',mode).ok,true);
+ }
+});
 
 const reviewFor = (count) => ({
  pass: true,
@@ -131,6 +151,38 @@ const reviewFor = (count) => ({
  ensemble_continuity: Array.from({ length: count }, (_, index) => ({ panel: index + 1, material_break: false, evidence: 'Aが前の札に続けて次の札を配置する。', correction: '' })),
  panel_development: Array.from({ length: count }, (_, index) => ({ panel: index + 1, material_padding: false, evidence: '札の順序と案内される方向が次の配置で変わる。', correction: '' })),
  camera_rhythm: { shots: Array.from({ length: count }, (_, index) => ({ panel: index + 1, signature: `view ${index + 1}`, purpose: '配置順に応じて手元と案内先を見せる。' })), repeated_panels: [], material_repeat: false, intentional_repeat: false, evidence: '順次変わる札の状態を読める。', correction: '' }
+});
+
+test('new native generation cannot silently lose page composition and uses the bounded retry',async()=>{
+ let generations=0;
+ setFixtureResponse(async prompt=>{
+  if(prompt.includes('構成監査'))return {text:JSON.stringify(reviewFor(5)),model:'fixture'};
+  generations++;
+  return {text:'Topic: 札\nScenario:\n'+(generations===1?panels(5).replace(/^PageComposition:.*\n/,''):panels(5)),model:'fixture'};
+ });
+ const recovered=await provider.generateScenario({...args,...mode,scenarioModelId:'gpt-6-luna'});
+ assert.equal(generations,2);
+ assert.match(recovered.scenario,/^PageComposition:/);
+ generations=0;
+ setFixtureResponse(async()=>{generations++;return {text:'Topic: 札\nScenario:\n'+panels(5).replace(/^PageComposition:.*\n/,''),model:'fixture'};});
+ await assert.rejects(provider.generateScenario({...args,...mode,scenarioModelId:'gpt-6-luna'}),error=>error.code==='PAGE_COMPOSITION_CONTRACT');
+ assert.equal(generations,3);
+});
+
+test('ordinary generated scenarios retry an unexplained missing breakout before narrative review',async()=>{
+ const understated={layout:'hero_bottom',reason:'人物が隠れた幕を最後の大コマにする',heroPanels:[5],breakouts:[],bleed:[]};
+ const bold={layout:'two_columns',reason:'人物の登場動作を大きく見せて反応へつなぐ',heroPanels:[1],breakouts:[{panel:1,part:'Aの肩につながる腕全体',into:2}],bleed:[]};
+ const body=panels(5).replace(/^PageComposition:.*\n/,'');
+ let attempts=0;
+ setFixtureResponse(async prompt=>{
+  if(prompt.includes('構成監査'))return {text:JSON.stringify(reviewFor(5)),model:'fixture'};
+  attempts++;
+  if(attempts===2)assert.match(prompt,/restraintReason/);
+  return {text:'Topic: 登場\nScenario:\nPageComposition: '+JSON.stringify(attempts===1?understated:bold)+'\n'+body,model:'fixture'};
+ });
+ const result=await provider.generateScenario({...args,...mode,scenarioModelId:'gpt-6-luna'});
+ assert.equal(attempts,2);
+ assert.ok(result.scenario.includes(JSON.stringify(bold)));
 });
 
 test('native generation and subsequent edit cross the real provider orchestration with the chosen count and model', async () => {
@@ -146,8 +198,8 @@ test('native generation and subsequent edit cross the real provider orchestratio
   assert.equal(result.scenario, panels(count));
   assert.equal(result.validationWarning, null);
   assert.equal(calls.length, 2, 'one generation and one successful review');
-  assert.match(calls[0].prompt, /5[〜～–-]8コマ/);
-  assert.doesNotMatch(calls[0].prompt, /4コマ/);
+  assert.match(calls[0].prompt, /4[〜～–-]8コマ/);
+  assert.doesNotMatch(calls[0].prompt, /四コマモードは常に|全4コマ/);
   for (const call of calls) assert.equal(call.options.scenarioModelId, 'gpt-6-luna');
   const editCalls = [];
   setFixtureResponse(async (prompt, _images, _system, _progress, options) => {
@@ -248,10 +300,10 @@ test('auto prompt uses story content without changing the manual prompt contract
  assert.match(auto,/4コマで因果と結末/);
  assert.match(auto,/文字数・カテゴリ名・偶然・交互選択で決めない/);
  assert.match(auto,/PanelCountReason:/);
- assert.doesNotMatch(auto,/実験的コマ割りは5〜8コマ|四コマモードは常に全4コマ|N（5〜8）/);
+ assert.doesNotMatch(auto,/実験的コマ割りは4〜8コマ|四コマモードは常に全4コマ|N（5〜8）/);
  const manual=prompts.getScenarioPrompt({...args,...mode});
  assert.doesNotMatch(manual,/PanelCountReason:/);
- assert.match(manual,/実験的コマ割りは5〜8コマ/);
+ assert.match(manual,/実験的コマ割りは4〜8コマ/);
 });
 test('provider selects either mode within the existing generation and review calls',async()=>{
  for (const count of [4,5,6,7,8]) {
@@ -266,7 +318,7 @@ test('provider selects either mode within the existing generation and review cal
   assert.equal(validation.getScenarioPanelBlocks(result.scenario).length,count);
   assert.equal(calls.length,2,'no additional classifier API');
   assert.equal(calls[0].options.scenarioModelId,'gpt-6-luna');
-  assert.match(calls[1].prompt,count===4?/四コマモードは常に全4コマ/:/実験的コマ割りは5〜8コマ/);
+  assert.match(calls[1].prompt,count===4?/四コマモードは常に全4コマ/:/実験的コマ割りは4〜8コマ/);
  }
 });
 test('parser keeps selection rationale separate from manga dialogue for both response formats',()=>{

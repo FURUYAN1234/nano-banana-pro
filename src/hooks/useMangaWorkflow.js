@@ -1399,7 +1399,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     promptAssemblyAbortRef.current = controller;
     const scenarioValidation = validateMangaScenario(currentScenario, castList, {scenarioMode:getScenarioMode()});
     if (scenarioValidation.structuralValid === false) {
-      showStatus(isExperimentalPage() ? '実験モードには5〜8コマのシナリオが必要です。STEP2で作成してください。' : '通常モードには4コマのシナリオが必要です。STEP2で作成してください。');
+      showStatus(isExperimentalPage() ? '実験モードには4〜8コマのシナリオが必要です。STEP2で作成してください。' : '通常モードには4コマのシナリオが必要です。STEP2で作成してください。');
       return null;
     }
     const assemblyQualityWarning = !scenarioValidation.ok

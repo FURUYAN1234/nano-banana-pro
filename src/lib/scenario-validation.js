@@ -1,3 +1,4 @@
+import {readPageComposition} from './manga-page-composition.js';
 import { extractDialogueOnly, extractEmotionStyle, normalizePanelStyleTags } from './panel-utils.js';
 import { classifyCameraElevation, isFisheyeCamera } from './composition-variety.js';
 import { STYLE_DRAWING_CONTRACTS } from './constants.js';
@@ -6,7 +7,7 @@ const PANEL_NUMBER_MAP = new Map(['一', '二', '三', '四', '五', '六', '七
 
 export const getScenarioPanelCountRange = (scenarioMode = 'four-panel') => {
   if (scenarioMode === 'four-panel') return [4, 4];
-  if (scenarioMode === 'experimental-manga') return [5, 8];
+  if (scenarioMode === 'experimental-manga') return [4, 8];
   throw new Error('Unknown scenario mode: ' + scenarioMode);
 };
 
@@ -16,7 +17,7 @@ export const buildScenarioPanelCountInstruction = (scenarioMode = 'four-panel') 
   const [min, max] = getScenarioPanelCountRange(scenarioMode);
   return min === max
     ? '【モード固定のコマ数契約】四コマモードは常に全4コマ。自由入力による漫画全体の総コマ数の指定は無視し、モードを変更しない。コマ数指定に従わないことを要望不一致や修正理由にしない。1〜4コマの画風・カメラ・演技・台詞の個別指定は保持する。範囲外のコマ番号を理由にコマを追加しない。物語中の数値・引用・作中漫画のコマ数は削除・改変しない。'
-    : '【モード固定のコマ数契約】実験的コマ割りは5〜8コマ。範囲内の総コマ数の指定があれば従い、未指定なら内容に合う必要数を選ぶ。決定済み台本の監査・修正ではそのコマ数を保つ。原文の物語・引用・数値と各コマの画風・カメラ・演技・台詞は保持する。';
+    : '【モード固定のコマ数契約】実験的コマ割りは4〜8コマ。範囲内の総コマ数の指定があれば従い、未指定なら内容に合う必要数を選ぶ。決定済み台本の監査・修正ではそのコマ数を保つ。PageCompositionがあれば制作メタデータとして必ず保持し、大コマ・枠越え・タチキリの指定を削除・任意化しない。原文の物語・引用・数値と各コマの画風・カメラ・演技・台詞は保持する。';
 };
 
 const NO_DIALOGUE_RE = /^\s*(?:[-*]\s*)?(?:無言|(?:台詞|セリフ|せりふ)\s*[:：]?\s*(?:なし|無し)|(?:Dialogue\s*:\s*)?(?:none|no\s+dialogue|without\s+dialogue))\s*[。.!]?\s*$/im;
@@ -63,7 +64,8 @@ const inspectPanelStructure = (scenarioText, scenarioMode) => {
   const headers = findPanelHeaders(stripThoughtBlocks(scenarioText));
   const panelCountRange = getScenarioPanelCountRange(scenarioMode);
   const structuralValid = headers.length >= panelCountRange[0] && headers.length <= panelCountRange[1]
-    && headers.every((header, index) => header.num === index + 1);
+    && headers.every((header, index) => header.num === index + 1)
+    && (scenarioMode!=='experimental-manga'||headers.length!==4||Boolean(readPageComposition(scenarioText,4)));
   const expectedCount = Math.min(panelCountRange[1], Math.max(panelCountRange[0], headers.length));
   return {
     structuralValid,
@@ -76,7 +78,7 @@ const inspectPanelStructure = (scenarioText, scenarioMode) => {
 
 export const assertScenarioPanelStructure = (scenarioText, { scenarioMode = 'four-panel' } = {}) => {
   const structure = inspectPanelStructure(scenarioText, scenarioMode);
-  if (structure.structuralValid) return true;
+  if (structure.structuralValid) { readPageComposition(scenarioText, getScenarioPanelBlocks(scenarioText).length); return true; }
   const range = structure.panelCountRange.join('–');
   const error = new Error('コマ見出しは選択モードの ' + range + ' コマを1から欠番・重複なしの順番で記載してください。');
   error.code = 'PANEL_STRUCTURE_CONTRACT';
@@ -94,7 +96,7 @@ export const resolveAutoScenarioMode = ({ scenario, panelCountReason } = {}) => 
     throw error;
   }
   const panelCount = getScenarioPanelBlocks(scenario).length;
-  const scenarioMode = panelCount === 4 ? 'four-panel' : 'experimental-manga';
+  const scenarioMode = panelCount === 4 && !readPageComposition(scenario,panelCount) ? 'four-panel' : 'experimental-manga';
   assertScenarioPanelStructure(scenario, { scenarioMode });
   return { scenarioMode, panelCount, reason };
 };
@@ -149,6 +151,8 @@ export const assertGeneratedScenarioStyleContract = (scenarioText, options = {})
 export const validateMangaScenario = (scenarioText, castList = '', { scenarioMode = 'four-panel' } = {}) => {
   const structure = inspectPanelStructure(scenarioText, scenarioMode);
   const panels = getScenarioPanelBlocks(scenarioText);
+  let compositionError = null;
+  try { readPageComposition(scenarioText, panels.length); } catch(error) { compositionError = error.message; }
   const invalidDialogue = [];
   const hasDialogue = new Map(panels.filter(panel => panel.found).map(panel => {
     try {
@@ -169,8 +173,9 @@ export const validateMangaScenario = (scenarioText, castList = '', { scenarioMod
   }
 
   return {
-    ok: structure.structuralValid && panelsMissingDialogue.length === 0 && invalidDialogue.length === 0,
+    ok: !compositionError && structure.structuralValid && panelsMissingDialogue.length === 0 && invalidDialogue.length === 0,
     scenarioMode,
+    compositionError,
     ...structure,
     invalidDialogue,
     panelsMissingDialogue,
@@ -181,6 +186,7 @@ export const validateMangaScenario = (scenarioText, castList = '', { scenarioMod
 
 export const formatMangaScenarioValidationIssue = (validation) => {
   const issues = [];
+  if (validation.compositionError) issues.push(validation.compositionError);
   if (validation.structuralValid === false || validation.invalidPanelSequence?.length) {
     const range = validation.panelCountRange || [4, 4];
     issues.push(`panel headers must appear exactly once in order 1 through N (${range[0]}–${range[1]} panels); found: ${validation.invalidPanelSequence.join(', ') || 'none'}`);

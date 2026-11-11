@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {buildImageQualityRepairPrompt,runPageImageQuality} from '../src/lib/image-quality-failsafe.js';
 
-const boundary = {type:'panel_layout',panel:1,subject:'ページの枠比率',
-  reason:'コマの高さ・幅と境界が指定と異なる。P1下辺 0.286→0.380; P2上辺 0.289→0.380。',
+const boundary = {type:'panel_layout',panel:1,subject:'ページの読順',
+  reason:'コマ境界が伸びて二つの場面が結合し、P2の台詞が隠れて読めない。P1下辺 0.286→0.380; P2上辺 0.289→0.380。',
   correction:'指摘境界を指定座標へ移動し、隣接コマも原文のrectへ再配置。'};
 const camera = {type:'camera_geometry',panel:2,reason:'The requested underside is absent.'};
 const clipping = {type:'panel_layout',panel:3,reason:'Hair contour is severed by the upper frame.'};

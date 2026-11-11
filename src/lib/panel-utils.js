@@ -787,10 +787,14 @@ export const readOffscreenCast = (source, castList, extraNames = []) => {
     .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, '');
   const group = `((?:${pattern})(?:\\s*(?:と|や|、|及び)\\s*(?:${pattern}))*)`;
   const outside = '(?:画面外|画角外|フレーム外)';
+  // A location may intervene ("甲、乙はラックのそばに画面外で待つ").
+  // Do not cross another subject, an object, or a clause boundary to find it.
+  const location = '(?:[^。！？\\n、はがを]{1,40}?(?:に|で))?';
   const absent = new Set();
   const rules = [
-    new RegExp(`${group}(?:は|が)\\s*(?:引き続き|そのまま)?${outside}(?:の(?:前コマ|元の)?位置を維持|(?:の[^。！？\\n]{1,24}?(?:側|場所|位置))?に(?:いる|居る|残(?:る|っている)|留まる)|で待機|[。\\n]|$)`, 'gu'),
+    new RegExp(`${group}(?:は|が)\\s*(?:引き続き|そのまま)?${location}${outside}(?:の(?:前コマ|元の)?位置を維持|(?:の[^。！？\\n]{1,24}?(?:側|場所|位置))?に(?:いる|居る|残(?:る|っている)|留まる)|で(?!は?(?:ない|なく))|[。\\n]|$)`, 'gu'),
     new RegExp(`${outside}の${group}(?=へ|に|を|は|が|[、。！？\\n])`, 'gu'),
+    new RegExp(`${group}(?:は|が)[^。！？\\n]{0,60}姿を見せ(?:ず|ない)[^。！？\\n]{0,30}(?:声だけ|声のみ)`, 'gu'),
   ];
   for (const rule of rules) for (const match of text.matchAll(rule)) {
     for (const name of match[1].matchAll(new RegExp(pattern, 'gu'))) absent.add(lookup[name[0]]);
@@ -1359,7 +1363,11 @@ const currentCastMentionText = (source, castList) => {
   // in this shot. Mask only this reference occurrence; independent present
   // action, Camera mentions and actual dialogue still establish that actor.
   const causal = aliases.length ? new RegExp(`(${aliases.map(escapeRegex).join('|')})(?=の(?:言葉|発言|提案|説明|指示|呼びかけ)を受け(?:て|[、,\\s]|$))`, 'gu') : null;
-  const text = causal ? String(source || '').replace(causal, name => ' '.repeat(name.length)) : String(source || '');
+  let text = causal ? String(source || '').replace(causal, name => ' '.repeat(name.length)) : String(source || '');
+  // A reserved receiving area belongs to the later breakout's connected body,
+  // not a second actor in this frame. Keep the actual staging prose unchanged.
+  const reservation=aliases.length?new RegExp(`(?:後続|別|次)(?:の)?コマから(${aliases.map(escapeRegex).join('|')})[^。！？\\n]{0,35}(?:空間|余白|場所)(?:を|は)[^。！？\\n]{0,12}(?:残す|空ける|確保する)`, 'gu'):null;
+  if(reservation)text=text.replace(reservation,(match,name)=>match.replace(name,' '.repeat(name.length)));
   const evidence = text.replace(BALLOON_LAYOUT_LINE_RE, match => ' '.repeat(match.length))
     .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, match => ' '.repeat(match.length));
   const counts = [...evidence.matchAll(/(?:画面|画角|フレーム)内(?:は|には)[^。！？\n]*?([0-9０-９一二三四五六七八九十]+)人(?:だけ|のみ)?(?=[。！？\n]|$)/gu)]
@@ -1832,6 +1840,12 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const charLookup = Object.fromEntries(
     Object.entries(flatCharLookup).map(([alias, name]) => [alias, { name, full: name }])
   );
+  // An authored foreground crossing is owned and counted in its source frame.
+  // It is neither a new local actor nor an absent character to erase here.
+  const incomingCast=new Set((options.incomingCast||[]).map(name=>flatCharLookup[name]).filter(Boolean));
+  const overlayCast=new Set((options.overlayCast||[]).map(name=>flatCharLookup[name]).filter(Boolean));
+  const pageCast=new Set([...incomingCast,...overlayCast]);
+  const castScope=pageCast.size?`LOCAL CAST SCOPE: 以下はこの場面の独立人物のみ。${[...pageCast].map(name=>`[${name}]`).join(', ')}の越境身体は元コマで一度だけ数え、この人数・不在・描法の規則から除外。別身体を追加せず一続きの前景を保持。${overlayCast.size?'この小コマ自身の別時点の登場は下記人数に含み、前景と混同して消さない。':''}\n`:'';
 
   // The bubble parser is the source of truth for speakers, including multiple
   // utterances on one line and speakers written after the quote.
@@ -1950,6 +1964,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   if (explicitRearSubject && !offscreenCast.has(explicitRearSubject) && !allPanelCharacters.includes(explicitRearSubject)) {
     allPanelCharacters.push(explicitRearSubject);
   }
+  for(let i=allPanelCharacters.length-1;i>=0;i--)if(incomingCast.has(allPanelCharacters[i]))allPanelCharacters.splice(i,1);
 
   // 吹き出し数カウント: セリフ行（「」付き）の数を数えてソロショット判定の矛盾を防ぐ
   let dialogueLineCount = 0;
@@ -1963,8 +1978,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   });
 
   // スピーカー最大3名をメインアクターとして登録
-  const panelActors = speakers.filter(speaker => !offscreenCast.has(speaker)).slice(0, 3).map(s => `[${s}]`);
-  const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
+  const panelActors = speakers.filter(speaker => !offscreenCast.has(speaker)&&!incomingCast.has(speaker)).slice(0, 3).map(s => `[${s}]`);
+  const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject)&&!incomingCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
   const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, [...new Set([...allPanelCharacters,...canonicalValidCharacters])]);
   const replicaBrackets = replicaNames.map(c => `[${c}]`);
@@ -1977,7 +1992,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
   // このコマに一切登場しないキャラ（No-Show）を特定
-  const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c));
+  const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c)&&!pageCast.has(c));
 
   const storyGuests = allPanelCharacters.filter(c => !canonicalValidCharacters.includes(c));
 
@@ -2007,11 +2022,11 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
         : `\nSTORY-REQUIRED GUEST CONTINUITY: ${guestNames} are legitimate characters without reference sheets. Draw each exactly once where required; if recurring, preserve the same identity, age, clothing, prop ownership and action/spatial continuity. Never clone, substitute or omit them while their scripted action remains.`;
     }
     
-    if (!hasMob && allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
+    if (!pageCast.size && !hasMob && allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
       cloneWarning += compact
         ? `\nSOLO: only ${allCharBrackets[0]}; no other people or second copy.`
         : `\nSOLO SHOT (SINGLE CHARACTER SCENE): Since only ${allCharBrackets[0]} is listed, THIS IS A SOLO SHOT. Do NOT draw ANY other person. Do NOT draw a second copy of ${allCharBrackets[0]}. Leave the surrounding space empty rather than adding people.`;
-    } else if (!hasMob && allPanelCharacters.length === 1 && dialogueLineCount >= 2) {
+    } else if (!pageCast.size && !hasMob && allPanelCharacters.length === 1 && dialogueLineCount >= 2) {
       cloneWarning += compact
         ? `\nMONOLOGUE: all bubbles belong to ${allCharBrackets[0]}; no extra person.`
         : `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
@@ -2056,27 +2071,27 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
         : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}${otsInstanceConstraint}\n${replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size people; no other full-size humans.` : `ABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`}`;
     }
 
-    return compact
+    return castScope+(compact
       ? `CAST LIMIT: required cast ${mainFocus}; focus follows Camera/Action.\n${cloneWarning}${spatialConstraint}`
-      : `CRITICAL CAST PLACEMENT: Include ${mainFocus}; optical focus follows Camera/Action, not cast count.\n${cloneWarning}${spatialConstraint}`;
+      : `CRITICAL CAST PLACEMENT: Include ${mainFocus}; optical focus follows Camera/Action, not cast count.\n${cloneWarning}${spatialConstraint}`);
   } else {
     // 登場キャラクターが検出されなかった場合でも、キャスト全体から除外指示を出すことは可能
     if (hasBroadGroupCue || hasCountedCastGroup) {
-      return compact
+      return castScope+(compact
         ? `CRITICAL CAST PLACEMENT: broad group cue is required by the action; draw the relevant visible group, one generic adult for any non-cast speaker, and never duplicate the same character.`
-        : `CRITICAL CAST PLACEMENT: The action uses a broad group cue such as "all characters", "everyone", "全員", "みんな", or "一同". Treat that group as explicitly required by the panel action. Draw the relevant visible group described by the action, and if a speech bubble names a speaker outside the reference cast, draw exactly one generic adult speaker for that bubble. Do NOT exclude registered main characters solely because they are not dialogue speakers in this panel. NEVER draw the exact same character twice.`;
+        : `CRITICAL CAST PLACEMENT: The action uses a broad group cue such as "all characters", "everyone", "全員", "みんな", or "一同". Treat that group as explicitly required by the panel action. Draw the relevant visible group described by the action, and if a speech bubble names a speaker outside the reference cast, draw exactly one generic adult speaker for that bubble. Do NOT exclude registered main characters solely because they are not dialogue speakers in this panel. NEVER draw the exact same character twice.`);
     }
 
     let negativeConstraint = "";
     if (canonicalValidCharacters.length > 0) {
-      const allNames = canonicalValidCharacters.map(c => `[${c}]`).join(', ');
+      const allNames = canonicalValidCharacters.filter(c=>!incomingCast.has(c)).map(c => `[${c}]`).join(', ');
       negativeConstraint = compact
         ? `\nABSENT unless explicitly required: ${allNames}.`
         : `\nDo NOT draw ${allNames} unless explicitly required.`;
     }
-    return compact
+    return castScope+(compact
       ? `CRITICAL CAST PLACEMENT: follow the action naturally; never duplicate a character.${negativeConstraint}`
-      : `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.${negativeConstraint}`;
+      : `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.${negativeConstraint}`);
   }
 };
 

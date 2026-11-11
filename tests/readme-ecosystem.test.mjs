@@ -7,7 +7,7 @@ test('current README documents all five added endings and the actual provider an
   for (const label of ['怒り・抗議', '逆転・反撃', '激怒・逆ギレ', '自業自得・ブーメラン', '立場逆転']) {
     assert.ok(current.includes(label), `Missing current ending description: ${label}`);
   }
-  assert.match(current, /5[～〜]8コマ生成はOpenAIのみ/);
+  assert.match(current, /自由コマ割り（4[～〜]8コマ）はOpenAIのみ/);
   assert.match(current, /Geminiはカラー・白黒とも4コマ/);
   assert.match(current, /APIで新しく生成した画像は、自動修正ONの場合だけ総合検査されます/);
   assert.match(current, /自動修正OFFは画像検査なし/);

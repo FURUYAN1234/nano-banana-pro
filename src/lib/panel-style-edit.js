@@ -3,7 +3,8 @@ import { buildImageEditRequest } from './image-edit.js';
 import { normalizeImageDataUrl } from './openai-image-references.js';
 import { OPENAI_IMAGE_SIZE_OPTIONS, DEFAULT_OPENAI_IMAGE_SIZE } from './openai-image-settings.js';
 import { buildEmotionBlock } from './panel-utils.js';
-import { orderObservedFrames, experimentalLayout } from './experimental-manga.js';
+import { orderObservedFrames } from './experimental-manga.js';
+import { pageCompositionRects } from './manga-page-composition.js';
 
 const EDIT_STYLES = new Set(['NORMAL', 'POP_ART', 'WATERCOLOR', 'GEKIGA', 'SKETCH', 'CHIBI_GAG']);
 
@@ -153,7 +154,7 @@ export function orderPanelStyleEditFrames(regions, page, { plan } = {}) {
     let planned = [];
     try {
       if (plan.count === regions.length && typeof plan.layout === 'string') {
-        planned = experimentalLayout(plan.count, plan.layout).map(r => [r.x, r.y, r.w, r.h]);
+        planned = pageCompositionRects(plan).map(r => [r.x, r.y, r.w, r.h]);
       }
     } catch { /* Unknown saved layouts cannot confirm numbers, but crops stay usable. */ }
     const relation = (a, b, axis) => a[axis] + a[axis + 2] <= b[axis] + tolerance ? -1

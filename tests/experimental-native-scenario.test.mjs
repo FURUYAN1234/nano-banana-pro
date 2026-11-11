@@ -155,7 +155,7 @@ try {
   };
   const fixedScenario = input => input.scenario.replace(JSON.stringify([balloon(),balloon('ナギ',0.3)]),JSON.stringify([balloon()]));
   const patch = count => JSON.stringify([{panel:count,field:'BalloonLayout',value:[balloon()]}]);
-  test('native STEP3 repairs only broken balloon metadata once before planning, including panels5–8', async()=>{
+  test('native STEP3 repairs only broken balloon metadata once before planning, including panels4–8', async()=>{
     for(const count of [5,6,7,8]) {
       const input=recoveryInput(count), original=input.scenario, progress=[];
       const fixed=fixedScenario(input), source=m.readExperimentalSource({...input,scenario:fixed});

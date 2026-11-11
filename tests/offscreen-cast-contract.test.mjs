@@ -44,6 +44,16 @@ try {
     const normal = voice.replace('甲は画面外にいる。', '甲は画面内にいる。');
     assert.doesNotMatch(p.extractDialogueOnly(normal, cast, { forImagePrompt: true }), /OFFSCREEN VOICE/);
   });
+  test('offscreen activity and voice-only entrances do not manufacture a visible actor',()=>{
+    for(const absent of ['甲は画面外で布を羽織ったまま、乙の発見を待つ。','甲は出入口の向こうでまだ姿を見せず、声だけで登場を予告する。']) {
+      const source=voice.replace('甲は画面外にいる。',absent);
+      assert.deepEqual(names(p.extractCastLimitRule(source,cast,{compact:true})),['乙']);
+      assert.match(p.extractDialogueOnly(source,cast,{forImagePrompt:true}),/OFFSCREEN VOICE: B1=>\[甲\] frame_edge/);
+    }
+    for(const visible of ['甲は画面外の布を持つ。','甲は画面外ではない。','甲は画面外でなく画面内に立つ。','甲は画面外で布を持つが、甲の手が画面内に見える。']) {
+      assert.deepEqual(names(p.extractCastLimitRule(voice.replace('甲は画面外にいる。',visible),cast,{compact:true})),['乙','甲']);
+    }
+  });
   test('authored edge routes remain literal; visible-mouth endpoints cannot reveal an offscreen speaker', () => {
     for (const anchor of ['甲の方向の右の画面縁', '甲の口元']) {
       const source = `BalloonLayout: ${JSON.stringify([{speaker:'甲',x:0.8,anchor,route:'右上から甲の口元へ短く結ぶ'}])}\n${voice}`;
@@ -52,6 +62,25 @@ try {
       assert.doesNotMatch(text, /甲の口元/);
       if (anchor.includes('画面縁')) assert.ok(text.includes(anchor));
     }
+  });
+  test('offscreen groups with a location phrase stay absent without hiding visible actors', async () => {
+    const absent='状況: 乙が布を持ち上げる。甲、丙は衣装ラックのそばに画面外で待っている。';
+    for (const compact of [false,true]) {
+      assert.deepEqual(names(p.extractCastLimitRule(absent,cast,{compact})),['乙']);
+      assert.deepEqual(names(p.extractCastLimitRule(absent+'甲の手だけが画面内に見える。',cast,{compact})),['乙','甲']);
+    }
+    for (const visible of [
+      '甲、丙は衣装ラックのそばに画面外ではなく画面内に立つ。',
+      '甲は衣装ラックのそばに画面外の看板を置く。丙が笑う。',
+      '甲は乙が画面外で話すのを聞く。丙が笑う。',
+    ]) assert.ok(names(p.extractCastLimitRule(visible,cast,{compact:true})).includes('甲'),visible);
+    const scenario=Array.from({length:5},(_,i)=>`[${i+1}コマ目]\n[EMOTION: NORMAL]\n[Camera: 高所から乙を見下ろす]\n${i===1?absent:'状況: 乙が布を持つ。'}\nセリフなし`).join('\n');
+    const input={enabled:true,scenario,castList:cast,colorMode:'color'};
+    const source=n.readExperimentalSource(input);
+    const plan={count:5,layout:'two_columns',reason:'布の動きを追う',panels:source.panels.map((panel,i)=>({sourcePanel:panel.id,kind:'anchor',camera:panel.camera,action:i===1?absent:'乙が布を持つ。',dialogueIds:panel.dialogueIds,breakout:null}))};
+    const prepared=await n.prepareExperimentalManga(input,async()=>JSON.stringify(plan));
+    assert.deepEqual(n.validateExperimentalPlan(plan,source).expectedCast[1].names,['乙']);
+    assert.deepEqual(names(prepared.prompt.split('[PAGE FRAME P2 |')[1].split('[END PAGE FRAME P2]')[0]),['乙']);
   });
   test('native compilation and expected QA roster share the corrected source contract', async () => {
     const scenario = Array.from({length:5}, (_, index) => `[${index+1}コマ目]\n[EMOTION: NORMAL]\n${index === 0 ? gaze : '[Camera: 高所から乙を俯瞰]\n状況: 乙が本を読む。\nセリフなし'}`).join('\n');
