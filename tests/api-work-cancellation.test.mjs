@@ -84,7 +84,7 @@ test('STOP removes old image-wait status and preserves the acquired data', async
   let cancelled = false, epoch = 0;
   const noop = () => {};
   const values = {cancelApiWork:()=>{cancelled=true;},fullAutoAbortRef:{current:false},isFullAutoModeRef:{current:false},isEndlessModeRef:{current:false},scenarioRunEpochRef:{current:0},
-    invalidateScenarioRun:()=>{epoch++;},isAnalyzing:false,is360Analyzing:false,isAssembling:false,isGeneratingImage:true,isFixingPolicy:false,policyAutoRetrying:false,
+    invalidateScenarioRun:()=>{epoch++;},isAnalyzing:false,is360Analyzing:false,isSearching:false,isAssembling:false,isGeneratingImage:true,isFixingPolicy:false,policyAutoRetrying:false,
     setAnalyzeThought:noop,setAssembleThought:noop,setGenLog:update=>{logs=update(logs);},setIsAnalyzing:noop,isAnalyzingRef:{current:false},setIs360Analyzing:noop,
     setIsEndlessMode:noop,setIsSearching:noop,setIsAssembling:noop,setIsGeneratingImage:noop,setIsFixingPolicy:noop,setIs360CameraWorking:noop,setIsFullAutoMode:noop,setFullAutoStep:noop,setIsAborting:noop,showStatus:noop};
   new Function(...Object.keys(values),body)(...Object.values(values))();

@@ -110,7 +110,7 @@ export default function ControlBar({
             disabled={!apiKey || isAborting}
             aria-pressed={Boolean(isFullAutoMode)}
             onClick={() => isFullAutoMode ? handleFullAutoToggle() : requestMode('fullAuto')}
-            title="画像をドロップするだけで漫画を全自動生成。OpenAIは内容に応じて4〜8コマと配置を選択。完了後は自動OFF。生成中に押すと即中断。"
+            title="途中までの内容があれば未完了のSTEPから再開。生成中に押すと通信と自動進行を中断。1作品の完了後は自動OFFになり、もう一度ONにすると新しい作品を開始します。"
             style={{ color: isFullAutoMode ? (isAborting ? '#ffffff' : '#dc2626') : '#ffffff' }}
             className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
               isFullAutoMode
@@ -137,8 +137,10 @@ export default function ControlBar({
         <div className={`workflow-mode-help flex flex-col justify-center text-[10px] leading-relaxed text-center transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
             <span className="whitespace-normal text-slate-300 font-bold">💡 全自動モード（フルオート）の使い方：</span>
             <span className="whitespace-normal">・「⚡ 全自動モード ON」にして画像をドロップ（またはドロップ後にON）すると、漫画を全自動で最後まで生成します。</span>
-            <span className="whitespace-normal">・OpenAIではネタの内容から4〜8コマと配置を自動選択します。Geminiは4コマ。フルオートOFFでは手動のモード選択を使います。</span>
-            <span className="whitespace-normal">・途中で中断したい場合は同じボタンで停止できます。以降は手動（各STEPボタン）で進行可能です。</span>
+            <span className="whitespace-normal">・新しい作品はニュースから生成し、OpenAIは内容に応じて4〜8コマと配置を自動選択します。Geminiは4コマです。</span>
+            <span className="whitespace-normal">・同じボタンで停止し、再度ONにすると未完了のSTEPから再開します。手動で進めた台本・プロンプトも引き継ぎます。</span>
+            <span className="whitespace-normal">・台本まであればSTEP3、プロンプトまであればSTEP4へ進みます。通信を止めた工程は再実行し、STEP2の再開では入力した題材・設定を保持します。</span>
+            <span className="whitespace-normal">・1作品の完了後に再度ONにすると新しい作品を開始します。途中から新しく作り直す場合は「シナリオ（STEP2）からやり直す」を使います。</span>
             <span className="whitespace-normal">・「連続ループ生成」をONにすると、自動生成完了後に自動で次の作品（別のシナリオ）を永遠に作り続けます。</span>
         </div>
       </div>

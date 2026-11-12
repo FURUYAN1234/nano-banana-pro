@@ -100,6 +100,58 @@ try {
     const brokenRoot=structuredClone(checked);brokenRoot.validationErrors.push('observedFrames: ambiguous or overlapping actual frame bounds');
     assert.deepEqual(m.experimentalRepairIssues(brokenRoot,plan),[]);
   });
+  test('a grounded missing foreground reaches repair even when the review omits a correction entry',()=>{
+    const source=m.readExperimentalSource(inputFor()),plan=c.applyPageComposition(planFor(source),source);
+    plan.composition.breakouts=[];
+    plan.composition.foregrounds=[{panel:3,character:'ユウ',over:[1],placement:'肩と上腕を隣の余白へ連続して重ねる'}];
+    const bounds=m.experimentalLayout(plan.count,plan.layout).map(r=>[r.x,r.y,r.w,r.h]);
+    const review={validationErrors:[],observedCount:plan.count,corrections:[],
+      observedFrames:bounds.map(b=>({bounds:b,edgeEvidence:'白い溝と黒い枠線の連続を確認。'})),
+      compositionChecks:[{id:'foreground:P3',status:'fail',observed:'大コマの人物は大きいが、肩の輪郭が隣のコマとの境界を越えていない。'}],
+      evidence:bounds.map((b,i)=>({panel:i+1,bounds:b,anatomy:'首、肩、腕は一つの身体として接続している。',breakout:'肩の輪郭は黒いコマ枠の手前で終わっている。'}))};
+    const issues=m.experimentalRepairIssues(review,plan);
+    assert.equal(issues.length,1);
+    assert.equal(issues[0].type,'page_composition');
+    assert.match(issues[0].correction,/ユウ.*P1.*連続/);
+    assert.doesNotMatch(issues[0].correction,/人物・主動作を隣接する小コマに対して大きく見せる/);
+    for(const status of ['pass','uncertain']) {
+      const acceptable=structuredClone(review);acceptable.compositionChecks[0].status=status;
+      assert.deepEqual(m.experimentalRepairIssues(acceptable,plan),[]);
+    }
+    const missingEvidence=structuredClone(review);missingEvidence.evidence.forEach(e=>e.breakout=null);
+    assert.deepEqual(m.experimentalRepairIssues(missingEvidence,plan),[]);
+    const malformed=structuredClone(review);malformed.validationErrors=['observedFrames: ambiguous'];
+    assert.deepEqual(m.experimentalRepairIssues(malformed,plan),[]);
+    const partial=structuredClone(review);partial.validationErrors=['evidence[5].story'];
+    assert.match(m.experimentalRepairIssues(partial,plan)[0].correction,/ユウ.*P1.*連続/);
+  });
+
+  test('foreground repairs locate authored source and receiving boundaries without inventing a diagonal edge',()=>{
+    const frames=[{x:.52,y:0,w:.48,h:.2},{x:0,y:0,w:.48,h:.2},{x:.52,y:.22,w:.48,h:.22},
+      {x:0,y:.22,w:.48,h:.48},{x:.52,y:.46,w:.48,h:.24},{x:0,y:.72,w:1,h:.28}];
+    for(const [panel,over,route] of [[4,3,'P4右辺→P3左側内側'],[3,4,'P3左辺→P4右側内側'],
+      [3,5,'P3下辺→P5上側内側'],[5,3,'P5上辺→P3下側内側'],[2,5,null]]) {
+      const plan={count:6,layout:'free',panels:[],composition:{layout:'free',frames,heroPanels:[],breakouts:[],bleed:[],
+        foregrounds:[{panel,over:[over],character:'ユウ',placement:'肩と上腕だけを隣の余白へ重ねる'}]}};
+      const bounds=frames.map(r=>[r.x,r.y,r.w,r.h]);
+      const review={observedCount:6,corrections:[],observedFrames:bounds.map(b=>({bounds:b,edgeEvidence:'白い溝と黒い枠線の連続を確認。'})),
+        compositionChecks:[{id:`foreground:P${panel}`,status:'fail',observed:'肩の輪郭は隣の枠へ入らず、元のコマ枠で終わっている。'}],
+        evidence:bounds.map((b,i)=>({panel:i+1,bounds:b,anatomy:'肩と胴体は一つの身体として連続している。',breakout:'肩は元の枠内に収まり、隣のコマへの連続がない。'}))};
+      const [issue]=m.experimentalRepairIssues(review,plan);
+      assert.ok(issue.correction.includes(`P${panel}[`));assert.ok(issue.correction.includes(`P${over}[`));
+      assert.match(issue.correction,/漫画領域の左上基準/);
+      assert.ok(issue.correction.includes('肩と上腕だけを隣の余白へ重ねる'));
+      assert.doesNotMatch(issue.reason,/expected:/,'the full expected instruction occurs once, in correction');
+      if(route)assert.ok(issue.correction.includes(route),issue.correction);
+      else assert.doesNotMatch(issue.correction,/[左右上下]辺→/,'diagonal frames have no inferred shared edge');
+      if(panel===4) {
+        assert.match(issue.correction,/P4\[x0–48%,y22–70%\]/);
+        assert.match(issue.correction,/左側2段目/);
+        assert.match(issue.correction,/右側2段目/);
+      }
+    }
+  });
+
   test('incoming authored bodies belong to their source in both renderer and QA cast counts',async()=>{
     const input=inputFor({layout:'tall_right_top',reason:'登場を大きく見せて札の発見へつなぐ',heroPanels:[1],breakouts:[{panel:1,part:'ユウの頭と肩',into:2}],bleed:[]});
     input.castList='## ユウ\n## ヒカリ';

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildCastRepairConservation } from '../src/lib/manga-cast-repair.js';
+import { buildCastRepairConservation, formatCastRepairConservation } from '../src/lib/manga-cast-repair.js';
 import { buildImageQualityRepairPrompt } from '../src/lib/image-quality-failsafe.js';
 import { castInventoryIssues } from '../src/lib/image-quality-qa.js';
 import { createServer } from 'vite';
@@ -34,6 +34,31 @@ test('duplicate removal records both sources, never preserving both under a gene
   assert.equal(result.beforeNamedBodies,4);
   assert.equal(result.actors[1].operation,'retain_one_remove_extras');
   assert.equal(result.actors[1].sourceBodies.length,2);
+  assert.doesNotMatch(formatCastRepairConservation(4,result,{compact:true}),/MISSING CAST/);
+});
+
+test('missing identities receive a direct visible insertion operation before the conservation ledger',()=>{
+  const result=buildCastRepairConservation(inventory,names,bodies);
+  for(const compact of [false,true]) {
+    const prompt=formatCastRepairConservation(4,result,{compact});
+    assert.match(prompt,/MISSING CAST P4: \["B"\]を各1人追加/);
+    assert.ok(prompt.indexOf('MISSING CAST P4')<prompt.indexOf('CAST RECONCILIATION P4'));
+    for(const instruction of ['同ページ・参照シート','台本の立ち位置と動作','頭と身体が見える','既存人物の人数・同一性','最小限の間隔・遮蔽変更可','隠して追加済みにしない'])
+      assert.ok(prompt.includes(instruction),instruction);
+    assert.ok(prompt.includes(JSON.stringify(result.actors)),'all observed identities and head coordinates remain intact');
+  }
+});
+
+test('missing-actor rules are shared once after an earlier duplicate repair without losing panel-specific additions',()=>{
+  const duplicate=structuredClone(inventory);
+  duplicate[1]={name:'B',status:'defect',observed_count:2,instances:[{location:'front',matched_features:['gold hair','jacket']},{location:'back',matched_features:['gold hair','jacket']}]};
+  const contracts=[buildCastRepairConservation(duplicate,names),buildCastRepairConservation(inventory,names,bodies),buildCastRepairConservation(inventory,names,bodies)];
+  const prompt=buildImageQualityRepairPrompt({originalPrompt:'Approved scene.',sourceMode:'source-image',panelCount:6,compact:true,
+    issues:contracts.map((castConservation,index)=>({type:'cast_count',panel:index+1,subject:'B',reason:'independent census',castConservation}))});
+  assert.equal(prompt.split('全MISSING CAST共通').length-1,1);
+  assert.doesNotMatch(prompt,/MISSING CAST P1/);
+  assert.match(prompt,/MISSING CAST P2: \["B"\]を各1人追加/);
+  assert.match(prompt,/MISSING CAST P3: \["B"\]を各1人追加/);
 });
 test('uncertain or inconsistent identity evidence never authorizes a cast delta',()=>{
   const invalids=[

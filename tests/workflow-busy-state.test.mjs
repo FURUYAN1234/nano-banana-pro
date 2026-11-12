@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { beginApiWork, cancelApiWork } from '../src/lib/api-work-cancellation.js';
-import { collectRecentScenarioOutcomes, collectRecentPageCompositions } from '../src/lib/generation-history.js';
+import { collectRecentScenarioOutcomes, collectRecentPageCompositions, getWorkflowStep } from '../src/lib/generation-history.js';
 import * as scenarioHistory from '../src/lib/generation-history.js';
 import { retryImagePolicyGeneration } from '../src/lib/image-policy-retry.js';
 import { assertRenderOptions, buildRenderOptionsContract } from '../src/lib/render-options.js';
@@ -42,7 +42,7 @@ function harness(overrides = {}) {
     policyAutoRetrying: false, allowImageQualityRepair: true, is360CameraWorking: false, isFullAutoMode: false, isAborting: false,
     isAssembling: false, isAnalyzing: false, experimentalEnabled: false,
     get scenarioMode() { return this.experimentalEnabled ? 'experimental-manga' : 'four-panel'; },
-    scenarioRunEpochRef: { current: 0 }, promptAssemblyRunRef: { current: 0 },
+    scenarioRunEpochRef: { current: 0 }, promptAssemblyRunRef: { current: 0 }, getWorkflowStep,
     promptAssemblyAbortRef: { current: null }, fullAutoAbortRef: { current: false },
     isFullAutoModeRef: { current: false }, qualityRetryAbortRef: { current: false },
     resolvedPunchlineTypeRef: { current: '' }, scenarioUsedModelRef: { current: null },
@@ -94,6 +94,164 @@ function harness(overrides = {}) {
 
 const result = { topic: 'Generic title', scenario: 'A complete generated scenario', usedModel: 'unchanged' };
 const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+
+for (const startStep of [3, 4]) {
+  test(`full-auto resumes manual progress at STEP${startStep} without replacing its input or earlier output`, async () => {
+    const calls = [];
+    const {state, bind} = harness({ finalPrompt: startStep === 4 ? 'Completed manual prompt' : '',
+      generateScenarioFromNews: async () => { calls.push(2); return 'Unwanted replacement scenario'; },
+      assemblePrompt: async (_skip, text) => { calls.push([3, text]); return 'Resumed prompt'; },
+      regenerateImage: async (_skip, prompt, options) => { calls.push([4, prompt, options.sourceScenario]); return true; },
+    });
+    const before = [state.scenario, state.inputMode, state.manualTopic, state.categories];
+    await bind('runFullAuto')({resume: true});
+    assert.deepEqual(calls, startStep === 3
+      ? [[3, before[0]], [4, 'Resumed prompt', before[0]]]
+      : [[4, 'Completed manual prompt', before[0]]]);
+    assert.deepEqual([state.scenario, state.inputMode, state.manualTopic, state.categories], before);
+    assert.equal(state.isFullAutoMode, false);
+  });
+}
+
+test('full-auto retries interrupted STEP3 even when an older prepared prompt and image remain', async () => {
+  const calls = [];
+  const {state, bind} = harness({ isAssembling: true, generatedImage: 'Previous image',
+    generateScenarioFromNews: async () => { calls.push(2); return 'Wrong scenario'; },
+    assemblePrompt: async () => { calls.push(3); return 'New prompt'; },
+    regenerateImage: async () => { calls.push(4); return true; },
+  });
+  bind('stopApiProcessing')();
+  await bind('runFullAuto')({resume: true});
+  assert.deepEqual(calls, [3, 4]);
+  assert.equal(state.generatedImage, 'Previous image');
+});
+
+test('full-auto retries a stopped manual STEP2 with its selected input mode and panel mode', async () => {
+  const calls = [];
+  const {state, bind} = harness({ scenario: '', finalPrompt: '', isSearching: true,
+    generateScenarioFromNews: async (categories, mode, options) => {
+      calls.push([2, categories, mode, options.autoSelectPanelCount]); return 'Same topic scenario';
+    },
+    assemblePrompt: async () => 'Same topic prompt', regenerateImage: async () => true,
+  });
+  const before = [state.inputMode, state.manualTopic, state.categories];
+  bind('stopApiProcessing')();
+  await bind('runFullAuto')({resume: true});
+  assert.deepEqual(calls, [[2, before[2], 'manual', false]]);
+  assert.deepEqual([state.inputMode, state.manualTopic, state.categories], before);
+});
+
+test('full-auto cannot start another generation while a manual API request is still active', async () => {
+  const {state, bind} = harness({isSearching: true});
+  await bind('handleFullAutoToggle')();
+  assert.notEqual(state.isFullAutoMode, true);
+  assert.equal(state.triggerFullAuto, undefined);
+  assert.equal(state.isSearching, true);
+});
+
+test('full-auto resumes interrupted STEP1 with the retained files before any downstream work', async () => {
+  const files = [{name:'retained-reference.png'}], calls = [];
+  const {state, bind} = harness({castList:'',isAnalyzing:true,
+    processFiles:async (...args)=>{calls.push(args);},
+  });
+  state.scenarioRunEpochRef.analysisFiles = files;
+  bind('stopApiProcessing')();
+  await bind('handleFullAutoToggle')();
+  assert.deepEqual(calls, [[files,{continueFullAuto:true}]]);
+  assert.equal(state.isFullAutoModeRef.current,true);
+  assert.equal(state.triggerFullAuto,undefined);
+});
+
+test('a completed current image starts a new full-auto work, while an interrupted image rerun resumes STEP4', async () => {
+  for (const interrupted of [false,true]) {
+    const calls=[];
+    const {state,bind}=harness({generatedImage:'completed image',
+      promptAssemblyRunRef:{current:3,completedRun:3},
+      generationHistory:[{img:'completed image',workflowSource:{promptAssemblyRun:3,finalPrompt:'Original prompt'}}],
+      generateScenarioFromNews:async()=>{calls.push(2);return 'next work';},
+      assemblePrompt:async()=>{calls.push(3);return 'next prompt';},
+      regenerateImage:async()=>{calls.push(4);return true;},
+    });
+    if (interrupted) { state.isGeneratingImage=true; bind('stopApiProcessing')(); }
+    await bind('runFullAuto')({resume:true});
+    assert.deepEqual(calls,interrupted?[4]:[2,3,4]);
+  }
+});
+
+test('a stopped full-auto STEP2 keeps its selected news categories and automatic panel selection', async () => {
+  const calls=[];
+  const {state,bind}=harness({scenario:'',finalPrompt:'',isSearching:true,isFullAutoMode:true,inputMode:'news',
+    generateScenarioFromNews:async(categories,mode,options)=>{calls.push([categories,mode,options.autoSelectPanelCount]);return 'same news';},
+    assemblePrompt:async()=> 'prompt',regenerateImage:async()=>true,
+  });
+  state.isFullAutoModeRef.current=true;
+  const categories=state.categories;
+  bind('stopApiProcessing')();
+  await bind('runFullAuto')({resume:true});
+  assert.deepEqual(calls,[[categories,'news',true]]);
+});
+
+test('stopped full-auto assembly cannot advance or unlock a newer resumed run when its late result arrives', async () => {
+  const old=deferred(),latest=deferred(),images=[];
+  let requests=0;
+  const {state,bind}=harness({finalPrompt:'',
+    assemblePrompt:()=>{state.isAssembling=true;return ++requests===1?old.promise:latest.promise;},
+    regenerateImage:async(_skip,prompt)=>{images.push(prompt);return true;},
+  });
+  const run=bind('runFullAuto');
+  const a=run({resume:true}); await flush();
+  bind('stopApiProcessing')();
+  const b=run({resume:true}); await flush();
+  old.resolve('stale prompt'); await a;
+  assert.deepEqual(images,[]); assert.equal(state.isFullAutoMode,true);
+  latest.resolve('resumed prompt'); await b;
+  assert.deepEqual(images,['resumed prompt']); assert.equal(state.isFullAutoMode,false);
+});
+
+test('changing the scenario clears the interrupted-stage marker and invalidates its old prompt', () => {
+  const {state}=harness();
+  state.scenarioRunEpochRef.resume={step:2,autoSelectPanelCount:true};
+  state.setScenarioFromUser('User supplied replacement scenario');
+  assert.equal(state.scenarioRunEpochRef.resume,null);
+  assert.equal(state.finalPrompt,'');
+  assert.equal(state.scenario,'User supplied replacement scenario');
+});
+
+test('stopping a new full-auto STEP2 before its request preserves the automatic panel decision on resume', async () => {
+  const timers=[], calls=[];
+  const {state,bind}=harness({scenario:'',finalPrompt:'',
+    setTimeout:fn=>{timers.push(fn);return 1;},
+    generateScenarioFromNews:async(categories,mode,options)=>{calls.push([categories,mode,options.autoSelectPanelCount]);return 'scenario';},
+    assemblePrompt:async()=> 'prompt',regenerateImage:async()=>true,
+  });
+  const run=bind('runFullAuto');
+  const old=run();
+  const selected=state.categories;
+  bind('stopApiProcessing')();
+  state.setTimeout=fn=>fn();
+  await run({resume:true});
+  timers[0](); await old;
+  assert.deepEqual(calls,[[selected,'news',true]]);
+});
+
+test('the full-auto trigger resumes once, then the endless-loop trigger explicitly starts a new work', async () => {
+  const calls=[]; let queued, nextRun;
+  const {state,bind}=harness({isEndlessModeRef:{current:true},
+    generateScenarioFromNews:async()=>{calls.push(2);return 'next scenario';},
+    assemblePrompt:async()=>{calls.push(3);return 'next prompt';},
+    regenerateImage:async()=>{calls.push(4);if(calls.length>1)state.isEndlessModeRef.current=false;return true;},
+    setTimeout:(fn,ms)=>{if(ms===2000)queued=fn;else fn();return 1;},
+  });
+  const run=bind('runFullAuto');
+  const triggerBody=source.match(/if \(triggerFullAuto > 0 && !fullAutoAbortRef.current\) \{[\s\S]*?\n    \}/)[0];
+  const trigger=()=>new Function('triggerFullAuto','fullAutoAbortRef','scenarioRunEpochRef','runFullAuto',triggerBody)(
+    1,state.fullAutoAbortRef,state.scenarioRunEpochRef,options=>{nextRun=run(options);});
+  trigger(); await nextRun;
+  assert.deepEqual(calls,[4]); assert.equal(typeof queued,'function');
+  queued(); trigger(); await nextRun;
+  assert.deepEqual(calls,[4,2,3,4]);
+  assert.equal(state.isFullAutoMode,false);
+});
 
 for (const experimentalEnabled of [false, true]) {
   test(`full-auto keeps ${experimentalEnabled ? 'native 5–8' : 'four-panel'} mode across normal STEP2, STEP3 and STEP4`, async () => {

@@ -438,6 +438,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   const invalidateScenarioRun = (reason = '中断（入力変更・リセット時点）') => {
     finishScenarioTiming(scenarioRunEpochRef.current, reason);
+    scenarioRunEpochRef.resume = null;
     scenarioRunEpochRef.current += 1;
     invalidatePromptAssembly();
     qualityRetryAbortRef.current = true;
@@ -643,7 +644,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // validate360Image → src/lib/panorama360.js に移動済み
 
 
-  const processFiles = async (files) => {
+  const processFiles = async (files, { continueFullAuto = false } = {}) => {
     // API KEY CHECK
     if (!apiKey) {
       showStatus("先にAPIキーを入力してシステムに接続してください！");
@@ -655,6 +656,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       showStatus('キャラクター解析が終わってから追加してください。');
       return;
     }
+    scenarioRunEpochRef.analysisFiles = Array.from(files);
+    scenarioRunEpochRef.resume = { step: 1 };
     setImageInputError('');
     isAnalyzingRef.current = true;
     let inputEpoch = scenarioRunEpochRef.current;
@@ -662,7 +665,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
     // 非同期処理に入る前に、現在のキャストリストの値を保持しておく（累積・マージ用）
     let currentCastList = castListRef.current;
-    const armedFullAuto = isFullAutoModeRef.current && !scenario && !finalPrompt && !isSearching && !isGeneratingImage;
+    const armedFullAuto = isFullAutoModeRef.current && (continueFullAuto || (!scenario && !finalPrompt && !isSearching && !isGeneratingImage));
     const armedEndless = armedFullAuto && isEndlessModeRef.current;
 
     setIsAnalyzing(true);
@@ -749,6 +752,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     }
     const analysisImages = getReferenceImagesToAnalyze(addition.images, referenceAssetsRef.current);
     if (analysisImages.length || detected360File || detectedStyleJson) invalidateReferenceOutputs();
+    scenarioRunEpochRef.resume = { step: 1 };
     inputEpoch = scenarioRunEpochRef.current;
     castRevisionAtStart = castRevisionRef.current;
     currentCastList = castListRef.current;
@@ -857,6 +861,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         return prev + separator + thoughtTrace;
       });
       showStatus('素材の認識が完了しました。認識結果をシナリオ・描画指示・Web貼付文へ引き継ぎます。');
+      scenarioRunEpochRef.resume = null;
+      scenarioRunEpochRef.analysisFiles = null;
 
       // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
       if (isFullAutoModeRef.current) {
@@ -1032,6 +1038,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     }
 
     const scenarioRunEpoch = invalidateScenarioRun();
+    scenarioRunEpochRef.resume = { step: 2, autoSelectPanelCount };
     setIsSearching(true);
     setExplanation("");
     setExplanationNotice("");
@@ -1235,6 +1242,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       }
 
       scenarioOutcome = '完了';
+      scenarioRunEpochRef.resume = null;
       return finalScenarioText;
     } catch (error) {
       if (scenarioRunEpoch !== scenarioRunEpochRef.current) return null;
@@ -1362,6 +1370,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     const context=cacheCurrentPage();
     const pages=promptAssemblyRunRef.pages;
     const next=pages[enabled?'experimental':'normal'] || {};
+    scenarioRunEpochRef.resume = null;
     const matches=next.context?.length===context.length && next.context.every((value,index)=>Object.is(value,context[index]));
     invalidatePromptAssembly();
     scenarioRunEpochRef.current+=1;
@@ -1396,6 +1405,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
     invalidatePromptAssembly();
     const assemblyRun = promptAssemblyRunRef.current;
+    scenarioRunEpochRef.resume = { step: 3 };
     const controller = new AbortController();
     promptAssemblyAbortRef.current = controller;
     const scenarioValidation = validateMangaScenario(currentScenario, castList, {scenarioMode:getScenarioMode()});
@@ -1457,6 +1467,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         const cameraNote = prepared.restoredCameraPanels.length
           ? `\n${prepared.restoredCameraPanels.join('・')}コマ目は配置案と台本の撮影指定が異なるため、元のカメラと状況を保持しました。` : '';
         setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}\nSTEP2のコマ数・順序・台詞を保持しました。${effectNote}${cameraNote}`);
+        scenarioRunEpochRef.resume = null;
         return completePrompt;
       }
       const activePunchlineType = resolvedPunchlineTypeRef.current || resolveScenarioEndingType(currentScenario, punchlineType);
@@ -1541,6 +1552,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       showStatus(reviewed.warning
         ? "指示文を構築しましたが、AI精査に警告があります。STEP3の理由を確認してください。"
         : "最終プロンプトの構築が完了しました。コピーまたはSTEP4の画像生成へ進めます。");
+      scenarioRunEpochRef.resume = null;
       return completePrompt; // 手動と全自動で同じ最終全文を渡す。
 
     } catch (error) {
@@ -2170,6 +2182,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       return false;
     }
     beginApiWork('step4');
+    scenarioRunEpochRef.resume = { step: 4 };
     setImageQualityNeedsRepair(false);
     const editablePrompt = overridePrompt ?? finalPrompt;
     const generationScenario = generationOptions.sourceScenario ?? scenario;
@@ -2754,6 +2767,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           ? "比較で保持した候補を採用しました（品質警告あり）"
           : "元画像を保持しました（品質警告あり）"
         : "画像生成完了！");
+      scenarioRunEpochRef.resume = null;
       return true; // [v2.78] フルオート連鎖用: 成功
     } catch (error) {
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
@@ -3062,25 +3076,37 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // [v2.78] フルオート生成トリガー監視
   useEffect(() => {
     if (triggerFullAuto > 0 && !fullAutoAbortRef.current) {
-      runFullAuto();
+      const resume = !scenarioRunEpochRef.nextFullAutoRound;
+      scenarioRunEpochRef.nextFullAutoRound = false;
+      runFullAuto({ resume });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerFullAuto]);
 
   // --- [v2.78] フルオート生成モード ---
   // STEP2→3→4を自動連鎖実行する。handleFullAutoToggleから呼ばれる。
-  const runFullAuto = async () => {
+  const runFullAuto = async ({ resume = false } = {}) => {
     if (!castList || castList.length < 20) {
       showStatus("先にキャラクターシートをアップロードしてください。");
       setIsFullAutoMode(false);
       return;
     }
 
-    // フルオート開始
+    const pending = scenarioRunEpochRef.resume;
+    const availableStep = getWorkflowStep({ castList, scenario, finalPrompt, generatedImage,
+      promptAssemblyRun: promptAssemblyRunRef.completedRun,
+      imageSource: generationHistory.find(item => item.img === generatedImage)?.workflowSource });
+    const continuing = resume && (pending?.step >= 2 || availableStep === 3 || availableStep === 4);
+    const startStep = continuing ? Math.min(availableStep, pending?.step || availableStep) : 2;
+    let generatedScenario = scenario;
+    let generatedPrompt = finalPrompt;
+    // 完了済み成果物は継続時に保持。連続ループの次周回だけ新しい作品にする。
     const fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
     scenarioRunEpochRef.fullAutoRun = fullAutoRun;
     if (isOpenAIEngine) cacheCurrentPage();
     let fullAutoEpoch = invalidateScenarioRun();
+    scenarioRunEpochRef.resume = { step: startStep,
+      autoSelectPanelCount: startStep === 2 && (!continuing || pending?.autoSelectPanelCount === true) };
     let nextRoundQueued = false;
     const ownsRun = () => scenarioRunEpochRef.fullAutoRun === fullAutoRun;
     const isCurrent = () => ownsRun() && scenarioRunEpochRef.current === fullAutoEpoch && !fullAutoAbortRef.current;
@@ -3090,10 +3116,11 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     isFullAutoModeRef.current = true;
     setIsFullAutoMode(true);
     setEnableChatGPTMode(isOpenAIEngine);
+    if (continuing) showStatus(`▶ STEP${startStep}からフルオートを再開します。完了済みの内容は保持します。`);
 
     try {
-    // [v4.2.7] 新しい周回の開始時に、前回の生成データ（シナリオ、プロンプト、画像等）を即時リセット
-    // これにより currentStep が 2 に下がり、画面レイアウトの再レンダリングが先行して完了します
+    if (!continuing) {
+    // 新規作品だけ前回の生成データをリセットする。
     setScenario("");
     setExplanation("");
     setExplanationNotice("");
@@ -3107,19 +3134,24 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setPolicyErrorMsg("");
     lastPolicyErrorRef.current = "";
     setShowPolicyChoice(false);
+    }
 
     // --- STEP2: シナリオ生成 ---
+    if (startStep <= 2) {
     setFullAutoStep(2);
+    let overrideCategories = categories;
+    if (!continuing) {
     // カテゴリをランダムで1〜2個選択し、直接オブジェクトとして生成
     const shuffled = [...categories].sort(() => Math.random() - 0.5);
     const count = Math.random() > 0.5 ? 2 : 1;
     const selectedIds = shuffled.slice(0, count).map(c => c.id);
-    const overrideCategories = categories.map(c => ({ ...c, checked: selectedIds.includes(c.id) }));
+    overrideCategories = categories.map(c => ({ ...c, checked: selectedIds.includes(c.id) }));
     // UIにも反映
     setCategories(overrideCategories);
     // 手入力済みの場所・服装は、フルオートと連続生成の各周回でも保持する。
     // 空欄の場合だけ、従来どおりAIが題材に合わせて選ぶ。
     setInputMode("news"); // ニュース検索モード固定
+    }
 
     // 自動スクロール: STEP2へ (ステート更新に伴う再レンダリング完了を待ってからスクロールを実行)
     await new Promise(r => setTimeout(r, 400));
@@ -3128,9 +3160,10 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     await new Promise(r => setTimeout(r, 600)); // スクロール完了をしっかり待つ
 
     if (!isCurrent()) return;
-    const scenarioRequest = generateScenarioFromNews(overrideCategories, "news", {autoSelectPanelCount:true});
+    const scenarioRequest = generateScenarioFromNews(overrideCategories, continuing ? inputMode : "news",
+      { autoSelectPanelCount: continuing ? pending?.autoSelectPanelCount === true : true });
     fullAutoEpoch = scenarioRunEpochRef.current;
-    const generatedScenario = await scenarioRequest;
+    generatedScenario = await scenarioRequest;
     if (!isCurrent()) return;
     if (fullAutoAbortRef.current || !generatedScenario) {
       setIsFullAutoMode(false);
@@ -3139,15 +3172,17 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       if (fullAutoAbortRef.current) showStatus("⏹ フルオートを中断しました。");
       return;
     }
+    }
 
     // --- STEP3: プロンプト組立 ---
+    if (startStep <= 3) {
     setFullAutoStep(3);
     step3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await new Promise(r => setTimeout(r, 300));
 
     if (!isCurrent()) return;
     const fullAutoProviderFamily = getCurrentPromptProviderFamily();
-    const generatedPrompt = await assemblePrompt(true, generatedScenario, fullAutoProviderFamily);
+    generatedPrompt = await assemblePrompt(true, generatedScenario, fullAutoProviderFamily);
     if (!isCurrent()) return;
     if (fullAutoAbortRef.current || !generatedPrompt) {
       setIsFullAutoMode(false);
@@ -3155,6 +3190,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       setIsAborting(false);
       if (fullAutoAbortRef.current) showStatus("⏹ フルオートを中断しました。");
       return;
+    }
     }
 
     // --- STEP4: 画像生成（コンテンツポリシー自動リトライ付き） ---
@@ -3169,6 +3205,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       ? promptAssemblyRunRef.completedScenario ?? generatedScenario : generatedScenario;
     const step4ok = await regenerateImage(true, generatedPrompt, {sourceScenario:assembledScenario});
     if (!isCurrent()) return;
+    if (step4ok) scenarioRunEpochRef.resume = null;
 
     // ポリシー関連のステートをクリーンアップ
     setIsFixingPolicy(false);
@@ -3208,6 +3245,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             : "🔄 生成エラーのため次の作品に進みます...");
         setTimeout(() => {
           if (isCurrent()) {
+            scenarioRunEpochRef.nextFullAutoRound = true;
             setTriggerFullAuto(prev => prev + 1);
           } else if (ownsRun()) {
             setIsFullAutoMode(false);
@@ -3249,18 +3287,26 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   // [v2.78] フルオートトグルハンドラ
   // castList有 → 即実行 / castList無 → 武装待機（ドロップで自動開始）
-    const handleFullAutoToggle = async () => {
-    scenarioRunEpochRef.fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
-    if (isFullAutoMode) {
+  const handleFullAutoToggle = async () => {
+    if (isFullAutoMode || isFullAutoModeRef.current) {
       stopApiProcessing();
       return;
     }
+    if (isAnalyzing || is360Analyzing || isSearching || isEnhancing || isAssembling
+      || isGeneratingImage || isFixingPolicy || is360CameraWorking || policyAutoRetrying) {
+      showStatus('処理が終わるか「解析・生成強制ストップ」で停止してから、フルオートを開始してください。');
+      return;
+    }
+    scenarioRunEpochRef.fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
+    scenarioRunEpochRef.nextFullAutoRound = false;
 
-      fullAutoAbortRef.current = false;
+    fullAutoAbortRef.current = false;
+    isFullAutoModeRef.current = true;
     setIsAborting(false);
     setIsFullAutoMode(true);
-    
-    if (castList && castList.length >= 20) {
+    if (scenarioRunEpochRef.resume?.step === 1 && scenarioRunEpochRef.analysisFiles?.length) {
+      await processFiles(scenarioRunEpochRef.analysisFiles, { continueFullAuto: true });
+    } else if (castList && castList.length >= 20) {
       // STEP1完了済み → 状態更新後に即実行させる
       setTriggerFullAuto(prev => prev + 1);
     } else {
@@ -3271,12 +3317,18 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   // Manual STEP actions and full-auto share the same stop boundary.
   const stopApiProcessing = () => {
+    const pending = scenarioRunEpochRef.resume || (isAnalyzing || is360Analyzing ? { step: 1 } : isSearching
+      ? { step: 2, autoSelectPanelCount: isFullAutoModeRef.current && isOpenAIEngine }
+      : isAssembling ? { step: 3 }
+        : isGeneratingImage || isFixingPolicy || policyAutoRetrying ? { step: 4 } : null);
     cancelApiWork();
     fullAutoAbortRef.current = true;
     isFullAutoModeRef.current = false;
     isEndlessModeRef.current = false;
     scenarioRunEpochRef.fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
     invalidateScenarioRun('強制停止');
+    scenarioRunEpochRef.resume = pending;
+    scenarioRunEpochRef.nextFullAutoRound = false;
     if (isAnalyzing || is360Analyzing) setAnalyzeThought(prev => `${prev}\n> ⏹ 強制停止しました。取得済みデータを保持します。`);
     if (isAssembling) setAssembleThought(prev => `${prev}\n> ⏹ 強制停止しました。`);
     if (isGeneratingImage || isFixingPolicy || policyAutoRetrying) setGenLog(prev => [...prev.filter(log => !log.startsWith('[WAIT]')), '[STOPPED] 強制停止しました。取得済み画像を保持します。']);
@@ -3295,7 +3347,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setIsFullAutoMode(false);
     setFullAutoStep(0);
     setIsAborting(false);
-    showStatus("⏹ API処理を強制停止しました。取得済みの台本・画像は残しています。");
+    showStatus("⏹ API処理を強制停止しました。取得済みの台本・画像は保持しています。フルオートをONにすると未完了のSTEPから再開できます。");
   };
 
   // Determine Current Step

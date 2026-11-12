@@ -42,6 +42,18 @@ test('anonymous tail geometry binds the visible head instead of a contradictory 
   assert.match(failures[0].correction,/"headRectangle":\[0\.6,0\.12,0\.2,0\.2\]/);
 });
 
+test('compact ownership repair retains exact speech, observed destination and safe rerouting constraints',()=>{
+  const input=fixture();
+  input.bodies[0].head_bounds=[.6,.12,.2,.2];input.bodies[0].features='丸眼鏡、短い黒髪、青い上着';
+  input.bodies[1].head_bounds=[.1,.12,.2,.2];
+  input.regions[0].tail_targets=[{root:[.2,.02],tip:[.2,.15],region:'head',evidence:'吹き出しの尾は左人物の頭の輪郭に続いている。'}];
+  const correction=inspectBalloonOwnership(input)[0].correction;
+  assert.ok(correction.length<500,`ownership instruction is ${correction.length} characters`);
+  for(const value of ['待って！','甲','乙','丸眼鏡、短い黒髪、青い上着','"headRectangle":[0.6,0.12,0.2,0.2]',
+    '左,上,幅,高さ','x右向き','y下向き','頭の輪郭','短縮だけ','背景を復元','文字・頭を横切らず','屈曲可',
+    '全文字・読順・人物数・身体位置・動作・Camera','人物を追加・移動しない'])assert.ok(correction.includes(value),value);
+});
+
 test('geometry keeps natural tail gaps valid and rejects incomplete or competing head evidence',()=>{
   const base=()=>{
     const input=fixture();input.expected.pop();input.regions.pop();

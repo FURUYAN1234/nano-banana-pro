@@ -71,9 +71,9 @@ export function inspectBalloonOwnership({panel,expected,regions,bodies,cast}) {
       return heads.length===1?[{speaker:name,headRectangle:heads[0].head_bounds,visibleFeatures:heads[0].features}]:[];
     });
     const spatialTarget=destinations.length===line.owners.length
-      ?` Independently observed destination heads in THIS panel (left,top,width,height; 0..1, x left-to-right, y top-to-bottom): ${JSON.stringify(destinations)}. The new pointed endpoint must visibly reach that head contour; merely deleting/shortening the old tail is not a correction.`:'';
+      ?` このコマで独立観察した接続先の頭（左,上,幅,高さ;0..1;x右向き,y下向き）:${JSON.stringify(destinations)}。尖った尾先を頭の輪郭まで明瞭につなぐ。尾の削除・短縮だけで済ませない。`:'';
     return JSON.stringify([...observed].sort())===JSON.stringify([...line.owners].sort())?[]:
       [{...issue('bubble_speaker',`「${balloon.text}」の尾は${observed.join('・')}へ接続していますが、予定話者は${line.owners.join('・')}です。${targets.map(t=>t.evidence).join(' ')}`),
-        correction:`For balloon ${i+1} containing ${JSON.stringify(line.text)}, erase its incorrect tail completely and restore the exposed artwork. Draw a clear continuous tail to the visible head of ${line.owners.join('・')}, not ${observed.join('・')}.${spatialTarget} Route through empty space without crossing another head or text; a short bend is allowed. Preserve the exact lettering, balloon reading order, existing cast, body positions, action and camera. Never add or move a person to meet the old tail.`}];
+        correction:`吹き出し${i+1} ${JSON.stringify(line.text)}: erase incorrect tail（誤った尾を完全に消し、背景を復元）。${observed.join('・')}への接続をやめ、${line.owners.join('・')}の見える頭へ明瞭で連続した尾を描く。${spatialTarget}文字・頭を横切らず余白を通す（短い屈曲可）。全文字・読順・人物数・身体位置・動作・Cameraを保持。旧尾に合わせて人物を追加・移動しない。`}];
   });
 }

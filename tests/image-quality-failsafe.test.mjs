@@ -42,6 +42,28 @@ test('oversize repair fails before API and reports its real reason without dropp
   assert.equal(result.candidate,image);assert.equal(result.stopReason,'repair_failed');assert.match(progress.join('\n'),/上限/);
 });
 
+test('several composition repairs fit beside a long approved contract without losing targets or instructions',async()=>{
+  const body='APPROVED camera, cast, every line and panel style\n'+'原文保持'.repeat(6500);
+  const issues=[2,4,6].map(panel=>({type:'page_composition',panel,subject:'authored edge',
+    reason:`Panel ${panel} loses its authored connected figure or bleed.`,
+    correction:`Restore the approved composition in panel ${panel}; retain every speech and connected body.`}));
+  issues.push({type:'camera_geometry',panel:3,subject:'viewpoint',reason:'The visible object underside contradicts the requested overhead view.',
+    correction:'Reproject the scene from the approved overhead camera without changing the action.'});
+  let edits=0;
+  const fixed={base64Img:'fixed'},maxChars=body.length+2800;
+  const result=await pageWorkflow.runPageImageQuality({kind:'experimental-manga',count:6},{
+    mode:'experimental-manga',allowRepair:true,originalCandidate:{base64Img:'original'},originalPrompt:body,
+    repairPromptMaxChars:maxChars,reviewCandidate:async()=>({pass:false,issues}),
+    generateRepairCandidate:async prompt=>{
+      edits++;assert.ok(prompt.length<=maxChars);assert.ok(prompt.endsWith(body));assert.equal(prompt.split(body).length,2);
+      for(const issue of issues){assert.ok(prompt.includes(issue.reason));assert.ok(prompt.includes(issue.correction));}
+      assert.match(prompt,/Panel 3 CAMERA OVERRIDE/);
+      return fixed;
+    },
+  });
+  assert.equal(edits,1);assert.equal(result.candidate,fixed);assert.equal(result.finalReview.notRechecked,true);
+});
+
 test('source-image edits lead with the actual change and retain the full approved contract as reference',()=>{
   const originalPrompt='Create ONE complete page.\nCAMERA exact.\nOriginal dialogue exact.';
   for(const compact of [false,true]) {
@@ -1192,4 +1214,25 @@ test('spatial defects use the three-repair limit and retain the original when st
     assert.equal(result.candidate.id, 'original');
     assert.equal(result.validationWarning, true);
   }
+});
+
+test('authored composition repair unlocks the whole connected figure before lettering while preserving panel topology', () => {
+  const approved = 'APPROVED: P4 hero crosses into P3; keep all six panels and every actor.';
+  const issues = [
+    { type: 'bubble_text', panel: 3, reason: 'Missing character', correction: 'RESTORE_EXACT_SPEECH' },
+    { type: 'page_composition', panel: 4, reason: 'Hero remains inside source frame', correction: 'MOVE_CONNECTED_HERO_TO_P3' },
+    { type: 'page_composition', panel: 6, reason: 'White footer blocks authored bleed', correction: 'EXTEND_BACKGROUND_TO_BOTTOM' },
+  ];
+  for (const compact of [false, true]) {
+    const prompt = buildImageQualityRepairPrompt({ originalPrompt: approved, issues, panelCount: 6, sourceMode: 'source-image', compact });
+    assert.ok(prompt.indexOf('AUTHORED COMPOSITION OVERRIDE') < prompt.indexOf('RESTORE_EXACT_SPEECH'));
+    assert.match(prompt, /WHOLE CONNECTED FIGURE FIRST/);
+    assert.doesNotMatch(prompt, /preserve[^\n]*the original page geometry/i);
+    assert.ok(prompt.includes('MOVE_CONNECTED_HERO_TO_P3'));
+    assert.ok(prompt.includes('EXTEND_BACKGROUND_TO_BOTTOM'));
+    assert.equal(prompt.split(approved).length - 1, 1);
+  }
+  const local = buildImageQualityRepairPrompt({ originalPrompt: approved, issues: issues.slice(0, 1), panelCount: 6, sourceMode: 'source-image' });
+  assert.match(local, /the original page geometry/);
+  assert.doesNotMatch(local, /WHOLE CONNECTED FIGURE FIRST/);
 });

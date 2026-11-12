@@ -323,26 +323,30 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
   if (sourceMode === 'source-image') {
     const boundaryRepair = effectiveMode !== 'single-image' && issues.some(issue => Number.isInteger(issue.panel)
       && issue.panel >= 1 && issue.panel <= panelCount && isPageBoundaryRepair(issue));
+    const compositionRepair = effectiveMode !== 'single-image' && issues.some(issue => issue.type === 'page_composition'
+      && Number.isInteger(issue.panel) && issue.panel >= 1 && issue.panel <= panelCount);
     const pageReflow = boundaryRepair
       ? 'PAGE REFLOW FIRST: 承認済みrectへ枠を置き、移動対象とadjacent panelsを再構図してから局所修正。誤った溝位置は保持しない。各時点/Camera/人数/全台詞/書体/画風を保ち、ページ全体の拡縮や人物・文字の切落としで合わせない。'
       : '';
     // Edits must start with the requested change, not the original 20k+ "Create
     // a page" task. Keep the complete approved contract as a reference appendix.
-    const approvedReference=`\n\nAPPROVED CONTENT REFERENCE (retain all requirements; the original creation wording below describes the existing image, not a request to regenerate it):\n${String(originalPrompt)}`;
+    const approvedReference=`\n\nAPPROVED CONTENT REFERENCE (${compact?'全要件を保持。元の生成命令は既存画像の仕様であり、再生成の依頼ではない':'retain all requirements; the original creation wording below describes the existing image, not a request to regenerate it'}):\n${String(originalPrompt)}`;
     const sharedStructuralRules = new Set();
     const structuralOverrides = issues.filter(issue => Number.isInteger(issue.panel)
       && issue.panel >= 1 && issue.panel <= panelCount).flatMap(issue => {
       if (issue.type === 'cast_count') {
         const includeRules=!sharedStructuralRules.has('cast');
         const includeCountRules=!sharedStructuralRules.has('cast_count');
+        const includeMissingRules=!sharedStructuralRules.has('missing_cast');
+        if(issue.castConservation?.actors?.some(actor=>actor.operation==='add_once'))sharedStructuralRules.add('missing_cast');
         if(issue.castConservation)sharedStructuralRules.add('cast');
         sharedStructuralRules.add('cast_count');
-        return [formatCastRepairConservation(issue.panel,issue.castConservation,{compact,includeRules}),compact&&issue.castConservation?'':compact
+        return [formatCastRepairConservation(issue.panel,issue.castConservation,{compact,includeRules,includeMissingRules}),compact&&issue.castConservation?'':compact
         ? `Panel ${issue.panel} CAST COUNT OVERRIDE: ${includeCountRules?'全CAST COUNT OVERRIDE共通: 指定同一性/人数を満たす。重複は動作/奥行きに合う一体を保持し余分のみ除き背景を復元。欠員のみ一体復元。他の人物を変えず代替の分身を作らない。':'同じCAST COUNT OVERRIDE共通規則を適用。'}`
         : `Panel ${issue.panel} CAST COUNT OVERRIDE: match the approved cast identities and counts. For an observed duplicate, retain the one body consistent with the scripted action/depth and remove only the observed extra body, restoring the exposed background. For an observed missing actor, restore that actor once. Do not change other actors or create a replacement clone.`];
       }
       if (issue.type === 'camera_geometry') {
-        if(compact&&sharedStructuralRules.has('camera'))return [`Panel ${issue.panel} CAMERA OVERRIDE: 同じCAMERA OVERRIDE共通規則を適用。`];
+        if(compact&&sharedStructuralRules.has('camera'))return [`Panel ${issue.panel} CAMERA OVERRIDE（同上）`];
         sharedStructuralRules.add('camera');
         return [compact
         ? `Panel ${issue.panel} CAMERA OVERRIDE: reproject the entire interior of this affected panel. screen positions, silhouettes, overlap and internal crop may change. Keep the same story moment; ${boundaryRepair ? 'use the corrected frame scaffold.' : 'every unaffected panel unchanged.'} 指定Cameraから全人物/道具/場を再投影。局所修正限定を解除し、元の誤った角度/座標を保持しない。上面を全て見せるため視点を上げず、可視の下面/端/遮蔽で表す。同じ動作/接触/人数/同一性/全文/画風/指定画角${boundaryRepair ? 'を新しい枠内で保持。' : 'とページ枠を保持。'}`
@@ -351,7 +355,18 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
       if (isPageBoundaryRepair(issue)) return [compact
         ? `Panel ${issue.panel} PAGE BOUNDARY OVERRIDE: approved comic-area coordinates（画布x/yは換算目標）。指摘境界とadjacent panelsを再配置。他境界保持、切落とし禁止。`
         : `Panel ${issue.panel} PAGE BOUNDARY OVERRIDE: restore the reported boundary to the approved comic-area coordinates, not whole-page percentages. Move the affected gutter and reflow adjacent panels as needed. コマ数/読順/分割構造と全内容を保持。指摘された枠位置/寸法は変更し、隣接コマも新しい枠へ移動・再配置する。各Camera/画角/動作/人数/全台詞/書体を保ち、人物や文字を切らない。枠移動に必要な範囲では他の局所保持指示より本規則を優先し、無関係な境界は保持。`];
-      if (issue.type === 'page_composition') return [`Panel ${issue.panel} AUTHORED COMPOSITION OVERRIDE: restore only the missing authored hero emphasis, connected breakout or specified full-bleed edge. Reposition/scale the SAME connected body as needed for the authored crossing, preserving its head-neck-shoulder-arm connections and source medium; never paste a detached fragment above the border. The defective margin/border/subject scale may change as required; gutters resume outside the silhouette. Keep reading order, cast, Camera, medium, story action, complete dialogue and title intact; preserve intended footer wording where visible while allowing overlap/occlusion. Bleed artwork may continue behind page lettering; no blank band may stop an authored top/bottom bleed. Do not add a bleed or breakout on an unspecified edge. Use the approved PAGE COMPOSITION, not a guessed redesign.`];
+      if (issue.type === 'page_composition') {
+        if(compact) {
+          if(sharedStructuralRules.has('composition'))return [];
+          sharedStructuralRules.add('composition');
+          const panels=[...new Set(issues.filter(item=>item.type==='page_composition'&&Number.isInteger(item.panel)
+            &&item.panel>=1&&item.panel<=panelCount).map(item=>`P${item.panel}`))];
+          // Share only this invariant rule. Each defect and its complete
+          // correction remain in concreteIssues; the approved body is intact.
+          return [`Panel ${issue.panel} AUTHORED COMPOSITION OVERRIDE: 対象=${panels.join('/')}。WHOLE CONNECTED FIGURE FIRST: 指定の一身体全体を先に移動/拡縮し受入枠へ渡す。元の人物位置を固定せず、両コマの背景/溝をその背後へ再配置。頭首肩腕を連続、切離片禁止。誤余白/枠/尺度は変更可。読順/全員・人数/Camera/媒体/動作/全台詞/題字を保持。可視フッター文言保持、重なり/遮蔽可。指定タチキリは文字背後から画布端まで、白帯禁止。未指定辺は保持。`];
+        }
+        return [`Panel ${issue.panel} AUTHORED COMPOSITION OVERRIDE: WHOLE CONNECTED FIGURE FIRST. Restore only the missing authored hero emphasis, connected breakout or specified full-bleed edge. Reposition/scale the ENTIRE SAME body across the named receiving frame before restoring both scenes behind it. Its source position is not locked. Preserve head-neck-shoulder-arm connections and source medium; never paste a detached fragment above the border. The defective margin/border/subject scale may change as required; gutters resume outside the silhouette. Keep reading order, cast, Camera, medium, story action, complete dialogue and title intact; preserve intended footer wording where visible while allowing overlap/occlusion. Bleed artwork must continue behind page lettering to the canvas edge; no blank band may stop an authored top/bottom bleed. Do not add a bleed or breakout on an unspecified edge. Use the approved PAGE COMPOSITION, not a guessed redesign.`];
+      }
       if (issue.type === 'panel_layout') return [compact
         ? `Panel ${issue.panel} FRAME CONTENT OVERRIDE: recompose inside the ${boundaryRepair ? 'corrected' : 'unchanged'} panel rectangle. Do not preserve the reported defective crop. Preserve explicit intentional crops and breakouts. 指摘された頭/髪/手足/道具の欠けを直す。配置前に枠との明瞭な余白を予約し、必要な内部構図変更を許容。指定Camera/動作を弱めず、${boundaryRepair ? '修正後の枠へ収める' : 'ページ溝は動かさない'}。全人物/台詞/対象外コマを保持。`
         : `Panel ${issue.panel} FRAME CONTENT OVERRIDE: when the reported defect is clipping or a severed contour, recompose inside the ${boundaryRepair ? 'corrected' : 'unchanged'} panel rectangle to restore the specifically required head, hair, limb or prop contour with visible clearance from the border. Do not preserve the reported defective crop. Reserve that clearance before placing the actors; shift the internal framing as needed without flattening the approved camera${boundaryRepair ? ' or shrinking the action into a static pose' : ', shrinking the action into a static pose, or moving page gutters'}. Preserve explicit intentional crops and breakouts, all required cast and dialogue, and ${boundaryRepair ? 'the content of adjacent panels in their corrected frames' : 'every unaffected panel'}.`];
@@ -359,13 +374,13 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
     }).join('\n');
     const sourceLayout = effectiveMode === 'single-image'
       ? 'Edit the same single illustration. Do not introduce panels, a comic page, a collage, additional scenes, unrequested characters, or a new setting.'
-      : `Edit the same manga page. Preserve exactly ${panelCount} separate visible panels and ${boundaryRepair ? 'the approved panel topology, allowing the reported boundary corrections and adjacent reflow' : 'the original page geometry'}. Do not merge, omit, duplicate, or reorder panels.`;
-    if (compact) return `IMAGE QUALITY CORRECTION ATTEMPT ${attempt}/${maxAttempts}: 添付1は修正元。${effectiveMode==='single-image'?'同じ一枚絵、コマ/別場面を追加しない。':`同じ${panelCount}コマ、数/${boundaryRepair?'分割構造':'配置'}/読順を保持。統合/欠落/重複/並替え禁止。`}
+      : `Edit the same manga page. Preserve exactly ${panelCount} separate visible panels and ${boundaryRepair ? 'the approved panel topology, allowing the reported boundary corrections and adjacent reflow' : compositionRepair ? 'the panel rectangles and reading order; the targeted whole-figure position, crossing silhouette and authored bleed margins may change' : 'the original page geometry'}. Do not merge, omit, duplicate, or reorder panels.`;
+    if (compact) return `IMAGE QUALITY CORRECTION ATTEMPT ${attempt}/${maxAttempts}: 添付1は修正元。${effectiveMode==='single-image'?'同じ一枚絵、コマ/別場面を追加しない。':`同じ${panelCount}コマ、数/${boundaryRepair?'分割構造':'コマ配置'}/読順を保持。統合/欠落/重複/並替え禁止。`}
 ${pageReflow}
+${structuralOverrides}
 修正対象（描画しない）:
 ${concreteIssues || '- 具体的な指摘なし。変更しない。'}
 ${letteringRules}
-${structuralOverrides}
 ${anatomyRepair}
 ${bubbleOrderRepair}
 ${bubbleMoves}
@@ -374,11 +389,11 @@ ${bubbleMoves}
   SOURCE IMAGE TO EDIT: the first attached image is the current retained candidate, not a character sheet.
   ${sourceLayout}
   ${pageReflow}
+  ${structuralOverrides}
   CHANGE:
   Correct only the concrete visible defects listed below, using the smallest coherent edit:
   ${concreteIssues || '- No concrete issue was supplied; do not introduce any change.'}
   ${letteringRules}
-  ${structuralOverrides}
   ${anatomyRepair}
   ${bubbleOrderRepair}
   ${bubbleMoves}

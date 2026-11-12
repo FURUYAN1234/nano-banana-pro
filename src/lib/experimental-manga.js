@@ -818,11 +818,32 @@ Title required EXACTLY ${JSON.stringify(options.showTitle===false?null:extractSc
 
 // Turn only a grounded failing check into an edit. Missing observations,
 // uncertain findings and coherent minor variations never authorize generation.
+function authoredCrossingRoute(plan,sourcePanel,receivers) {
+  const rects=pageCompositionRects(plan),source=rects[sourcePanel-1];
+  const percent=n=>Math.round(n*10000)/100;
+  const rows=rects.map(r=>r.y).sort((a,b)=>a-b).reduce((all,y)=>all.some(top=>Math.abs(top-y)<.02)?all:[...all,y],[]);
+  const location=(n,r)=>{
+    const side=r.w>=.95?'全幅':r.x+r.w/2<.45?'左側':r.x+r.w/2>.55?'右側':'中央';
+    return `P${n}[x${percent(r.x)}–${percent(r.x+r.w)}%,y${percent(r.y)}–${percent(r.y+r.h)}%](${side}${rows.findIndex(top=>Math.abs(top-r.y)<.02)+1}段目)`;
+  };
+  return `漫画領域の左上基準: ${receivers.map(n=>{
+    const target=rects[n-1];
+    const overlapsY=Math.min(source.y+source.h,target.y+target.h)-Math.max(source.y,target.y)>.001;
+    const overlapsX=Math.min(source.x+source.w,target.x+target.w)-Math.max(source.x,target.x)>.001;
+    const route=overlapsY&&target.x>=source.x+source.w-.001?`P${sourcePanel}右辺→P${n}左側内側`
+      :overlapsY&&source.x>=target.x+target.w-.001?`P${sourcePanel}左辺→P${n}右側内側`
+        :overlapsX&&target.y>=source.y+source.h-.001?`P${sourcePanel}下辺→P${n}上側内側`
+          :overlapsX&&source.y>=target.y+target.h-.001?`P${sourcePanel}上辺→P${n}下側内側`:'';
+    return `${location(sourcePanel,source)}→${location(n,target)}${route?` (${route})`:''}`;
+  }).join(' / ')}。`;
+}
+
 function independentlyObservedCompositionIssues(review,plan) {
   // An incomplete actor/text observation cannot certify the page. It also must
   // not erase a separate, fully located observation of a required composition
   // failure. No root/schema/geometry error is eligible for this narrow path.
-  if(!review.validationErrors.every(error=>/^evidence\[[1-9]\d*\]\./.test(error))
+  const validationErrors=review.validationErrors||[];
+  if(!validationErrors.every(error=>/^evidence\[[1-9]\d*\]\./.test(error))
     ||review.observedCount!==plan.count)return [];
   let frames;
   try {frames=orderObservedFrames(review.observedFrames,plan.count);} catch {return [];}
@@ -830,17 +851,19 @@ function independentlyObservedCompositionIssues(review,plan) {
   if(!frames.every(frame=>concrete(frame.edgeEvidence)))return [];
   return inspectCompositionChecks(review,plan).checks.filter(check=>check.status==='fail').flatMap(check=>{
     const b=plan.composition.breakouts.find(b=>`breakout:P${b.panel}`===check.id);
+    const f=plan.composition.foregrounds?.find(f=>`foreground:P${f.panel}`===check.id);
     const sourceRecords=review.evidence?.filter(e=>e.panel===check.panel)||[];
-    const endpoints=review.evidence?.filter(e=>e.panel===check.panel||e.panel===b?.into)||[];
-    if(b&&!endpoints.some(e=>concrete(e.breakout)&&concrete(e.anatomy)))return [];
+    const endpoints=review.evidence?.filter(e=>e.panel===check.panel||e.panel===b?.into||f?.over.includes(e.panel))||[];
+    if((b||f)&&!endpoints.some(e=>concrete(e.breakout)&&concrete(e.anatomy)))return [];
     if(check.id.startsWith('hero:')&&(sourceRecords.length!==1||!concrete(sourceRecords[0].story)
-      ||review.validationErrors.some(error=>error.startsWith(`evidence[${check.panel}].`))))return [];
+      ||validationErrors.some(error=>error.startsWith(`evidence[${check.panel}].`))))return [];
     const expected=b?`P${b.panel}の${b.part}を同じ身体のままP${b.into}へ接続して越境させる。`
+      :f?`P${f.panel}の${f.character}を同じ一身体のまま${f.over.map(n=>`P${n}`).join('・')}へ連続して重ねる。${f.placement} ${authoredCrossingRoute(plan,f.panel,f.over)}`
       :check.id.startsWith('bleed:')?`P${check.panel}の${check.id.split(':')[2]}辺は絵を実際の画布端まで連続させる。`
         :`P${check.panel}の人物・主動作を隣接する小コマに対して大きく見せる。`;
     return [{type:'page_composition',panel:check.panel,subject:check.id,materialImpact:'material',
       impactReason:'実際の境界と演出の独立観察で指定構図の欠落を確認。別の未確認項目は合格扱いしない。',
-      reason:`Observed: ${check.observed}; expected: ${expected}`,
+      reason:`Observed: ${check.observed}`,
       correction:`${expected} 指定した一身体と共有辺のみを修正し、別の頭・手足を貼り足さない。元Camera・描法・人物・主動作・全台詞を保持。`}];
   });
 }
@@ -848,6 +871,7 @@ function independentlyObservedCompositionIssues(review,plan) {
 export function experimentalRepairIssues(review, plan) {
   if(review?.validationErrors?.length)return independentlyObservedCompositionIssues(review,plan);
   if(!Array.isArray(review?.corrections))return [];
+  const compositionIssues=independentlyObservedCompositionIssues(review,plan);
   const knownNames=[...new Set((plan.expectedCast||[]).flatMap(entry=>entry.names))];
   const castIssues=(plan.expectedCast||[]).flatMap(({panel,names})=>{
     const observation=review.evidence?.find(entry=>entry.panel===panel);
@@ -883,7 +907,7 @@ export function experimentalRepairIssues(review, plan) {
   const category={page_composition:'pageComposition',panel_layout:'readingOrder',cast_count:'anatomy',anatomy:'anatomy',object_geometry:'anatomy',
     prop_ownership:'story',camera_geometry:'camera',bubble_text:'readingOrder',bubble_order:'readingOrder',
     title_text:'pageText',extra_text:'pageText',story_integrity:'story',wardrobe_continuity:'story',art_style:'style'};
-  return [...speechIssues,...castIssues,...(review.balloonOwnershipIssues||[]).filter(issue=>issue.type==='bubble_speaker'),...review.corrections.filter(issue=>!(issue.type==='cast_count'&&castIssues.some(grounded=>grounded.panel===issue.panel))&&issue?.materialImpact==='material'&&review[category[issue.type]]==='fail'
+  return [...speechIssues,...castIssues,...compositionIssues,...(review.balloonOwnershipIssues||[]).filter(issue=>issue.type==='bubble_speaker'),...review.corrections.filter(issue=>!(issue.type==='page_composition'&&compositionIssues.some(grounded=>grounded.panel===issue.panel))&&!(issue.type==='cast_count'&&castIssues.some(grounded=>grounded.panel===issue.panel))&&issue?.materialImpact==='material'&&review[category[issue.type]]==='fail'
     &&(issue.panel===null||Number.isInteger(issue.panel)&&issue.panel>=1&&issue.panel<=plan.count)
     &&['subject','observed','expected','correction','impactReason'].every(key=>typeof issue[key]==='string'&&issue[key].trim())
     &&issue.observed.trim()!==issue.expected.trim()

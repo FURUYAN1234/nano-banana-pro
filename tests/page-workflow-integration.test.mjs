@@ -170,9 +170,9 @@ test('mode cannot change during active API work and leaves current draft and com
 });
 
 test('full-auto passes the newly generated scenario through shared STEP3 and STEP4',async()=>{
-  const body=source.match(/const fullAutoProviderFamily = getCurrentPromptProviderFamily\(\);([\s\S]*?const step4ok = await regenerateImage\([^;]+;)/)[0];
+  const body=source.match(/if \(startStep <= 3\) \{([\s\S]*?const step4ok = await regenerateImage\([^;]+;)/)[0];
   const calls=[];
-  const scope={generatedScenario:'new scenario',getCurrentPromptProviderFamily:()=> 'chatgpt',
+  const scope={startStep:3,generatedPrompt:'',step3Ref:{current:null},generatedScenario:'new scenario',getCurrentPromptProviderFamily:()=> 'chatgpt',
     promptAssemblyRunRef:{current:1},
     assemblePrompt:async(...args)=>{calls.push(['step3',...args]);return 'new prompt';},
     regenerateImage:async(...args)=>{calls.push(['step4',...args]);return true;},
