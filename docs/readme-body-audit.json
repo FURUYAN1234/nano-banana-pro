@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "4cc2e1ac99e553716342e19b81243b4a40d32edf5f5ef7623d9d18b932780b2a",
   "readmeLanguageGaps": [],
-  "sourceTree": "e1796d8beb18f4753669705c74d2bd32fae9c985",
-  "publicTree": "f152b152010c6d877630a5b39af2e42cd0f99024",
+  "sourceTree": "78c889ebea0c223182ea76a007a02ded49b7bd89",
+  "publicTree": "3e167f562e5c52ea7831784f0ed58c6b7ce47049",
   "packageSha256": "925b397ceb6b4ce0378496add39c3bb6fdfa74bfd3517b63f8890623a6c436c2",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,7 +41,7 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-12T04:30:41.388Z",
+  "checkedAt": "2026-11-12T04:31:41.298Z",
   "findings": "Reviewed v7.4.8 README against published MIT baseline ab501b4. Resume descriptions match the retained-stage implementation and completed normal-UI STEP2/STEP3/STEP4 resume checks. Repair descriptions match approved-body compaction, independently grounded composition handoff, whole-figure priority, authored physical edge mapping, concise balloon ownership corrections preserving exact speech and observed head geometry, and direct missing-actor restoration with minimum visible spacing. MIT and output-rights sections match the eight published repositories; third-party conditions and historical releases remain separately scoped. Unchanged pricing and manual bodies retain their previous evidence. Run c522e82c generated and reviewed an image, but its combined seven-issue repair exceeded the prompt budget before sending. The subsequent manual diagnostic spatial edit completed and improved the intended crossing, with other defects remaining. Normal run cc47b197 then completed generation, review and repair HTTP200, improving speech and bleed, but still lacked Rin in P4. Diagnostic edit 792280a8 restored Rin and retained the four existing actors. The final normal run 6da1aa86 completed generation, review and repair HTTP200 and retained all five actors. The rendered result was accepted under the user criterion allowing coherent energetic posing, harmless overflow and minor differences. The later diagnostic edit d6444acd was not adopted, and unbuilt exact-crossing restoration additions were withdrawn. Runtime hashes match the normally API-tested candidate. The raw repaired_unverified verdict remains unchanged; visual acceptance is separate.",
   "manualFindings": "Rebuilt 71 A4 pages and compared all extracted page bodies with the distributed v7.4.7 PDFs, normalizing only v7.4.7/v7.4.8. Only full-manual page27 changed. Viewed its entire rendered page: stop/resume, input preservation, new-work boundaries and reload limitation are readable without clipping or overlap. Page counts, version, text bounds, naming and privacy checks passed. Unchanged bodies reuse the prior visual review. All three PDFs copied into public/downloads.",
   "pricingReview": {
