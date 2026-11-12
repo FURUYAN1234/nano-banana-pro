@@ -51,6 +51,15 @@ try {
       const contract=prepared.plan.expectedCast.find(p=>p.panel===panel);
       assert(contract.depictedNames?.includes(speaker));assert(!contract.names.includes(speaker));
     }
+    const foreground=source.composition.foregrounds[0];
+    assert(!prepared.plan.expectedCast.find(p=>p.panel===foreground.over[0]).names.includes(foreground.character),'reserved incoming silhouette is not a second local actor');
+  });
+  test('reserving a later silhouette excludes only that mention, keeping a separate local appearance',()=>{
+    for(const reservation of ['次のコマからユウの頭と肩が重なる余白を残す。','ユウの頭と肩が次のコマから重なる位置を左下に空け、文字を右へ寄せる。']) {
+      const contract=body=>qa.extractPanelCastContracts('## Panel 1\n'+p.extractCastLimitRule(body,cast,{compact:true,overlayCast:['ユウ'],scriptedNames:['ユウ']}))[0];
+      assert(!contract(`状況: ${reservation}ミオが札を見ている。\nミオ「こちら。」`).names.includes('ユウ'));
+      assert(contract(`状況: ${reservation}ユウは手前の椅子でカップを持っている。ミオが話す。\nミオ「こちら。」`).names.includes('ユウ'),'a real later scene must retain its own local body');
+    }
   });
   test('composition compliance alone must not fabricate material harm or authorize an edit',()=>{
     const plan={count:1,layout:'free',composition:{heroPanels:[1],foregrounds:[],breakouts:[],bleed:[]},panels:[{}]};
@@ -73,6 +82,28 @@ try {
       const unknown=inspectDepictedFigures({depicted_figures:observed},['展示役'],2);
       assert.equal(unknown.status,'uncertain');assert(unknown.issues.every(issue=>issue.type==='unverified'));
     }
+  });
+  test('an uncertain camera observation cannot spend an edit even when the summary says fail',()=>{
+    const issue={type:'camera_geometry',panel:1,subject:'画面の視点',observed:'机の天面など高い視点を示す投影が確認しにくい。',expected:'上方から見下ろす俯瞰。',correction:'俯瞰へ描き直す。',materialImpact:'material',impactReason:'俯瞰の指定に合わない。'};
+    const plan={count:1,panels:[{camera:'高い位置から俯瞰'}]};
+    const review={camera:'fail',corrections:[issue],evidence:[{panel:1,view:{elevation:'uncertain',evidence:'顔と机の上面が不明瞭で俯角を判定しにくい。'}}]};
+    assert.deepEqual(m.experimentalRepairIssues(review,plan),[]);
+    const broken=structuredClone(review);broken.evidence[0].view.elevation='low';
+    broken.corrections[0].observed='机の裏面と人物の顎下が大きく見える低いアオリ。';
+    assert.equal(m.experimentalRepairIssues(broken,plan).filter(i=>i.type==='camera_geometry').length,1);
+  });
+  test('unaltered real API observations no longer create a missing incoming actor or uncertain camera edit',async()=>{
+    const actual=JSON.parse(readFileSync(new URL('./fixtures/qa-incoming-foreground-observation.json',import.meta.url),'utf8'));
+    const input={...JSON.parse(readFileSync(new URL('./fixtures/experimental-news-budget.json',import.meta.url),'utf8')),enabled:true,colorMode:'monochrome',providerFamily:'chatgpt',promptMaxChars:28880};
+    const source=m.readExperimentalSource(input);
+    const prepared=await m.prepareExperimentalManga(input,async()=>JSON.stringify({count:6,layout:'free',reason:'元台本の人物と構成を保持する。',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:p.text.match(/^状況:\s*(.+)$/m)[1],dialogueIds:p.dialogueIds,breakout:null}))}));
+    const names=prepared.plan.expectedCast.find(c=>c.panel===3).names;
+    const issues=qa.castInventoryIssues(actual.panel3.cast_instances,3,names,{knownNames:prepared.plan.expectedCast.flatMap(c=>c.names),bodies:actual.panel3.physical_bodies});
+    assert(!issues.some(i=>i.type==='cast_count'),'real zero-body observation is correct for the reserved incoming figure');
+    assert.equal(inspectDepictedFigures(actual.panel3,prepared.plan.expectedCast.find(c=>c.panel===3).depictedNames,3).status,'pass');
+    const observed=actual.cameraIssue.reason.match(/^Observed: ([\s\S]*); expected:/)[1];
+    const correction={...actual.cameraIssue,observed,expected:'高い位置から俯瞰する。',materialImpact:'material',impactReason:'俯瞰指定と一致しない。'};
+    assert(!m.experimentalRepairIssues({observedCount:6,camera:'fail',corrections:[correction],evidence:[actual.panel3]},prepared.plan).some(i=>i.type==='camera_geometry'));
   });
   test('a full six-panel repair stays within its reserved API budget without dropping any correction or source',async()=>{
     const input=JSON.parse(readFileSync(new URL('./fixtures/experimental-news-budget.json',import.meta.url),'utf8'));

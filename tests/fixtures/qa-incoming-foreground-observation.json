@@ -1,0 +1,131 @@
+{
+  "panel3": {
+    "panel": 3,
+    "head_inventory": [],
+    "physical_bodies": [],
+    "text_regions": [
+      {
+        "region_kind": "speech_balloon",
+        "text": "右だ左だとやっているような時代ではない。",
+        "container_evidence": "右上に縦長の丸い吹き出し。尾は左下へ向く。",
+        "center_x": 0.821,
+        "reading_units": [
+          "右だ左だと",
+          "やっている",
+          "ような時代",
+          "ではない。"
+        ],
+        "tail_targets": [
+          {
+            "root": [
+              0.727,
+              0.303
+            ],
+            "tip": [
+              0.659,
+              0.362
+            ],
+            "region": "head",
+            "evidence": "吹き出し左下の尖った尾が画面内の男性の頭側へ向く。"
+          }
+        ]
+      },
+      {
+        "region_kind": "printed_object",
+        "text": "11月6日　神谷宗幣代表",
+        "container_evidence": "映像下部の白い横長の字幕板。",
+        "center_x": null,
+        "reading_units": null,
+        "tail_targets": null
+      }
+    ],
+    "story": "小池の映像とは別の会見人物を単独で見せ、下部に日付と代表名がある。",
+    "anatomy": "描かれた男性はモニター内の人物であり、コマ内の物理的な身体には数えない。",
+    "breakout": "アカリの頭や肩がこのコマの左下へ連続して入る様子は見えない。",
+    "view": {
+      "elevation": "uncertain",
+      "gaze": "no_visible_eyes",
+      "evidence": "傾いた背景線はあるが、顔や肩の上面と会見机の天面が明瞭でなく俯角を判定しにくい。瞳の向きも対象を特定できない。",
+      "assessment_gaze": "uncertain"
+    },
+    "style_observation": {
+      "medium": "SKETCH",
+      "status": "uncertain",
+      "evidence": "背景に荒い斜線と細かな線の重なりがある一方、人物の輪郭は比較的滑らかな墨線で、鉛筆状の途切れは限定的。",
+      "actors": []
+    },
+    "cast_instances": [
+      {
+        "name": "アカリ",
+        "status": "defect",
+        "evidence": "コマ内にアカリの頭・肩の連続した前景シルエットは見えない。",
+        "instances": [],
+        "observed_count": 0
+      }
+    ],
+    "depicted_figures": [
+      {
+        "name": "神谷宗幣",
+        "status": "present",
+        "evidence": "短い暗髪で濃色スーツの男性が画面内に胸元まで写る。",
+        "container_evidence": "会見映像として枠取りされた領域内。",
+        "feature_indices": [
+          0,
+          1
+        ],
+        "body": {
+          "id": "depicted_kamiya",
+          "bounds": [
+            0.15,
+            0.2,
+            0.72,
+            0.75
+          ],
+          "head_bounds": [
+            0.31,
+            0.23,
+            0.4,
+            0.28
+          ],
+          "features": [
+            "短く立った暗髪",
+            "濃色のスーツと白いシャツ",
+            "マイク前の正面寄りの顔"
+          ]
+        },
+        "style_observation": {
+          "medium": "SKETCH",
+          "status": "uncertain",
+          "face_visibility": "visible",
+          "face": "眉と目鼻口は明瞭だが、顔の輪郭は滑らかな墨線が中心。",
+          "shading": "背景に斜線がある一方、顔の鉛筆状の途切れ線は弱い。"
+        }
+      }
+    ],
+    "body_dispositions": [],
+    "camera": "傾いた背景線はあるが、顔や肩の上面と会見机の天面が明瞭でなく俯角を判定しにくい。瞳の向きも対象を特定できない。",
+    "style": "背景に荒い斜線と細かな線の重なりがある一方、人物の輪郭は比較的滑らかな墨線で、鉛筆状の途切れは限定的。",
+    "center": [
+      0.857,
+      0.496
+    ],
+    "bounds": [
+      0.72,
+      0.291,
+      0.274,
+      0.41
+    ],
+    "dialogue": [
+      "右だ左だとやっているような時代ではない。"
+    ]
+  },
+  "cameraIssue": {
+    "type": "camera_geometry",
+    "panel": 3,
+    "subject": "会見映像のカメラ角度",
+    "materialImpact": "material",
+    "impactReason": "指定された俯角の場面差が読み取りにくく、カメラの高さが重要な構図情報である。",
+    "reason": "Observed: 男性の顔と肩が正面寄りの肖像として見え、机の天面など高い視点を示す投影が確認しにくい。; expected: 高い位置から見下ろす斜めの中景と、会見机の天面が見える投影。.",
+    "correction": "神谷の顔・肩・会見枠と表示を保ち、カメラを高い左斜め位置に置いて机の天面と上面投影を局所的に明瞭化する。"
+  }
+}

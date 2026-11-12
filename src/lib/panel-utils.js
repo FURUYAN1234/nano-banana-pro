@@ -1368,6 +1368,8 @@ const currentCastMentionText = (source, castList) => {
   // not a second actor in this frame. Keep the actual staging prose unchanged.
   const reservation=aliases.length?new RegExp(`(?:後続|別|次)(?:の)?コマから(${aliases.map(escapeRegex).join('|')})[^。！？\\n]{0,35}(?:空間|余白|場所)(?:を|は)[^。！？\\n]{0,12}(?:残す|空ける|確保する)`, 'gu'):null;
   if(reservation)text=text.replace(reservation,(match,name)=>match.replace(name,' '.repeat(name.length)));
+  const laterReservation=aliases.length?new RegExp(`(${aliases.map(escapeRegex).join('|')})[^。！？\\n]{0,24}(?:後続|別|次)(?:の)?コマから[^。！？\\n]{0,40}(?:空間|余白|場所|位置)(?:を|は)[^。！？\\n]{0,16}(?:残す|空け|確保)`,'gu'):null;
+  if(laterReservation)text=text.replace(laterReservation,(match,name)=>match.replace(name,' '.repeat(name.length)));
   const evidence = text.replace(BALLOON_LAYOUT_LINE_RE, match => ' '.repeat(match.length))
     .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, match => ' '.repeat(match.length));
   const counts = [...evidence.matchAll(/(?:画面|画角|フレーム)内(?:は|には)[^。！？\n]*?([0-9０-９一二三四五六七八九十]+)人(?:だけ|のみ)?(?=[。！？\n]|$)/gu)]
