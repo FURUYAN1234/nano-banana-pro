@@ -16,11 +16,11 @@
       "sha256": "418d492225353f2d2b57bc818fa2108206742bf9faf48a67b0bc0c07822db8b9"
     }
   ],
-  "readmeSha256": "55f43cfcba0fb79e85f93d64e29bb0f56c09c8899ce3c81873dfdae72173b52b",
+  "readmeSha256": "bd7855540e378dfb8e141d0e7cdec2062318eb3a2a00304a75258e6cf29e8065",
   "readmeLanguageGaps": [],
   "sourceTree": "e1796d8beb18f4753669705c74d2bd32fae9c985",
-  "publicTree": "0ac5df2f9f7e4f72b9d068a3a70ae8fe0faaa234",
-  "packageSha256": "4479627c3f7986a6ec92400f3915cfa367457190ade43543b713d1b873f6f40e",
+  "publicTree": "f152b152010c6d877630a5b39af2e42cd0f99024",
+  "packageSha256": "5bba40d39d6903f0c7c57bb578b608fa264f737f46675580276d3ab4d4d81d92",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -42,7 +42,7 @@
     "📋 ChangeLog / 更新履歴"
   ],
   "checkedAt": "2026-11-11T22:41:05.241Z",
-  "findings": "Reviewed v7.4.7 scoped source and README body changes against v7.4.6: silent source-staged foreground guests are permitted; depicted screen figures remain separate from physical cast and tiny replicas. Names only in quotations, signage, explicit absence or undrawn instructions do not authorize a foreground. The repeated compiler directive is concise without dropping depiction size, pose, continuity or authored crossing rules. Existing models, prices, panel/media/camera contracts, licensing and other body sections retain the reviewed v7.4.6 behavior. Current API image verification details are retained in private work evidence; this audit does not assert image quality acceptance.",
+  "findings": "Reviewed v7.4.7 scoped source and README body changes against v7.4.6: silent source-staged foreground guests are permitted; depicted screen figures remain separate from physical cast and tiny replicas. Names only in quotations, signage, explicit absence or undrawn instructions do not authorize a foreground. The repeated compiler directive is concise without dropping depiction size, pose, continuity or authored crossing rules. Existing models, prices, panel/media/camera contracts, licensing and other body sections retain the reviewed v7.4.6 behavior. Current API image verification details are retained in private work evidence; this audit does not assert image quality acceptance. 2026-11-12 licensing-only documentation review: standard MIT and user-owned outputs replace the old custom paid-use restrictions; third-party notices and earlier distribution history are preserved. Application source, version and runtime behavior remain v7.4.7.",
   "manualFindings": "Rebuilt all 71 A4 pages, with version/date, text bounds, page counts, naming and privacy checks passing. Compared complete extracted body text with the distributed v7.4.6 PDFs, normalizing only version/date. Only full-manual page14 changes; inspected its complete render and the OpenAI opening contact sheet. Added silent guests and depicted figure behavior is readable with no clipping or overlap. Unchanged page bodies reuse the prior v7.4.6 visual review. All three final PDFs copied to public/downloads.",
   "pricingReview": {
     "version": "7.4.7",

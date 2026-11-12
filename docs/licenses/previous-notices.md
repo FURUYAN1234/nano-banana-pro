@@ -1,5 +1,10 @@
 # 以前のライセンス表示 / Previous license notices
 
+## Current license from November 12, 2026 / 2026年11月12日以降の現行ライセンス
+
+The current source uses the [MIT License](../../LICENSE); the notices below describe earlier distributions. The [October 8 application terms](furu-application-terms-2026-10-08.txt) are archived and do not restrict the current MIT-licensed source. Output rights remain with users. / 現行ソースは[MITライセンス](../../LICENSE)です。以下は過去の配布物に関する履歴です。[10月8日の旧アプリ利用条件](furu-application-terms-2026-10-08.txt)は保存記録であり、現行のMITソースには適用しません。成果物の権利は利用者に帰属します。
+
+
 記録日: 2026-10-04。以下は変更前の表示を保持した履歴資料であり、今後の版全体に新しく同じ許諾を付与する表示ではありません。
 
 対象リポジトリ: nano-banana-pro
