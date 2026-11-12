@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "6e823e0e713049b799af03779210f41d2d8ebb7bec28f8e7dd04ee7f5af91be3",
   "readmeLanguageGaps": [],
-  "sourceTree": "78c889ebea0c223182ea76a007a02ded49b7bd89",
-  "publicTree": "3e167f562e5c52ea7831784f0ed58c6b7ce47049",
+  "sourceTree": "03a9734f356153d54e304015580ec8767f2d717a",
+  "publicTree": "5ff44cf4218c7153cb272c93cde7ae98712bd293",
   "packageSha256": "6d9e0fc132eee909acea306c2f18855e527a47576db4a5e76e7357766580ab36",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -43,7 +43,7 @@
   ],
   "checkedAt": "2026-11-12T04:31:41.298Z",
   "findings": "既存本文の監査を継承し、差分のSTEP3説明と版履歴を英日で照合。白黒の上限時にはコンパイラー所有の規則だけを同義の日本語で記載し、台本とAction全文、画風、カメラ、台詞、配置を保持する。超過時の候補全文を既存の失敗専用診断へ渡す。最終のソース/public treeと配布ZIP監査は実API後に行う。",
-  "manualFindings": "v7.4.9の3冊71ページを生成し、13一覧画像のレイアウト確認を実施。その後に変わった全機能マニュアル19ページを単独で再確認。共通の白黒規則だけ同じ条件の日本語へ変換し、元台本とAction全文を保持する説明と、超過時の候補全文ログを実装へ照合。実API画像検証は後続の修正版で未完了。",
+  "manualFindings": "v7.4.9の3冊71ページを生成し、13一覧画像のレイアウト確認を実施。その後に変わった全機能マニュアル19ページを単独で再確認。共通の白黒規則だけ同じ条件の日本語へ変換し、元台本とAction全文を保持する説明と、超過時の候補全文ログを実装へ照合。通常UIのSTEP3は全台詞と元の状況を保持し31,302文字で成功し、6コマ白黒画像を受信。画像生成・総合検査はHTTP200で終了。自動検査の警告と修正用上限超過は残り、元画像を本人の絵の成立基準で目視受入れしたことと区別。",
   "pricingReview": {
     "version": "7.4.9",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
@@ -59,5 +59,5 @@
     ],
     "findings": "Opened official OpenAI Standard pricing and four legacy model pages, plus Gemini Standard pricing on 2026-11-12 for v7.4.9. Astra10/50,Sol6.1 2/10,Terra6.1 1/5,Luna6 .1/.5,Sol6 2/10,Sol5.6 4/20,Terra5.6 2/12,Luna5.6 .2/1.2 match current configuration. Image2.6 input8/output30/cached2,text5/cached1.25; GeminiFlash3.8 .75/3.75 through December31 and NanoBanana2.1 input1.5,text7.5,image30 with1K .0336 match unchanged UI/README/manual. Batch/Flex excluded; same pricing source hash retained."
   },
-  "candidateReviewStatus": "waiting_for_real_api; source/public trees and release ZIP remain baseline until final verification"
+  "candidateReviewStatus": "STEP3 real API and original-image visual acceptance recorded; automatic QA/repair-budget warning retained; source/public bound to e99f84c"
 }
