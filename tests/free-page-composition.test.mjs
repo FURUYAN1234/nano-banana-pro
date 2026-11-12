@@ -75,6 +75,12 @@ try {
     assert.equal(c.observedForegroundBodies(ungrounded,plan,2).size,0);
     const disconnected=structuredClone(review);disconnected.compositionChecks[0].status='fail';
     assert.equal(c.observedForegroundBodies(disconnected,plan,2).size,0);
+    const shifted=structuredClone(review);
+    Object.assign(shifted.compositionChecks[0],{status:'fail',materialImpact:'minor_variation',impactReason:'接続した肩と腕の越境位置がずれただけで人物と台詞は読める。'});
+    const otherRecipient={...plan,composition:{...composition,foregrounds:composition.foregrounds.map(f=>({...f,over:[3,4]}))}};
+    assert.equal(c.observedForegroundBodies(shifted,otherRecipient,2).get('part')?.panel,1,'observed continuous silhouette ownership survives a harmless receiving-frame shift');
+    shifted.evidence[1].body_dispositions[0].evidence=null;
+    assert.equal(c.observedForegroundBodies(shifted,otherRecipient,2).size,0,'a layout waiver cannot invent a connection');
     assert.equal(c.observedForegroundBodies(review,{...plan,composition:{...composition,foregrounds:[]}},2).size,0);
     const doubleClaim=structuredClone(review);doubleClaim.evidence[1].cast_instances=[{name:'ユウ',instances:[{body_id:'part'}]}];
     assert.equal(c.observedForegroundBodies(doubleClaim,plan,2).size,0,'one body cannot be both an incoming layer and an independent local actor');

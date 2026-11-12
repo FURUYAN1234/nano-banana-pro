@@ -736,7 +736,7 @@ try {
     assert.deepEqual(checked.validationErrors||[],[]);
     assert.deepEqual(m.validateExperimentalReview(checked,plan),checked);
     const old={...original,review:legacy};let inspections=0;
-    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:11}},async()=>{inspections++;return {};});
+    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:12}},async()=>{inspections++;return {};});
     assert.equal(inspections,1,'a quarantined census must not start another inspection of the old image');
     const next={...original,image:{base64Img:'fresh'}};
     const selected=await m.selectExperimentalCandidate(old,next,async()=>({preferred:'repair',reason:'台詞を保ち、演技が明瞭。',readingOrderChecks:checks}));
@@ -914,6 +914,7 @@ try {
     delete panel.camera;delete panel.style;delete panel.cast_instances[0].observed_count;
     delete panel.cast_instances[0].instances[0].matched_features;
     panel.cast_instances[0].instances[0].feature_indices=[0,1];
+    panel.depicted_figures=[];
     const report={compositionChecks:[],corrections:[],status:'unverified',observedCount:null,readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'not_requested',issues:['細部を確認できない。'],pageEvidence:null,evidence:[panel],wardrobe_observation:null};
     assert.equal(assessment(report),true,JSON.stringify(assessment.errors));
     const missingComposition=structuredClone(report);delete missingComposition.compositionChecks;
@@ -963,7 +964,7 @@ try {
     }
   });
   test('candidate review pair reuses valid current evidence and never inspects another prepared group',async()=>{
-    const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion:11}};
+    const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion:12}};
     let requests=0;
     for(const previous of [original,null]) {
       await m.reviewExperimentalCandidatePair({},previous,async()=>{requests++;return {pass:true,issues:[]};});
@@ -971,14 +972,14 @@ try {
     assert.equal(requests,2,'only each new image requires a review');
   });
   test('candidate review pair refreshes prior body-coverage and layout inspection versions',async()=>{
-    for(const inspectionVersion of [7,8]) {
+    for(const inspectionVersion of [7,8,11]) {
       const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion}};
       const fresh={base64Img:'new'},started=[];
       await m.reviewExperimentalCandidatePair(fresh,original,async image=>{
-        started.push(image);image.experimentalReview={...styledReview(),inspectionVersion:11};return {pass:true,issues:[]};
+        started.push(image);image.experimentalReview={...styledReview(),inspectionVersion:12};return {pass:true,issues:[]};
       });
       assert.deepEqual(started,[fresh,original.image]);
-      assert.equal(original.review.inspectionVersion,11);
+      assert.equal(original.review.inspectionVersion,12);
     }
   });
   test('candidate review pair preserves provider timeout failures and does not claim a comparison',async()=>{
@@ -1458,7 +1459,7 @@ try {
             {region_kind:'printed_object',text:'3'},{region_kind:'speech_balloon',text:'右の台詞',center_x:.8}]:[]}))})};
     },{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})});
     assert.equal(calls.length,1);assert.equal(calls[0].count,9,'combined review sees all native frames and footer crops');
-    assert.equal(result.review.inspectionVersion,11);
+    assert.equal(result.review.inspectionVersion,12);
     assert.deepEqual(result.review.evidence[0].physical_bodies,[independentBody],'observed gaze, body identity and geometry remain bound to the panel');
     assert.deepEqual(result.review.expectedStyles,expectedStyles,'expected media come from the source contract, not the assessment model');
     assert.deepEqual(result.review.expectedOutfits,expectedOutfits,'outfit authority comes from the compiler, never the assessment response');
@@ -1502,7 +1503,7 @@ try {
     const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>{requests++;throw new Error('no paid review for count mismatch');},{detect:async()=>frames,inspect:async()=>({width:400,height:600}),crop:async()=>{crops++;throw new Error('no crop based on incompatible plan');}});
     assert.equal(requests,0);assert.equal(crops,0);assert.equal(result.requests,0);
     assert.equal(result.review.observedCount,7);assert.deepEqual(result.review.observedFrames,frames);
-    assert.equal(result.review.inspectionVersion,11,'local count evidence belongs to the current inspection format');
+    assert.equal(result.review.inspectionVersion,12,'local count evidence belongs to the current inspection format');
     const review=m.validateExperimentalReview(result.review,six);
     assert.equal(review.status,'warning');assert.equal(review.observedCount,7);
     assert.equal(m.validateExperimentalReview(JSON.parse(JSON.stringify(review)),six).status,'warning','saved local geometry retains its supported count warning');

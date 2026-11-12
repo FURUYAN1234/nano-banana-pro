@@ -83,7 +83,7 @@ try {
     const bounds=m.experimentalLayout(plan.count,plan.layout).map(r=>[r.x,r.y,r.w,r.h]);
     const review={status:'warning',observedCount:5,readingOrder:'pass',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'fail',issues:['頭と肩の越境が接続していない。'],pageEvidence:'題字の文字は判読できる。',
       observedFrames:bounds.map(b=>({bounds:b,edgeEvidence:'白い溝と黒い枠線の連続を確認。'})),
-      compositionChecks:[{id:'breakout:P3',status:'fail',observed:'受入コマには独立した頭があり、大コマの胴と首はつながっていない。'}],corrections:[],
+      compositionChecks:[{id:'breakout:P3',status:'fail',observed:'受入コマには独立した頭があり、大コマの胴と首はつながっていない。',materialImpact:'material',impactReason:'頭と胴が分断され、誰の動作か読めない。'}],corrections:[],
       evidence:bounds.map((b,i)=>({panel:i+1,bounds:b,center:[b[0]+b[2]/2,b[1]+b[3]/2],camera:'顔と肩の上面がはっきり見える。',style:'墨線と網点で描かれている。',story:'人物は幕を手で支えている。',anatomy:'腕と肩の接続が見える。',breakout:i===0?'大コマからの連続ではなく、別の頭が枠内に見える。':null}))};
     review.evidence[4].story=null;
     const checked=m.validateExperimentalReview(review,plan);
@@ -107,7 +107,7 @@ try {
     const bounds=m.experimentalLayout(plan.count,plan.layout).map(r=>[r.x,r.y,r.w,r.h]);
     const review={validationErrors:[],observedCount:plan.count,corrections:[],
       observedFrames:bounds.map(b=>({bounds:b,edgeEvidence:'白い溝と黒い枠線の連続を確認。'})),
-      compositionChecks:[{id:'foreground:P3',status:'fail',observed:'大コマの人物は大きいが、肩の輪郭が隣のコマとの境界を越えていない。'}],
+      compositionChecks:[{id:'foreground:P3',status:'fail',observed:'大コマの人物が小コマと同じ尺度に縮み、中心動作の腕も切れて読めない。',materialImpact:'material',impactReason:'主役の大小差と中心動作が欠落している。'}],
       evidence:bounds.map((b,i)=>({panel:i+1,bounds:b,anatomy:'首、肩、腕は一つの身体として接続している。',breakout:'肩の輪郭は黒いコマ枠の手前で終わっている。'}))};
     const issues=m.experimentalRepairIssues(review,plan);
     assert.equal(issues.length,1);
@@ -135,7 +135,7 @@ try {
         foregrounds:[{panel,over:[over],character:'ユウ',placement:'肩と上腕だけを隣の余白へ重ねる'}]}};
       const bounds=frames.map(r=>[r.x,r.y,r.w,r.h]);
       const review={observedCount:6,corrections:[],observedFrames:bounds.map(b=>({bounds:b,edgeEvidence:'白い溝と黒い枠線の連続を確認。'})),
-        compositionChecks:[{id:`foreground:P${panel}`,status:'fail',observed:'肩の輪郭は隣の枠へ入らず、元のコマ枠で終わっている。'}],
+        compositionChecks:[{id:`foreground:P${panel}`,status:'fail',observed:'人物が枠内へ縮み、肩と主動作の腕が切れて見えない。',materialImpact:'material',impactReason:'必要な主動作が切れて物語の帰結が読めない。'}],
         evidence:bounds.map((b,i)=>({panel:i+1,bounds:b,anatomy:'肩と胴体は一つの身体として連続している。',breakout:'肩は元の枠内に収まり、隣のコマへの連続がない。'}))};
       const [issue]=m.experimentalRepairIssues(review,plan);
       assert.ok(issue.correction.includes(`P${panel}[`));assert.ok(issue.correction.includes(`P${over}[`));
@@ -270,7 +270,9 @@ try {
     failed.corrections=[{type:'page_composition',panel:3,subject:'右タチキリ',observed:failed.compositionChecks[2].observed,expected:'背景と布が右端まで連続する。',correction:'右余白と外枠だけを取り除き、同じ背景と布を画布端までつなぐ。',materialImpact:'material',impactReason:'指定された外周タチキリが描かれていない。'}];
     const checked=m.validateExperimentalReview(failed,plan);
     assert.equal(checked.status,'warning');
-    assert.equal(m.experimentalRepairIssues(checked,plan).filter(i=>i.type==='page_composition').length,1);
+    assert.equal(m.experimentalRepairIssues(checked,plan).filter(i=>i.type==='page_composition').length,0,'a white margin alone does not prove story damage');
+    Object.assign(failed.compositionChecks[2],{observed:'右余白で必要な手と布が切れ、受渡し動作が読めない。',materialImpact:'material',impactReason:'必要な手と布の接点が欠け、中心動作が成立しない。'});
+    assert.equal(m.experimentalRepairIssues(m.validateExperimentalReview(failed,plan),plan).filter(i=>i.type==='page_composition').length,1);
     failed.compositionChecks[2].status='uncertain';
     assert.equal(m.experimentalRepairIssues(m.validateExperimentalReview(failed,plan),plan).filter(i=>i.type==='page_composition').length,0);
     const optional={...plan};delete optional.composition;

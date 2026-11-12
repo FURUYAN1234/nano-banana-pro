@@ -172,7 +172,8 @@ export function inspectCompositionChecks(review, plan) {
   const checks=required.map(expected=>{
     const matches=(Array.isArray(review?.compositionChecks)?review.compositionChecks:[]).filter(c=>c?.id===expected.id);
     const c=matches[0];
-    return {...expected,status:matches.length===1&&['pass','fail'].includes(c.status)&&typeof c.observed==='string'&&c.observed.trim().length>=8?c.status:'uncertain',observed:c?.observed||''};
+    return {...expected,status:matches.length===1&&['pass','fail'].includes(c.status)&&typeof c.observed==='string'&&c.observed.trim().length>=8?c.status:'uncertain',observed:c?.observed||'',
+      materialImpact:c?.materialImpact,impactReason:c?.impactReason};
   });
   return {status:checks.some(c=>c.status==='fail')?'fail':checks.every(c=>c.status==='pass')?'pass':'uncertain',checks};
 }
@@ -186,14 +187,15 @@ export function observedForegroundBodies(review,plan,panel) {
   const supported=(features,body)=>Array.isArray(features)&&new Set(features).size>=2&&features.every(f=>body?.features?.includes(f));
   for(const d of target.body_dispositions||[]) {
     if(d.kind!=='foreground'||!text(d.evidence)||result.has(d.body_id))continue;
-    const f=plan.composition?.foregrounds?.find(f=>f.panel===d.source_panel&&f.over.includes(panel));
+    const f=plan.composition?.foregrounds?.find(f=>f.panel===d.source_panel&&f.panel!==panel);
     const checks=(review.compositionChecks||[]).filter(c=>c.id===`foreground:P${d.source_panel}`);
     const sources=(review.evidence||[]).filter(e=>e.panel===d.source_panel),source=sources[0];
     const bodies=(target.physical_bodies||[]).filter(b=>b.id===d.body_id);
     const owners=(source?.physical_bodies||[]).filter(b=>b.id===d.source_body_id);
     const identities=(source?.cast_instances||[]).filter(a=>a.name===f?.character&&a.status==='ok');
     const binding=identities.length===1?identities[0].instances?.find(b=>b.body_id===d.source_body_id):null;
-    if(!f||checks.length!==1||checks[0].status!=='pass'||!text(checks[0].observed)||sources.length!==1||bodies.length!==1||owners.length!==1
+    const coherentShift=checks[0]?.status==='fail'&&checks[0]?.materialImpact==='minor_variation'&&text(checks[0]?.impactReason);
+    if(!f||checks.length!==1||!(checks[0].status==='pass'||coherentShift)||!text(checks[0].observed)||sources.length!==1||bodies.length!==1||owners.length!==1
       ||!supported(d.observed_features,bodies[0])||!supported(binding?.matched_features,owners[0])
       ||(target.body_dispositions||[]).filter(entry=>entry.body_id===d.body_id).length!==1
       ||target.cast_instances?.some(a=>a.instances?.some(b=>b.body_id===d.body_id)))continue;
@@ -204,7 +206,7 @@ export function observedForegroundBodies(review,plan,panel) {
 
 export function pageCompositionReview(plan) {
   if(!plan.composition)return '';
-  return `${pageCompositionRendering(plan)}\nThese authored effects are REQUIRED; optional-effect waivers do not apply. Return compositionChecks with one {id,status:pass|fail|uncertain,observed:concrete Japanese visual evidence} for EACH of ${JSON.stringify(requiredCompositionChecks(plan))}. Observe actual artwork, not this metadata. Judge the whole page before local details: readable story, strong large/small contrast, one coherent dominant body. Foreground checks need a visibly dominant connected figure spanning the intended group of small frames; a small character contained in one box fails, while natural shifts in silhouette or overlap amount are allowed. Never demand exact coordinates or overlap percentages. Hero checks need the character/action's visible size and contrast with smaller neighboring frames, not merely a large empty background. Breakout checks need a visible connected silhouette crossing the assigned internal edge: describe which of the authored parts actually cross and which remain inside. A hair tip or one raised hand does not satisfy an authored whole head/shoulder crossing; assess the requested extent, never infer hidden connections. The crossing keeps its source panel's medium and body owner. Bleed checks need artwork reaching that actual canvas edge without white margin/outer frame, including through any title/footer zone on the specified edge. Authorized bleed is NOT an accidental page crop; missing faces, essential props, dialogue or a required title still fail their own checks; footer visibility follows the allowed overlap/occlusion policy. An absent required effect is a material page_composition correction ONLY with grounded visible evidence and a failed matching check. Optional unrequested effects may be absent without failure. Do not infer compliance from a layout ID.`;
+  return `${pageCompositionRendering(plan)}\nThese authored effects are REQUIRED; optional-effect waivers do not apply. Return compositionChecks with one {id,status:pass|fail|uncertain,observed:concrete Japanese visual evidence,materialImpact:material|minor_variation|none|uncertain,impactReason:concrete visible effect on readability/story or creative hierarchy} for EACH of ${JSON.stringify(requiredCompositionChecks(plan))}. Observe actual artwork, not this metadata. Judge the whole page before local details: readable story, strong large/small contrast, one coherent dominant body. Foreground checks need a visibly dominant connected figure spanning the intended group of small frames; a small character contained in one box fails, while natural shifts in silhouette or overlap amount are allowed. Never demand exact coordinates or overlap percentages. Hero checks need the character/action's visible size and contrast with smaller neighboring frames, not merely a large empty background. Breakout checks need a visible connected silhouette crossing the assigned internal edge: describe which of the authored parts actually cross and which remain inside. A hair tip or one raised hand does not satisfy an authored whole head/shoulder crossing; assess the requested extent, never infer hidden connections. The crossing keeps its source panel's medium and body owner. Bleed checks need artwork reaching that actual canvas edge without white margin/outer frame, including through any title/footer zone on the specified edge. Authorized bleed is NOT an accidental page crop; missing faces, essential props, dialogue or a required title still fail their own checks; footer visibility follows the allowed overlap/occlusion policy. Report effect compliance separately from material impact. A missing required effect is repairable ONLY when the failed check also has materialImpact=material with concrete harm: missing dominant hierarchy, disconnected body, hidden speech/necessary action, or broken story flow. Harmless margin/bleed differences, a natural change of crossing body part or edge, and coherent overlap shifts remain minor_variation while their compliance status stays honest; do not fabricate harm from metadata or demand another paid edit. Optional unrequested effects may be absent without failure. Do not infer compliance from a layout ID.`;
 }
 
 

@@ -1851,6 +1851,25 @@ const scriptedFigurePresence = (panelText, castList, candidates) => {
   });
 };
 
+// An explicitly recorded screen scene keeps its speakers inside that recording.
+// A bare 「画面」 (the manga frame) or a name in dialogue is not such authority.
+const screenOnlyCast = (panelText, castList, candidates) => {
+  const action=extractActionOnly(panelText,castList)
+    .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"/gu,'');
+  const clauses=action.split(/[。！？\n]/u);
+  return [...new Set(candidates)].filter(name=>{
+    const n=escapeRegex(name);
+    const device='(?:モニター|テレビ|スクリーン|スマートフォン|スマホ|端末|ディスプレイ)';
+    const screenContext=new RegExp(device,'u').test(action)?'|画面内':'';
+    const title='(?:氏|さん|代表|書記局長|社長|選手)?';
+    const depicted=new RegExp(`(?:${device}(?:の画面)?(?:内|の中)[^。！？\\n]{0,24}${n}|${n}${title}の(?:別個の|別の)?(?:記者)?会見映像|${n}の(?:映像|動画|写真|肖像)|(?:映像内|写真内${screenContext})の${n}|(?:映像|動画)に切り替わ[りる]、?\\s*${n}${title}(?:は|が))`,'u');
+    const positive=clauses.some(clause=>depicted.test(clause)
+      &&!/(?:描かない|映さない|表示しない|文字だけ|名前だけ)/u.test(clause));
+    const live=new RegExp(`${n}(?:は|が)[^。！？\\n]{0,14}(?:モニターの(?:横|隣|前)|画面の外|現場で|実際に登場)`,'u');
+    return positive&&!clauses.some(clause=>live.test(clause));
+  });
+};
+
 export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   fullPanelText = stripSourceMetadata(fullPanelText);
   const compact = Boolean(options.compact);
@@ -1866,8 +1885,10 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // An authored foreground crossing is owned and counted in its source frame.
   // It is neither a new local actor nor an absent character to erase here.
   const scriptedNames = (options.scriptedNames || []).filter(name => typeof name === 'string' && name.trim());
+  const entries = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true, asEntries: true, withSourceSpeaker: true});
   const scriptedFigures = scriptedFigurePresence(fullPanelText, castList, scriptedNames);
-  const scriptedDepictions = scriptedFigures.filter(figure => figure.kind === 'depicted').map(figure => figure.name);
+  const scriptedDepictions = [...new Set([...scriptedFigures.filter(figure => figure.kind === 'depicted').map(figure => figure.name),
+    ...screenOnlyCast(fullPanelText,castList,[...scriptedNames,...Object.values(flatCharLookup),...entries.map(entry=>entry.speaker)])])];
   const resolvePageName = name => flatCharLookup[name] || (scriptedNames.includes(name) ? name : null);
   const incomingCast=new Set((options.incomingCast||[]).map(resolvePageName).filter(Boolean));
   const overlayCast=new Set((options.overlayCast||[]).map(resolvePageName).filter(Boolean));
@@ -1877,7 +1898,6 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   // The bubble parser is the source of truth for speakers, including multiple
   // utterances on one line and speakers written after the quote.
-  const entries = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true, asEntries: true, withSourceSpeaker: true});
   const speakers = [...new Set(entries.flatMap(({speaker, sourceSpeaker}) => {
     const group = parseCollectiveSpeaker(sourceSpeaker || speaker, validCharacters);
     // Count the actual owners of explicit collective dialogue, including guests.
@@ -2014,7 +2034,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   });
 
   // スピーカー最大3名をメインアクターとして登録
-  const panelActors = speakers.filter(speaker => !offscreenCast.has(speaker)&&!incomingCast.has(speaker)).slice(0, 3).map(s => `[${s}]`);
+  const panelActors = speakers.filter(speaker => !offscreenCast.has(speaker)&&!incomingCast.has(speaker)&&!scriptedDepictions.includes(speaker)).slice(0, 3).map(s => `[${s}]`);
   const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject)&&!incomingCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
   const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, [...new Set([...allPanelCharacters,...canonicalValidCharacters])]).filter(name=>!scriptedDepictions.includes(name));
