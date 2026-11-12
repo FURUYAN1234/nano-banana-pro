@@ -18,7 +18,7 @@
   ],
   "readmeSha256": "063de0ca873e162f2b42751b22764fa1facbd046fc10818a3dd59e30bedf0c37",
   "readmeLanguageGaps": [],
-  "sourceTree": "361db34aa49661c7c1fd19aa0d8ee3febd87dab5",
+  "sourceTree": "41bb0f53f1590d8124c79ee8e7462753e842f1f7",
   "publicTree": "ea3eb820f7c5089208d3126184079410b5733d1b",
   "packageSha256": "6d9e0fc132eee909acea306c2f18855e527a47576db4a5e76e7357766580ab36",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
@@ -41,8 +41,8 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-12T11:48:58.556Z",
-  "findings": "前回の本文全見出し監査を継承し、変更した品質検査説明とv7.4.9履歴を英日で実装へ照合。画面内描像を実空間の人数と分離し、構図の修正には観察された実害を必要とする。修正時の共通末尾共有は承認済み全文と全指示を保持する。通常の実API検証は継続中。",
+  "checkedAt": "2026-11-12T12:15:36.363Z",
+  "findings": "既存本文全見出し監査を継承。変更した検査説明と履歴を実装へ照合。画中人物/現場人物を分離し、前景予約文の語順が逆でも同じ一身体だけを扱う。構図の微差と判定不能なカメラ角は修正費用を使う根拠にしない。全台詞・元台本・承認済み全文・全修正指示を保持する。",
   "manualFindings": "既存3冊71ページの目視確認を継承。再生成した全機能40ページを前回レンダーとバイト比較し、変更は23ページだけ。23ページを単独目視して文字切れ/重なりなし、画面内人物/構図実害/修正指示の全文保持の説明を確認。公開PDFへコピー済み。残る39ページと未変更2冊は既存確認と一致。",
   "pricingReview": {
     "version": "7.4.9",
@@ -59,5 +59,5 @@
     ],
     "findings": "Opened official OpenAI Standard pricing and four legacy model pages, plus Gemini Standard pricing on 2026-11-12 for v7.4.9. Astra10/50,Sol6.1 2/10,Terra6.1 1/5,Luna6 .1/.5,Sol6 2/10,Sol5.6 4/20,Terra5.6 2/12,Luna5.6 .2/1.2 match current configuration. Image2.6 input8/output30/cached2,text5/cached1.25; GeminiFlash3.8 .75/3.75 through December31 and NanoBanana2.1 input1.5,text7.5,image30 with1K .0336 match unchanged UI/README/manual. Batch/Flex excluded; same pricing source hash retained."
   },
-  "candidateReviewStatus": "source/public bound to ec3a26b; live API verification pending"
+  "candidateReviewStatus": "real API image/review/one edit visually accepted; final revision66 normal STEP3 contract verified; final release preflight only"
 }
