@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-  "manualVersion": "7.4.8",
-  "manualSourceSha256": "9da6c45881c8a60d71b39a52e72ee0ffd23ac62e7892dd0c551ee28fa0a4c0ae",
+  "manualVersion": "7.4.9",
+  "manualSourceSha256": "78674faf013ddab5f0fb2fab04d6766e35efaae5af5beb569db99b3bab6b4553",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "2910617c74494ea978ffe79d60d61dab4d685fb38dececa4cc5c905b1071d200"
+      "sha256": "a2e06f60b57033c1d3447f663ba7a2016b3ca16f69ef50e7aca255ec2f920802"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "27af83f7f2c8b978ddb08f65ab4a3c88d580293280c1b72097c3122119ac499a"
+      "sha256": "520a84112b472e339bd6641a03a15e985689f6c2332d25bf279182f6b187e362"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "0e0dcc452aa0036b24540851846fea1e31b6a03031980758ea978d5cd8c97812"
+      "sha256": "70c67bdbcfef7f5c448e1d4e27914aebe412716148c117e548f9a9a25285a2a7"
     }
   ],
-  "readmeSha256": "4cc2e1ac99e553716342e19b81243b4a40d32edf5f5ef7623d9d18b932780b2a",
+  "readmeSha256": "6e823e0e713049b799af03779210f41d2d8ebb7bec28f8e7dd04ee7f5af91be3",
   "readmeLanguageGaps": [],
   "sourceTree": "78c889ebea0c223182ea76a007a02ded49b7bd89",
   "publicTree": "3e167f562e5c52ea7831784f0ed58c6b7ce47049",
-  "packageSha256": "925b397ceb6b4ce0378496add39c3bb6fdfa74bfd3517b63f8890623a6c436c2",
+  "packageSha256": "6d9e0fc132eee909acea306c2f18855e527a47576db4a5e76e7357766580ab36",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -42,12 +42,12 @@
     "📋 ChangeLog / 更新履歴"
   ],
   "checkedAt": "2026-11-12T04:31:41.298Z",
-  "findings": "Reviewed v7.4.8 README against published MIT baseline ab501b4. Resume descriptions match the retained-stage implementation and completed normal-UI STEP2/STEP3/STEP4 resume checks. Repair descriptions match approved-body compaction, independently grounded composition handoff, whole-figure priority, authored physical edge mapping, concise balloon ownership corrections preserving exact speech and observed head geometry, and direct missing-actor restoration with minimum visible spacing. MIT and output-rights sections match the eight published repositories; third-party conditions and historical releases remain separately scoped. Unchanged pricing and manual bodies retain their previous evidence. Run c522e82c generated and reviewed an image, but its combined seven-issue repair exceeded the prompt budget before sending. The subsequent manual diagnostic spatial edit completed and improved the intended crossing, with other defects remaining. Normal run cc47b197 then completed generation, review and repair HTTP200, improving speech and bleed, but still lacked Rin in P4. Diagnostic edit 792280a8 restored Rin and retained the four existing actors. The final normal run 6da1aa86 completed generation, review and repair HTTP200 and retained all five actors. The rendered result was accepted under the user criterion allowing coherent energetic posing, harmless overflow and minor differences. The later diagnostic edit d6444acd was not adopted, and unbuilt exact-crossing restoration additions were withdrawn. Runtime hashes match the normally API-tested candidate. The raw repaired_unverified verdict remains unchanged; visual acceptance is separate.",
-  "manualFindings": "Rebuilt 71 A4 pages and compared all extracted page bodies with the distributed v7.4.7 PDFs, normalizing only v7.4.7/v7.4.8. Only full-manual page27 changed. Viewed its entire rendered page: stop/resume, input preservation, new-work boundaries and reload limitation are readable without clipping or overlap. Page counts, version, text bounds, naming and privacy checks passed. Unchanged bodies reuse the prior visual review. All three PDFs copied into public/downloads.",
+  "findings": "既存本文の監査を継承し、差分のSTEP3説明と版履歴を英日で照合。白黒の上限時にはコンパイラー所有の規則だけを同義の日本語で記載し、台本とAction全文、画風、カメラ、台詞、配置を保持する。超過時の候補全文を既存の失敗専用診断へ渡す。最終のソース/public treeと配布ZIP監査は実API後に行う。",
+  "manualFindings": "v7.4.9の3冊71ページを生成し、13一覧画像のレイアウト確認を実施。その後に変わった全機能マニュアル19ページを単独で再確認。共通の白黒規則だけ同じ条件の日本語へ変換し、元台本とAction全文を保持する説明と、超過時の候補全文ログを実装へ照合。実API画像検証は後続の修正版で未完了。",
   "pricingReview": {
-    "version": "7.4.8",
+    "version": "7.4.9",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-    "checkedAt": "2026-11-12T04:30:40.9360285Z",
+    "checkedAt": "2026-11-12T10:42:16.055Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -57,6 +57,7 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Reopened official OpenAI Standard pricing and Gemini Standard pricing on 2026-11-12 immediately before v7.4.8 publication. Astra10/50,Sol6.1 2/10,Terra6.1 1/5,Luna6 .1/.5; Image2.6 image8/30 cached2,text5 cached1.25; Gemini3.8Flash .75/3.75 through December31 and NanoBanana2.1 1.5 input,7.5 text output,30 image output match the unchanged UI/README/manual configuration. Batch/Flex excluded. Same source hash retained."
-  }
+    "findings": "Opened official OpenAI Standard pricing and four legacy model pages, plus Gemini Standard pricing on 2026-11-12 for v7.4.9. Astra10/50,Sol6.1 2/10,Terra6.1 1/5,Luna6 .1/.5,Sol6 2/10,Sol5.6 4/20,Terra5.6 2/12,Luna5.6 .2/1.2 match current configuration. Image2.6 input8/output30/cached2,text5/cached1.25; GeminiFlash3.8 .75/3.75 through December31 and NanoBanana2.1 input1.5,text7.5,image30 with1K .0336 match unchanged UI/README/manual. Batch/Flex excluded; same pricing source hash retained."
+  },
+  "candidateReviewStatus": "waiting_for_real_api; source/public trees and release ZIP remain baseline until final verification"
 }

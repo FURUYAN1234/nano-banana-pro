@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.4.8** / 現在のソース版: **v7.4.8**
+> Current source version: **v7.4.9** / 現在のソース版: **v7.4.9**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -146,6 +146,8 @@ POP panels redraw faces, hair, clothes, props and backgrounds with extra-bold bl
 **Story-led page composition / シナリオに合うページ構成**: STEP2 first chooses the most effective story moment, then compares distinct page structures in the same request. The last six accepted session scripts provide geometry-only comparison data. Story impact and legibility take priority; novelty only breaks ties between suitable alternatives. Explicit layouts and meaningful repetition remain valid. No extra layout API call or similarity-only regeneration is added. The comparison resets on reload or full reset. / STEP2はシナリオの動き・表情・間・オチから最も効果的な見せ場を選び、上下の横長大コマ、左右の縦長、中央の見せ場などを同じリクエスト内で比較します。この画面で採用した直近6作品の構図を参考にしますが、内容への効果と読順を優先します。同程度に適した案があるときに偏りを抑え、違う構図にするためだけに話を変えたり、人物を小さくしたりしません。明示された配置や物語に必要な反復は使えます。比較専用のAPI呼び出しや、構図の類似だけを理由とする再生成は追加しません。比較履歴は再読み込み・全設定リセットで消去されます。横長4段のレガシーはこの変更の対象外です。
 
 **Panel-count switch / 4コマ生成・4～8コマ生成**: The switch above STEP2 defaults to the right-hand 4–8-panel mode and retains the selection until reload. Four-panel mode shows a short guide; 4–8-panel mode shows detailed direction and operation guidance. Four-panel STEP2 creates four panels and ignores total-count requests such as "six panels", while preserving valid style and direction requests for panels 1–4. The other mode writes 4–8 panels from the start. STEP3 retains that script’s count and order while preparing layouts and drawing instructions. It may use large and small panels, tall panels and actors extending into adjacent panels. The last six layouts provide comparison material, including alternatives without merged panels. Story-motivated repetition is allowed; layout repetition alone never triggers paid regeneration. Candidates must have a clear reading order; arbitrary layouts are not guaranteed. / STEP2の上にあるスイッチは初期状態が右の「4～8コマ生成」で、選択はリロードまで保持します。4コマ生成では短い案内、4～8コマ生成では演出と操作の詳しい説明を表示します。4コマ生成はSTEP2で通常の4コマを作り、自由入力の「6コマ」などの総コマ数指定は採用しません。1〜4コマへの有効な画風・演出指定は保持します。4～8コマ生成は最初から4～8コマのシナリオを作ります。STEP3では台本と同じコマ数・順番を保って配置と描画指示を作ります。大小のコマ、縦のぶち抜き、隣のコマへの身体の枠越えを必要に応じて試します。直近6枚の配置を比較資料にし、結合コマを使わない構成も比較します。物語上必要な反復は許容し、配置の重複だけで有料再生成はしません。配置は読む順番が明確な候補から選び、自由な配置全般を保証する機能ではありません。
+
+STEP3 reserves room for reference-image instructions. On monochrome overflow, compiler-owned drawing rules use equivalent Japanese wording. The source scenario and planned Action both remain verbatim, including dialogue, cameras, media and layout. Inputs still above the limit stop before the image API request; the failure log retains the assembled candidate. / STEP3は参照画像の説明用の文字数も予約します。白黒で上限を超える場合は、アプリ側の共通描画ルールを同じ条件の日本語で記載します。元台本とActionの全文、台詞・カメラ・描法・コマ割りは保持します。それでも超過する入力は画像APIの送信前に停止し、失敗ログへ組立後の候補全文を残します。
 
 Experimental mode uses the usual STEP4, saving, history, automatic workflow and Web-copy controls. Switching modes alone makes no API call; each mode retains its own scenario and results. After only a color/monochrome change, STEP3 reuses the approved layout and updates color and medium instructions without another layout request. Changes to the script or references require reconstruction. Four- to eight-panel camera instructions use high and low angles and avoid looking at the camera. Inspect expression, dialogue and reading order in the actual image. / 4～8コマ生成も通常と同じSTEP4・保存・履歴・全自動・Webコピーを使います。スイッチだけではAPIを呼びません。4コマと4〜8コマそれぞれの台本・生成結果を保持します。4～8コマ生成では、カラー／白黒だけを変更した後のSTEP3は決定済みのコマ割りを保ち、色と画材の指示だけを更新します。この更新では配置を決めるAPIを再実行しません。台本や参照資料なども変わった場合は再構築します。4～8コマ生成のカメラは俯瞰・アオリとし、カメラ目線を使わない指示です。表現や台詞・読む順番が意図どおりかは実画像で確認してください。
 
@@ -662,7 +664,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.4.8](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.8/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.8のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.8/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.4.8](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.8のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -722,7 +724,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.8 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.8 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -783,6 +785,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.4.9 (2026-11-12)
+- **[Fix & UX]** Use equivalent Japanese compiler rules on monochrome prompt overflow and retain failed candidates in diagnostics. / 白黒の自由コマ割りで、台本とAction全文を保持したまま共通規則を日本語化し、上限超過の失敗候補を診断JSONへ保持。
 
 ### v7.4.8 (2026-11-12)
 - **[Fix & UX]** Full-auto resumes the unfinished step, preserving manual progress and interrupted input settings. / 全自動を未完了のSTEPから再開できるようにし、手動で進めた台本・描画指示と停止時の入力設定を引き継ぎます。

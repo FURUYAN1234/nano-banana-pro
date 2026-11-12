@@ -5,6 +5,7 @@ import { collectCastNameEntries, extractActionOnly, extractDialogueOnly, extract
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
 import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily, buildMonochromePanelInkLock } from './prompt-assembler.js';
+import { translateMonochromeCompilerRules } from './monochrome-compiler-prose.js';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
 import { buildRenderOptionsContract, buildRenderOptionsQa, buildProtectedCastContract, allowsWatermarkOverlap, COPYRIGHT_MOSAIC_TARGET_SCOPE, NO_PAGE_TITLE } from './render-options.js';
@@ -28,7 +29,7 @@ const fail = message => { throw new Error(`実験的コマ割り: ${message}`); 
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 62;
+export const EXPERIMENTAL_PROMPT_REVISION = 64;
 const EXPERIMENTAL_INSPECTION_VERSION = 11;
 const EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS = 15000;
 const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
@@ -684,7 +685,7 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, provider
     .replace(FUNCTIONAL_SURFACE_ORIENTATION_LOCK, 'FUNCTIONAL SURFACE ORIENTATION LOCK: 情報/操作/光学/サービス面（画面・モニター・携帯・名札・看板・ラベル・文書・申請書・印刷紙・カード・本・地図・領収書・券・メニュー・新聞・キーボード・操作盤・レンズ・背面画面）の表/裏/対象を解く。対象は保持者でなくActionで決定: 読む/操作=本人、提出/提示=受取人。作中の操作/接客/読書/鑑賞/撮影対象へ正面を向け、漫画読者への読みやすさで回転しない。対象の反対からは裏/縁。モニター背面は筐体/台座、画面を透かさない。机の上向き紙は上から見え、文字の天地は読む人物向き。後ろ向き人物の胸元の紙/端末は胴体に隠れてよく、正面や手を背中に透過させず、見える場合だけ身体に接続した側面/裏/縁を描く。明示Cameraの位置/高さ/仰俯角/レンズ/切取りは固定、可読性のため移動禁止。位置未指定時のみ物でなくCameraを移し、実際に読む人物の後頭部/肩を前景に。カメラ/閲覧者へ提示する例外は脚本で受取人として明示された時だけ。')
     .replace(OBJECT_GEOMETRY_LOCK, 'OBJECT GEOMETRY LOCK: 体積/接触/遮蔽を解き、隠れた輪郭は整合して消失/再開。頭/髪/体/物へ道具を貫通・融合・接線で埋め込まない。重なりか隙間を明確にし、指定接触/Action/Cameraを保持。厚み/綴じ/折り目/角から印字面（表紙/背/本文/小口/ラベル/画面）を識別。文字はその面の軸/透視に従い、画布基準・面またぎ・小口の表紙化は禁止。まず直立した物に各字の天地を含め組版し、一枚の印刷テクスチャとして物と回転/投影。完成Camera像へ直接組版しない。積む/回す時に背文字を再組版したり行だけ回して字を画布に直立させない。縦横書きとも成立し、元の組版を保持。原文に根拠のあるシュールなギャグ/変形は保ち、出来事でなく輪郭を明確化。笑いを無関係な描画欠陥の口実にしない。');
   const hasDominantFigure=Boolean(plan.composition?.foregrounds?.length);
-  const render=(compact, sharedMedia=new Map())=>`Create ONE complete Japanese manga page with EXACTLY ${plan.count} ${hasDominantFigure?`story scenes: one page-dominant foreground scene and ${plan.count-1} smaller story panels. Do not enclose the dominant silhouette in an isolated box.`:'framed panels.'} ${plan.composition?.bleed.length?'A4縦。基本の左右余白は各0.6%。下記FULL BLEED指定辺だけ絵を画布端まで延長し白余白と外枠線を除く。その他の辺は保持。':'A4縦、外周全体を保持。左右白余白各0.6%、残り98.8%をコマに使用し切り落とさない。'}${showTitle?'上6.5%は題字、中91.3%はコマと溝、下2.2%はフッター。':'題字と題字用の空白帯は不要。小さな上端安全余白から下2.2%のフッターまで、旧題字領域も含めコマと溝へ配分。'}${hasDominantFigure?'小コマ同士は白溝で分離し、大きな前景人物の背後では枠線と溝を止める。':'コマ間は白溝で明瞭に分離し、外余白で代用しない。'}${plan.composition?'\n'+pageCompositionRendering(plan):''}
+  const render=(compact, sharedMedia=new Map(), translateMonochrome=false)=>`Create ONE complete Japanese manga page with EXACTLY ${plan.count} ${hasDominantFigure?`story scenes: one page-dominant foreground scene and ${plan.count-1} smaller story panels. Do not enclose the dominant silhouette in an isolated box.`:'framed panels.'} ${plan.composition?.bleed.length?'A4縦。基本の左右余白は各0.6%。下記FULL BLEED指定辺だけ絵を画布端まで延長し白余白と外枠線を除く。その他の辺は保持。':'A4縦、外周全体を保持。左右白余白各0.6%、残り98.8%をコマに使用し切り落とさない。'}${showTitle?'上6.5%は題字、中91.3%はコマと溝、下2.2%はフッター。':'題字と題字用の空白帯は不要。小さな上端安全余白から下2.2%のフッターまで、旧題字領域も含めコマと溝へ配分。'}${hasDominantFigure?'小コマ同士は白溝で分離し、大きな前景人物の背後では枠線と溝を止める。':'コマ間は白溝で明瞭に分離し、外余白で代用しない。'}${plan.composition?'\n'+pageCompositionRendering(plan):''}
 ${plan.composition?pageCompositionForeground(plan,source)+'\n'+(plan.composition.foregrounds?.length?'PAGE LAYER PRIORITY: the dominant figure keeps its SOURCE Camera and medium across the page. Receiving frame CAST/ALL ACTORS/MEDIUM rules apply to local scene actors, not to the connected overlaid figure.\n':''):''}${showTitle?`Top title EXACTLY ${JSON.stringify(title)}: ${topBleed?'指定コマの絵を画布上端まで連続させ、その上の安全域中央に読みやすく題字を置く。全面白帯で絵を止めない。':'白地中央に'}大きい極太長体ゴシック、囲み枠/帯/罫線なし。`:NO_PAGE_TITLE}台詞は縦書き漫画明朝。コマ番号/計画ラベル/Camera/参照トークンは印字禁止。RTL READING ORDER: P1〜P${plan.count}は右→左、上→下の順。${plan.composition?'各時点と読順を保持し、矩形は構図と可読性を両立する空間の目安にする。':'指定矩形と各時点を厳守。'}
 ${VERTICAL_DIALOGUE_GEOMETRY}${hasScriptedSfx(source.scenario)?'\n'+MANGA_SFX_LETTERING_LOCK:''}
 PHYSICAL READING PATH（非印字）: ${rects.map((_,i)=>`P${i+1}`).join(' -> ')}. ${hasDominantFigure?'各場面は指定位置へ。前景人物の所属する場面も一場面として数え、同じ身体を枠内にもう一度描かない。':'各場面は指定枠へ。'}結末の台詞/反応はP${plan.count}。${spans.length?`\nSPANNING FRAMES（非印字）: ${spans.join(' ')} 先に全${plan.count}枠を確保し、無言の動作も一枠ずつ描く。動作の接触と反動を同じ絵へ統合してコマを省かない。`:''}
@@ -735,7 +736,7 @@ ${sceneOutfit&&!renderedContext?'':`SOURCE FACTS (not captions): preserve every 
 ${styles.includes('GEKIGA')?`GEKIGA CAST CHECK (${plan.panels.flatMap((p,i)=>source.panels[p.sourcePanel-1].style==='GEKIGA'?[`P${i+1}`]:[]).join(', ')} only): HATCH-FIRST FACE CONSTRUCTION — DEEP-CUT GEKIGA。ペン線で意図的に深い彫りを作る。穏やか・微笑・遠景・眼鏡を含む全可視顔を再構築。ハッチ前に頭蓋と顔面を組立て、眉骨下へくぼむ眼、眼球を包む厚い瞼と狭い開口・小さい虹彩、突出する鼻梁/鼻側面/小鼻、明瞭な頬骨/顎角を陰影なしでも読める輪郭にする。眼窩/こめかみ/鼻側面/頬下面/首へ、各面と脚本の光に沿う細い交差ペン線。線間隔/角度/筆圧を変え、個々の線と狭い紙白の隙間を残す。明部へ線を先細りさせ、影は広い塗潰しや柔らかなグラデでなく線の層で深める。内部は細線、外輪郭は強弱ある太い筆線。黒ベタは鼻孔/顎下など最深部の小さな遮蔽の補助だけ。顔のハッチを大きな平坦セル影で代替しない。彫った顔の量感であり、汚れ/装飾傷/加齢皺/灰色テクスチャ被せではない。柔光でも同じ光向きでハッチ密度差を明瞭にし、穏やかな感情で彫りを弱めない。${colorMode==='monochrome'?'墨と紙白。顔の陰影はペン線で、均一な灰色網点にしない。':'主となるハッチの下に不透明色。明部の肌色と顔の影全体の細線を保持。'}参照の眼形状/簡略鼻を上書き。劇画の柔らかさは感情で、丸いアニメ顔ではない。年齢/髪/肌色/眼鏡/顔の識別点で同一性を保つ。微笑は口と頬を緩め、目を拡大せず、彫った面/密な顔ハッチを消さない。脚本の視線/Camera/切取り/表情と性別表現を保持し、怒り/加齢/皺を追加しない。冷静な顔は冷静に。他コマは各自の顔構造/媒体を保持。`:''}
 ${[...commonCast].filter(([,panels])=>panels.length>1).map(([rule,panels])=>`Applies only to ${panels.map(n=>`P${n}`).join(', ')}: ${rule}`).join('\n')}
 ${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects??[]).includes(id)?[`P${i+1}`]:[]).join(', ')}: ${EXPERIMENTAL_VISUAL_EFFECTS[id].instruction}`).join('\n')}
-${qualityContract}${colorMode==='monochrome'?'\n'+MONOCHROME_RENDERING_LOCK_COMPACT+'\n'+MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT:''}
+${translateMonochrome?translateMonochromeCompilerRules(qualityContract):qualityContract}${colorMode==='monochrome'?'\n'+(translateMonochrome?translateMonochromeCompilerRules(MONOCHROME_RENDERING_LOCK_COMPACT):MONOCHROME_RENDERING_LOCK_COMPACT)+'\n'+MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT:''}
 PANEL EDGE CONTINUITY LOCK: PAGE CONTAINMENT: ${plan.composition?.bleed.length?'FULL BLEEDで指定したコマの辺だけタチキリ必須。他の外周は余白付きで保持。':'外枠の四辺/四隅を余白付きで画布内へ収め、切落とし/画外拡張は禁止。明示の枠なし/裁切り指定は優先。'}内部の枠越えは外周裁切りの許可ではない。道具/画面/文字は自枠内、隣場面への流出は明示時のみ。${hasDominantFigure?'小コマの独立人物は枠内へ。PAGE DOMINANT FIGUREは枠を越える大きさを保つ。':'原則、見える頭と髪の全輪郭を余裕付きで枠内に。'}演出上の枠越えは一つの連続した前景層とし、枠線は頭/髪の全輪郭の後ろで止まり、その後に再開。顔/髪を枠線で貫く・輪郭の切断・外側断片の複製・枠内外の位置ずれは禁止。${hasDominantFigure?'PAGE DOMINANT FIGUREと指定のREQUIRED BREAKOUTは省略しない。人物を縮めず周囲の枠と台詞の余白を調整し、一続きの輪郭を描く。':plan.composition?.breakouts.length?'REQUIRED BREAKOUTは省略しない。隣接の余白を調整し一続きの輪郭を描く。':'綺麗に越えられなければ全輪郭を枠内に保持。'}
 LIMB OWNERSHIP CHECK (internal; never print): 全コマの各人物の左右の腕/手/脚/足を可視・自然な遮蔽・画面外に分類。見える手→手首→肘→本人の肩、足→足首→膝→本人の腰を辿り、隠れた部分も自然につなぐ。所有者不明/余分/融合/分離/理由のない欠落、家具や他人の体から出る手足は禁止。指定の解剖/ポーズ/接触/Camera/切取り/短縮を保持し、隠れた四肢の露出や全身画角を強制しない。仕上げ前に所有/接続の曖昧さだけを直し、動作や構図を変えない。
 ${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks,showTitle,bottomBleed})}
@@ -755,7 +756,9 @@ ${showWatermarks?`FOOTER ONLY: Bottom-left EXACTLY "ネームから全自動の�
     const panels=plan.panels.flatMap((p,i)=>source.panels[p.sourcePanel-1].style===style?[`P${i+1}`]:[]);
     if(panels.length>1) sharedMedia.set(style,panels);
   }
-  return sharedMedia.size ? sharePanelShotExecution(render(true,sharedMedia)) : compact;
+  const shared=sharedMedia.size ? sharePanelShotExecution(render(true,sharedMedia)) : compact;
+  if(shared.length<=promptMaxChars) return shared;
+  return colorMode==='monochrome' ? sharePanelShotExecution(render(true,sharedMedia,true)) : shared;
 }
 
 export function buildExperimentalReviewPrompt(plan, source, options={}) {
@@ -1442,7 +1445,14 @@ export async function prepareExperimentalManga(input, requestPlan, {colorOnlyPre
     }
   }
   const prompt=buildExperimentalImagePrompt(plan,source,input);
-  assertImagePromptBudget(prompt,input.promptMaxChars);
+  try { assertImagePromptBudget(prompt,input.promptMaxChars); }
+  catch(error) {
+    if(error?.code==='IMAGE_PROMPT_BUDGET') error.diagnosticContext={
+      stage:'step3_image_prompt_budget',scenario:source.scenario,castList:source.castList,
+      userTopic:source.userDirection,finalPrompt:prompt,scenarioMode:input.scenarioMode||'experimental-manga',
+    };
+    throw error;
+  }
   return {source,plan,prompt,colorLayoutContext:context,omittedEffectPanels,restoredCameraPanels};
 }
 
