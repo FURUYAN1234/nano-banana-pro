@@ -414,6 +414,7 @@ const REPORTED_SOURCE_QUOTE_PRE_RE = /(?:記事|新聞|ニュース|発表文|�
 const INSTRUCTION_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${META_SPEAKER_LABEL_PATTERN}\\s*[:：]`, 'i');
 
 const isInstructionLine = (line = '') => INSTRUCTION_LINE_RE.test(String(line).trim());
+const ACTION_NARRATION_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}(?:状況(?:演出)?|Action|物理描写)\\s*[:：]`, 'i');
 
 const STRUCTURED_SCENARIO_SECTION_RE = new RegExp(
   `^\\s*(?:[-+>・●▪◦]\\s*|\\*\\s+)?\\*{0,2}\\s*(${VISUAL_DIRECTION_LABEL_PATTERN}|背景|Background|セリフ|台詞|Dialogue)\\s*[:：]\\s*\\*{0,2}\\s*$`,
@@ -567,16 +568,26 @@ const getExplicitSameLineSpeakerName = (value = '', validCharacters = []) => {
   return isExplicitSameLineSpeakerPrefix(clean, validCharacters) ? clean : '';
 };
 
-const getImmediateInlineSpeakerName = (value = '', validCharacters = []) => {
+const getImmediateInlineSpeakerName = (value = '', validCharacters = [], allowUnregistered = false) => {
+  const resolve = (label) => {
+    const known = getExplicitSameLineSpeakerName(label, validCharacters);
+    if (known || !allowUnregistered) return known;
+    const clean = normalizeDialogueSpeakerPrefix(label);
+    // 独立行と同じく、参照に未登録のゲスト名も短い明示話者として読む。
+    if (!isGenericShortSpeakerPrefix(clean) || isUnregisteredCharacterCategorySpeaker(clean, validCharacters)
+      || isNarrationSubjectSpeakerCandidate(clean, validCharacters) || /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(clean)
+      || (clean.length > 5 && /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(clean))) return '';
+    return clean;
+  };
   const previousClose = String(value).lastIndexOf('」');
   if (previousClose >= 0) {
     const completeLabel = String(value).slice(previousClose + 1).replace(/^[\s、。！？!?…:：]+/u, '').trim();
-    const explicit = getExplicitSameLineSpeakerName(completeLabel, validCharacters);
+    const explicit = resolve(completeLabel);
     if (explicit) return explicit;
   }
   const match = String(value).match(/(?:^|[、。！？!?…）)」\s])([\p{L}\p{N}_・\s]{1,24})\s*(?:→|[-=]>|[:：])?\s*$/u);
   if (!match) return '';
-  return getExplicitSameLineSpeakerName(match[1], validCharacters);
+  return resolve(match[1]);
 };
 
 // 入れ子の引用は台詞本文として保持し、同じ行の次の話者の引用とは分離する。
@@ -943,6 +954,19 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     let detectedSpeaker = '';
 
     const isInstruction = isInstructionLine(line);
+    if (ACTION_NARRATION_LINE_RE.test(line)) {
+      // 完結した引用だけを走査する後段より先に、行末で切れた明示台詞を拒否する。
+      let quoteDepth = 0;
+      for (let index = 0; index < line.length; index++) {
+        if (line[index] === '「') {
+          if (quoteDepth === 0) {
+            const speaker = getImmediateInlineSpeakerName(line.slice(0, index), validCharacters, true);
+            if (speaker) { assertDialogueQuoteBalance(line, speaker); break; }
+          }
+          quoteDepth++;
+        } else if (line[index] === '」') quoteDepth = Math.max(0, quoteDepth - 1);
+      }
+    }
     if (match && match[1].trim() && !isInstruction) {
       let tempSpeaker = unwrapSpeakerLabel(match[1]).replace(/\s*(?:→|[-=]>|[:：])\s*$/u, '');
       // A parenthesis around several inline utterances opens before the first
@@ -1066,7 +1090,10 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const isSpokenQuoteByPostText = hasSpokenQuotePostContext(sameLinePostText || postText);
       if (REPORTED_SOURCE_QUOTE_POST_RE.test(sameLinePostText)
         || (REPORTED_SOURCE_QUOTE_PRE_RE.test(sameLinePrevText) && !isSpokenQuoteByPostText)) continue;
-      const immediateInlineSpeaker = getImmediateInlineSpeakerName(sameLinePrevText, validCharacters);
+      const immediateInlineSpeaker = getImmediateInlineSpeakerName(sameLinePrevText, validCharacters, ACTION_NARRATION_LINE_RE.test(quoteLine));
+      // 状況の後ろへ同じ行で続く「話者＋引用」は、改行した台詞と同じ所有者を持つ。
+      // カメラ・字幕等のメタデータや、話者のない面文字を台詞へ昇格させない。
+      const isExplicitActionSpeech = Boolean(immediateInlineSpeaker) && ACTION_NARRATION_LINE_RE.test(quoteLine);
 
       // Same-line speaker labels are reliable. Speech verbs inside situation/reaction
       // narration become bubble contracts only when a nearby person/role can be identified.
@@ -1090,7 +1117,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const isSfx = /^(バン|ドン|ガン|ドカ|バキ|ドス|ガサ|ゴト|チリン|ピンポン|カチ|パチ|ドーン|バァーン|ドォーン|バーン|ドドド|ゴゴゴ|ザザザ|ピー|ピピッ|ガチャ|ギー|ガリ|バタ|ガタ|ビリ|メリ|パリ|ドサ|ズド|ゴロ|キー|ギシ|ビシ|ガシャ|ミシ|カタ|コト|パタ|ジャリ|ズシ|グシャ|ベキ|メキ)[ッーン!！\s]*$/u.test(dialogueText);
       // [v4.6.5-fix2] 「〜と...音が」「〜と...鳴」等のSE文脈も検出
       const isSfxByPostText = hasAcousticQuotePostContext(postText);
-      const isInstructionQuoteWithoutSpeechVerb = isInstructionLine(quoteLine) && !hasSpokenQuotePostContext(sameLinePostText);
+      const isInstructionQuoteWithoutSpeechVerb = isInstructionLine(quoteLine) && !isExplicitActionSpeech && !hasSpokenQuotePostContext(sameLinePostText);
       const isLooseContextOnly = !hasValidSpeakerInPrevText;
       const isReactionNoteQuote = /(?:リアクション|Reaction)\s*[:：][^。！？!?\n]*$/i.test(sameLinePrevText);
 

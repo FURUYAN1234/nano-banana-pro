@@ -1414,7 +1414,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       return null;
     }
     const assemblyQualityWarning = !scenarioValidation.ok
-      ? `シナリオ品質警告: ${formatMangaScenarioValidationIssue(scenarioValidation)}。取得済みの内容を保持し、品質警告のままSTEP4へ進めます。`
+      ? `シナリオ品質警告: ${formatMangaScenarioValidationIssue(scenarioValidation)}。取得済みの内容を保持し、描画指示の検証を続けます。`
       : '';
     if (assemblyQualityWarning) showStatus(assemblyQualityWarning);
     setIsAssembling(true);

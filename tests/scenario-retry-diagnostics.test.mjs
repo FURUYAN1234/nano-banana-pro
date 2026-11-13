@@ -240,7 +240,9 @@ test('STEP3 quality warnings never return early or disappear during prompt assem
     const warning = run();
     assert.equal(warning.continued, true, 'ordinary quality warnings must continue');
     assert.match(warning.assemblyQualityWarning, /dialogue warning/);
-    assert.match(statuses.pop(), /品質警告のままSTEP4へ/);
+    const status = statuses.pop();
+    assert.match(status, /取得済みの内容を保持し、描画指示の検証を続けます/);
+    assert.doesNotMatch(status, /STEP4へ進めます/, 'later syntax validation may still stop assembly');
     context.validateMangaScenario = () => ({ ok: false, structuralValid: false });
     assert.equal(run(), null, 'wrong mode counts must stop before API work');
     assert.match(statuses.pop(), scenarioMode === 'four-panel' ? /4コマ/ : /4〜8コマ/);

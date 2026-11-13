@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-  "manualVersion": "7.4.9",
-  "manualSourceSha256": "1c236aa6632185798b3cfe6b63657d41fe0245c05a133de0cb113b0be25096e9",
+  "manualVersion": "7.5.0",
+  "manualSourceSha256": "2cbc0c920587bd2dac519e47f0eccb54eb774d38dfb1d333792220cee7beffc8",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "a2e06f60b57033c1d3447f663ba7a2016b3ca16f69ef50e7aca255ec2f920802"
+      "sha256": "ae978f6f7b453be64348d1776e44adb89f7b81a5bc7fd30b25f78415f90c89f7"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "520a84112b472e339bd6641a03a15e985689f6c2332d25bf279182f6b187e362"
+      "sha256": "67278ab8138d1279f64638067850c71dfb632366b6ab3d85b8f91011b18f5496"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "8ad54ae73872c6754bef0516d326a280c59a099da9028bf000b382b124ba3b06"
+      "sha256": "cc89e36c279c69bb74af7d59d2021aeceac521558b26acb4b407888ea17a3318"
     }
   ],
-  "readmeSha256": "063de0ca873e162f2b42751b22764fa1facbd046fc10818a3dd59e30bedf0c37",
+  "readmeSha256": "65a1766797fd4e6b0daaaaaee7247bec485db0f7c15cda4f40b24d505a01da06",
   "readmeLanguageGaps": [],
   "sourceTree": "41bb0f53f1590d8124c79ee8e7462753e842f1f7",
   "publicTree": "ea3eb820f7c5089208d3126184079410b5733d1b",
-  "packageSha256": "6d9e0fc132eee909acea306c2f18855e527a47576db4a5e76e7357766580ab36",
+  "packageSha256": "e9878fc542cf88f00cb82a3e65804022ff2e2de46af44648695708d4dbb7be1d",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-12T12:15:36.363Z",
-  "findings": "既存本文全見出し監査を継承。変更した検査説明と履歴を実装へ照合。画中人物/現場人物を分離し、前景予約文の語順が逆でも同じ一身体だけを扱う。構図の微差と判定不能なカメラ角は修正費用を使う根拠にしない。全台詞・元台本・承認済み全文・全修正指示を保持する。",
-  "manualFindings": "既存3冊71ページの目視確認を継承。再生成した全機能40ページを前回レンダーとバイト比較し、変更は23ページだけ。23ページを単独目視して文字切れ/重なりなし、画面内人物/構図実害/修正指示の全文保持の説明を確認。公開PDFへコピー済み。残る39ページと未変更2冊は既存確認と一致。",
+  "checkedAt": "2026-11-13T01:26:59.091Z",
+  "findings": "前版の全見出し監査を継承し、git差分で本文の未変更範囲を照合。変更したSTEP3説明・ゲスト発話・引用除外・壊れた括弧の停止を共通パーサーと正常/異常テスト、通常Luna APIの出力へ照合した。版番号、更新履歴、配布ZIPリンクと表示版を7.5.0へ同期。画像品質改善や外部公開済みとは記載していない。",
+  "manualFindings": "3冊71ページを再生成し、全ページの文字境界・ページ番号・版・秘密情報検査に合格。前版との本文比較は版/日付を除き全機能12ページのみ変更。13枚のコンタクトシートで全ページを目視し、変更した12ページは単独画像でも確認、文字切れ・重なりなし。状況行の明示発話と不完全な括弧の停止の説明を実装に照合し、固定名の公開PDFへコピーした。",
   "pricingReview": {
-    "version": "7.4.9",
+    "version": "7.5.0",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-    "checkedAt": "2026-11-12T10:42:16.055Z",
+    "checkedAt": "2026-11-13T01:26:59.093Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -57,7 +57,7 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Opened official OpenAI Standard pricing and four legacy model pages, plus Gemini Standard pricing on 2026-11-12 for v7.4.9. Astra10/50,Sol6.1 2/10,Terra6.1 1/5,Luna6 .1/.5,Sol6 2/10,Sol5.6 4/20,Terra5.6 2/12,Luna5.6 .2/1.2 match current configuration. Image2.6 input8/output30/cached2,text5/cached1.25; GeminiFlash3.8 .75/3.75 through December31 and NanoBanana2.1 input1.5,text7.5,image30 with1K .0336 match unchanged UI/README/manual. Batch/Flex excluded; same pricing source hash retained."
+    "findings": "2026-11-13に公式Standard表と旧世代の個別4モデルページを再確認。Astra10/50、Sol6.1 2/10、Terra6.1 1/5、Luna6 .1/.5、Sol6 2/10、Sol5.6 4/20、Terra5.6 2/12、Luna5.6 .2/1.2。Image2.6画像8/30/キャッシュ2、text5/cache1.25。GeminiFlash3.8 .75/3.75（年末まで）、NanoBanana2.1入力1.5、text7.5、画像30/1K .0336。Batch/Flexの割引料金と区別し、設定の料金値に変更なし。2.5画像選択肢は11月12日の既存確認を継承。"
   },
-  "candidateReviewStatus": "real API image/review/one edit visually accepted; final revision66 normal STEP3 contract verified; final release preflight only"
+  "candidateReviewStatus": "全2330テスト・警告0 lint・build/security・通常Luna API STEP3正常/異常を確認。2026-11-13本人が正式公開、note、画像付きX/Facebook、公開後フルバックアップを許可。"
 }

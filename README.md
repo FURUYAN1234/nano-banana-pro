@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.4.9** / 現在のソース版: **v7.4.9**
+> Current source version: **v7.5.0** / 現在のソース版: **v7.5.0**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -506,6 +506,8 @@ A provider policy rejection stops the current generation and preserves existing 
 
 STEP3 keeps quoted article headings and document titles as scene text rather than extra dialogue. Explicit speech, including reading aloud, remains dialogue; invalid balloon counts, owners or coordinate order still stop prompt construction. After updating the app, rebuild STEP3 from the saved scenario. / STEP3は、引用された記事見出し・文書タイトルを作中文字として保持し、余分な台詞にしません。「読み上げる」などの明示発話は台詞に残し、吹き出しの件数・話者・座標順が不正なら構築を停止します。修正版へ更新後、保存済み台本からSTEP3を再実行してください。
 
+Speaker-labelled dialogue appended to an action line is extracted with its original owner and order, including unregistered guest names. Printed labels and direction-only notes stay out of bubbles; malformed dialogue quotes still stop processing. / 状況説明と同じ行に続く話者付き台詞も、ゲストの発話を含め、元の話者・順番で抽出します。看板などの文字や演出だけの注記を吹き出しにせず、台詞の括弧が壊れている場合は停止します。
+
 Speaker names retain bracketed aliases and titles (for example, `名前【別名】`); registered names are not discarded merely for being long. / `名前【別名】` などの括弧付き話者名を保持し、登録済みの人物名を長さだけで台詞から除外しません。
 
 Registered sheet characters are explicitly excluded from automatic copyright mosaics in generation and review. Only a scripted mask of a named character/region overrides that exclusion. Rebuild STEP3 if the exclusion no longer matches the cast. QA resolves registered full names and aliases across bracket styles, while still rejecting another person's balloon tail. / 登録済みシートの人物は、生成・品質検査の両方で自動モザイクの対象外にします。台本に本人・領域への遮蔽指定がある場合だけ例外です。除外指定と現在のキャストが一致しない場合はSTEP3の再構築が必要です。品質検査も登録済みの正式名・別名・括弧表記を照合し、別人への吹き出し接続は引き続き検出します。生成モデルが指定を守る保証ではないため、実画像の確認は必要です。
@@ -666,7 +668,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.4.8](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.4.8のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.4.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.5.0](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.0のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -726,7 +728,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.4.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.4.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -787,6 +789,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.5.0 (2026-11-13)
+- **[Fix & UX]** Fixed STEP3 failures caused by missed speaker-labelled dialogue on action lines / 状況説明と同じ行にある話者付き台詞の取りこぼしによるSTEP3停止を修正
 
 ### v7.4.9 (2026-11-12)
 - **[Fix]** Separate screen figures from physical cast, require visible harm for composition repair, and losslessly share repeated edit instructions. / 画面内人物の欠員誤検出、構図の微差を重大扱いする判定、長い自動修正指示の上限超過を修正。

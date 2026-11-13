@@ -33,6 +33,16 @@ test('valid original scenario goes straight through without repair requests', as
   assert.deepEqual(extractBubbleContracts(result.artifact.prompt).map(panel => panel.bubbles.map(({speaker,text}) => ({speaker,text}))), expected);
 });
 
+test('dialogue appended to situation lines reaches assembly without a false repair request', async () => {
+  const inline = scenario.replace(/\n(?=[^\n「]+「[^\n]+」\s*(?:\n|$))/g, ' ');
+  let calls = 0;
+  const result = await assemble({...options, scenario:inline}, async () => { calls++; throw new Error('unnecessary repair'); });
+  assert.equal(calls, 0);
+  assert.equal(result.repaired, false);
+  assert.equal(result.scenario, inline);
+  assert.deepEqual(extractBubbleContracts(result.artifact.prompt).map(panel => panel.bubbles.map(({speaker,text}) => ({speaker,text}))), expected);
+});
+
 test('all layout failure classes self-repair once and continue with exact dialogue and staging', async () => {
   const broken = ['{', '{}', '[]', JSON.stringify(plans[0].slice().reverse()),
     ...['speaker', 'x', 'anchor', 'route'].map(key => JSON.stringify(plans[0].map((item,i) => i ? item : {...item,[key]:key === 'x' ? 1 : ''}))),

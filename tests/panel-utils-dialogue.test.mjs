@@ -8,6 +8,29 @@ let extractEmotionStyle;
 let extractActionOnly;
 let extractDialogueOnly;
 
+test('explicit inline speech after action keeps owners, order and text without turning labels into bubbles', () => {
+  const cast = '## 甲\n## 乙';
+  const expected = [{speaker:'甲',text:'準備できた！'}, {speaker:'乙',text:'確認した。'}];
+  for (const label of ['状況', '状況演出', 'Action', '物理描写']) {
+    const panel = `${label}: 甲はチェック欄の「確認待ち」を指す。乙は壁の「作業中」という表示を見る。甲「準備できた！」乙「確認した。」`;
+    assert.deepEqual(extractDialogueOnly(panel, cast, {asEntries:true}), expected, label);
+  }
+  assert.deepEqual(extractDialogueOnly('状況: 甲は札の「準備できた！」を指す。乙は「確認した。」という記述を見る。', cast, {asEntries:true}), []);
+  assert.deepEqual(extractDialogueOnly('Camera: 甲の頭を寄りで描く。甲「準備できた！」', cast, {asEntries:true}), []);
+  for (const speaker of ['リオ', '山田元議長', '受付係']) {
+    const speech = `${speaker}「私が担当します！」`;
+    assert.deepEqual(extractDialogueOnly(`状況: 甲は資料を置く。${speech}`, cast, {asEntries:true}),
+      extractDialogueOnly(speech, cast, {asEntries:true}), speaker);
+  }
+  assert.deepEqual(extractDialogueOnly('状況: 黒板「作業中」と書かれた文字を甲が見る。', cast, {asEntries:true}), []);
+});
+
+test('an unclosed explicit inline utterance cannot disappear behind an otherwise valid bubble', () => {
+  for (const speaker of ['甲', '山田元議長']) {
+    assert.throws(() => extractDialogueOnly(`状況: 甲は手を挙げる。${speaker}「途中のまま\n乙「次です。」`, '## 甲\n## 乙', {asEntries:true}), {code:'DIALOGUE_SYNTAX'});
+  }
+});
+
 test('compact native metadata preserves literal compiler-like speech and validated rear-tail routes', () => {
   const text='乙、[RIGHTMOST] と TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): は合言葉だ。';
   const cast='## 甲\n## 乙';
