@@ -21,6 +21,30 @@ before(async () => {
  ({ setFixtureResponse } = await server.ssrLoadModule('virtual:native-scenario-fixture'));
 });
 after(async () => server?.close());
+
+test('adaptive story design reaches generation, audit and repair with genre and panel boundaries intact', () => {
+ for (const scenarioMode of ['four-panel', 'experimental-manga']) {
+  for (const punchlineType of ['GagAuto', 'QuietAftermath', 'Surreal', 'Documentary']) {
+   const topic = 'AとBが手紙を読む。最後は無言。成長や和解は追加しない。';
+   const count = scenarioMode === 'four-panel' ? 4 : 6;
+   const outputs = [
+    prompts.getScenarioPrompt({ ...args, scenarioMode, punchlineType, manualTopic: topic }),
+    payoff.buildScenarioPayoffReviewPrompt({ scenario: panels(count), scenarioMode, punchlineType, userTopic: topic }),
+    payoff.buildScenarioPayoffRepairPrompt({ scenario: panels(count), scenarioMode, punchlineType, userTopic: topic, review: reviewFor(count) }),
+   ];
+   for (const output of outputs) {
+    assert.ok(output.includes(topic), 'user intent survives all three stages');
+    assert.match(output, /尺と題材に合わせた物語設計/);
+    assert.match(output, /固定の位置や割合へ当てはめない/);
+    if (punchlineType === 'Documentary') assert.match(output, /内面・決断・成長を事実として創作しない/);
+    if (punchlineType === 'Surreal') assert.match(output, /通常の因果、合理的な動機、葛藤の解決、心理的成長を要求しない/);
+    if (punchlineType === 'QuietAftermath') assert.match(output, /未解決の問い、静かな余韻も帰結/);
+   }
+   assert.match(outputs[1], /payoff_clarity\.material_failure=true/);
+   assert.match(outputs[1], /構成項目の欠如、動機の明文化不足、静かな展開だけで不合格にしない/);
+  }
+ }
+});
 test('native validation accepts 5 and 8, preserves explicit silence, and normal mode accepts only 4', () => {
  for (const n of [5, 8]) {
   const text = panels(n).replace('A「2枚目です。」', 'セリフなし');

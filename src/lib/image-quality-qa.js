@@ -490,7 +490,9 @@ export const castInventoryIssues = (inventory, panel, names, {knownNames=[],bodi
   const { record, instances, grounded } = inspectCastInventoryRecord(inventory, name);
   if (!grounded || record.status === 'uncertain') return [{ type: 'unverified', panel, subject: name,
     reason: 'Named-cast count lacks distinct body locations and two identity cues, or grounded absence evidence.' }];
-  if (record.observed_count !== 1 || record.status === 'defect') return [{ type: 'cast_count', panel, subject: name,
+  // A style/framing/continuity verdict must not override a grounded count.
+  // Other audits retain those defects; this audit only checks physical instances.
+  if (record.observed_count !== 1) return [{ type: 'cast_count', panel, subject: name,
     castConservation:conservation,
     reason: `Expected exactly one physical instance; observed ${record.observed_count} at ${instances.map(instance => instance.location).join(' / ') || record.evidence}.` }];
   return [];

@@ -4,6 +4,7 @@ import { SCENARIO_SFX_CONTRACT } from './manga-sfx.js';
 import { buildScenarioPanelCountInstruction } from './scenario-validation.js';
 import { getPunchlineLabel, COMPACT_EMOTION_STYLES, STYLE_DRAWING_CONTRACTS } from './constants';
 import { buildRecentStoryContext } from './generation-history.js';
+import { buildStoryStructureGuidance } from './story-structure.js';
 import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
@@ -459,6 +460,7 @@ export const getScenarioPrompt = ({
            - 単なる場所名、天気、時刻、感情、抽象語ではなく、出来事固有の設備・主要物体・関係者・行為を優先すること。
            - すべてのコマへ同じ物を不自然に置かず、出来事の導入・展開・結果が分かるコマへ自然に配置すること。
         ${SCENARIO_PROP_CAUSALITY_RULES}
+        ${buildStoryStructureGuidance({ punchlineType, scenarioMode: experimental ? 'experimental-manga' : 'four-panel' })}
         - 新規シナリオの構想時は、題材に即した異なる行為と因果の候補を内部で比較する。操作の成否、空間の使い方、人物の役割・受け止め方などから、今回の出来事に最も合う展開を選ぶ。候補を固定ローテーションにしない。
         - 出力前に、固有名詞や数値だけ別の題材へ差し替えても成立する汎用の仕掛けに頼っていないか確認する。長くする・増やすだけなら、明示指定と事実を保ちつつ、人物の行為が次の結果を生む展開へ練り直す。この比較や設計ラベルは出力しない。
            ${customOutfit.trim() ? `

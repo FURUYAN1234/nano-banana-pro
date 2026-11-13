@@ -20,6 +20,15 @@ try {
     assert.match(result.prompt,/PAGE DOMINANT FIGURE F1: 客演者/);
     assert(result.plan.expectedCast.slice(1).every(p=>!p.names.includes('客演者')),'incoming figure must not add local guest bodies');
   });
+  test('foreground review distinguishes a later scene from a detached part of the same body', async()=>{
+    const input=makeInput('客演者は片膝をゆるめ、片手を腰に置いた大きなポーズ。ユウが横で見上げる。');
+    const result=await prepare(input);
+    const review=m.buildExperimentalReviewPrompt(result.plan,m.readExperimentalSource(input));
+    assert.match(review,/scripted reappearance in a later panel is its own scene/);
+    assert.match(review,/different neighboring edge\/body part is minor_variation/);
+    assert.match(review,/SAME scene\/body/);
+    assert.match(review,/unconfirmed intended connection is uncertain/);
+  });
   test('a depicted silent figure is preserved separately from physical visitors and tiny replicas',async()=>{
     const result=await prepare(makeInput('モニターの画面内の客演者の風刺再現像は片膝をゆるめ、片手を腰に置いた大きなポーズ。ユウが横で見上げる。'));
     assert.deepEqual(result.plan.expectedCast[0].names,['ユウ']);

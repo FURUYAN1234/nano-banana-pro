@@ -43,6 +43,18 @@ const STRONG_GAG_REVIEW = {
   reason_codes: [],
 };
 
+test('serious and factual repairs preserve consequences without requiring a surprise escalation', () => {
+  for (const punchlineType of ['QuietAftermath', 'OpenQuestion', 'SeriousDocumentary', 'Documentary']) {
+    const prompt = buildScenarioPayoffRepairPrompt({
+      scenario: '[1コマ目: 起]\n状況: Aが手紙を置く。\n[2コマ目: 承]\n状況: Bが読む。\n[3コマ目: 転]\n状況: Bが顔を上げる。\n[4コマ目: 結]\n状況: Aが隣に座る。',
+      punchlineType,
+      review: { ...STRONG_GAG_REVIEW, payoff_clarity: { material_failure: true, evidence: '最後の反応の相手が分からない。', correction: '手紙を渡した相手への反応を見せる。' } },
+    });
+    assert.doesNotMatch(prompt, /規模・意味・対象・行為者の少なくとも1つを意外に変える/, punchlineType);
+    assert.match(prompt, /静かな余韻|確認された現状や残る問い/, punchlineType);
+  }
+});
+
 const WEAK_SLOGAN_REVIEW = {
   pass: true,
   payoff_clarity: { material_failure: false, evidence: '結末の宣言自体は読めるが、視覚的なオチがない。', correction: '' },

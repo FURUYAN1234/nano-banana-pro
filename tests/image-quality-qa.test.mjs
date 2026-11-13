@@ -1259,6 +1259,24 @@ test('focused body and hand audit distinguishes a missing actor from hidden hand
     instances: [{ location: 'rear head and shoulder; face hidden', matched_features: ['twin tails', 'striped jacket'] }] }), []);
 });
 
+test('cast count follows grounded bodies instead of a conflicting defect label', () => {
+  const inspect = record => parseActorHandAuditResponse(JSON.stringify({ panels: [{ panel: 4,
+    cast_instances: [record],
+    actor_limb_inventory: [{ actor: 'A', visible_hands: [], evidence: 'Hands outside the crop.' }],
+  }] }), [{ panel: 4, names: ['A'] }]);
+  const one = { name: 'A', observed_count: 1, status: 'defect',
+    evidence: 'One cropped shoulder belongs to this later scene, not the preceding foreground.',
+    instances: [{ location: 'left edge of the later scene', matched_features: ['short dark hair', 'striped jacket'] }] };
+  assert.deepEqual(inspect(one), []);
+  assert.ok(inspect({ ...one, observed_count: 0, instances: [], evidence: 'Whole scene has no matching actor.' })
+    .some(issue => issue.type === 'cast_count'));
+  assert.ok(inspect({ ...one, observed_count: 2, instances: [...one.instances,
+    { location: 'separate body on the right', matched_features: ['short dark hair', 'striped jacket'] }] })
+    .some(issue => issue.type === 'cast_count'));
+  assert.ok(inspect({ ...one, observed_count: 2 }).every(issue => issue.type === 'unverified'));
+  assert.ok(inspect({ ...one, status: 'uncertain' }).every(issue => issue.type === 'unverified'));
+});
+
 test('reading order rejects reversed balloon bodies even when text and speaker tails pass', () => {
   const review = (positions, mode) => {
     const checks = spatialChecks(mode === 'single-image' ? 1 : 4);

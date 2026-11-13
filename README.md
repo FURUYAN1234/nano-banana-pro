@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.5.0** / 現在のソース版: **v7.5.0**
+> Current source version: **v7.5.1** / 現在のソース版: **v7.5.1**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -301,6 +301,8 @@ STEP1 moves to its live analysis log while character sheets are being read. STEP
 ### Story construction algorithm / 物語アルゴリズム
 
 The story routine is a constrained editor rather than a single request to “make a funny manga.” It processes the following layers in order. / 物語ルーチンは、単に「面白い漫画を作る」と依頼する一発生成ではなく、次の制約層を順に処理します。
+
+**Adaptive story structure / 尺と題材に合わせた物語設計:** Generation, review and repair share guidance inspired by three-act structure: connect a character's aim or assumption, a trigger, action and response, and the outcome or changed meaning. Four-panel and four-to-eight-panel stories compress or combine only the beats they need; a midpoint, crisis, villain, subplot or personal growth is not mandatory. Opening/closing visual contrast is optional. Quiet and surreal endings retain their form, and documentary stories must not invent motives, inner thoughts or resolutions. Existing payoff review checks concrete gaps that make the outcome unreadable, not completion of a beat checklist; no separate API review stage is added. / 三幕構成を参考に、人物の目的・思い込み、きっかけ、行動と応答、帰結や意味の変化をつなぐ指針を、生成・監査・修正で共有します。4コマと4〜8コマでは必要な展開だけを圧縮・統合し、中間点・危機・敵・脇筋・成長は必須にしません。冒頭と最後の絵の対比も選択肢です。静かな余韻やシュールの形式を保ち、ドキュメンタリーでは動機・内面・解決を創作しません。既存の帰結監査は項目数ではなく、結末の理解を妨げる具体的な断絶を確認します。専用のAPI検査工程は追加しません。
 
 1. **Normalize input facts / 入力事実の正規化:** Separate source/reference metadata, URLs, article titles, interface labels, input-mode names and internal placeholders from drawable events and real character dialogue. News-only category/date/freshness instructions never enter free-input prompts. Compound headings such as `出典・参考:` and their bullet lists remain posting metadata and never become a speaker, balloon or visible label. Explicit quotations spoken by a character and explicitly required prop lettering remain in the script. / 出典・参考メタデータ、URL、記事名、UIラベル、入力モード名、内部プレースホルダーを、描画する出来事と実際の人物台詞から分離します。ニュース専用のカテゴリ・日付・鮮度指示は自由入力プロンプトへ入れません。`出典・参考:`のような複合見出しと箇条書きは投稿用情報として扱い、話者・吹き出し・画面文字へ変換しません。人物が実際に話す引用と明示された小道具文字は保持します。
 2. **Resolve tone once / 調子の確定:** Resolve automatic selection into one gag or serious ending policy. Serious topics protect consequence and restraint; documentary modes additionally lock facts, numbers, chronology and causality. / 自動選択をギャグまたはシリアスの結末方針へ一度だけ確定します。シリアス題材は結果と抑制を守り、ドキュメンタリーでは事実・数値・時系列・因果も固定します。
@@ -668,7 +670,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.5.0](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.0のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.5.1](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.1のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -728,7 +730,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -789,6 +791,10 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.5.1 (2026-11-13)
+- **[Fix]** Cast-count review follows grounded body counts, so a conflicting defect label does not turn one required and observed actor into a count failure. Later story appearances remain separate from page foregrounds. / 人物数は根拠のある実人数で照合し、必要人数・観測人数ともに1人の記録を別の欠陥ラベルだけで人数異常にしません。後の場面への再登場とページ前景を区別します。
+- **[Fix & UX]** Share adaptive story structure across scenario generation, review and repair; preserve quiet, surreal and factual endings without forced surprise escalation. / 三幕構成を参考に、題材とコマ数に応じた人物の目的・行動・結果・帰結を生成と監査・修正で共有。静かな余韻・シュール・事実保持の境界を維持し、シリアス修正で意外性を強制する指示を解消。
 
 ### v7.5.0 (2026-11-13)
 - **[Fix & UX]** Fixed STEP3 failures caused by missed speaker-labelled dialogue on action lines / 状況説明と同じ行にある話者付き台詞の取りこぼしによるSTEP3停止を修正

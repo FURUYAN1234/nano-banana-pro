@@ -1,4 +1,5 @@
 import { getEndingModePolicy } from './ending-mode-policy.js';
+import { buildStoryStructureGuidance } from './story-structure.js';
 import { validateScenarioEnhancement } from './scenario-enhancement.js';
 import { buildCopyrightMosaicInstruction } from './render-options.js';
 import { getScenarioPanelBlocks, validateMangaScenario, assertGeneratedScenarioCameraContract, buildScenarioPanelCountInstruction } from './scenario-validation.js';
@@ -180,6 +181,7 @@ FINAL PANEL: ${panelCount}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
 ${experimental ? '互換JSON名 panel3_prediction は最終直前までの予測、panel4_outcome は実際の最終コマの帰結を意味する。番号3・4へ固定しない。panel_development は全コマを確認し、新しい動作・応答・発見・意味のある沈黙や間の必要性を evidence に記す。同じ出来事・情報の再掲やカメラだけの変更で、削除しても時機・感情・理解を何も失わない明確な水増しだけ material_padding=true とし、同じ題材・結末を保つ correction を添える。無言という理由だけで失格にせず、台詞や沈黙の数のノルマを設けない。' : ''}
 ${toneRule}
+${buildStoryStructureGuidance({ punchlineType, scenarioMode, phase: 'review' })}
 ${policy.guidance ? `選択した結末の判定基準: ${policy.guidance}` : ''}
 ${policy.actionDirection ? `${policy.actionDirection}\n- action_continuity: 結末より前の別々のコマに、結末と因果でつながる動きの開始と、動きによる状態変化が描かれているか。コマ番号と台本にある動作・変化・結果を evidence に挙げる。最後のポーズだけ、会話中の身振りだけ、準備を口にするだけ、無関係な動作の羅列、同じ動作の別アングルだけであれば material_failure=true。元の題材と結末を保って途中の演技を直す案を correction に書く。明示された静止や固定のコマ割りが演技追加を禁じる場合は、ユーザー原文の該当指定を evidence に引用して false。動作の派手さや好みだけで不合格にしない。` : ''}
 ${policy.actionDirection ? '- action_staging: 連続性とは別に、見せ場で人物が力を出す・受ける身体演技が具体化されているか。コマ番号と重心・身体軸・手足・接点・反動のうち実際に書かれた根拠をevidenceへ引用する。普通の立ち歩き、物の位置替え、手先の身振りだけで見せ場が終わり、元の動作で描ける全身の動勢が欠ける場合はmaterial_failure=true。単なる派手さの好みや軽微な差は失格にせず、全コマの大動作や跳躍・格闘は要求しない。明示された静止・固定姿勢・カメラ・身体条件は優先し、制約の原文を根拠にfalse。具体化された緊張・踏ん張り・反動も有効。correctionは同じ出来事・台詞・結末を保ち、必要な状況とCameraの演技だけを強める案。事故・暴力・新しい事件を創作して解消しない。' : ''}
@@ -426,6 +428,7 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
 export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review, userTopic, recentScenarios = [], mosaicCopyrightedCharacters = true, scenarioMode = 'four-panel' } = {}) => {
   const panelCount = payoffPanelCount(scenario, scenarioMode);
   const experimental = scenarioMode === 'experimental-manga';
+  const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
   const reasonCodes = evaluateScenarioPayoffReview(review, { punchlineType, recentScenarios, scenarioMode, panelCount }).reasonCodes;
   const stagingOnly = isStagingOnlyRepair(reasonCodes);
@@ -455,6 +458,7 @@ ${String(scenario || '').trim()}`;
 ENDING MODE: ${punchlineType || 'Auto'}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
 監査結果: ${JSON.stringify(repairReview, null, 2)}
+${buildStoryStructureGuidance({ punchlineType, scenarioMode, phase: 'repair' })}
 ${getEndingModePolicy(punchlineType).guidance ? `選択した結末の意味を保つ: ${getEndingModePolicy(punchlineType).guidance}` : ''}
 ${getEndingModePolicy(punchlineType).actionDirection || ''}
 ${buildRecentStoryContext(recentScenarios)}
@@ -465,7 +469,9 @@ ${identityRepair ? '- cast_identityの基準設定と台本の根拠を照合し
 - visual_feasibilityはmaterial_loss=trueの具体的な欠落だけを直す。既出印字の再掲可読性や補助細部だけのために、引き・アオリ・身体演技を顔中心へ変更しない。必要な情報を初めて読むコマと、身体演技を見せるコマを分け、内容に応じたコマ高と前後配置で解決する。ユーザーが明示した可読文字・カメラ・動作は保持する。
 ${stagingOnly ? '- 成立しているフリ・予測・帰結はそのまま保持する。新しい種や別のオチを追加しない。' : surrealMode
     ? '- 静寂型（シュール）では論理的な種、自然な予測、因果の回収を追加しない。物・設備・舞台の大破壊、因果の飛躍、支離滅裂、不条理を、真顔・沈黙・奇妙な間で目に見える笑いへ強める。辻褄合わせや後付け説明で合理化しない。'
-    : `- 1〜2コマ目に具体的な種を置き、${panelCount - 1}コマ目までに読者の予測を形成し、${panelCount}コマ目ではその予測を一段ずらす帰結を人物の行動・表情・小道具・空間変化で見せる。
+    : policy.documentary || policy.endingTone === 'serious'
+      ? '- 前の出来事・選択・手掛かりと最後の応答を結び、選択された結末の帰結や意味を絵で読めるようにする。意外な増幅や反転を必須にせず、事実・指定された結末・静かな余韻を保持する。'
+      : `- 1〜2コマ目に具体的な種を置き、${panelCount - 1}コマ目までに読者の予測を形成し、${panelCount}コマ目ではその予測を一段ずらす帰結を人物の行動・表情・小道具・空間変化で見せる。
 - ${panelCount - 1}コマ目で宣言・準備した行動を${panelCount}コマ目でそのまま実行するだけにしない。1〜2コマ目に置いた別の種を再利用し、規模・意味・対象・行為者の少なくとも1つを意外に変える。`}
 - 選択された ENDING MODE を守る。シリアスでは安いギャグ反転を強制せず、選択の結果・再解釈・余韻を成立させる。
 - 元シナリオの題材、人物、場所、事実、数値、時系列、明示された衣装とセリフ書式を保存する。ドキュメンタリーでは事実を発明しない。

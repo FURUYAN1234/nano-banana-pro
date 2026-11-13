@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-  "manualVersion": "7.5.0",
-  "manualSourceSha256": "2cbc0c920587bd2dac519e47f0eccb54eb774d38dfb1d333792220cee7beffc8",
+  "manualVersion": "7.5.1",
+  "manualSourceSha256": "62eb5e73247e3c16fbb01b79d0c7c5f2a4397ed0b519c08b420834fd198ed0ec",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "ae978f6f7b453be64348d1776e44adb89f7b81a5bc7fd30b25f78415f90c89f7"
+      "sha256": "395d0eed27dfa3e0dc25058696071fabe0753149ce5aa470fcfc1fa0a0e9c56a"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "67278ab8138d1279f64638067850c71dfb632366b6ab3d85b8f91011b18f5496"
+      "sha256": "4b68d363fe71f71d1fa4e91c3110305b9534ba095f02deab10aec66ae10287bb"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "cc89e36c279c69bb74af7d59d2021aeceac521558b26acb4b407888ea17a3318"
+      "sha256": "3003113c73907f298b6778592af901b9e400a1b49008ff49e34dc45f41f16c51"
     }
   ],
-  "readmeSha256": "65a1766797fd4e6b0daaaaaee7247bec485db0f7c15cda4f40b24d505a01da06",
+  "readmeSha256": "0c5c50b7c738a41eff27eb13610755449180e86326d3505cc0be84f78c371dff",
   "readmeLanguageGaps": [],
   "sourceTree": "e51816f2a0a240a4116a399b8c2df01cc57cd37f",
   "publicTree": "0c186062cbc264b3a2b0ce3412913a5fcfc6ddcd",
-  "packageSha256": "e9878fc542cf88f00cb82a3e65804022ff2e2de46af44648695708d4dbb7be1d",
+  "packageSha256": "cecc1e85fdb4f7c4c966d9712fd7b27b1408e3ab07586c087cabdeff88929126",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-13T01:26:59.091Z",
-  "findings": "前版の全見出し監査を継承し、git差分で本文の未変更範囲を照合。変更したSTEP3説明・ゲスト発話・引用除外・壊れた括弧の停止を共通パーサーと正常/異常テスト、通常Luna APIの出力へ照合した。版番号、更新履歴、配布ZIPリンクと表示版を7.5.0へ同期。画像品質改善や外部公開済みとは記載していない。",
-  "manualFindings": "3冊71ページを再生成し、全ページの文字境界・ページ番号・版・秘密情報検査に合格。前版との本文比較は版/日付を除き全機能12ページのみ変更。13枚のコンタクトシートで全ページを目視し、変更した12ページは単独画像でも確認、文字切れ・重なりなし。状況行の明示発話と不完全な括弧の停止の説明を実装に照合し、固定名の公開PDFへコピーした。",
+  "checkedAt": "2026-11-13T03:23:02.565Z",
+  "findings": "v7.5.0の全見出し監査を継承し、git差分で未変更範囲を照合。物語アルゴリズム本文に、生成・監査・修正で共有する適応型三幕設計、尺とジャンルの境界、追加API工程なしを記載し実装へ照合。版番号・更新履歴・配布ZIPを7.5.1へ同期。単発生成から品質保証を主張しない。 再検証で発見した人物数1対1の誤検出も修正し、本文・更新履歴・調査仕様へ反映。現在配布ZIPのリンクラベルの旧版表記を訂正。",
+  "manualFindings": "3冊71ページを再生成し全ページの文字境界・A4・ページ番号・版・秘密情報検査に合格。前版との全文比較は版番号を除き全機能11ページのみ変更。前版の全ページ目視を継承し、変更した11ページを実画像で確認。物語設計の追記を実装と照合し、切れ・重なりがない。公開PDFは同じ固定名へ同期。",
   "pricingReview": {
-    "version": "7.5.0",
+    "version": "7.5.1",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-    "checkedAt": "2026-11-13T01:26:59.093Z",
+    "checkedAt": "2026-11-13T03:16:45.8851613Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -57,7 +57,7 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "2026-11-13に公式Standard表と旧世代の個別4モデルページを再確認。Astra10/50、Sol6.1 2/10、Terra6.1 1/5、Luna6 .1/.5、Sol6 2/10、Sol5.6 4/20、Terra5.6 2/12、Luna5.6 .2/1.2。Image2.6画像8/30/キャッシュ2、text5/cache1.25。GeminiFlash3.8 .75/3.75（年末まで）、NanoBanana2.1入力1.5、text7.5、画像30/1K .0336。Batch/Flexの割引料金と区別し、設定の料金値に変更なし。2.5画像選択肢は11月12日の既存確認を継承。"
+    "findings": "2026-11-13に公式Standard表と旧世代の個別4モデルページを再確認。Astra10/50、Sol6.1 2/10、Terra6.1 1/5、Luna6 .1/.5、Sol6 2/10、Sol5.6 4/20、Terra5.6 2/12、Luna5.6 .2/1.2。Image2.6画像8/30/キャッシュ2、text5/cache1.25。GeminiFlash3.8 .75/3.75（年末まで）、NanoBanana2.1入力1.5、text7.5、画像30/1K .0336。Batch/Flexと区別し設定の価格に変更なし。2.5画像選択肢は11月12日の既存確認を継承。"
   },
-  "candidateReviewStatus": "全2330テスト・警告0 lint・build/security・通常Luna API STEP3正常/異常を確認。2026-11-13本人が正式公開、note、画像付きX/Facebook、公開後フルバックアップを許可。"
+  "candidateReviewStatus": "全Node回帰・lint・build/security成功。通常UIの新規台本、描画指示、Image2.6生成とLuna検査を実APIで確認。人数1対1の誤検出は再発せず、最終画像を目視受入れ。自動unverified（越境の指定差・瞳の証拠不足）は保持し、自動合格を主張しない。"
 }
