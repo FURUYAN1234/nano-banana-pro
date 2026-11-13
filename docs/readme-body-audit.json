@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "0c5c50b7c738a41eff27eb13610755449180e86326d3505cc0be84f78c371dff",
   "readmeLanguageGaps": [],
-  "sourceTree": "e51816f2a0a240a4116a399b8c2df01cc57cd37f",
-  "publicTree": "0c186062cbc264b3a2b0ce3412913a5fcfc6ddcd",
+  "sourceTree": "5660c72a9f1b762e8ba7c594e3e735f9a76ab1de",
+  "publicTree": "5ec37d523fb94e3849e27e9cbabc85955b612a94",
   "packageSha256": "cecc1e85fdb4f7c4c966d9712fd7b27b1408e3ab07586c087cabdeff88929126",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,7 +41,7 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-13T03:23:02.565Z",
+  "checkedAt": "2026-11-13T03:23:36.196Z",
   "findings": "v7.5.0の全見出し監査を継承し、git差分で未変更範囲を照合。物語アルゴリズム本文に、生成・監査・修正で共有する適応型三幕設計、尺とジャンルの境界、追加API工程なしを記載し実装へ照合。版番号・更新履歴・配布ZIPを7.5.1へ同期。単発生成から品質保証を主張しない。 再検証で発見した人物数1対1の誤検出も修正し、本文・更新履歴・調査仕様へ反映。現在配布ZIPのリンクラベルの旧版表記を訂正。",
   "manualFindings": "3冊71ページを再生成し全ページの文字境界・A4・ページ番号・版・秘密情報検査に合格。前版との全文比較は版番号を除き全機能11ページのみ変更。前版の全ページ目視を継承し、変更した11ページを実画像で確認。物語設計の追記を実装と照合し、切れ・重なりがない。公開PDFは同じ固定名へ同期。",
   "pricingReview": {
