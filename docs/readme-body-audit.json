@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "e93454a46a4d62a67e31abb6cf0c1e966fed5b07ffce9467c9d1ae94cd7c6039",
   "readmeLanguageGaps": [],
-  "sourceTree": "71f9c96cdf106113daca5e5a974ca56a41cecb70",
-  "publicTree": "409931e41f8db8af9949856b37548241a6b729e8",
+  "sourceTree": "84844c66bd5dc0c8962e97c0975461d5eeae4e5e",
+  "publicTree": "621cbcffa6d1f075cf068af44a4b7f56f07bc62e",
   "packageSha256": "5e16df11863ea758598af4196f4191446189573ae9316457fc5e43df4addb9da",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -61,5 +61,5 @@
     ],
     "findings": "2026-11-14に両社公式料金表を読み、現在の画面用設定・README価格本文・PDF原稿の単価へ照合。OpenAI Standard短文はAstra10/50、Sol6.1 2/10、Terra6.1 1/5（cached input .05）、Luna6 .1/.5。旧モデルの個別公式ページでSol6 2/10、Sol5.6 4/20（11月30日までのpromotion）、Terra5.6 2/12、Luna5.6 .2/1.2を確認。Image2.6Sunburstと2.5Sunburst/Flareは画像input8/cached2/output30、text input5/cached1.25。Gemini3.8Flashはinput .75/output3.75（12月31日まで。翌年1月1日から1.5/7.5）、Nano2.1はinput1.5、text/thinking7.5、image30/1K一枚.0336（2K.0504/4K.113）。すべてUSD/100万tokenの通常Standard料金で、Batch/Flexの割引表を使っていない。現在の実装単価に変更なし。価格確認日以外のソース・公開状態・実APIを本監査から保証しない。 Version 7.5.3 retains identical pricing-source bytes; original official-read timestamp retained."
   },
-  "candidateReviewStatus": "local-precommit; refresh source/public tree after root candidate commit"
+  "candidateReviewStatus": "local committed source/public trees exact; root UI/API pending"
 }
