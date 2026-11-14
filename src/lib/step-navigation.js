@@ -6,7 +6,7 @@ export function hasStep1WorkflowInput({ images = [], referenceAssets = [], castE
 
 export function shouldScrollToEmptyStep1(previous, next) {
   return Boolean(next.step === 1 && next.empty && next.unlocked && !next.busy
-    && (!previous || previous.step !== 1 || !previous.empty || !previous.unlocked || previous.busy));
+    && (!previous || previous.step !== 1 || !previous.empty || !previous.unlocked || previous.busy || previous.intent !== next.intent));
 }
 
 export function scheduleWorkflowScroll(action, browserWindow) {

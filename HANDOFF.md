@@ -1,3 +1,9 @@
+## Repeated empty STEP1 reset correction v7.5.3 — 2026-11-14
+
+- Root reproduced on a02f1ae asset index-DOPFiDsb.js: empty/unlocked Step1 scrolled2012px then explicit Step1 reset left autosave at-1578px because hook setters assigned identical empty values; state-dependent effect did not run. This was current code, not stale cache. Existing locked Step2 overlay was retained correctly.
+- UI-only handleStep1Reset now calls the existing reset then increments a dedicated scroll-intent epoch. Empty Step1 effect handles that explicit event even with identical input/progress state. No hook/provider/generation changes. Manual Step1 nav remains top0; unrelated renders do not create an epoch.
+- Regression executes actual App callback and effect source with three repeated same-empty resets and same input/currentStep values, confirms each top0 scroll, unrelated-render no-scroll and repeated manual Step1 nav. Existing header-aware next-action behavior and queued cleanup retained. PDFs/README behavior descriptions unchanged and prior visual review remains applicable. Root owns final live acceptance before publication.
+
 ## Workflow scrolling v7.5.3 candidate — 2026-11-14
 
 - Root normal UI measurement showed Step2 action bottom1337.531 in1338px viewport (only0.469px edge clearance), header419.281px. New UI-only helper positions offscreen/edge actions in available viewport below measured header with16px margins; already-safe targets do not move. Empty Step1 uses actual image/reference/character/recognition/360/style input state and scrolls top on empty/reset/arrival/unlock, not unrelated renders.

@@ -232,12 +232,17 @@ function App() {
     setFixedHeaderElement(element);
   }, []);
   const [diagnosticHost, setDiagnosticHost] = useState(null);
+  const [step1ResetScrollEpoch, requestStep1ResetScroll] = useState(0);
   const previousStep1ViewRef = useRef(null);
   const step2ActionRef = useRef(null);
   const step3ActionRef = useRef(null);
   const step4ActionRef = useRef(null);
   const step1ProgressRef = useRef(null);
   const step2ProgressRef = useRef(null);
+  const handleStep1Reset = () => {
+    step1Reset();
+    requestStep1ResetScroll(epoch => epoch + 1);
+  };
 
   useEffect(() => {
     if (!fixedHeaderElement) return;
@@ -260,12 +265,12 @@ function App() {
   }, [fixedHeaderElement]);
 
   useEffect(() => {
-    const next = { step: currentStep, empty: !step1HasInput, unlocked: !isMainLocked, busy: emptyStep1ScrollBusy };
+    const next = { step: currentStep, empty: !step1HasInput, unlocked: !isMainLocked, busy: emptyStep1ScrollBusy, intent: step1ResetScrollEpoch };
     const shouldScroll = shouldScrollToEmptyStep1(previousStep1ViewRef.current, next);
     previousStep1ViewRef.current = next;
     if (!shouldScroll) return;
     return scheduleWorkflowScroll(() => scrollToWorkflowStep(1, { currentStep, browserWindow: window }), window);
-  }, [currentStep, step1HasInput, isMainLocked, emptyStep1ScrollBusy]);
+  }, [currentStep, step1HasInput, isMainLocked, emptyStep1ScrollBusy, step1ResetScrollEpoch]);
 
   useEffect(() => {
     if (isAnalyzing) {
@@ -359,7 +364,7 @@ function App() {
           selectedEngine={selectedEngine}
           enableOpenAIApi={enableOpenAIApi}
           partialReset={partialReset}
-          step1Reset={step1Reset}
+          step1Reset={handleStep1Reset}
           hardReset={hardReset}
         />
         <div ref={setDiagnosticHost} className="diagnostic-slot" />

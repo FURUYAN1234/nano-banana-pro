@@ -1,6 +1,8 @@
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {hasStep1WorkflowInput,shouldScrollToEmptyStep1,scrollToWorkflowAction,scheduleWorkflowScroll} from '../src/lib/step-navigation.js';
+import {hasStep1WorkflowInput,shouldScrollToEmptyStep1,scrollToWorkflowAction,scheduleWorkflowScroll,scrollToWorkflowStep} from '../src/lib/step-navigation.js';
 
 test('next action is centered between measured fixed header and viewport margins, with reduced motion respected',()=>{
  for(const reduced of [false,true]){
@@ -36,4 +38,20 @@ test('a queued scroll is cancelled on cleanup, blocking stale completion from st
  let queued;const cancelled=[];const browserWindow={requestAnimationFrame:fn=>{queued=fn;return 7;},cancelAnimationFrame:id=>cancelled.push(id)};let moves=0;
  const cleanup=scheduleWorkflowScroll(()=>moves++,browserWindow);cleanup();queued();assert.equal(moves,0);assert.deepEqual(cancelled,[7]);
  scheduleWorkflowScroll(()=>moves++,browserWindow);queued();assert.equal(moves,1);
+});
+
+test('actual App reset callback and empty-view effect scroll after repeated same-empty resets without requiring input changes',()=>{
+ const source=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+ assert.match(source,/step1Reset=\{handleStep1Reset\}/);
+ const handler=source.match(/const handleStep1Reset = (\(\) => \{[\s\S]*?\n  \});/);assert.ok(handler,'App must carry explicit reset intent');
+ const effect=source.match(/useEffect\(\(\) => \{(\n    const next = \{ step: currentStep,[\s\S]*?)\n  \}, \[currentStep, step1HasInput,[^\]]+\]\);/);assert.ok(effect);
+ const queued=[],moves=[];let resetCalls=0;
+ const browserWindow={requestAnimationFrame:fn=>{queued.push(fn);return queued.length;},cancelAnimationFrame(){},scrollY:2012,scrollTo:options=>moves.push(options)};
+ const context=vm.createContext({currentStep:1,step1HasInput:false,isMainLocked:false,emptyStep1ScrollBusy:false,step1ResetScrollEpoch:0,previousStep1ViewRef:{current:{step:1,empty:true,unlocked:true,busy:false,intent:0}},step1Reset:()=>resetCalls++,requestStep1ResetScroll:update=>{context.step1ResetScrollEpoch=update(context.step1ResetScrollEpoch);},shouldScrollToEmptyStep1,scheduleWorkflowScroll,scrollToWorkflowStep,window:browserWindow});
+ const reset=vm.runInContext(handler[1],context),runEffect=vm.runInContext(`() => {${effect[1]}\n}`,context);
+ runEffect();assert.equal(queued.length,0,'unrelated same-empty render must not scroll');
+ for(let i=0;i<3;i++){reset();runEffect();assert.equal(queued.length,i+1);queued[i]();assert.equal(moves[i].top,0);assert.equal(context.currentStep,1);assert.equal(context.step1HasInput,false);}
+ assert.equal(resetCalls,3);runEffect();assert.equal(queued.length,3);
+ for(let i=0;i<2;i++)assert.equal(scrollToWorkflowStep(1,{currentStep:1,browserWindow}),true);
+ assert.equal(moves.length,5);assert.ok(moves.every(move=>move.top===0));
 });
