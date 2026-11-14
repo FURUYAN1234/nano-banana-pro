@@ -222,6 +222,8 @@ function App() {
   const workflowScrollBusy = isAnalyzing || is360Analyzing || isSearching || isAssembling || isEnhancing
     || is360CameraWorking || isGeneratingImage || isFixingPolicy || isAborting;
   const emptyStep1ScrollBusy = workflowScrollBusy || isFullAutoMode || isEndlessMode;
+  const nextActionReady = currentStep === 2 || (currentStep === 3 && scenarioModeValid && !isColorModeLocked)
+    || (currentStep === 4 && Boolean(finalPrompt?.trim()));
 
   const [fixedHeaderHeight, setFixedHeaderHeight] = useState(70);
   const measuredHeaderHeightRef = useRef(fixedHeaderHeight);
@@ -297,7 +299,7 @@ function App() {
   }, [isGeneratingImage, imageResultRef]);
 
   useEffect(() => {
-    if (currentStep < 2 || isMainLocked || workflowScrollBusy) return;
+    if (currentStep < 2 || !nextActionReady || isMainLocked || workflowScrollBusy) return;
     const activeActionRef = currentStep === 2
       ? step2ActionRef
       : currentStep === 3
@@ -309,7 +311,7 @@ function App() {
     return scheduleWorkflowScroll(() => {
       scrollToWorkflowAction(activeActionRef?.current, { browserWindow: window, headerOffset: measuredHeaderHeightRef.current });
     }, window);
-  }, [currentStep, isMainLocked, workflowScrollBusy]);
+  }, [currentStep, nextActionReady, isMainLocked, workflowScrollBusy]);
 
   const apiKeyForUnlockedUi = isMainLocked ? "" : apiKey;
   const isStepNavigationDisabled = isMainLocked || isApiProcessing || isAborting || isFullAutoMode;

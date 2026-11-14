@@ -1,3 +1,9 @@
+## Action-readiness scroll correction v7.5.3 — 2026-11-14
+
+- Root90e50 live UI confirmed empty reset3/3 and normal Step2 action y862–896 below header. It then exposed invalid-to-valid manual scenario at the same currentStep3: disabled action became enabled offscreen y1610–1644 without a new scroll because only step number/busy/lock were observed.
+- UI nextActionReady now mirrors actual action readiness (Step3 scenarioModeValid and color-mode lock; existing processing guard retained). Invalid actions are not auto-targeted; readiness false→true schedules arrival, and valid→valid edits do not steal scroll. No workflow-step derivation, parser, prompt/provider/generation changes.
+- Regression executes actual App readiness expression, effect and dependency array at fixed Step3: invalid input makes no move, fixing structure causes one visible action arrival, further valid edits make no additional queue/scroll. Repeated empty-reset regression retained. Existing README/PDF descriptions remain accurate; source/public audit updated to candidate. Root owns final live acceptance.
+
 ## Repeated empty STEP1 reset correction v7.5.3 — 2026-11-14
 
 - Root reproduced on a02f1ae asset index-DOPFiDsb.js: empty/unlocked Step1 scrolled2012px then explicit Step1 reset left autosave at-1578px because hook setters assigned identical empty values; state-dependent effect did not run. This was current code, not stale cache. Existing locked Step2 overlay was retained correctly.

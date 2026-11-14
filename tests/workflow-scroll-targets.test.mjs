@@ -55,3 +55,17 @@ test('actual App reset callback and empty-view effect scroll after repeated same
  for(let i=0;i<2;i++)assert.equal(scrollToWorkflowStep(1,{currentStep:1,browserWindow}),true);
  assert.equal(moves.length,5);assert.ok(moves.every(move=>move.top===0));
 });
+
+test('actual App scroll effect reacts once when the same STEP3 becomes valid, not on further valid edits',()=>{
+ const source=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+ const readiness=source.match(/const nextActionReady = ([\s\S]*?);/);assert.ok(readiness,'App must observe actual action readiness');
+ const effect=source.match(/useEffect\(\(\) => \{(\n    if \(currentStep < 2[\s\S]*?)\n  \}, (\[currentStep,[^\]]+\])\);/);assert.ok(effect);
+ const queued=[],moves=[];const browserWindow={innerHeight:1338,scrollY:2373,requestAnimationFrame:fn=>{queued.push(fn);return queued.length;},cancelAnimationFrame(){},scrollTo:options=>{moves.push(options);browserWindow.scrollY=options.top;}};
+ const target={getBoundingClientRect:()=>({top:3983.59-browserWindow.scrollY,height:34})};
+ const context=vm.createContext({currentStep:3,scenarioModeValid:false,isColorModeLocked:false,finalPrompt:'',isMainLocked:false,workflowScrollBusy:false,step2ActionRef:{current:null},step3ActionRef:{current:target},step4ActionRef:{current:null},measuredHeaderHeightRef:{current:419},scheduleWorkflowScroll,scrollToWorkflowAction,window:browserWindow});
+ const runEffect=vm.runInContext(`() => {${effect[1]}\n}`,context);let previousDeps,cleanup;
+ const render=()=>{context.nextActionReady=vm.runInContext(readiness[1],context);const deps=Array.from(vm.runInContext(effect[2],context));if(!previousDeps||deps.some((value,index)=>!Object.is(value,previousDeps[index]))){cleanup?.();cleanup=runEffect();previousDeps=deps;}};
+ render();assert.equal(queued.length,0);assert.equal(moves.length,0,'invalid scenario must not target a disabled action');
+ context.scenarioModeValid=true;render();assert.equal(queued.length,1);queued[0]();assert.equal(moves.length,1);const y=target.getBoundingClientRect().top;assert.ok(y>=435&&y+34<=1322);
+ context.scenario='another valid edit';render();render();assert.equal(queued.length,1);assert.equal(moves.length,1);assert.equal(context.currentStep,3);
+});
