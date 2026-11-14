@@ -18,6 +18,7 @@ import { appendDictatedText } from '../lib/audio-transcription';
 import Panorama360Viewer from './Panorama360Viewer';
 import { getJapaneseWeekdayLabel, getSeasonContext } from '../lib/seasonal-outfit';
 import { getEffectiveEngine } from '../lib/engine-state';
+import { getEndingModeHint } from '../lib/ending-mode-hints';
 import {
   DOCUMENTARY_ENDING_OPTIONS,
   GAG_ENDING_OPTIONS,
@@ -356,6 +357,7 @@ export default function Step2Panel({
                 value={punchlineType}
                 onChange={(e) => setPunchlineType(e.target.value)}
                 aria-label="ストーリーの結末を選択"
+                aria-describedby="ending-mode-hint"
                 className="punchline-select-input w-full appearance-none font-mono"
               >
                 <optgroup label="おまかせ">
@@ -381,7 +383,7 @@ export default function Step2Panel({
               </select>
               <ChevronDown size={20} strokeWidth={3} className="punchline-select-chevron" aria-hidden="true" />
             </div>
-            <p className="mt-2 text-xs text-slate-400">アクションは一般的なニュースでも、話に沿った大胆な身体の動きを描きます。通常の結末にも、場面に合う動きの見せ場を織り交ぜます。</p>
+            <p id="ending-mode-hint" aria-live="polite" className="mt-2 text-xs text-slate-400">{getEndingModeHint(punchlineType)}</p>
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
               style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
               <input type="checkbox" checked={mosaicCopyrightedCharacters}

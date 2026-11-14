@@ -1,3 +1,9 @@
+## STEP2 ending hint candidate v7.5.3 correction — 2026-11-14
+
+- Fixed action-only hint originated27b9875 (2026-11-09), reworded0733ee2 (2026-11-10); no hint existed there before. Display now follows all27 selectable endings through a UI-only helper. Auto/GagAuto/SeriousAuto, both action and both documentary choices have distinct correct explanations; documentary says only the ending is cartoonized.
+- Existing ending policy/prompt/generation files remain byte-identical to72630a7; Step2Panel only imports the display helper, associates aria-describedby and renders polite dynamic text. No connected tab/key/user state accessed. Root owns final live UI acceptance and official publication.
+- Focused45 tests pass; full tests/lint/build tracked privately. README changed ending row preserves bilingual meaning; unchanged sections inherit exact prior body review. PDF regeneration retains41/12 pages; operation page12 changed and visually reviewed, other52 regenerated pages pixel-identical. Public PDFs and candidate audit synchronized before local commit.
+
 ## Super FURU AI 4-koma System v7.5.2 candidate — 2026-11-14（追加仕様の最終検証中・未公開）
 
 - STEP1はキャラクターシートのドロップを主経路とし、共通の人物欄を6行・160pxに統一。素材ごとの認識詳細を人物欄の上に置き、画像認識後は展開、空欄／人物テキストのみは折りたたむ。各STEPの白欄は編集できる旨を表示。

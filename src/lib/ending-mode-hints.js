@@ -1,0 +1,32 @@
+// Display copy only. Generation policies and prompts remain in ending-mode-policy.
+export const ENDING_MODE_HINTS = Object.freeze({
+  Auto: '題材と話の流れに合わせて、ギャグ／シリアスと結末の種類を自動で選びます。',
+  GagAuto: 'ギャグの結末から、題材に合う笑いの締め方を自動で選びます。',
+  SeriousAuto: 'シリアスの結末から、題材に合う感情や問いの締め方を自動で選びます。',
+  QuietAftermath: '言葉を抑え、出来事のあとの感情や静かな余韻を残します。',
+  Resolve: '困難を受け止めた人物の決意と、次へ進む一歩で締めます。',
+  Warning: '出来事から見える危機や代償を示し、警告として締めます。',
+  OpenQuestion: '答えを急いで決めず、読者が考えられる問いを残します。',
+  EmotionalClosure: '人物同士の理解や支えを通して、感動や救いにつなげます。',
+  TragicClosure: '取り戻せないものや喪失に向き合う結末にします。',
+  AngerProtest: '不当な扱いへの抗議や拒否で締めます。叫びや暴力は必須ではありません。',
+  EarnedReversal: '先に積み上げた行動や準備で、不利な局面を逆転させます。',
+  SeriousAction: '話に沿った大胆な身体の動きとその結果で、緊迫した局面の変化を見せます。',
+  Surreal: '静けさや無言の間にある、シュールなずれで笑いを作ります。',
+  Explosion: '積み重ねた状況を、カオスや大きなリアクションで弾けさせます。',
+  FakeEmotion: 'いい話に見せた流れを裏切り、その落差で笑いを作ります。',
+  Metafiction: '漫画や物語の枠を意識した仕掛けで、笑いにつなげます。',
+  Unreasonable: '出来事に対して不釣り合いな制裁や理不尽な結果で、笑いを作ります。',
+  RunningGag: '同じボケを繰り返して積み重ね、最後の変化や強まりで落とします。',
+  Dream: '夢やループとして状況をひっくり返し、笑いや不穏さを残します。',
+  Misunderstanding: '思い込みと実際の状況のすれ違いを、最後に大きく見せます。',
+  CanceledEnding: 'まだ続きそうな展開を、打ち切り風の締め方で笑いに変えます。',
+  ComicRage: '怒りや筋違いな責任転嫁と、受け手の反応の落差で笑わせます。',
+  SelfInflicted: '人物自身の行動が自分に返ってくる結果を、オチにします。',
+  RoleReversal: '仕込んだ行動や条件によって役割・力関係が逆転する落差で笑わせます。',
+  GagAction: '話に沿った身体の動きやドタバタの結果を、笑いのオチにつなげます。',
+  SeriousDocumentary: '原文の事実と参照の絵柄・頭身を保ち、結末だけをシリアスな漫画表現にします。',
+  Documentary: '原文の事実を保ち、結末だけをギャグの漫画表現にします。',
+});
+
+export const getEndingModeHint = (type) => ENDING_MODE_HINTS[type] || ENDING_MODE_HINTS.Auto;
