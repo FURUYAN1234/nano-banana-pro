@@ -230,6 +230,11 @@ function App() {
     pendingAutomaticWork }, getApiWorkSignal());
   const nextActionReady = currentStep === 2 || (currentStep === 3 && scenarioModeValid && !isColorModeLocked)
     || (currentStep === 4 && Boolean(finalPrompt?.trim()));
+  const enhancementViewOpen = !isFullAutoMode && isEnhancePanelOpen && scenario.length > 20;
+
+  useEffect(() => {
+    if (isFullAutoMode) setIsEnhancePanelOpen(false);
+  }, [isFullAutoMode, isEnhancePanelOpen, setIsEnhancePanelOpen]);
 
   const [fixedHeaderHeight, setFixedHeaderHeight] = useState(70);
   const measuredHeaderHeightRef = useRef(fixedHeaderHeight);
@@ -247,6 +252,10 @@ function App() {
   const step4ActionRef = useRef(null);
   const step1ProgressRef = useRef(null);
   const step2ProgressRef = useRef(null);
+  const scenarioEnhanceToggleRef = useRef(null);
+  const scenarioEnhanceActionRef = useRef(null);
+  const scenarioEnhanceProgressRef = useRef(null);
+  const [requestedStepNavigation, setRequestedStepNavigation] = useState(null);
   const handleStep1Reset = () => {
     step1Reset();
     requestStep1ResetScroll(epoch => epoch + 1);
@@ -305,11 +314,11 @@ function App() {
   }, [isGeneratingImage, imageResultRef]);
 
   useEffect(() => {
-    if (currentStep < 2 || !nextActionReady || isMainLocked || workflowScrollBusy) return;
+    if (currentStep < 2 || !nextActionReady || isMainLocked || workflowScrollBusy || enhancementViewOpen) return;
     const activeActionRef = currentStep === 2
       ? step2ActionRef
       : currentStep === 3
-        ? step3ActionRef
+        ? scenarioEnhanceToggleRef
         : currentStep === 4
           ? step4ActionRef
           : null;
@@ -317,15 +326,47 @@ function App() {
     return scheduleWorkflowScroll(() => {
       scrollToWorkflowAction(activeActionRef?.current, { browserWindow: window, headerOffset: measuredHeaderHeightRef.current });
     }, window);
-  }, [currentStep, nextActionReady, isMainLocked, workflowScrollBusy]);
+  }, [currentStep, nextActionReady, isMainLocked, workflowScrollBusy, enhancementViewOpen]);
+
+  useEffect(() => {
+    if (!enhancementViewOpen || isMainLocked) return;
+    return scheduleWorkflowScroll(() => scrollToWorkflowAction(scenarioEnhanceActionRef.current,
+      { browserWindow: window, headerOffset: measuredHeaderHeightRef.current }), window);
+  }, [enhancementViewOpen, isMainLocked]);
+
+  useEffect(() => {
+    if (!enhancementViewOpen || !isEnhancing || isMainLocked) return;
+    return scheduleWorkflowScroll(() => scrollToWorkflowAction(scenarioEnhanceProgressRef.current,
+      { browserWindow: window, headerOffset: measuredHeaderHeightRef.current }), window);
+  }, [enhancementViewOpen, isEnhancing, isMainLocked]);
 
   const apiKeyForUnlockedUi = isMainLocked ? "" : apiKey;
   const isStepNavigationDisabled = isMainLocked || isApiProcessing || isAborting || isFullAutoMode;
-  const handleNavigateToStep = step => scrollToWorkflowStep(step, {
+  const handleNavigateToStep = step => {
+    if (isStepNavigationDisabled || !Number.isInteger(step) || step < 1 || step > 4 || step > currentStep) return false;
+    if (step >= 3 && enhancementViewOpen) {
+      setIsEnhancePanelOpen(false);
+      setRequestedStepNavigation(step);
+      return true;
+    }
+    return scrollToWorkflowStep(step, {
     currentStep, disabled: isStepNavigationDisabled, browserWindow: window,
     headerOffset: fixedHeaderHeight,
     targets: { 2: step2Ref.current, 3: step3Ref.current, 4: outputRef.current },
-  });
+    });
+  };
+
+  useEffect(() => {
+    if (requestedStepNavigation === null || enhancementViewOpen) return;
+    return scheduleWorkflowScroll(() => {
+      scrollToWorkflowStep(requestedStepNavigation, {
+        currentStep, disabled: isStepNavigationDisabled, browserWindow: window,
+        headerOffset: fixedHeaderHeight,
+        targets: { 2: step2Ref.current, 3: step3Ref.current, 4: outputRef.current },
+      });
+      setRequestedStepNavigation(null);
+    }, window);
+  }, [requestedStepNavigation, enhancementViewOpen, currentStep, isStepNavigationDisabled, fixedHeaderHeight, step2Ref, step3Ref, outputRef]);
 
   return (
     <div className="app-shell min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30">
@@ -479,6 +520,10 @@ function App() {
               isSearching={isSearching}
               scenarioActionRef={step2ActionRef}
               scenarioProgressRef={step2ProgressRef}
+              scenarioEnhanceToggleRef={scenarioEnhanceToggleRef}
+              scenarioEnhanceActionRef={scenarioEnhanceActionRef}
+              scenarioEnhanceProgressRef={scenarioEnhanceProgressRef}
+              enhancementControlsDisabled={isApiProcessing || isFullAutoMode || isAborting}
               generateScenarioFromNews={generateScenarioFromNews}
               scenarioThought={scenarioThought}
               scenario={scenario}
@@ -511,7 +556,7 @@ function App() {
             /></div>
           </div>
 
-          {!isAnalyzing && !isSearching && currentStep >= 3 && (
+          {!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3 && (
             <>
               <GenerationPreview
                 scenario={scenario}
@@ -525,8 +570,9 @@ function App() {
               />
             </>
           )}
-          {!isAnalyzing && !isSearching && currentStep >= 3 && <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />}
-              <div  ref={step3Ref} className="flex flex-col gap-4">
+          {!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3 && <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />}
+          {!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3 && (
+              <div ref={step3Ref} className="flex flex-col gap-4">
 
                 {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
                 <Step3Panel
@@ -550,10 +596,11 @@ function App() {
                   promptActionRef={step3ActionRef}
                 />
               </div>
+          )}
 
 
           {/* 出力結果 */}
-          <div>
+          {!enhancementViewOpen && Boolean(finalPrompt?.trim() || generatedImage) && (<div>
           {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim() || generatedImage) && (<Step4Panel
               onNavigateToStep={handleNavigateToStep}
               isStepNavigationDisabled={isStepNavigationDisabled}
@@ -644,9 +691,7 @@ function App() {
               handlePolicyAutoFix={handlePolicyAutoFix}
               handlePolicySwitchToWeb={handlePolicySwitchToWeb}
               MAX_POLICY_RETRIES={MAX_POLICY_RETRIES}
-            />)}
-
-            {Boolean(finalPrompt?.trim() || generatedImage) && (<GenerationHistory
+            historyPanel={<GenerationHistory
               generationHistory={generationHistory}
               setGenerationHistory={setGenerationHistory}
               generatedImage={generatedImage}
@@ -657,9 +702,12 @@ function App() {
               isEnhancing={isEnhancing}
               isFullAutoMode={isFullAutoMode}
               fullAutoStep={fullAutoStep}
+            />}
             />)}
+
+
           
-          </div>
+          </div>)}
           </main >
 
         {!isAnalyzing && !isSearching && !isAssembling && <footer className="text-center text-slate-500 text-[9px] font-bold tracking-[0.3em] uppercase py-10 px-4">

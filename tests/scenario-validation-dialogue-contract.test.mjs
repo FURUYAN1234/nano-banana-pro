@@ -52,6 +52,25 @@ test('automatic cameras allow real high/low variation and intentional non-eye-le
   assert.equal(assertGeneratedScenarioCameraContract(fourPanels('[Camera: 俯瞰・同じ構図]\nセリフなし')), true);
 });
 
+test('automatic camera validation accepts noun-ended elevated placement before shot directions', () => {
+  for (const camera of [
+    '作業卓の端より少し高い位置、正面から左へ振った超広角の引き。机の上面が手前から奥へ収束する。',
+    '観客席よりやや高い位置、右後方からの中景。頭頂と肩の上面が見える。',
+    '高めの撮影位置、斜め前からの全身ショット。',
+  ]) {
+    assert.equal(assertGeneratedScenarioCameraContract(fourPanels(`[Camera: ${camera}]\nセリフなし`)), true, camera);
+  }
+  for (const camera of [
+    '主人公の手が高い位置、正面からの中景。',
+    '小道具は高い位置、右側に人物を置く。',
+    '机上の高い位置の手を大きく見せる。',
+    '高い位置ではなく、正面からの中景。',
+    '高い位置、正面からアイレベルで撮る。',
+  ]) {
+    assert.throws(() => assertGeneratedScenarioCameraContract(fourPanels(`[Camera: ${camera}]\nセリフなし`)), { code: 'CAMERA_CONTRACT' }, camera);
+  }
+});
+
 test('automatic cameras reject fisheye while retaining wide-angle and negated fisheye instructions', () => {
   for (const camera of ['俯瞰の魚眼', 'ローアングルのフィッシュアイ', 'high-angle fisheye view', 'low-angle fish-eye view']) {
     const scenario = fourPanels(`[Camera: ${camera}]\nセリフなし`);

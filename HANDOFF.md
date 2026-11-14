@@ -1,3 +1,10 @@
+## STEP boundaries and camera/title correction v7.5.5 — 2026-11-15 (local candidate)
+
+- STEP1完了後はSTEP2実行、台本完成後は強化見出し、STEP3完了後はSTEP4画像生成へ案内。STEP2初回の空台本編集・コピーを保持し、未準備のSTEP3と実行前STEP4の空ログ・画像枠を除去。強化展開時は後続を一時非表示にし、閉じると既存データを復帰。API処理・停止・全自動中は強化操作を抑止。結末補足10px、SNS説明コピーを入力欄右下へ移動。過去画像がある新しいSTEP4の実行前は、ボタン上の閉じた「過去の生成画像を開く」へ履歴を移し、実処理・ログ・表示画像ありでは従来の下部履歴を維持する修正を主担当が進める。履歴データは保持し、最終UI確認を要する。
+- CAMERA_CONTRACTの名詞止め撮影位置の誤検出を共有分類器で修正。非カメラ主体の高さと否定された撮影位置の誤受理も修正し、実際の撮影起点を保持。題名未指定の持ち込み台本はPageComposition等を印刷せず「無題」とし、明示題名と普通の先頭題名を保持。カメラ関連100件、題名関連23件の回帰と限定lintが合格。
+- 主担当の通常UI実API記録：STEP1 31.694秒、通常STEP2 110.265秒、添付元台本STEP3 33.552秒、STEP4生成・検査・台詞修復1回込み約466秒で終了。強化候補の比較も成功。同題材STEP2は衣装条件の修正後に候補生成・監査を通過し、262.975秒で成功。これらは各実行の記録値で、工程横断の総時間ではない。STEP4の自動最終QA合格を意味しない。
+- 同題材の追加STEP3も通常経路で16.437秒で成功し、全6コマと台詞を保持。全体検査・最終監査・正式公開・note/X/Facebook・公開後フルバックアップは主担当の台帳と現物で完遂判定する。具体的な公開許可は取得済み。作業正本：/home/furu/Codex/work/manga-step2-scroll-20261115/TASK.md。今回の追記では公開・バックアップを実行していない。
+
 ## Emergency-stop UI v7.5.4 candidate — 2026-11-14
 
 - Current editing/full-auto guidance now quotes the actual 緊急停止 button. Idle/stopped controls are grey and disabled; active work remains red. Height40px/top20px/right12px/header reservation72px retain a clear gap.

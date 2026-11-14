@@ -142,17 +142,28 @@ export const isFisheyeCamera = (camera = '') => /fish[ -]?eye|魚眼|フィッ�
 // eye-level viewpoint can be physically near the floor for a seated/chibi subject.
 export const classifyCameraElevation = (camera = '') => {
   const text = affirmativeCameraText(camera).normalize('NFKC')
+    .replace(/(?:高(?:い|めの?)|低(?:い|めの?))(?:撮影)?位置(?:ではなく|でなく|ではない|でない)/g, '')
     // A body crop's range start (膝上から…まで) is framing, not an
     // above/below camera origin. Keep separate placement and pitch cues intact.
     .replace(/(膝|ひざ|腰|胸|肩|首)[上下](?=から[^。;；\n]*?まで)/g, '$1')
-    .replace(/(?:^|[。;；\n、])([^。;；\n、]*?)(?:が|は)[^。;；\n、]*/g, (clause, subject) =>
-      /カメラ|撮影(?:者|位置)|視点|\bcamera\b/i.test(subject) ? clause : clause.replace(/見上げ|見下ろ[すし]/g, ''));
+    .replace(/(?:^|[。;；\n、])([^。;；\n、]*?)(?:が|は)([^。;；\n、]*)/g, (clause, subject, description) => {
+      if (/カメラ|撮影(?:者|位置)|視点|\bcamera\b/i.test(subject)) return clause;
+      // Mask the subject's described height, retaining a camera origin written
+      // before that subject: 「低い位置から人物が…」 is still a low shot.
+      return (clause.slice(0, clause.length - description.length)
+        + description.replace(/(?:高(?:い|めの?)|低(?:い|めの?))(?:撮影)?位置/g, ''))
+        .replace(/見上げ|見下ろ[すし]/g, '');
+    });
   const eyeLevelText = text.replace(/(?:above|below)\s+(?:the\s+)?eye[ -]?level/gi, '');
   if (/(?:アイレベル|eye[ -]?level|(?:目(?:線)?|視線)(?:の高さ|と同じ高さ))(?!より(?:も)?(?:高|低|上|下))/i.test(eyeLevelText)) return 'eye';
   const placement = text.match(/\bcamera\s+(?:(?:is\s+)?(?:positioned|placed|set)\s+)?(?:is\s+)?(?:slightly\s+)?(above|below)\b/i)?.[1]?.toLowerCase();
   const pitch = text.match(/(俯角|仰角)\s*[:：]?\s*(?:約|およそ|おおよそ)?\s*\+?(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)\s*(?:度|°)/)?.[1];
   const lateralHeight = text.match(/より(?:も)?(高|低)い(?:左|右)(?:前|後(?:ろ|方)?|側面)?(?:斜め)?(?:から|より)/)?.[1];
-  if (placement === 'above' || pitch === '俯角' || lateralHeight === '高' || HIGH_CAMERA_RE.test(text)) return 'high';
+  // Camera descriptions can end the placement clause as a noun, then name the
+  // azimuth/lens after a comma. Do not infer elevation from an actor/prop's
+  // height (が/は/を), an isolated height noun or a negated placement.
+  const nounPlacement = text.match(/(?:^|[。;；\n])[^。;；\n、,がはを]*?(高(?:い|めの?))(?:撮影)?位置(?=[、,]\s*(?:正面|左|右|前方|後方|斜め|広角|超広角|望遠|引き|中景|接写|全景|全身))/)?.[1];
+  if (placement === 'above' || pitch === '俯角' || lateralHeight === '高' || nounPlacement || HIGH_CAMERA_RE.test(text)) return 'high';
   if (placement === 'below' || pitch === '仰角' || lateralHeight === '低' || FLOOR_CAMERA_RE.test(text) || LOW_CAMERA_RE.test(text)) return 'low';
   return 'unspecified';
 };

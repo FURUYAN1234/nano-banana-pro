@@ -97,7 +97,7 @@ test('STEP2 generation keeps the real progress log visible while hiding stale re
 });
 
 test('STEP2 result controls return after generation finishes', () => {
-  const html = renderStep2({ currentStep: 3, scenario: '生成済みシナリオ' });
+  const html = renderStep2({ currentStep: 3, scenario: '生成済みシナリオ。人物の行動と台詞が入った台本。' });
 
   assert.match(html, /<textarea[^>]*aria-label="生成されたシナリオ"/);
   assert.match(html, /生成済みシナリオ/);
@@ -112,6 +112,41 @@ test('STEP2 progress frame remains for pasted scenarios without inventing an API
   assert.doesNotMatch(html, /STEP2 TIME|シナリオ生成完了/);
 });
 
+test('first STEP2 keeps a pasteable editor and reveals enhancement only for usable scenario text', () => {
+  const empty = renderStep2();
+  assert.match(empty, /aria-label="生成されたシナリオ"/);
+  assert.match(empty, /STEP2を実行すると/);
+  assert.doesNotMatch(empty, /シナリオ強化/);
+  const scenario = '生成済みシナリオ。人物の行動と台詞が入った台本。';
+  const closed = renderStep2({ scenario });
+  assert.match(closed, /aria-expanded="false"/);
+  assert.doesNotMatch(closed, /シナリオ強化実行/);
+  const open = renderStep2({ scenario, isEnhancePanelOpen: true });
+  assert.match(open, /aria-expanded="true"/);
+  assert.match(open, /シナリオ強化実行/);
+  assert.doesNotMatch(open, /シナリオ強化を開始しています/);
+  assert.equal((open.match(/Neural Process/g) || []).length, 1, 'no unused enhancement progress space');
+  for (const activity of [{ isEnhancing: true }, { enhanceLog: '> 強化に失敗しました。元の台本は保持しています。' }]) {
+    const active = renderStep2({ scenario, isEnhancePanelOpen: true, ...activity });
+    assert.equal((active.match(/Neural Process/g) || []).length, 2, 'started or failed enhancement retains progress');
+  }
+});
+
+test('automatic or active processing cannot reopen enhancement and conceal downstream progress', async () => {
+  const html = renderStep2({ scenario: '生成済みシナリオ。人物の行動と台詞が入った台本。',
+    isEnhancePanelOpen: true, enhanceExpressions: true, enhancementControlsDisabled: true });
+  const buttons = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)];
+  const toggle = buttons.find(([,attrs]) => attrs.includes('aria-expanded='));
+  const execute = buttons.find(([, ,body]) => body.includes('シナリオ強化実行'));
+  assert.match(toggle[1], /disabled=""/);
+  assert.match(execute[1], /disabled=""/);
+  const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  const condition = app.match(/const enhancementViewOpen = ([^;]+);/)[1];
+  const visible = new Function('isFullAutoMode','isEnhancePanelOpen','scenario',`return Boolean(${condition});`);
+  assert.equal(visible(true,true,'a'.repeat(30)),false);
+  assert.equal(visible(false,true,'a'.repeat(30)),true);
+});
+
 test('STEP2 completion log and final time remain beside the generated scenario', () => {
   const html = renderStep2({ currentStep: 3, scenario: '生成済みシナリオ',
     scenarioThought: '> シナリオ生成完了\n> [STEP2 TIME] 完了: 12.345秒' });
@@ -123,7 +158,7 @@ test('STEP2 completion log and final time remain beside the generated scenario',
 
 test('preview waits for a scenario and the page-mode switch precedes STEP2', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
-  assert.match(app, /\{!isAnalyzing && !isSearching && currentStep >= 3 && \(\s*<>\s*<GenerationPreview[\s\S]*?<\/?>\s*\)\}/);
+  assert.match(app, /\{!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3 && \(\s*<>\s*<GenerationPreview[\s\S]*?<\/?>\s*\)\}/);
   assert.match(app, /<ExperimentalMangaPanel[\s\S]*?currentStep=\{currentStep\} isAnalyzing=\{isAnalyzing\} isSearching=\{isSearching\}[\s\S]*?\/>[\s\S]*?<Step2Panel/);
   assert.doesNotMatch(app, /<\/ExperimentalMangaPanel>/);
 });

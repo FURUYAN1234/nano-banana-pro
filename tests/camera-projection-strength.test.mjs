@@ -18,6 +18,34 @@ test('a rejected camera angle before ではなく does not override the chosen p
   assert.equal(classifyCameraElevation('作業台の右上から見下ろす。手前には箱ではなく、紙を置く。'), 'high');
   assert.equal(classifyCameraElevation('左上から見下ろす。左の人物ではなく、右の人物を主役にする。'), 'high');
 });
+
+test('noun-ended high camera placement receives projection cues without rewriting the authored camera', () => {
+  const camera = '作業卓の端より少し高い位置、正面から左へ振った超広角の引き。卓の上面が手前から奥へ収束する。';
+  assert.equal(classifyCameraElevation(camera), 'high');
+  assert.match(getPanelShotExecution(camera), /look down.*head\/shoulder tops/);
+  assert.doesNotMatch(getPanelShotExecution('主人公の手が高い位置、正面からの中景。'), /look down/);
+});
+
+test('noun-ended camera heights keep low/high symmetry and reject subject heights and negated placements', () => {
+  for (const [camera, expected] of [
+    ['低い位置、正面からの広角', 'low'],
+    ['カメラは高い位置、正面からの広角', 'high'],
+    ['撮影位置は低い位置、右前からの中景', 'low'],
+    ['視点が高い位置、左後方からの引き', 'high'],
+  ]) assert.equal(classifyCameraElevation(camera), expected, camera);
+  for (const camera of [
+    '小道具は低い位置、正面からの広角',
+    '人物の手が低い位置、右からの中景',
+    '小道具は高い位置、正面からの広角',
+    'カメラは高い位置ではなく、正面からの中景',
+    '撮影位置は低い位置ではない。正面からの中景',
+  ]) {
+    assert.equal(classifyCameraElevation(camera), 'unspecified', camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), /look down|look up|below faces/, camera);
+  }
+  assert.equal(classifyCameraElevation('カメラは高い位置、正面からアイレベルで撮る'), 'eye');
+  assert.equal(classifyCameraElevation('カメラは高い位置ではなく、床から見上げる'), 'low');
+});
 const assertRoll = cue => {
   assertStrength(cue);
   assert.match(cue, /場面の鉛直\/水平.*光軸回り/);

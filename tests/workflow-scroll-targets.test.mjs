@@ -4,6 +4,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {hasStep1WorkflowInput,shouldScrollToEmptyStep1,scrollToWorkflowAction,scheduleWorkflowScroll,scrollToWorkflowStep} from '../src/lib/step-navigation.js';
 
+test('unavailable STEP3 contributes no scrollable space before STEP2 finishes, including resets and analysis',()=>{
+ const source=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8');
+ const gate=source.match(/\{([^\r\n{}]+?) && \(\s*<div\s+ref=\{step3Ref\}/)?.[1];
+ assert.ok(gate,'STEP3 must be absent from layout until its prerequisite is complete');
+ const visible=new Function('currentStep','isAnalyzing','isSearching','enhancementViewOpen = false',`return Boolean(${gate});`);
+ for(const step of [1,2])assert.equal(visible(step,false,false),false);
+ for(const step of [3,4,5]){
+  assert.equal(visible(step,false,false),true);
+  assert.equal(visible(step,true,false),false);
+  assert.equal(visible(step,false,true),false);
+  assert.equal(visible(step,false,false,true),false,'open enhancement temporarily hides later steps');
+ }
+ assert.match(source,/\{!enhancementViewOpen && Boolean\(finalPrompt\?\.trim\(\) \|\| generatedImage\) && \(<div>/,'empty output wrapper must not leave a downstream gap');
+});
+
 test('next action is centered between measured fixed header and viewport margins, with reduced motion respected',()=>{
  for(const reduced of [false,true]){
  const calls=[];const browserWindow={innerHeight:1338,scrollY:1564,matchMedia:()=>({matches:reduced}),scrollTo:o=>calls.push(o)};
@@ -62,7 +77,7 @@ test('actual App scroll effect reacts once when the same STEP3 becomes valid, no
  const effect=source.match(/useEffect\(\(\) => \{(\n    if \(currentStep < 2[\s\S]*?)\n  \}, (\[currentStep,[^\]]+\])\);/);assert.ok(effect);
  const queued=[],moves=[];const browserWindow={innerHeight:1338,scrollY:2373,requestAnimationFrame:fn=>{queued.push(fn);return queued.length;},cancelAnimationFrame(){},scrollTo:options=>{moves.push(options);browserWindow.scrollY=options.top;}};
  const target={getBoundingClientRect:()=>({top:3983.59-browserWindow.scrollY,height:34})};
- const context=vm.createContext({currentStep:3,scenarioModeValid:false,isColorModeLocked:false,finalPrompt:'',isMainLocked:false,workflowScrollBusy:false,step2ActionRef:{current:null},step3ActionRef:{current:target},step4ActionRef:{current:null},measuredHeaderHeightRef:{current:419},scheduleWorkflowScroll,scrollToWorkflowAction,window:browserWindow});
+ const context=vm.createContext({currentStep:3,scenarioModeValid:false,isColorModeLocked:false,finalPrompt:'',isMainLocked:false,workflowScrollBusy:false,enhancementViewOpen:false,step2ActionRef:{current:null},scenarioEnhanceToggleRef:{current:target},step3ActionRef:{current:null},step4ActionRef:{current:null},measuredHeaderHeightRef:{current:419},scheduleWorkflowScroll,scrollToWorkflowAction,window:browserWindow});
  const runEffect=vm.runInContext(`() => {${effect[1]}\n}`,context);let previousDeps,cleanup;
  const render=()=>{context.nextActionReady=vm.runInContext(readiness[1],context);const deps=Array.from(vm.runInContext(effect[2],context));if(!previousDeps||deps.some((value,index)=>!Object.is(value,previousDeps[index]))){cleanup?.();cleanup=runEffect();previousDeps=deps;}};
  render();assert.equal(queued.length,0);assert.equal(moves.length,0,'invalid scenario must not target a disabled action');

@@ -91,13 +91,13 @@ test('STEP4 opens for a prepared prompt or saved image and stays hidden during p
   }
 });
 
-test('STEP4 empty image area describes the selected four-panel or five-to-eight-panel mode', async () => {
+test('STEP4 reveals its empty image area only after generation starts, with the selected panel mode', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
   try {
     const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
     for (const experimentalEnabled of [false, true]) {
       const html = renderToStaticMarkup(React.createElement(Step4Panel, {
-        currentStep: 4, finalPrompt: 'OUTPUT: Single image.', generatedImage: null,
+        currentStep: 4, finalPrompt: 'OUTPUT: Single image.', generatedImage: null, isGeneratingImage: true,
         genLog: [], policyErrorMsg: '', castList: '', scenario: '', webCopyPartLengths: [],
         selectedEngine: 'openai', experimentalEnabled,
       }));
@@ -109,6 +109,32 @@ test('STEP4 empty image area describes the selected four-panel or five-to-eight-
   } finally {
     await server.close();
   }
+});
+
+test('STEP4 stops at its action before the first run while keeping live, failed and retained results accessible', async () => {
+  const server = await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true,hmr:false}});
+  try {
+    const {default:Step4Panel}=await server.ssrLoadModule('/src/components/Step4Panel.jsx');
+    const base={currentStep:4,finalPrompt:'OUTPUT: Single image.',generatedImage:null,genLog:[],policyErrorMsg:'',castList:'',scenario:'',webCopyPartLengths:[],selectedEngine:'openai'};
+    const render=props=>renderToStaticMarkup(React.createElement(Step4Panel,{...base,...props}));
+    const idle=render({});
+    assert.match(idle,/APIで新しい画像を生成する/);
+    assert.doesNotMatch(idle,/画像生成ログ \(STEP 4\)|step4-image-display|Ready to Start/);
+    assert.ok(idle.indexOf('安全化した制作情報')<idle.indexOf('APIで新しい画像を生成する'),'metadata help precedes the final action');
+    for(const state of [{isGeneratingImage:true},{genLog:['[ERROR] image request failed']},{generatedImage:'data:image/png;base64,fixture'},{showPolicyChoice:true}]){
+      assert.match(render(state),/画像生成ログ \(STEP 4\)/);
+    }
+    assert.match(render({genLog:['[ERROR] image request failed']}),/image request failed/);
+    assert.match(render({generatedImage:'data:image/png;base64,fixture'}),/step4-image-display/);
+    const historyProps={generationHistory:[{id:'retained'}],historyPanel:React.createElement('button',null,'RETAINED_HISTORY')};
+    const withHistory=render(historyProps);
+    assert.match(withHistory,/<details[^>]*><summary[^>]*>過去の生成画像を開く/);
+    assert.doesNotMatch(withHistory,/<details[^>]*\sopen=/);
+    assert.ok(withHistory.indexOf('RETAINED_HISTORY') < withHistory.indexOf('APIで新しい画像を生成する'),'idle history stays above the final action');
+    const activeHistory=render({...historyProps,genLog:['request failed']});
+    assert.ok(activeHistory.indexOf('RETAINED_HISTORY') > activeHistory.indexOf('step4-image-display'),'started run keeps history after its results');
+    assert.equal((activeHistory.match(/RETAINED_HISTORY/g)||[]).length,1);
+  } finally {await server.close();}
 });
 
 test('STEP3 exposes its live progress and advances to STEP4 only after the prompt is ready', async () => {

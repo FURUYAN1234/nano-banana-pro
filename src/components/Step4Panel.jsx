@@ -361,6 +361,7 @@ export default function Step4Panel({
   generatedImage,
   images = [],
   generationHistory = [],
+  historyPanel = null,
   normalizeDisplayedPage,
   editGeneratedImage,
   preparePanelStyleEditor,
@@ -389,6 +390,7 @@ export default function Step4Panel({
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
   const isFourPanelPage = !isImportedManga && !experimentalEnabled && inferImageQualityMode(finalPrompt) === 'four-panel';
   const generationWaitLog = genLog.find(log => String(log).startsWith('[WAIT]'));
+  const hasImageActivity = Boolean(isGeneratingImage || isFixingPolicy || policyAutoRetrying || showPolicyChoice || genLog.length || generatedImage);
   const visibleGenLog = genLog.filter(log => !String(log).startsWith('[WAIT]'));
   if (!isGeneratingImage && generationWaitLog) visibleGenLog.push(generationWaitLog);
   // Each request resets the log. This receipt accompanies the current request's
@@ -1312,6 +1314,15 @@ No explanations. No partial results.`;
                             </div>
                           </div>
 
+              {!hasImageActivity && generationHistory.length > 0 && historyPanel && (
+                <details className="mb-3 rounded-lg border border-white/15 p-2">
+                  <summary className="cursor-pointer text-sm">過去の生成画像を開く ({generationHistory.length})</summary>
+                  {historyPanel}
+                </details>
+              )}
+              <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
+                生成画像には、安全化した制作情報を保存します。生成時点の素材番号・認識内容・人物設定・360°背景設定を記録し、後からの素材変更で書き換えません。APIキー・参照画像本体・解析ログは保存しません。
+              </p>
               <button
                 ref={imageActionRef}
                 style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: 0 }}
@@ -1335,9 +1346,6 @@ No explanations. No partial results.`;
                   )}
                 </div>
               </button>
-              <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
-                生成画像には、安全化した制作情報を保存します。生成時点の素材番号・認識内容・人物設定・360°背景設定を記録し、後からの素材変更で書き換えません。APIキー・参照画像本体・解析ログは保存しません。
-              </p>
 
               {/* [v4.2.0] コンテンツポリシー選択メッセージボックス（パネルとは独立） */}
               {showPolicyChoice && (
@@ -1380,7 +1388,7 @@ No explanations. No partial results.`;
               )}
 
               {/* Generation Log Terminal */}
-              <div
+              {hasImageActivity && (<div
                 ref={genLogRef}
                 className="mt-4 p-3 bg-black/80 rounded-lg border border-white/10 font-mono text-[11px] text-green-400 custom-scrollbar"
                 style={{ height: '160px', overflowY: 'auto', marginTop: '16px', padding: '12px', border: '1px solid rgba(255,255,255,0.2)' }}
@@ -1400,14 +1408,14 @@ No explanations. No partial results.`;
                   ))
                 )}
                 {isGeneratingImage && <div className="animate-pulse">_</div>}
-              </div>
+              </div>)}
             </div>
           </div>
         </div>
       </section>
 
       {/* 右: 生成画像エリア */}
-      <section className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
+      {hasImageActivity && (<section className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
         {/* 描画エリアロックオーバーレイ */}
         {(((!generatedImage && !isGeneratingImage) || isSearching || isAssembling || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4)) && !isGeneratingImage) && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} className="flex flex-col items-center justify-center">
@@ -1543,7 +1551,8 @@ No explanations. No partial results.`;
             </div>
           )}
         </div>
-      </section>
+      </section>)}
+      {hasImageActivity && historyPanel}
 
     </div>
   );

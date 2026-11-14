@@ -158,6 +158,9 @@ button { border-radius: 8px !important; }
 .sns-explanation textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #475569; border-radius: 4px; background: #080c14; color: #e2e8f0; font: inherit; font-size: 14px; line-height: 1.6; }
 .sns-explanation button { padding: 6px 12px; border: 1px solid #155e75; border-radius: 4px; background: #102632; color: #cffafe; cursor: pointer; }
 .sns-explanation button:disabled { opacity: .4; cursor: default; }
+.sns-explanation-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.sns-explanation-footer p { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
+.sns-explanation-footer button { flex: 0 1 auto; margin-left: auto; max-width: 100%; }
 .sns-explanation button:focus-visible, .sns-explanation textarea:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
 
 .web-prompt-disclosure {

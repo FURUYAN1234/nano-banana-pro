@@ -66,6 +66,10 @@ export default function Step2Panel({
   isSearching,
   scenarioActionRef,
   scenarioProgressRef,
+  scenarioEnhanceToggleRef,
+  scenarioEnhanceActionRef,
+  scenarioEnhanceProgressRef,
+  enhancementControlsDisabled = false,
   generateScenarioFromNews,
   scenarioThought,
   scenario,
@@ -383,7 +387,7 @@ export default function Step2Panel({
               </select>
               <ChevronDown size={20} strokeWidth={3} className="punchline-select-chevron" aria-hidden="true" />
             </div>
-            <p id="ending-mode-hint" aria-live="polite" className="mt-2 text-xs text-slate-400">{getEndingModeHint(punchlineType)}</p>
+            <p id="ending-mode-hint" aria-live="polite" style={{ fontSize: '10px', lineHeight: 1.5, margin: '6px 0' }} className="text-slate-400">{getEndingModeHint(punchlineType)}</p>
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
               style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
               <input type="checkbox" checked={mosaicCopyrightedCharacters}
@@ -473,12 +477,15 @@ export default function Step2Panel({
         </div>
 
         {/* シナリオ強化パネル */}
-        <div style={{ marginTop: '8px' }} className={`mt-2 border rounded-lg overflow-hidden transition-all duration-300 ${
+        {scenario && scenario.length > 20 && (<div style={{ marginTop: '8px' }} className={`mt-2 border rounded-lg overflow-hidden transition-all duration-300 ${
           scenario && scenario.length > 20 
             ? 'border-orange-500/30' 
             : 'border-slate-700/30 blur-[2px] opacity-40 grayscale pointer-events-none'
         }`}>
           <button
+            ref={scenarioEnhanceToggleRef}
+            aria-expanded={isEnhancePanelOpen}
+            disabled={enhancementControlsDisabled}
             className="w-full flex items-center justify-between px-4 py-3 bg-orange-900/25 hover:bg-orange-900/50 transition-all duration-150 cursor-pointer border-l-4 border-orange-500 hover:border-orange-400 group/enhance-hdr"
             onClick={() => scenario && scenario.length > 20 && setIsEnhancePanelOpen(!isEnhancePanelOpen)}
           >
@@ -653,9 +660,10 @@ export default function Step2Panel({
 
               <div className="flex gap-2">
                 <button
+                  ref={scenarioEnhanceActionRef}
                   className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
                   onClick={enhanceScenario}
-                  disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceGag)}
+                  disabled={enhancementControlsDisabled || isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceGag)}
                 >
                   {isEnhancing ? (
                     <><Loader2 size={16} className="animate-spin" /> 強化中...</>
@@ -677,10 +685,12 @@ export default function Step2Panel({
                 </button>
               </div>
 
-              <ThinkingLog thought={enhanceLog || "> 待機中...強化したいカテゴリを選んで「シナリオ強化実行」ボタンを押してください。"} />
+              {(isEnhancing || enhanceLog) && <div ref={scenarioEnhanceProgressRef}>
+                <ThinkingLog thought={enhanceLog} placeholder="> シナリオ強化を開始しています..." />
+              </div>}
             </div>
           )}
-            </div>
+            </div>)}
           </>
         )}
       </div>
