@@ -98,7 +98,9 @@ try {
     // The new layout line applies to both modes; guard the rest of the color output.
     assert.match(color,/右P3は左の上P4と下P5の高さを合わせた未分割の一枠/);
     // Added projection cues cross the soft compaction threshold. Expand only
-    // the exact shared compiler clauses; the old content hash stays unchanged.
+    // the exact shared compiler clauses. This title-less fixture now uses 無題;
+    // reverting only that title reproduces the prior color-content hash.
+    assert.match(color, /Top title EXACTLY "無題"/);
     let colorWithoutLayoutAddition=restoreActionProjectionBefore737(color.replace(/^SPANNING FRAMES（非印字）: .*\n/m,''));
     const sharedOrder='人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定なら対象に応じた自然な頭向きを補う（明示の横目/目だけの移動/顔上げ/背面を優先、顔/対象の遮蔽保持）、可視瞳を指定先へ（対象未指定/閉眼/明示の読者目線保持）→独立Cameraで立体投影→画風';
     if(colorWithoutLayoutAddition.includes(`SHOT P1/P2/P3/P4/P5/P6 ONLY: ${sharedOrder}.\n`)) {
@@ -109,7 +111,7 @@ try {
         .replace(/^(FRAME MEDIUM P\d+ — NORMAL: [^\n]*) ALL ACTORS\.$/gm,'$1 Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。');
     }
     assert.equal(createHash('sha256').update(restoreWritingPolicyBefore729(colorWithoutLayoutAddition).replace(/v\d+\.\d+\.\d+/g,'v<VERSION>')).digest('hex'),
-      '5951da401a8db0995f364a3e4b3753238f54532d014a327b308308c48813f20f');
+      '1e906dfaec6d5495ce936dc5eb4aa531c59b8a2dced78785120324fe335d9e03');
     for (const count of [5,6,7,8]) {
       const scenario = scenarioFor(count).replaceAll(/行動\d+/g, '葵と凛が木箱を運ぶ。');
       const source = m.readExperimentalSource({scenario, castList, colorMode:'monochrome'});
