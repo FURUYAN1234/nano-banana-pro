@@ -16,7 +16,7 @@
       "sha256": "f3b1c66c8862538911772b1a26e803f2ad96d9fc1dd385712bf80c8cd3dfa79f"
     }
   ],
-  "readmeSha256": "3e386d5c5b8be73496c9cd061cad2c905193961a34b94e4e475016de9212df31",
+  "readmeSha256": "0f9766036a1016754fe0fad00fb5941579ab9ed89c1f32aa8f06bdbb7e45b655",
   "readmeLanguageGaps": [],
   "sourceTree": "71f9c96cdf106113daca5e5a974ca56a41cecb70",
   "publicTree": "409931e41f8db8af9949856b37548241a6b729e8",
@@ -41,8 +41,8 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-14T04:59:16.790Z",
-  "findings": "v7.5.1の未変更本文監査を継承し、今回のREADME差分と全見出し一覧を照合。冒頭の人物画像なし設定・実画像取込の分岐・年齢違い、What this project doesの素材/人物説明、Quick startの素材投入・Web添付手順、ComfyUI配布欄、FAQ、更新履歴を英日で読み、候補7.5.2へ同期。十分なSTEP1人物設定をAPI/Webの両方へ渡す契約をreference-assets/prompt-assembler/experimental-mangaと照合。人物画像ありの同一性優先、背景/描法見本の区別、不十分な入力の拒否を保持。配布リンクは候補公開用であり、Release実在・公開確認は未実施。sourceTree/publicTreeは最終レビュー済み候補コミットのsrc/public treeと一致。コード差分・README・PDFの対応を確認し、実APIと最終決定的修正の再評価を区別して記録。 追加のv7.5.2更新行を英日で照合：別時点の局所人物を枠越え身体から分離し、画像なしNORMALに既存描画基準を共有する修正を反映。実画像は微差を許容して保持し、検査を無条件合格へ変更しない。 追加の関連アプリ案内を英日で照合。STEP1はキャラクターメーカー、STEP2はStory Makerで、別タブと貼付先の説明を常時表示。初期API接続画面も同じ案内を使用。README追記と実コンポーネントのリンク先・文言を照合。 最終READMEの素材詳細位置/自動展開と人物登録前提条件をfreeze sourceへ照合し英日同期。実API/公開完了は主担当の別証拠による。",
+  "checkedAt": "2026-11-14T05:56:42.649Z",
+  "findings": "v7.5.1の未変更本文監査を継承し、今回のREADME差分と全見出し一覧を照合。冒頭の人物画像なし設定・実画像取込の分岐・年齢違い、What this project doesの素材/人物説明、Quick startの素材投入・Web添付手順、ComfyUI配布欄、FAQ、更新履歴を英日で読み、候補7.5.2へ同期。十分なSTEP1人物設定をAPI/Webの両方へ渡す契約をreference-assets/prompt-assembler/experimental-mangaと照合。人物画像ありの同一性優先、背景/描法見本の区別、不十分な入力の拒否を保持。配布リンクは候補公開用であり、Release実在・公開確認は未実施。sourceTree/publicTreeは最終レビュー済み候補コミットのsrc/public treeと一致。コード差分・README・PDFの対応を確認し、実APIと最終決定的修正の再評価を区別して記録。 追加のv7.5.2更新行を英日で照合：別時点の局所人物を枠越え身体から分離し、画像なしNORMALに既存描画基準を共有する修正を反映。実画像は微差を許容して保持し、検査を無条件合格へ変更しない。 追加の関連アプリ案内を英日で照合。STEP1はキャラクターメーカー、STEP2はStory Makerで、別タブと貼付先の説明を常時表示。初期API接続画面も同じ案内を使用。README追記と実コンポーネントのリンク先・文言を照合。 最終READMEの素材詳細位置/自動展開と人物登録前提条件をfreeze sourceへ照合し英日同期。実API/公開完了は主担当の別証拠による。 2026-11-14公開前にremote6675be4のREADME関連リンク9行を英日対応と既存行の保持で再照合し統合。Codex UsageのGitHubラベルに日本語を補完。runtime/src/public/PDFは変更なし。",
   "manualFindings": "候補7.5.2のPDF3冊72ページ（全機能41/Gemini12/OpenAI19）を既存原稿から生成。全頁のA4・文字境界・ページ番号・版・privacy scanに合格し全13一覧画像を目視。以降の変更頁だけ追加確認を実施。最終ソースfreezeでは全機能6/7ページを再レンダーし、素材別の名前/説明は人物欄の上・認識済み画像で自動open・textonly/空closed、白い共通6行/160px欄は人物のみ、と同期。背景/小物/360追加には人物1名以上、Storyの有効人物textも人物と数え、人物+背景の同時追加可、人物削除後の背景のみは次工程停止と人物追加で復帰、styleJSON単独対象外を説明。変更6/7頁を実画像で確認し切れ/重なりなし、41頁と目次不変。API接続前PDFグループと各STEP編集案内を反映した既確認3/4/5頁、残り未変更頁の確認を継承。公開PDFへ同期しSHA一致。",
   "pricingReview": {
     "version": "7.5.2",
