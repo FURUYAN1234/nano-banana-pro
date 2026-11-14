@@ -24,7 +24,7 @@ import Step3Panel from './components/Step3Panel';
 import ExplanationPanel from './components/ExplanationPanel';
 import Step4Panel from './components/Step4Panel';
 import { getEffectiveEngine } from './lib/engine-state';
-import { scrollToWorkflowStep } from './lib/step-navigation.js';
+import { hasStep1WorkflowInput, shouldScrollToEmptyStep1, scheduleWorkflowScroll, scrollToWorkflowAction, scrollToWorkflowStep } from './lib/step-navigation.js';
 import ControlBar from './components/ControlBar';
 import SystemHeader from './components/SystemHeader';
 import GenerationPreview from './components/GenerationPreview';
@@ -216,8 +216,15 @@ function App() {
     toggleCategory,
   } = useMangaWorkflow({experimentalEnabled:experimentEnabled,onAutoPageModeChange:setExperimentEnabled});
   const nativePageModeEnabled = experimentEnabled && getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
+  const isApiModalOpen = showModal || showOpenAIKeyModal;
+  const isMainLocked = !apiKey || isApiModalOpen;
+  const step1HasInput = hasStep1WorkflowInput({ images, referenceAssets, castEditorText, castList, recognitionText, bg360Image, styleJson });
+  const workflowScrollBusy = isAnalyzing || is360Analyzing || isSearching || isAssembling || isEnhancing
+    || is360CameraWorking || isGeneratingImage || isFixingPolicy || isAborting;
+  const emptyStep1ScrollBusy = workflowScrollBusy || isFullAutoMode || isEndlessMode;
 
   const [fixedHeaderHeight, setFixedHeaderHeight] = useState(70);
+  const measuredHeaderHeightRef = useRef(fixedHeaderHeight);
   const [autoSaveCheckStatus, setAutoSaveCheckStatus] = useState('pending');
   const autoSaveVerified = autoSaveCheckStatus === 'passed';
   const [fixedHeaderElement, setFixedHeaderElement] = useState(null);
@@ -225,7 +232,7 @@ function App() {
     setFixedHeaderElement(element);
   }, []);
   const [diagnosticHost, setDiagnosticHost] = useState(null);
-  const wasAssemblingRef = useRef(false);
+  const previousStep1ViewRef = useRef(null);
   const step2ActionRef = useRef(null);
   const step3ActionRef = useRef(null);
   const step4ActionRef = useRef(null);
@@ -239,7 +246,10 @@ function App() {
       // Ignore a detached old bar's zero-height notification and bind the new node.
       if (!fixedHeaderElement.isConnected) return;
       const height = fixedHeaderElement.getBoundingClientRect().height;
-      if (Number.isFinite(height) && height > 0) setFixedHeaderHeight(Math.ceil(height));
+      if (Number.isFinite(height) && height > 0) {
+        measuredHeaderHeightRef.current = Math.ceil(height);
+        setFixedHeaderHeight(measuredHeaderHeightRef.current);
+      }
     };
     measure();
     const resizeObserver = new ResizeObserver(measure);
@@ -250,29 +260,23 @@ function App() {
   }, [fixedHeaderElement]);
 
   useEffect(() => {
-    if (isAssembling) {
-      wasAssemblingRef.current = true;
-      return;
-    }
-    if (!wasAssemblingRef.current || !finalPrompt?.trim()) return;
-
-    wasAssemblingRef.current = false;
-    requestAnimationFrame(() => {
-      outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }, [finalPrompt, isAssembling, outputRef]);
+    const next = { step: currentStep, empty: !step1HasInput, unlocked: !isMainLocked, busy: emptyStep1ScrollBusy };
+    const shouldScroll = shouldScrollToEmptyStep1(previousStep1ViewRef.current, next);
+    previousStep1ViewRef.current = next;
+    if (!shouldScroll) return;
+    return scheduleWorkflowScroll(() => scrollToWorkflowStep(1, { currentStep, browserWindow: window }), window);
+  }, [currentStep, step1HasInput, isMainLocked, emptyStep1ScrollBusy]);
 
   useEffect(() => {
     if (isAnalyzing) {
-      requestAnimationFrame(() => {
+      return scheduleWorkflowScroll(() => {
         step1ProgressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-      return;
+      }, window);
     }
     if (isSearching) {
-      requestAnimationFrame(() => {
+      return scheduleWorkflowScroll(() => {
         step2ProgressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
+      }, window);
     }
   }, [isAnalyzing, isSearching]);
 
@@ -288,7 +292,7 @@ function App() {
   }, [isGeneratingImage, imageResultRef]);
 
   useEffect(() => {
-    if (currentStep < 2 || isAnalyzing || isSearching || isAssembling || isEnhancing || is360CameraWorking || isGeneratingImage) return;
+    if (currentStep < 2 || isMainLocked || workflowScrollBusy) return;
     const activeActionRef = currentStep === 2
       ? step2ActionRef
       : currentStep === 3
@@ -297,13 +301,11 @@ function App() {
           ? step4ActionRef
           : null;
 
-    requestAnimationFrame(() => {
-      activeActionRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    });
-  }, [currentStep, isAnalyzing, isSearching, isAssembling, isEnhancing, is360CameraWorking, isGeneratingImage]);
+    return scheduleWorkflowScroll(() => {
+      scrollToWorkflowAction(activeActionRef?.current, { browserWindow: window, headerOffset: measuredHeaderHeightRef.current });
+    }, window);
+  }, [currentStep, isMainLocked, workflowScrollBusy]);
 
-  const isApiModalOpen = showModal || showOpenAIKeyModal;
-  const isMainLocked = !apiKey || isApiModalOpen;
   const apiKeyForUnlockedUi = isMainLocked ? "" : apiKey;
   const isStepNavigationDisabled = isMainLocked || isApiProcessing || isAborting || isFullAutoMode;
   const handleNavigateToStep = step => scrollToWorkflowStep(step, {

@@ -119,11 +119,12 @@ test('STEP3 exposes its live progress and advances to STEP4 only after the promp
 
   assert.match(step3, /<ThinkingLog thought=\{assembleThought\}/);
   assert.match(step3, /isAssembling[\s\S]*?scrollIntoView\(\{ behavior: 'smooth', block: 'center' \}\)/);
-  assert.match(app, /wasAssemblingRef\.current = true/);
-  assert.match(app, /!wasAssemblingRef\.current \|\| !finalPrompt\?\.trim\(\)[\s\S]*?outputRef\.current\?\.scrollIntoView\(\{ behavior: 'smooth', block: 'start' \}\)/);
+  assert.doesNotMatch(app, /wasAssemblingRef/);
+  assert.doesNotMatch(app, /outputRef\.current\?\.scrollIntoView/);
+  assert.match(app, /scrollToWorkflowAction\(activeActionRef\?\.current/);
 });
 
-test('each newly actionable STEP button is placed at the lower edge and live work centers its progress window', async () => {
+test('each newly actionable STEP button uses the measured-header visible region and live work centers progress', async () => {
   const [app, step1, step2, step3, step4] = await Promise.all([
     readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/Step1Panel.jsx', import.meta.url), 'utf8'),
@@ -132,7 +133,7 @@ test('each newly actionable STEP button is placed at the lower edge and live wor
     readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(app, /activeActionRef\?\.current\?\.scrollIntoView\(\{ behavior: 'smooth', block: 'end' \}\)/);
+  assert.match(app, /return scheduleWorkflowScroll\([\s\S]*?scrollToWorkflowAction\(activeActionRef\?\.current, \{ browserWindow: window, headerOffset: measuredHeaderHeightRef\.current \}\)/);
   assert.match(app, /const step2ActionRef = useRef\(null\)/);
   assert.match(app, /const step3ActionRef = useRef\(null\)/);
   assert.match(app, /const step4ActionRef = useRef\(null\)/);

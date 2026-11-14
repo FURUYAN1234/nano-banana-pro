@@ -1,3 +1,9 @@
+## Workflow scrolling v7.5.3 candidate — 2026-11-14
+
+- Root normal UI measurement showed Step2 action bottom1337.531 in1338px viewport (only0.469px edge clearance), header419.281px. New UI-only helper positions offscreen/edge actions in available viewport below measured header with16px margins; already-safe targets do not move. Empty Step1 uses actual image/reference/character/recognition/360/style input state and scrolls top on empty/reset/arrival/unlock, not unrelated renders.
+- Removed competing assembly-complete output:start scroll in favor of next-action ownership; queued progress/action/empty scrolls cancel during cleanup. Header resizing updates measurement without stealing manual scroll. Existing manual STEP nav, legitimate locked Step2 overlay, provider generation/prompt/cancellation unchanged.
+- Focused geometry/state/cancellation regressions cover normal and short viewport, reduced motion, already-visible/invalid/detached targets, populated inputs, empty transitions and stale RAF cleanup. Root owns fresh normal UI acceptance; connected tabs and keys untouched by worker.
+
 ## STEP2 ending hint candidate v7.5.3 correction — 2026-11-14
 
 - Fixed action-only hint originated27b9875 (2026-11-09), reworded0733ee2 (2026-11-10); no hint existed there before. Display now follows all27 selectable endings through a UI-only helper. Auto/GagAuto/SeriousAuto, both action and both documentary choices have distinct correct explanations; documentary says only the ending is cartoonized.
