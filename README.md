@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.5.1** / 現在のソース版: **v7.5.1**
+> Current source version: **v7.5.2** / 現在のソース版: **v7.5.2**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -15,6 +15,12 @@ OpenAI starts in free-layout mode with four to eight panels and also supports a 
 Demo URL / デモサイト: [https://furuyan1234.github.io/nano-banana-pro/](https://furuyan1234.github.io/nano-banana-pro/)
 
 [![Read the note article: features, examples and getting started / note記事で特徴・作例・始め方を読む](docs/assets/note-article-button.png)](https://note.com/happy_duck780/n/ndf063558c1f5)
+
+### Character text without reference images / 人物参照画像なしの人物設定
+
+You can paste usable character descriptions into STEP1 “人物設定” (`#reference-recognition-editor`) without uploading character images. The names, appearance and clothing are retained in API prompts and Web copy. Backgrounds and style examples do not count as character references; when character images are supplied, their identity remains the priority. Blank or insufficient settings still fail validation. / 人物画像をアップロードせず、STEP1「人物設定」（`#reference-recognition-editor`）へ十分な人物説明を貼り付けて制作できます。名前・外見・服装をAPI指示文とWebコピーへ残します。背景・描法見本は人物参照画像に数えず、人物画像がある場合はその同一性を優先します。空欄や不十分な設定は引き続き検査で拒否します。
+
+For Story Maker integration, copy its STEP1 character text here, paste its scenario into STEP2 “生成されたシナリオ”, build the prompt in STEP3, then generate in STEP4. Story Maker’s same-sheets checkbox is a user declaration, without automatic image comparison; leave it unchecked to generate separate character settings after the final scenario. Different ages of one person belong in that person’s entry. / Story Makerとの連携では、STEP1用の人物設定をここへ、台本をSTEP2「生成されたシナリオ」へ貼り、STEP3で指示文を作ってSTEP4で画像化します。Story Makerの同一シート欄は自己申告で、画像を自動照合しません。未チェックなら最終台本の後に人物設定を別途生成します。同一人物の年齢違いは、その人物の項目内で扱います。
 
 ### PDF manuals / PDFマニュアル
 
@@ -462,6 +468,7 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 2. Choose Gemini API or OpenAI API and enter that provider's API key in the application. / Gemini APIまたはOpenAI APIを選び、対応するAPIキーをアプリへ入力します。
    The connection dialog is centered within the viewport and includes Gemini and OpenAI API manual PDFs beside their key acquisition links. The user manual to the left of STEP1 in the top progress bar opens the full application guide. All PDFs open in a separate tab. / 画面中央の接続窓にあるGemini・OpenAIキー取得リンクの右側から、それぞれのAPIマニュアルを開けます。上部の解析ボタン左側の「使い方マニュアル」はアプリ全体の操作ガイドです。同梱PDFは別タブで開き、表示方法はブラウザーの設定に依存します。
 3. Select character-sheet images with the STEP1 button or drop them into its drop zone; multiple images can be added together or later, within the limits below. If you do not have your own sheets, the sample button above STEP1 loads two example sheets through the same analysis flow. Optional 360-degree background images and style-setting JSON files can be loaded there too. / STEP1ボタンでキャラクター設定画像（キャラシート）を選ぶか、ドロップ領域へ読み込みます。自分のシートがない場合は、STEP1の上のサンプルボタンで2枚の見本を同じ解析経路に読み込めます。以下の上限内で複数枚を同時または後から追加でき、任意で360°背景画像や作風設定JSONも読み込めます。
+   Alternatively, paste sufficient names, appearance and clothing into STEP1 “人物設定” without character images. For Story Maker output, paste its separate scenario into STEP2 “生成されたシナリオ”, then build STEP3. / 人物画像を使わない場合は、十分な名前・外見・服装の説明をSTEP1「人物設定」へ貼り付けます。Story Makerの出力は、別途コピーした台本をSTEP2「生成されたシナリオ」へ貼ってからSTEP3を実行します。
 4. Before STEP2, choose "4コマ生成" (left, light blue) or "4～8コマ生成" (right, green), then run STEP2. Four-panel generation ignores a free-input total such as six panels while retaining valid style/staging directions for panels 1–4. In 4–8-panel generation with no requested count, the AI chooses 4–8 panels to suit the story. While the scenario request is active, the app keeps its real progress or error log directly below the STEP2 button and hides the stale result, preview and STEP3. A completed scenario reveals those controls and highlights STEP3. / STEP2の上のスイッチで「4コマ生成（横長コマ）レガシー」（左・水色）か「4～8コマ生成」（右・緑色）を選んでから実行します。4コマ生成は自由入力の総コマ数指定を採用せず4コマを保ち、1〜4コマへの有効な画風・演出指定を残します。4～8コマ生成でコマ数を指定しない場合は、AIが話に合う4～8コマを選びます。シナリオ処理中はSTEP2ボタン直下の実際の進捗・エラーログだけを表示し、古い結果・プレビュー・STEP3を隠します。シナリオ完成後に各欄を表示し、次のSTEP3を案内します。
 
 #### Drop materials together / 素材をまとめて投入する
@@ -670,7 +677,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.5.1](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.1のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.5.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -730,7 +737,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -791,6 +798,11 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.5.2 (2026-11-14)
+- **[Fix]** Retain sufficient STEP1 character text in API and Web-copy prompts without character images; preserve image identity priority when supplied. Background and style references remain separate, and invalid input is rejected. / 人物画像がない場合も十分なSTEP1人物設定をAPI・Webコピーへ保持します。人物画像がある場合の同一性優先と、背景・描法見本の区別、不十分な入力の拒否を維持します。
+- **[Fix]** Preserve separate scripted appearances beside a crossing figure; use the existing normal drawing recipe and matching review criteria when character images are absent. / 枠越え人物とは別の、その場面の登場人物を人数へ残します。人物画像なしの通常画風には既存の描画基準を使い、画像検査の基準も揃えます。
+- **[Docs]** Explain separate Story Maker character text and scenario handoff: STEP1 settings, STEP2 scenario, STEP3 prompt, STEP4 image. / Story Makerの人物設定と台本を分け、STEP1設定→STEP2台本→STEP3指示文→STEP4画像の手順を説明します。
 
 ### v7.5.1 (2026-11-13)
 - **[Fix]** Cast-count review follows grounded body counts, so a conflicting defect label does not turn one required and observed actor into a count failure. Later story appearances remain separate from page foregrounds. / 人物数は根拠のある実人数で照合し、必要人数・観測人数ともに1人の記録を別の欠陥ラベルだけで人数異常にしません。後の場面への再登場とページ前景を区別します。

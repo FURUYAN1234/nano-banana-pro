@@ -235,7 +235,7 @@ const DOCUMENTARY_STYLE_PROMPT_CHECKS = Object.freeze([
   Object.freeze({ issue: 'style-difference-qa', pattern: /^\s*(?:MONOCHROME )?ART-STYLE DIFFERENCE QA LOCK:/im })
 ]);
 
-export const validatePromptEndingModeConsistency = ({ prompt, punchlineType } = {}) => {
+export const validatePromptEndingModeConsistency = ({ prompt, punchlineType, hasCharacterReferences = true } = {}) => {
   const policy = getEndingModePolicy(punchlineType);
   if (policy.endingTone !== 'serious') {
     return { ok: true, issues: [] };
@@ -246,8 +246,11 @@ export const validatePromptEndingModeConsistency = ({ prompt, punchlineType } = 
   if (!/SERIOUS(?: DOCUMENTARY)? INTENT:/i.test(text)) {
     issues.push('missing-serious-intent');
   }
-  if (policy.preserveReferenceStyle && !/REFERENCE-SHEET ART-STYLE LOCK \(ABSOLUTE[^\n]*ALL FOUR PANELS\)/i.test(text)) {
-    issues.push('missing-reference-style-lock');
+  const styleLock = hasCharacterReferences
+    ? /REFERENCE-SHEET ART-STYLE LOCK \(ABSOLUTE[^\n]*ALL FOUR PANELS\)/i
+    : /TEXT-ONLY ART-STYLE LOCK \(ABSOLUTE[^\n]*ALL FOUR PANELS\)/i;
+  if (policy.preserveReferenceStyle && !styleLock.test(text)) {
+    issues.push(hasCharacterReferences ? 'missing-reference-style-lock' : 'missing-text-only-style-lock');
   }
   for (const { issue, pattern } of GENERAL_SERIOUS_PROMPT_CHECKS) {
     if (pattern.test(text)) issues.push(issue);
@@ -268,7 +271,14 @@ export const assertPromptEndingModeConsistency = (options = {}) => {
   throw error;
 };
 
-export const buildReferenceSheetArtStyleLock = ({ monochrome = false } = {}) => `REFERENCE-SHEET ART-STYLE LOCK (ABSOLUTE — ALL FOUR PANELS):
+export const buildReferenceSheetArtStyleLock = ({ monochrome = false, hasCharacterReferences = true } = {}) => !hasCharacterReferences
+  ? `TEXT-ONLY ART-STYLE LOCK (ABSOLUTE — ALL FOUR PANELS):
+- No character reference images are supplied. Establish each named character from the written character descriptions and explicit art direction; infer only unspecified details. Choose one coherent manga drawing style for the entire page.
+- Across all four panels keep the same linework, ${monochrome ? 'black-ink and bounded screentone method' : 'coloring method and character palette'}, shading design, facial construction, eye design, body proportions and degree of stylization.
+- Emotion tags describe expression and acting only. They MUST NOT trigger a panel-specific art-style or proportion change. Preserve serious intensity through expression, gaze, body acting, camera, composition and lighting.
+- Preserve written appearance and approved outfit instructions. Render the story directly; do not request missing sheets, invent image IDs, or render character-setting labels.
+- ${monochrome ? 'Use white paper, solid black ink and one bounded Japanese screentone; white-paper reserves override written color fills and gradients.' : 'Scene lighting may change illumination, never the underlying drawing style or canonical character colors.'}`
+  : `REFERENCE-SHEET ART-STYLE LOCK (ABSOLUTE — ALL FOUR PANELS):
 - Use every attached character sheet as the authoritative art-style reference. Across all four panels preserve its ${monochrome ? 'linework, facial construction, eye design, body proportions and degree of stylization; translate shading into the selected ink medium' : 'linework, coloring method, shading design, facial construction, eye design, body proportions and degree of stylization'}.
 - Emotion tags describe expression and acting only. They MUST NOT trigger chibi, gekiga, watercolor, painterly, retro, pop-art, sketch, photorealistic or any other panel-specific art-style transformation.
 - Keep serious intensity through expression, gaze, body acting, camera, composition and lighting while the drawing style remains unchanged.

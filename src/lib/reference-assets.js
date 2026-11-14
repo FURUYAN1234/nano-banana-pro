@@ -4,6 +4,15 @@ export const REFERENCE_KIND_LABELS = Object.freeze({
   character: '人物', background: '背景', prop: '小物', unknown: '未分類',
 });
 
+// Backgrounds/props and built-in style examples are not character sheets.
+// Unclassified uploads retain the existing reference behavior until analyzed.
+export function hasCharacterReferenceImages(images = [], assets = []) {
+  return images.some(image => {
+    const items = assets.find(asset => asset.image === image)?.items;
+    return !items?.length || items.some(item => item.kind === 'character' || item.kind === 'unknown');
+  });
+}
+
 const MATERIAL_MARKER = '【画像ごとの認識】';
 const CAST_MARKER = '【人物設定】';
 const PANORAMA_MARKER = '【360°背景の認識】';

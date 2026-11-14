@@ -1,3 +1,4 @@
+import { hasCharacterReferenceImages } from '../src/lib/reference-assets.js';
 import { resolveAutoScenarioMode } from '../src/lib/scenario-validation.js';
 import { applyOpenAIImageEngineWatermark } from '../src/lib/openai-image-settings.js';
 import assert from 'node:assert/strict';
@@ -33,6 +34,7 @@ function deferred() {
 
 function harness(overrides = {}) {
   const state = {
+    hasCharacterReferenceImages,
     referenceEditorError: '', isApiProcessing:false, colorMode:'color', castListRef:{current:'cast'}, bg360EnabledRef:{current:false}, bg360ImageRef:{current:null}, bg360CameraWork:null, bg360CroppedPanels:[], usedModel:null, explanation:'', explanationNotice:'', mangaTitle:'', lockedLocation:'', lockedOutfit:'', generatedImage:null, assembleThought:'', resolveAutoScenarioMode, onAutoPageModeChange: enabled => { state.experimentalEnabled = enabled; }, pageModeRef: {current: false}, DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID,
     buildReferenceAssetContext, referenceAssetsRef: { current: [] }, imagesRef: { current: [] },
     beginApiWork, cancelApiWork, is360Analyzing: false, isAnalyzingRef: { current: false }, analyzeThought: '',

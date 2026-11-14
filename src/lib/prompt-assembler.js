@@ -15,7 +15,7 @@ import {
   OPENAI_COLOR_STYLE_QA,
   OPENAI_COLOR_FOCAL_READABILITY,
   OPENAI_COLOR_FOLD_PRIORITY,
-  REFERENCE_FOLD_RENDERING
+  REFERENCE_FOLD_RENDERING, TEXT_ONLY_FOLD_RENDERING
 } from './prompts';
 import { 
   cleanCastList, 
@@ -203,8 +203,9 @@ const compactBudgetEyeLine = (line) => {
   return `EYE-LINE LOCK: ${participants} mutual gaze; reactors watch speaker; never lens/front. ${primary} 3/4; camera behind ${rear}; ${rear} rear head/shoulder FG, no front-on face. Script camera wins.`;
 };
 
-const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false, maxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS, preservePanelRecipes = false, sourceBlocks = [], compactStyleReminderAtCap = false) => {
+const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false, maxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS, preservePanelRecipes = false, sourceBlocks = [], compactStyleReminderAtCap = false, hasCharacterReferences = true) => {
   if (prompt.length <= maxChars) return prompt;
+  const foldRendering = hasCharacterReferences ? REFERENCE_FOLD_RENDERING : TEXT_ONLY_FOLD_RENDERING;
   const panelColorMedia = !monochrome && !preserveReferenceStyle;
   const focalReadability = monochrome ? MONOCHROME_FOCAL_READABILITY : panelColorMedia ? OPENAI_COLOR_FOCAL_READABILITY : FOCAL_READABILITY;
   const artStyleQa = panelColorMedia ? OPENAI_COLOR_STYLE_QA : ART_STYLE_DIFFERENCE_QA_LOCK;
@@ -233,7 +234,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   const mapAuthored = (text, transform) => text.split(sourceToken)
     .map(part => part.startsWith(`${tokenPrefix}SOURCE_`) ? part : transform(part)).join('');
   const compactWardrobeLock = preserveReferenceStyle
-    ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: explicit outfit overrides setting era/culture; preserve mismatch. Keep garment items and rendering method across panels."
+    ? `${hasCharacterReferences ? 'REFERENCE-SHEET' : 'TEXT-ONLY'} WARDROBE AND RENDERING LOCK: explicit outfit overrides setting era/culture; preserve mismatch. Keep garment items and rendering method across panels.`
       : 'CROSS-PANEL WARDROBE COLOR LOCK: same items/colors across style/light. Explicit outfit overrides setting era/culture; preserve mismatch; never period-substitute. Default: infer setting.';
   // This body-placement rule is identical for every panel. Keep one global
   // copy instead of spending the source/recipe budget repeating it four times.
@@ -253,9 +254,9 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/FACIAL ACTING LOCK:[\s\S]*?(?=\n- CLEAN SURFACE PROTOCOL:)/g, FACIAL_ACTING_LOCK_COMPACT)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
-    .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, preserveReferenceStyle ? `FOLD SHADOWS: ${REFERENCE_FOLD_RENDERING}` : panelColorMedia ? 'FOLD SHADOWS: follow panel medium and FOLD PRIORITY.' : 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
+    .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, preserveReferenceStyle ? `FOLD SHADOWS: ${foldRendering}` : panelColorMedia ? 'FOLD SHADOWS: follow panel medium and FOLD PRIORITY.' : 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
     .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; ordinary architecture; preserve script/cast/dialogue/camera/layout.')
-    .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, preserveReferenceStyle ? `FOLD PRIORITY: ${REFERENCE_FOLD_RENDERING}` : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
+    .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, preserveReferenceStyle ? `FOLD PRIORITY: ${foldRendering}` : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no lineup; distinct actions; readable faces, silhouettes, hands.')
     .replace(
       /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:BODY ACTING \/ GESTURE VARIETY LOCK|HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|SETTING CONTINUITY \(LOW PRIORITY\)|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
@@ -330,7 +331,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       RICH_PANEL_COMPOSITION_LOCK_COMPACT
     )
     .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; preserve script/cast/dialogue/camera/layout.')
-    .replace(/FOLD PRIORITY:[^\n]*/g, preserveReferenceStyle ? `FOLD PRIORITY: ${REFERENCE_FOLD_RENDERING}` : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
+    .replace(/FOLD PRIORITY:[^\n]*/g, preserveReferenceStyle ? `FOLD PRIORITY: ${foldRendering}` : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, compactWardrobeLock)
     .replace(/^ART-STYLE DIFFERENCE QA LOCK:[^\n]*/gm, artStyleQa)
     .replace(/^(PANEL STYLE LOCK: ([^;\n]+);[^\n]*\n)Style: [^\n]*/gm,
@@ -348,7 +349,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   const finallyCompacted = mapAuthored(maximallyCompacted, part => part.replace(
     /CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g,
     preserveReferenceStyle
-      ? 'REFERENCE-SHEET WARDROBE AND RENDERING LOCK: preserve garment and rendering method across all panels.'
+      ? `${hasCharacterReferences ? 'REFERENCE-SHEET' : 'TEXT-ONLY'} WARDROBE AND RENDERING LOCK: preserve garment and rendering method across all panels.`
       : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; no period substitution. No outfit: infer from setting.'
   )
     .replace(/^WARDROBE \/ ENVIRONMENT CONTRAST LOCK:[^\n]*\n?/gm, '')
@@ -472,7 +473,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     // The finish, fold-shadow and identity contracts above already cover these
     // short reminders when a caller explicitly requests a tighter hard budget.
     .replace(/^- CLEAN:[^\n]*/gm, '- CLEAN: no noise except style exceptions.')
-    .replace(/^FOLD PRIORITY:[^\n]*/gm, preserveReferenceStyle ? `FOLD PRIORITY: ${REFERENCE_FOLD_RENDERING}` : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows at overlap/pinch only.')
+    .replace(/^FOLD PRIORITY:[^\n]*/gm, preserveReferenceStyle ? `FOLD PRIORITY: ${foldRendering}` : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows at overlap/pinch only.')
     .replace(/^CHARACTER QA:[^\n]*/gm, monochrome ? 'CHARACTER QA: identity/wardrobe/ink/tone.' : 'CHARACTER QA: preserve identity/wardrobe.')
     .replace(/\. Keep faces\/skin clean; do not add unrelated noise\./g, '. Faces/skin clean; no unrelated noise.')
     .replace(/\. Intentional style marks may model faces and skin; no unrelated noise\./g, '. Style marks on faces/skin allowed.')
@@ -557,7 +558,7 @@ const compactScriptLockOrReference = (text, maxLength, referenceText) => {
   return compact.length <= maxLength ? compact : referenceText;
 };
 
-const buildStrictScriptLock = ({ showTitle = true, safeTopic, panels, castList, activeOutfit, isMonochrome = false, preserveReferenceStyle = false, seriousTone = false }) => {
+const buildStrictScriptLock = ({ showTitle = true, safeTopic, panels, castList, activeOutfit, isMonochrome = false, preserveReferenceStyle = false, seriousTone = false, hasCharacterReferences = true }) => {
   const panelLocks = panels.map((panelText, index) => {
     const panelNumber = index + 1;
     try {
@@ -592,7 +593,7 @@ ${preserveReferenceStyle
 - REVEAL ORDER: Show only information available in that panel's Action. Later outcomes and punchline states must not appear early, including background props or reaction faces. VisualEvidence is an inventory, not an instruction to show every state together.
 - REACTION TARGET: Preserve stated gaze and actions. Where acting is unspecified, develop its expressive silhouette, full-body amplitude, head angle and hand pose toward the scripted person or object; do not invent a new event, contact or reaction target. Preserve explicit quiet beats. Keep the key action and its reaction readable within the assigned camera.
 - PROP STATE: Preserve object identity, but allow changes in contents, condition and holder exactly when the script requires them, including deliberate surreal changes. Unless explicitly scripted, do not restore consumed contents or combine pre-transfer and post-transfer ownership.
-- REFERENCE ROLE: Character sheets supply ${preserveReferenceStyle ? 'appearance, identity and the authoritative drawing style for all four panels' : isMonochrome ? 'shape/design and canonical skin-base assignments, never source hues or painted shading' : 'appearance and identity'}; approved outfit instructions take precedence for clothing. Do not reproduce sheet layouts, labels, sample poses or duplicate views as story content.
+- ${hasCharacterReferences ? `REFERENCE ROLE: Character sheets supply ${preserveReferenceStyle ? 'appearance, identity and the authoritative drawing style for all four panels' : isMonochrome ? 'shape/design and canonical skin-base assignments, never source hues or painted shading' : 'appearance and identity'}; approved outfit instructions take precedence for clothing. Do not reproduce sheet layouts, labels, sample poses or duplicate views as story content.` : 'TEXT-ONLY CAST: No character reference images are supplied. Use the STEP1 character descriptions as the identity source; keep age, hair, face, glasses, physique and clothing consistent. Infer only unspecified details. Do not request missing sheets or invent image IDs. Background/style examples are not the cast. Render the manga directly, not a character sheet.'}
 ${panelLocks}`;
 };
 
@@ -681,6 +682,7 @@ export const buildMangaPromptArtifact = ({
   imageEngineLabel,
   allowScenarioQualityWarning = false,
   referenceAssetContext = '',
+  hasCharacterReferences = true,
   cinematicTechniques = true,
   promptMaxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS
 }) => {
@@ -700,6 +702,7 @@ export const buildMangaPromptArtifact = ({
     ? Math.min(promptMaxChars, CHATGPT_WEB_COPY_SOFT_TARGET_CHARS)
     : promptMaxChars;
   const endingPolicy = getEndingModePolicy(punchlineType);
+  // Documentary style consistency also applies without images; its source is selected below.
   const preserveReferenceStyle = endingPolicy.preserveReferenceStyle;
   const seriousTone = endingPolicy.endingTone === 'serious';
 
@@ -720,12 +723,12 @@ export const buildMangaPromptArtifact = ({
   };
   const compactForSoftTarget = (prompt) => compactChatGPTConversationRules(
     prompt, isMonochrome, preserveReferenceStyle, seriousTone,
-    promptTargetChars, promptMaxChars > promptTargetChars, sourceBlocks
+    promptTargetChars, promptMaxChars > promptTargetChars, sourceBlocks, false, hasCharacterReferences
   );
 
   // アートスタイルの基本プロンプトの決定
   const styleCore = preserveReferenceStyle
-    ? buildReferenceSheetArtStyleLock({ monochrome: isMonochrome })
+    ? buildReferenceSheetArtStyleLock({ monochrome: isMonochrome, hasCharacterReferences })
     : isMonochrome
     ? 'Draw a finished Japanese manga manuscript with expressive ink, paper reserves, assigned skin/material tones and motivated shadows; preserve camera and acting.'
     : "Follow each panel's selected drawing medium and rendering recipe.";
@@ -794,7 +797,7 @@ export const buildMangaPromptArtifact = ({
 
   let rawPrompt = "";
   const identityMatrix = buildIdentityMatrix(castList, { monochrome: isMonochrome });
-  const scriptLock = buildStrictScriptLock({ showTitle, safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle, seriousTone });
+  const scriptLock = buildStrictScriptLock({ showTitle, safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle, seriousTone, hasCharacterReferences });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
   const identityContinuityLock = 'IDENTITY CONTINUITY: keep each character recognizable through hairstyle, wardrobe, glasses and other identity anchors; facial expression and drawing style may vary with the scene without creating a new person.';
   const mixedColorMedia = !isMonochrome && !preserveReferenceStyle
@@ -823,7 +826,7 @@ export const buildMangaPromptArtifact = ({
 ${source(`Camera: ${camera}`)}
 ${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? source(buildMonochromePanelInkLock(pt, identityMatrix)) : ''}
-${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone, providerFamily: 'chatgpt', resetChibiProportions: !seriousTone && panels.slice(0, i).some(panel => extractEmotionStyle(panel) === 'CHIBI_GAG') }))}
+${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, hasCharacterReferences, seriousTone, providerFamily: 'chatgpt', resetChibiProportions: !seriousTone && panels.slice(0, i).some(panel => extractEmotionStyle(panel) === 'CHIBI_GAG') }))}
 ${extractPlacementRule(pt, castList, { compact: true, colorMode }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList, { compact: true, storyText: scenario, colorMode, preserveReferenceStyle }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
@@ -836,6 +839,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
     panelSections = eyeLineBase ? `${eyeLineBase}\n\n${panelSections}` : panelSections;
 
     rawPrompt = buildChatGPTMangaPrompt({
+      hasCharacterReferences,
       showWatermarks,
       showTitle,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
@@ -867,7 +871,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
 ${source(`Camera: ${camera}.`)}
 ${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? source(buildMonochromePanelInkLock(pt, identityMatrix)) : ''}
-${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone, resetChibiProportions: !seriousTone && panels.slice(0, i).some(panel => extractEmotionStyle(panel) === 'CHIBI_GAG') }))}
+${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, hasCharacterReferences, seriousTone, resetChibiProportions: !seriousTone && panels.slice(0, i).some(panel => extractEmotionStyle(panel) === 'CHIBI_GAG') }))}
 ${extractPlacementRule(pt, castList, { colorMode })}
 ${extractCastLimitRule(pt, castList, { storyText: scenario, colorMode, preserveReferenceStyle })}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}
@@ -883,6 +887,7 @@ ${geminiRearForegroundLock}`;
 
     const antiCharSheetPrefix = ANTI_CHARSHEET_PREFIX;
     rawPrompt = antiCharSheetPrefix + buildGeminiMangaPrompt({
+      hasCharacterReferences,
       showWatermarks,
       showTitle,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
@@ -926,7 +931,7 @@ ${geminiRearForegroundLock}`;
     ? compactForSoftTarget(clarifiedPrompt)
     : clarifiedPrompt;
   let budgetedPrompt = isChatGPTFamily && baselinePrompt.length > promptMaxChars
-    ? compactChatGPTConversationRules(baselinePrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars, false, sourceBlocks, true)
+    ? compactChatGPTConversationRules(baselinePrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars, false, sourceBlocks, true, hasCharacterReferences)
     : baselinePrompt;
   if (isChatGPTFamily && budgetedPrompt.length > promptTargetChars) {
     // Share only this repeated generated cue. Never touch Camera/Action or the

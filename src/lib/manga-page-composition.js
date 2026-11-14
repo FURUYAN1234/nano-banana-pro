@@ -187,8 +187,12 @@ export function observedForegroundBodies(review,plan,panel) {
   const supported=(features,body)=>Array.isArray(features)&&new Set(features).size>=2&&features.every(f=>body?.features?.includes(f));
   for(const d of target.body_dispositions||[]) {
     if(d.kind!=='foreground'||!text(d.evidence)||result.has(d.body_id))continue;
-    const f=plan.composition?.foregrounds?.find(f=>f.panel===d.source_panel&&f.panel!==panel);
-    const checks=(review.compositionChecks||[]).filter(c=>c.id===`foreground:P${d.source_panel}`);
+    const foreground=plan.composition?.foregrounds?.find(f=>f.panel===d.source_panel&&f.panel!==panel);
+    const breakout=plan.composition?.breakouts?.find(b=>b.panel===d.source_panel&&b.panel!==panel);
+    const sourceNames=plan.expectedCast?.find(entry=>entry.panel===d.source_panel)?.names||[];
+    const character=breakout&&[...sourceNames].sort((a,b)=>b.length-a.length).find(name=>breakout.part.includes(name));
+    const f=foreground||(character?{panel:breakout.panel,character,over:[breakout.into]}:null);
+    const checks=(review.compositionChecks||[]).filter(c=>c.id===`${foreground?'foreground':'breakout'}:P${d.source_panel}`);
     const sources=(review.evidence||[]).filter(e=>e.panel===d.source_panel),source=sources[0];
     const bodies=(target.physical_bodies||[]).filter(b=>b.id===d.body_id);
     const owners=(source?.physical_bodies||[]).filter(b=>b.id===d.source_body_id);

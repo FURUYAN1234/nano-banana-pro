@@ -477,7 +477,7 @@ export default function Step4Panel({
               <p className="step4-help-copy-compact text-slate-500 text-center mt-2 px-2">
                 {isOpenAIImageMode
                   ? 'API生成では、人物・表情集・三面図・通常背景・小物の元画像とAIの認識結果を送信し、有効な360°背景も添付します。素材を極力反映しますが、認識できない場合や描画で取り違える場合もあり、完全再現は保証しません。参照画像がない場合は文章のみで生成します。API料金はChatGPTのサブスク料金とは別です。'
-                  : 'Gemini API生成では、人物・表情集・三面図・通常背景・小物の元画像とAIの認識結果を送信します。有効な360°背景の4コマ分の切り出しがそろっていれば、それらも添付します。認識できない場合や描画で取り違える場合もあり、完全再現は保証しません。API料金がかかります。公式Web版の手動生成は下の案内をご利用ください。'}
+                  : 'Gemini API生成では、人物・表情集・三面図・通常背景・小物の元画像とAIの認識結果を送信します。有効な360°背景の4コマ分の切り出しがそろっていれば、それらも添付します。人物画像がない場合はSTEP1の人物設定を使って生成します。認識できない場合や描画で取り違える場合もあり、完全再現は保証しません。API料金がかかります。公式Web版の手動生成は下の案内をご利用ください。'}
               </p>
 
               {/* PRO TIPS FOR EXTERNAL GENERATION */}
@@ -497,12 +497,12 @@ export default function Step4Panel({
                       <>
                         ChatGPTのサブスクに加入していて、API画像生成料金を節約したい場合は、上の「コピー」ボタンでプロンプトをコピーし、
                         <a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPT公式Web版</a>
-                        へキャラクターシート画像と一緒に貼り付けて生成してください。360°背景を使う場合は、その画像も添付します。
+                        へ貼り付けて生成してください。人物画像を使った場合は同じ画像を添付します。人物画像なしでSTEP1の人物設定を入力した場合は、プロンプト内の人物設定だけで生成できます。360°背景を使う場合は、その画像も添付します。
                         <br />
                         Web版での生成にはChatGPT側の利用枠・上限が適用されます。この方法ではNano Bananaから画像生成APIを呼びません。ただし、アプリ内で行ったキャラ解析・シナリオ生成などのAPI料金は別途発生する場合があります。
                         <br />
                         <span className="step4-help-copy-compact inline-block mt-2 text-yellow-300 font-bold bg-yellow-900/50 px-2 py-1.5 rounded border border-yellow-500/30">
-                          長文は分割コピーボタンを1から順に使い、同じ入力欄へ貼ってから一度だけ送信してください。TXT保存も使えます。その場合は「添付テキスト全文を画像生成指示として読み、添付画像を人物参照にして生成」と指定し、キャラクターシートと有効な背景を順に添付します。
+                          長文は分割コピーボタンを1から順に使い、同じ入力欄へ貼ってから一度だけ送信してください。TXT保存も使えます。その場合は「添付テキスト全文を画像生成指示として読んで生成」と指定します。人物画像がある場合だけ「添付画像を人物参照にする」と添え、同じ画像を添付してください。画像なしの場合はSTEP1由来の人物設定を使います。有効な背景を使う場合はその画像も添付します。
                         </span><br />
                         <span className="step4-help-copy inline-block mt-2 text-cyan-300/80">
                           ⚠️ <strong>ChatGPTの仕様上、縦に細長すぎる画像になってしまう場合</strong>は、ChatGPT側の「アスペクト比」ボタンで手動修正するのではなく、以下の「画像比率修正プロンプト」をコピーしてChatGPTに貼り付けてみてください。綺麗な4コマの形に修正されます。
@@ -512,7 +512,7 @@ export default function Step4Panel({
                       <>
                         コピーしたプロンプトを
                         <a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Gemini公式Web版</a>
-                        へ、キャラクターシート画像と一緒に貼り付けて生成してください。360°背景を使う場合は、その画像も添付します。Web版で利用できる機能や上限は、Google側のプラン・提供状況に従います。
+                        へ貼り付けて生成してください。人物画像を使った場合は同じ画像を添付します。人物画像なしでSTEP1の人物設定を入力した場合は、プロンプト内の人物設定だけで生成できます。360°背景を使う場合は、その画像も添付します。Web版で利用できる機能や上限は、Google側のプラン・提供状況に従います。
                       </>
                     )}
 
@@ -1205,12 +1205,12 @@ No explanations. No partial results.`;
               {finalPrompt && !isOpenAIImageMode && (
                 <div className="text-[11px] text-slate-400 mt-1 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-white/5">
                   {enableChatGPTMode ? (
-                      <span>💡 <strong>【手動生成用（ChatGPT専用）】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong>（および360°背景画像）を一緒に添付して送信してください。（※毎回新しいチャットで生成することを推奨）</span>
+                      <span>💡 <strong>【手動生成用（ChatGPT専用）】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付けて送信してください。人物画像がある場合は同じキャラクターシート画像を添付し、ない場合はSTEP1由来の人物設定だけで生成できます。360°背景を使う場合はその画像も添付してください。（※毎回新しいチャットで生成することを推奨）</span>
                     ) : (
                       (bg360Image && bg360Enabled) ? (
-                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
+                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>360°背景画像</strong>を添付してください。人物画像がある場合は同じキャラクターシート画像も添付し、ない場合はSTEP1由来の人物設定を使います。</span>
                       ) : (
-                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> を一緒に添付して送信してください。</span>
+                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付けて送信してください。人物画像がある場合は同じキャラクターシート画像を添付し、ない場合はSTEP1由来の人物設定だけで生成できます。</span>
                       )
                     )}
                 </div>
@@ -1483,7 +1483,7 @@ No explanations. No partial results.`;
                         <ol className="list-decimal list-inside text-slate-300 space-y-1 text-xs">
                           <li>画面左側の分割コピーボタンを番号順に使います。短文なら「<span className="text-white font-bold">プロンプトをコピーする（Web / Work用）</span>」を押します。</li>
                           <li><a href={isOpenAIImageMode ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{isOpenAIImageMode ? 'ChatGPTウェブ版' : 'Geminiウェブ版'}</a> を開きます。</li>
-                          <li>同じ入力欄に全部貼り付け、元のキャラクターシート画像を添付して一度だけ送信してください。</li>
+                          <li>同じ入力欄に全部貼り付けて一度だけ送信してください。人物画像を使う場合は元のキャラクターシートを添付します。画像なしの場合はSTEP1由来の人物設定で生成できます。</li>
                         </ol>
                       </div>
                     </div>

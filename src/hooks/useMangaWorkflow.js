@@ -1,3 +1,4 @@
+import { hasCharacterReferenceImages } from '../lib/reference-assets.js';
 import { useWorkflowDiagnostics } from './useWorkflowDiagnostics.js';
 import { diagnosticConsole as console, recordImageQualityReview } from '../lib/diagnostics.js';
 import { resolveAutoScenarioMode } from '../lib/scenario-validation.js';
@@ -1355,6 +1356,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     scenarioModelLabel:OPENAI_SCENARIO_MODEL_OPTIONS.find(({id})=>id===scenarioUsedModelRef.current)?.label,
     // The API and Web copy paths append their own attachment-role manifest once.
     referenceContext:buildReferenceAssetContext(referenceAssetsRef.current,imagesRef.current,{purpose:'image',panorama:bg360Enabled?bg360Analysis:null}),
+    hasCharacterReferences:hasCharacterReferenceImages(imagesRef.current,referenceAssetsRef.current),
     referenceImages:imagesRef.current,backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,
     promptMaxChars:isOpenAIEngine?getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({compact:true,
       characterImages:imagesRef.current,referenceAssets:referenceAssetsRef.current,
@@ -1489,6 +1491,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         castList,
         colorMode,
         providerFamily: effectiveProviderFamily,
+        hasCharacterReferences: hasCharacterReferenceImages(imagesRef.current, referenceAssetsRef.current),
         referenceAssetContext: buildReferenceAssetContext(referenceAssetsRef.current, imagesRef.current, { purpose: 'image', panorama: bg360Enabled ? bg360Analysis : null }),
         bg360Image,
         bg360Analysis,
@@ -1511,7 +1514,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       const safePrompt = promptArtifact.prompt;
       const endingPolicy = getEndingModePolicy(activePunchlineType);
       setAssembleThought(prev => prev + (endingPolicy.preserveReferenceStyle
-        ? "\n> 原文忠実性と全4コマの参照絵柄固定を保ってAI精査中..."
+        ? "\n> 原文忠実性と全4コマの画風統一を保ってAI精査中..."
         : endingPolicy.endingTone === 'serious'
           ? "\n> シリアス結末の因果と余韻を保ってAI精査中..."
           : "\n> ギャグの意図を保ってAI精査中..."));
@@ -1523,6 +1526,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         castList,
         reviewTone: endingPolicy.endingTone,
         preserveReferenceStyle: endingPolicy.preserveReferenceStyle,
+        hasCharacterReferences: hasCharacterReferenceImages(imagesRef.current, referenceAssetsRef.current),
         signal: controller.signal
       }, callStep3AI, message => {
         if (promptScenarioEpoch === scenarioRunEpochRef.current && assemblyRun === promptAssemblyRunRef.current) {
@@ -1538,7 +1542,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
       setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きを優先（構図に適した横書きは許容）\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
 
-      assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType });
+      assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType, hasCharacterReferences: hasCharacterReferenceImages(imagesRef.current, referenceAssetsRef.current) });
       assertPrintableDialogue(reviewed.prompt);
       assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
       promptAssemblyRunRef.completedRun = assemblyRun;
@@ -2165,7 +2169,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       if(prepared.images!==imagesRef.current||prepared.bg360Image!==bg360Image) throw new Error('参照素材が変わりました。STEP3を作り直してください。');
       return;
     }
-    if (enforceAssemblySettings) assertPromptEndingModeConsistency({ prompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
+    if (enforceAssemblySettings) assertPromptEndingModeConsistency({ prompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType, hasCharacterReferences: hasCharacterReferenceImages(imagesRef.current, referenceAssetsRef.current) });
     assertPrintableDialogue(prompt);
     if (enforceAssemblySettings && inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
   };

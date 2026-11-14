@@ -1922,7 +1922,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const incomingCast=new Set((options.incomingCast||[]).map(resolvePageName).filter(Boolean));
   const overlayCast=new Set((options.overlayCast||[]).map(resolvePageName).filter(Boolean));
   const pageCast=new Set([...incomingCast,...overlayCast]);
-  const castScope=(pageCast.size?`LOCAL CAST SCOPE: 以下はこの場面の独立人物のみ。${[...pageCast].map(name=>`[${name}]`).join(', ')}の越境身体は元コマで一度だけ数え、この人数・不在・描法の規則から除外。別身体を追加せず一続きの前景を保持。${overlayCast.size?'この小コマ自身の別時点の登場は下記人数に含み、前景と混同して消さない。':''}\n`:'')
+  const castScope=(pageCast.size?`LOCAL CAST SCOPE: 以下はこの場面の独立人物のみ。${[...pageCast].map(name=>`[${name}]`).join(', ')}の越境身体は元コマで一度だけ数え、この人数・不在・描法の規則から除外。別身体を追加せず一続きの前景を保持。この小コマ自身の別時点の登場は下記人数に含み、前景と混同して消さない。\n`:'')
     +(scriptedDepictions.length?`SCRIPTED DEPICTED FIGURES: ${scriptedDepictions.map(name=>`[${name}]`).join(', ')}. 画面/絵の中の描像。指定の大きさ/ポーズ/連続性を保持。現場の身体数・ABSENT対象外で、来館者化/消去/小さな複製化は禁止。PAGE DOMINANT FIGUREは指定境界だけを一体で越え、別の身体を増やさない。\n`:'');
 
   // The bubble parser is the source of truth for speakers, including multiple
@@ -1990,14 +1990,30 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       actionAndMetaLines.push(line);
     }
   });
-  const actionAndMetaText = currentCastMentionText(actionAndMetaLines.join('\n'), castList);
+  // Mask only an explicit incoming fragment mention. The same name's separate
+  // local action/dialogue remains authoritative, just as for page foregrounds.
+  const incomingAliases=Object.keys(flatCharLookup).filter(alias=>incomingCast.has(flatCharLookup[alias])).sort((a,b)=>b.length-a.length);
+  const incomingMention=incomingAliases.length?new RegExp(`(${incomingAliases.map(escapeRegex).join('|')})`,'gu'):null;
+  const localActionText=actionAndMetaLines.join('\n').replace(/[^。！？\n]+/gu,clause=>{
+    if(!incomingMention||!/(?:コマ|枠|panel|frame|gutter)/iu.test(clause))return clause;
+    const mentions=[...clause.matchAll(incomingMention)];
+    let local=clause;
+    for(let i=mentions.length-1;i>=0;i--) {
+      const mention=mentions[i],end=mention.index+mention[0].length;
+      const ownAction=clause.slice(end,mentions[i+1]?.index??clause.length).split(/(?:が、|一方|しかし|けれど|whereas|while)/iu)[0];
+      if(/(?:越え|はみ出|越境|extends? into|cross(?:es|ing)?)/iu.test(ownAction))
+        local=local.slice(0,mention.index)+' '.repeat(mention[0].length)+local.slice(end);
+    }
+    return local;
+  });
+  const actionAndMetaText = currentCastMentionText(localActionText, castList);
   const offscreenCast = readOffscreenCast(actionAndMetaText, castList, speakers);
   const hasBroadGroupCue = /(?:全員|みんな|一同|全キャラ|全メンバー|主要人物全員|メンバー全員|全員集合|everyone|all characters|the whole group)/i.test(actionAndMetaText);
 
   // Visual Action テキストからも登場キャラ名を検出
   const allPanelCharacters = speakers.filter(speaker => !offscreenCast.has(speaker));
   const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
-  const explicitRearSubject = extractExplicitRearSubject(fullPanelText, collectCastNameEntries(castList)).subject;
+  const explicitRearSubject = extractExplicitRearSubject(incomingCast.size?localActionText:fullPanelText, collectCastNameEntries(castList)).subject;
   // An unqualified group subject refers to the registered cast, not unnamed mobs.
   // Keep qualified groups such as 社員全員 separate from the main cast.
   const hasUnqualifiedCastGroup = /(?:^|[。！？\n:：／、])\s*(?:全員|一同|みんな|他のメンバー)(?:が|は|も|で|、)/u.test(actionAndMetaText);
@@ -2049,7 +2065,6 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   if (explicitRearSubject && !offscreenCast.has(explicitRearSubject) && !allPanelCharacters.includes(explicitRearSubject)) {
     allPanelCharacters.push(explicitRearSubject);
   }
-  for(let i=allPanelCharacters.length-1;i>=0;i--)if(incomingCast.has(allPanelCharacters[i]))allPanelCharacters.splice(i,1);
 
   // 吹き出し数カウント: セリフ行（「」付き）の数を数えてソロショット判定の矛盾を防ぐ
   let dialogueLineCount = 0;
@@ -2063,8 +2078,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   });
 
   // スピーカー最大3名をメインアクターとして登録
-  const panelActors = speakers.filter(speaker => !offscreenCast.has(speaker)&&!incomingCast.has(speaker)&&!scriptedDepictions.includes(speaker)).slice(0, 3).map(s => `[${s}]`);
-  const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject)&&!incomingCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
+  const panelActors = speakers.filter(speaker => !offscreenCast.has(speaker)&&!scriptedDepictions.includes(speaker)).slice(0, 3).map(s => `[${s}]`);
+  const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
   const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, [...new Set([...allPanelCharacters,...canonicalValidCharacters])]).filter(name=>!scriptedDepictions.includes(name));
   const replicaBrackets = replicaNames.map(c => `[${c}]`);
@@ -2238,6 +2253,9 @@ export const OPENAI_COLOR_GEKIGA_STYLE = `THIS PANEL ONLY: high-intensity GEKIGA
 
 const OPENAI_MONOCHROME_GEKIGA_STYLE = `THIS PANEL ONLY: redraw GEKIGA faces. ${GEKIGA_FACE_CONSTRUCTION} Fine dense directional crosshatching ON faces/hands is primary; solid black is a local secondary accent, with fine white gaps between strokes. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。`;
 const NORMAL_COLOR_RENDERING = `\nNORMAL PANEL RENDERING: Chic cinematic full-color TV anime style; polished Japanese animation finish. ${OPAQUE_COLOR_RENDERING}`;
+export const buildNormalPanelRendering = (colorMode='color') => colorMode==='monochrome'
+  ? resolveMonochromeRenderIntent({style:'NORMAL'}).lineRule
+  : NORMAL_COLOR_RENDERING.trim();
 
 // The same actor construction travels through ordinary/native and API/Web
 // paths. It changes the drawing medium, never the camera or visible cast.
@@ -2251,9 +2269,10 @@ export const buildActorMediumInstruction = (style, colorMode = 'color') => {
   return construction ? `ACTOR MEDIUM${colorMode === 'monochrome' ? ` ${style}` : ''}: ${construction}` : '';
 };
 
-export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false, providerFamily = '', resetChibiProportions = false } = {}) => {
+export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, hasCharacterReferences = true, seriousTone = false, providerFamily = '', resetChibiProportions = false } = {}) => {
   const emo = extractEmotionStyle(panelText);
   if (preserveReferenceStyle) {
+    if (!hasCharacterReferences) return `\nTEXT-ONLY PANEL ACTING ONLY: interpret [EMOTION: ${emo}] as expression, gaze, posture and timing only. Keep the same established linework, rendering, facial construction and body proportions across all four panels; no panel-specific art-style or proportion change.`;
     return `\nREFERENCE-SHEET PANEL ACTING ONLY: interpret [EMOTION: ${emo}] as expression, gaze, posture and timing only. Keep the same reference-sheet linework, rendering, facial construction and body proportions; no panel-specific art-style or proportion change.`;
   }
   const rawEmotionTag = extractRawEmotionTag(panelText);

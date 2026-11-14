@@ -883,6 +883,7 @@ export const OPENAI_COLOR_FOCAL_READABILITY = FOCAL_READABILITY
   .replace('strengthen focal G-pen.', 'strengthen focal separation in the panel medium.');
 export const OPENAI_COLOR_FOLD_PRIORITY = 'FOLD PRIORITY: 2-4 triangular overlap/pinch shadows in panel medium; hard cel edges NORMAL/unmarked only; no geometric patterns.';
 export const REFERENCE_FOLD_RENDERING = 'Keep reference fold/shadow treatment; no new method.';
+export const TEXT_ONLY_FOLD_RENDERING = 'Keep the established fold/shadow treatment in all four panels; no new method.';
 
 export const SCENE_LETTERING_LOCK = 'SCENE LETTERING: scripted object text exact/readable; repeat only if scripted. Otherwise keep natural artwork/icons/colors/borders/material/layout and any context-appropriate lettering, length/density/readability. No censoring/blanking/simplifying just for unscripted text; depth blur/thin/pale allowed, required text readable.';
 
@@ -892,9 +893,9 @@ const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(
   '- Physical-setting shots preserve recognizable shapes and spatial depth; explicitly scripted abstract beats may omit scenery while preserving story evidence. Quiet beats lower nonessential detail; keep focal action and necessary reactions crisp.'
 );
 
-const mangaImageQualityContract = (isMonochrome, preserveReferenceStyle = false) => {
+const mangaImageQualityContract = (isMonochrome, preserveReferenceStyle = false, hasCharacterReferences = true) => {
   const contract = isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT;
-  const foldRule = preserveReferenceStyle ? REFERENCE_FOLD_RENDERING : isMonochrome ? '' : OPENAI_COLOR_FOLD_PRIORITY;
+  const foldRule = preserveReferenceStyle ? hasCharacterReferences ? REFERENCE_FOLD_RENDERING : TEXT_ONLY_FOLD_RENDERING : isMonochrome ? '' : OPENAI_COLOR_FOLD_PRIORITY;
   return `${foldRule ? contract.replace(/^- Add clothing-fold shadows[^\n]*/m, `- ${foldRule}`) : contract}\n- ${PANEL_EDGE_CONTINUITY_LOCK}`;
 };
 
@@ -912,7 +913,13 @@ const REFERENCE_SHEET_OUTFIT_RENDERING_LOCK = `REFERENCE-SHEET OUTFIT RENDERING 
 - Apply the character sheet's linework, fold-line treatment, shading method, coloring or monochrome tone method, and degree of stylization to those overridden garments in all four panels. In monochrome, the white-paper/ink/tone contract takes priority over reference fills and shading methods.
 - Lighting may change highlight and shadow strength, but never change the selected garment items or the reference sheet's rendering method.`;
 
-const referenceOutfitRenderingLock = (scopedOutfit) => scopedOutfit
+const TEXT_ONLY_WARDROBE_STYLE_LOCK = `TEXT-ONLY WARDROBE AND RENDERING LOCK:
+- Establish garment items, colors or monochrome tone regions, materials and patterns from the written character descriptions. Approved outfit instructions override them only for the assigned actors and scope.
+- Preserve each character's wardrobe and the same fold-line treatment, shading, coloring or ink method across all four panels. Lighting may change illumination, not the established rendering method. Monochrome white-paper/ink/tone rules remain authoritative.`;
+const TEXT_ONLY_STYLE_QA = `TEXT-ONLY STYLE QA LOCK:
+- Compare all four panels with the established written cast design and page-wide drawing style. Redraw changes in linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization. No character image attachment is required.`;
+
+const referenceOutfitRenderingLock = (scopedOutfit, hasCharacterReferences = true) => !hasCharacterReferences ? TEXT_ONLY_WARDROBE_STYLE_LOCK : scopedOutfit
   ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK.replace('Garment items come from the active outfit override, not from the character sheet.', 'Garment items come from the active outfit override only for assigned characters/roles; unassigned actors retain character-sheet garments.')
   : REFERENCE_SHEET_OUTFIT_RENDERING_LOCK;
 
@@ -929,6 +936,7 @@ ${prompt.replace(storyboard, '').replace(scriptLock, '')}`;
 
 export const buildChatGPTMangaPrompt = (p) => {
   const {
+    hasCharacterReferences = true,
     showTitle = true,
     showWatermarks = true,
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
@@ -952,16 +960,16 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
     : '- OUTFIT CONSISTENCY: Each character keeps their own outfit across ALL 4 panels.';
   const compactCastDetails = compactChatGPTCastDetails(VAR_CAST_LIST_CHATGPT);
   const clothingFoldRule = preserveReferenceStyle
-    ? REFERENCE_FOLD_RENDERING
+    ? (hasCharacterReferences ? REFERENCE_FOLD_RENDERING : TEXT_ONLY_FOLD_RENDERING)
     : `${isMonochrome ? 'use a few localized solid-black or hatched wedge shadows where fabric overlaps; preserve white lit fabric and garment tone assignments. Do not scatter geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}`;
   const panelColorMedia = !isMonochrome && !preserveReferenceStyle;
   const artStyleQa = preserveReferenceStyle
-    ? 'REFERENCE-SHEET STYLE QA LOCK:\n- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.'
+    ? hasCharacterReferences ? 'REFERENCE-SHEET STYLE QA LOCK:\n- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.' : TEXT_ONLY_STYLE_QA
     : isMonochrome ? MONOCHROME_STYLE_QA : OPENAI_COLOR_STYLE_QA;
 
   const prompt = `OUTPUT: Single image. Draw manga directly.
 
-ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'identity, hair, glasses and design; panel recipes redraw faces within the black ink plate' : 'identity, hair, eye/skin colors and glasses; panel recipes determine facial construction and body stylization'}.
+ABSOLUTE TASK: new 4-panel manga, not a reference sheet. ${hasCharacterReferences ? `Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'identity, hair, glasses and design; panel recipes redraw faces within the black ink plate' : 'identity, hair, eye/skin colors and glasses; panel recipes determine facial construction and body stylization'}.` : 'TEXT-ONLY CAST: Draw the named characters from their written descriptions below. No character image attachment is needed; preserve the described appearance and outfit across all panels.'}
 
 FORMAT:
 ${pageEnvelope(showTitle)}
@@ -974,7 +982,7 @@ ${MANGA_FOOTER_EXCLUSIVITY}` : ''}
 ${scriptLock}
 
 ART / RENDERING QUALITY:
-${panelColorMedia ? mangaImageQualityContract(false).replace(FOCAL_READABILITY, OPENAI_COLOR_FOCAL_READABILITY) : mangaImageQualityContract(isMonochrome, preserveReferenceStyle)}
+${panelColorMedia ? mangaImageQualityContract(false).replace(FOCAL_READABILITY, OPENAI_COLOR_FOCAL_READABILITY) : mangaImageQualityContract(isMonochrome, preserveReferenceStyle, hasCharacterReferences)}
 - Clean finish: ${isMonochrome ? 'crisp focal ink; simplify distant lines while keeping setting shapes and white light planes.' : 'crisp story focus; soften nonessential near/far planes in the panel medium; preserve required text and lighting.'}
 ${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
@@ -992,7 +1000,7 @@ CHARACTER IDENTITY:
 - ${isMonochrome ? preserveReferenceStyle ? 'Reproduce reference geometry and design using black ink/white paper: face/eye shape, hairstyle, glasses and accessory shapes. No source hue or skin base tone.' : 'Keep reference identity/ink assignments; panel recipe redraws facial construction. No source hue.' : preserveReferenceStyle ? 'Reproduce reference face, hair, eyes, skin, accessories.' : 'Keep reference identity/colors; panel recipe redraws facial construction.'} No feature swapping.
 ${outfitRule}
 ${preserveReferenceStyle
-  ? (activeOutfit ? referenceOutfitRenderingLock(scopedOutfit) : REFERENCE_SHEET_WARDROBE_STYLE_LOCK)
+  ? (activeOutfit ? referenceOutfitRenderingLock(scopedOutfit, hasCharacterReferences) : hasCharacterReferences ? REFERENCE_SHEET_WARDROBE_STYLE_LOCK : TEXT_ONLY_WARDROBE_STYLE_LOCK)
   : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 ${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
 - Adults 20+. Keep each character recognizable through hairstyle, wardrobe, glasses, and other identity anchors across panels; facial expression and drawing style may vary with the scene. ${isMonochrome ? 'Keep skin bases in light: light=paper, dark/tanned=screen.' : 'Keep canonical skin and outfit colors under changing light.'}
@@ -1023,7 +1031,7 @@ THINGS TO AVOID:
 - No plastic skin, extra credits/watermarks, floating/ghost eyes/faces or duplicate humans.
 - No sparkle/glow dust unless scripted. HAND ANATOMY: correct hands; five digits (one thumb + four fingers); every foreground hand/foreshortened hand; no four-digit/mirrored/extra/backward hands.
 
-PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : preserveReferenceStyle ? REFERENCE_FOLD_RENDERING : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : preserveReferenceStyle ? (hasCharacterReferences ? REFERENCE_FOLD_RENDERING : TEXT_ONLY_FOLD_RENDERING) : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
 PANEL DESCRIPTIONS:
 
@@ -1041,6 +1049,7 @@ ${isMonochrome ? `\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
  */
 export const buildGeminiMangaPrompt = (p) => {
   const {
+    hasCharacterReferences = true,
     showTitle = true,
     showWatermarks = true,
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
@@ -1110,7 +1119,7 @@ Setting: ${safeLocation}.
 ${bg360Block}
 
 VISUAL REPRODUCTION:
-Strictly reproduce reference image designs:
+${hasCharacterReferences ? 'Strictly reproduce reference image designs:' : 'TEXT-ONLY CAST: No character image is supplied. Draw the named characters from the written appearance and clothing below; do not request a missing reference sheet.'}
 - ${isMonochrome ? preserveReferenceStyle ? 'EXACT hairstyle, face/eye shape and stable skin bases: light=paper, dark/tanned=screen; no source hue.' : 'Keep reference identity/ink assignments; panel recipe redraws facial construction. Skin bases: light=paper, dark/tanned=screen; no source hue.' : 'EXACT hairstyle/color, eye color/shape, skin tone.'}
 - EXACT accessories (glasses, hats). NO add/remove.
 - NO feature swapping. Keep unique charm points in EVERY panel.
@@ -1120,7 +1129,7 @@ ${VAR_CAST_LIST}
 ${outfitOverride}
 【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${identityMatrix}
-${preserveReferenceStyle ? (activeOutfit ? referenceOutfitRenderingLock(scopedOutfit) : REFERENCE_SHEET_WARDROBE_STYLE_LOCK) : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
+${preserveReferenceStyle ? (activeOutfit ? referenceOutfitRenderingLock(scopedOutfit, hasCharacterReferences) : hasCharacterReferences ? REFERENCE_SHEET_WARDROBE_STYLE_LOCK : TEXT_ONLY_WARDROBE_STYLE_LOCK) : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 ${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
 OUTFIT CONSISTENCY: Each character keeps their own assigned outfit across ALL 4 panels unless the script explicitly changes its state.
 ${WARDROBE_COMPONENT_LOCK}
@@ -1138,7 +1147,7 @@ COMPOSITION: follow the scripted framing within each panel; keep required cast, 
 
 Tech Dict:
 ${preserveReferenceStyle
-  ? (isMonochrome
+  ? !hasCharacterReferences ? '(same established linework, shading, facial construction and proportions across all four panels: 2.8)' : (isMonochrome
     ? '(reference-sheet linework and proportions translated only into white paper, solid black and one bounded Japanese screentone: 2.8)'
     : '(exact reference-sheet linework, coloring method, shading design and proportions: 2.8)')
   : isMonochrome ? '(clean ink background with selectively simplified detail: 2.5)\n(crisp black penwork, white highlights, one bounded screentone and deliberate line hatching: 2.5)' : `(background rendering follows the selected panel medium: 2.5)
@@ -1153,12 +1162,12 @@ ${SCENE_LETTERING_LOCK}
 (NO unrelated ENGLISH TEXT. NO 'G-pen'/'HA': 3.0)
 
 GEMINI STABILITY / QUALITY LOCK:
-${mangaImageQualityContract(isMonochrome, preserveReferenceStyle)}
+${mangaImageQualityContract(isMonochrome, preserveReferenceStyle, hasCharacterReferences)}
 - Physical-setting shots keep spatial depth and recognizable setting props; explicitly scripted abstract beats may omit scenery. Quiet beats reduce detail/contrast; depth-of-field may soften distant backgrounds while focal actions and required reactions stay readable.
 ${MANGA_FACIAL_ACTING_LOCK}
 ${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
-- CLOTHING FOLD SHADOW ASSIST: ${preserveReferenceStyle ? REFERENCE_FOLD_RENDERING : panelColorMedia ? 'Follow panel medium and FOLD PRIORITY below.' : 'localized solid-black/hatched wedge shadows only where fabric overlaps; preserve white lit fabric and stable wardrobe tones, never random geometric patterns.'}
+- CLOTHING FOLD SHADOW ASSIST: ${preserveReferenceStyle ? (hasCharacterReferences ? REFERENCE_FOLD_RENDERING : TEXT_ONLY_FOLD_RENDERING) : panelColorMedia ? 'Follow panel medium and FOLD PRIORITY below.' : 'localized solid-black/hatched wedge shadows only where fabric overlaps; preserve white lit fabric and stable wardrobe tones, never random geometric patterns.'}
 ${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
@@ -1168,16 +1177,16 @@ ${SAFE_VISUAL_CONTENT_LOCK}
 - Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
 - ${preserveReferenceStyle ? 'Panel mood may become more serious through expression, acting, camera, composition and lighting, but the character-sheet art style must remain identical in all four panels.' : seriousTone ? 'Panel style may be dramatic or restrained and may vary with the selected serious emotion cues, but must never become comedic, chibi, or a gag release. Keep the story consequences, cast, key prop and bold camera readable.' : 'Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.'}
 
-PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? REFERENCE_FOLD_RENDERING : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? (hasCharacterReferences ? REFERENCE_FOLD_RENDERING : TEXT_ONLY_FOLD_RENDERING) : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
 PANEL DESCRIPTIONS:
 
 ${panelSections}
 
 Important constraints:
-${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
-- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.` : isMonochrome ? MONOCHROME_STYLE_QA : ''}
-- ${preserveReferenceStyle ? 'Preserve the reference-sheet art style in every panel; emotion tags are acting cues only.' : `Preserve the selected scenario style and each PANEL STYLE LOCK; do not collapse the page into generic classic anime or a flat template. ${isMonochrome ? '' : ART_STYLE_DIFFERENCE_QA_LOCK}`}
+${preserveReferenceStyle ? hasCharacterReferences ? `REFERENCE-SHEET STYLE QA LOCK:
+- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.` : TEXT_ONLY_STYLE_QA : isMonochrome ? MONOCHROME_STYLE_QA : ''}
+- ${preserveReferenceStyle ? hasCharacterReferences ? 'Preserve the reference-sheet art style in every panel; emotion tags are acting cues only.' : 'Preserve the established page-wide drawing style in every panel; emotion tags are acting cues only.' : `Preserve the selected scenario style and each PANEL STYLE LOCK; do not collapse the page into generic classic anime or a flat template. ${isMonochrome ? '' : ART_STYLE_DIFFERENCE_QA_LOCK}`}
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
 - ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text.

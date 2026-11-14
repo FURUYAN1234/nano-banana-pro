@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { beginApiWork, createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS } from '../src/lib/api-work-cancellation.js';
 import { assertImageInputBudget } from '../src/lib/image-input-budget.js';
-import { buildReferenceAssetContext } from '../src/lib/reference-assets.js';
+import { buildReferenceAssetContext, hasCharacterReferenceImages } from '../src/lib/reference-assets.js';
 import { formatOpenAIImageEngineName } from '../src/lib/openai-image-settings.js';
 import { GEMINI_IMAGE_MODEL } from '../src/lib/gemini-image-settings.js';
 
@@ -51,7 +51,7 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
     referenceEditorError: '',
     formatOpenAIImageEngineName, GEMINI_IMAGE_MODEL, openAIImageQuality: 'sunburst_max', translateApiError: error => error.message,
     beginApiWork,
-    buildReferenceAssetContext, referenceAssetsRef: { current: [] },
+    buildReferenceAssetContext, hasCharacterReferenceImages, referenceAssetsRef: { current: [] },
     assertImageInputBudget, imagesRef:{current:[]}, bg360EnabledRef:{current:false}, setImageInputError:()=>{},
     scenarioRunEpochRef:{current:0}, promptAssemblyRunRef:{current:0}, promptAssemblyAbortRef:{current:null},
     scenario:'fixture scenario', castList:'fixture cast', collectCastNameEntries:()=>[], validateMangaScenario:()=>({ok:true}),

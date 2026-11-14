@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-  "manualVersion": "7.5.1",
-  "manualSourceSha256": "62eb5e73247e3c16fbb01b79d0c7c5f2a4397ed0b519c08b420834fd198ed0ec",
+  "manualVersion": "7.5.2",
+  "manualSourceSha256": "28467ad7e99ae6e2451215f185d9dc5684033aab90ee71b24ceba36628913169",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "395d0eed27dfa3e0dc25058696071fabe0753149ce5aa470fcfc1fa0a0e9c56a"
+      "sha256": "8bc1c4a0685094c61e93681d300da9301c706aa697762f247e96a7f9d74d2108"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "4b68d363fe71f71d1fa4e91c3110305b9534ba095f02deab10aec66ae10287bb"
+      "sha256": "9a64b89ec3a3134418d9eb734c3dac154e3ea309b300f609595ff76b3b89aa32"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "3003113c73907f298b6778592af901b9e400a1b49008ff49e34dc45f41f16c51"
+      "sha256": "92256d696b9bb64773f35e14f831516bd64b02b408b8e5e0881a83e8e4214f6d"
     }
   ],
-  "readmeSha256": "0c5c50b7c738a41eff27eb13610755449180e86326d3505cc0be84f78c371dff",
+  "readmeSha256": "356620f5ab1ff0f5e62bba542d017f4c9b5a5e081d086325a440b20ddeebafb5",
   "readmeLanguageGaps": [],
-  "sourceTree": "5660c72a9f1b762e8ba7c594e3e735f9a76ab1de",
-  "publicTree": "5ec37d523fb94e3849e27e9cbabc85955b612a94",
-  "packageSha256": "cecc1e85fdb4f7c4c966d9712fd7b27b1408e3ab07586c087cabdeff88929126",
+  "sourceTree": "2df01dd7c28449207b0574be7b14fdf5edef1548",
+  "publicTree": "962487ee599f2e7e4599258acfea8ce88e4e2950",
+  "packageSha256": "9f3dcd2836da1ace24168ccd66ba59bb737c35f3d82a54df672c0a3e3bc74923",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-13T03:23:36.196Z",
-  "findings": "v7.5.0の全見出し監査を継承し、git差分で未変更範囲を照合。物語アルゴリズム本文に、生成・監査・修正で共有する適応型三幕設計、尺とジャンルの境界、追加API工程なしを記載し実装へ照合。版番号・更新履歴・配布ZIPを7.5.1へ同期。単発生成から品質保証を主張しない。 再検証で発見した人物数1対1の誤検出も修正し、本文・更新履歴・調査仕様へ反映。現在配布ZIPのリンクラベルの旧版表記を訂正。",
-  "manualFindings": "3冊71ページを再生成し全ページの文字境界・A4・ページ番号・版・秘密情報検査に合格。前版との全文比較は版番号を除き全機能11ページのみ変更。前版の全ページ目視を継承し、変更した11ページを実画像で確認。物語設計の追記を実装と照合し、切れ・重なりがない。公開PDFは同じ固定名へ同期。",
+  "checkedAt": "2026-11-14T02:46:03.312343Z",
+  "findings": "v7.5.1の未変更本文監査を継承し、今回のREADME差分と全見出し一覧を照合。冒頭の人物画像なし設定・自己申告・年齢違い、What this project doesの素材/人物説明、Quick startの素材投入・Web添付手順、ComfyUI配布欄、FAQ、更新履歴を英日で読み、候補7.5.2へ同期。十分なSTEP1人物設定をAPI/Webの両方へ渡す契約をreference-assets/prompt-assembler/experimental-mangaと照合。人物画像ありの同一性優先、背景/描法見本の区別、不十分な入力の拒否を保持。配布リンクは候補公開用であり、Release実在・公開確認は未実施。sourceTree/publicTreeは最終レビュー済み候補コミットのsrc/public treeと一致。コード差分・README・PDFの対応を確認し、実APIと最終決定的修正の再評価を区別して記録。 追加のv7.5.2更新行を英日で照合：別時点の局所人物を枠越え身体から分離し、画像なしNORMALに既存描画基準を共有する修正を反映。実画像は微差を許容して保持し、検査を無条件合格へ変更しない。",
+  "manualFindings": "候補7.5.2で既存原稿から3冊72ページ（全機能41、Gemini12、OpenAI19）を生成。文字境界・A4・ページ番号・版・秘密情報検査成功。全13一覧画像で全ページを目視し、最終修正した全機能マニュアル2ページの目次と5ページのStory Maker受け渡しを個別確認。目次の追加ページずれを修正し、実際の自己申告checkbox文言とSTEP1/2の貼り付け先へ同期。切れ・重なりを認めず、固定名のpublic/downloadsへコピーしSHA一致を確認。 追加のWeb手動案内修正では、画像なしのSTEP1人物設定なら人物画像添付が不要で、使用する背景/描法資料だけ添付すると明記。全機能7ページ・21ページと目次2ページを再生成PDFで個別目視し、切れ/重なりなし。残り既確認ページを継承。Gemini取得ガイドはAPI接続案内であり当該Web添付の説明を持たず変更不要。",
   "pricingReview": {
-    "version": "7.5.1",
+    "version": "7.5.2",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-    "checkedAt": "2026-11-13T03:16:45.8851613Z",
+    "checkedAt": "2026-11-14T01:30:17.441Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -55,9 +55,11 @@
       "https://developers.openai.com/api/docs/models/gpt-6-sol",
       "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst.md",
+      "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare.md"
     ],
-    "findings": "2026-11-13に公式Standard表と旧世代の個別4モデルページを再確認。Astra10/50、Sol6.1 2/10、Terra6.1 1/5、Luna6 .1/.5、Sol6 2/10、Sol5.6 4/20、Terra5.6 2/12、Luna5.6 .2/1.2。Image2.6画像8/30/キャッシュ2、text5/cache1.25。GeminiFlash3.8 .75/3.75（年末まで）、NanoBanana2.1入力1.5、text7.5、画像30/1K .0336。Batch/Flexと区別し設定の価格に変更なし。2.5画像選択肢は11月12日の既存確認を継承。"
+    "findings": "2026-11-14に両社公式料金表を読み、現在の画面用設定・README価格本文・PDF原稿の単価へ照合。OpenAI Standard短文はAstra10/50、Sol6.1 2/10、Terra6.1 1/5（cached input .05）、Luna6 .1/.5。旧モデルの個別公式ページでSol6 2/10、Sol5.6 4/20（11月30日までのpromotion）、Terra5.6 2/12、Luna5.6 .2/1.2を確認。Image2.6Sunburstと2.5Sunburst/Flareは画像input8/cached2/output30、text input5/cached1.25。Gemini3.8Flashはinput .75/output3.75（12月31日まで。翌年1月1日から1.5/7.5）、Nano2.1はinput1.5、text/thinking7.5、image30/1K一枚.0336（2K.0504/4K.113）。すべてUSD/100万tokenの通常Standard料金で、Batch/Flexの割引表を使っていない。現在の実装単価に変更なし。価格確認日以外のソース・公開状態・実APIを本監査から保証しない。"
   },
-  "candidateReviewStatus": "全Node回帰・lint・build/security成功。通常UIの新規台本、描画指示、Image2.6生成とLuna検査を実APIで確認。人数1対1の誤検出は再発せず、最終画像を目視受入れ。自動unverified（越境の指定差・瞳の証拠不足）は保持し、自動合格を主張しない。"
+  "candidateReviewStatus": "候補7.5.2は全2353回帰、215関連ケース、lint警告0、build/security成功。通常UIからSTEP1テキストとSTEP2台本を渡し実APIで6コマ画像を生成、目視受入れ。自動QAは未確認を保持。最後の人数・位置・NORMAL規則修正は保存済みAPI観察の再評価と正常/異常回帰で確認し、追加画像生成なし。文書/PDF監査・価格照合済み。公開未実施、デプロイ許可待ち。"
 }

@@ -106,6 +106,7 @@ export default function Step1Panel({
       </div>
 
       <div className="reference-intake-guidance" aria-live="polite">
+        <p>人物画像がなくても、下の「人物設定」に名前・外見・服装などを記入すれば生成できます。Story Makerの「STEP1用」テキストも貼り付けられます。人物画像がない場合はこのテキストを人物の基準とし、API生成とWeb用指示文の両方へ反映します。背景や描法見本は人物シートの代わりには使いません。</p>
         <p>素材の追加は、下の「素材画像を選択」ボタンでも、STEP1の枠内全体へのドロップでもできます。後からの追加も同じ操作です。</p>
         <p>追加・削除・背景ON/OFF後は認識結果と人物設定を更新し、シナリオ以降を作り直します。画像をすべて外した人物は設定も削除し、差し替え画像は新たに解析します。残る人物と手入力人物の編集は保持します。Webへ貼付済みの指示文・添付画像は、新しい内容と現在の番号順に差し替えてください。</p>
         <p className="reference-image-count">参照素材画像：{imageInputBudget.characterImageCount} / {imageInputBudget.maxCharacterImages}枚（あと{imageInputBudget.remaining}枚・OpenAI／Gemini共通）</p>
@@ -116,7 +117,7 @@ export default function Step1Panel({
         <p className="mt-1 text-[11px] text-slate-400">素材をまとめてドロップすると、AIが種類・同じ人物・関係・使いどころを判断し、シナリオとAPI／Webの描画指示へ極力反映します。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。素材全点の登場や完全再現を保証するものではありません。</p>
         <p>2D背景と360°背景が両方ある場合、指定がなければ360°背景を舞台の基準にします。自由入力の素材・コマ別指定を優先し、2D背景も場面に合う範囲で使います。添付順は画像番号との対応づけのためで、背景の使用優先度を決めるものではありません。</p>
         <p className="mt-1 text-[11px] text-slate-400">1枚に複数の人物・素材が載っていても1枚です。同じ人物の表情集・三面図は一人分の資料として扱います。</p>
-        <p className="mt-1 text-[11px] text-slate-400">ChatGPTやGeminiのWeb版で生成するときは、STEP1で読み込んだ素材画像をもう一度添付してください。添付する順番は、STEP1に現在表示されている「1、2、3…」の番号順です。360°背景は途中で追加しても最後に表示されます。その後に通常素材を追加すると、360°背景は最後へ繰り下がり、番号も更新されます。API画像生成では、アプリが対応づけて送信するため、並べ直しや再添付は不要です。</p>
+        <p className="mt-1 text-[11px] text-slate-400">ChatGPTやGeminiのWeb版で生成するとき、STEP1で画像を読み込んだ場合は同じ素材画像をもう一度添付してください。人物設定テキストだけを使う場合、人物画像の添付は不要です。画像がある場合の添付順は、STEP1に現在表示されている「1、2、3…」の番号順です。360°背景は途中で追加しても最後に表示されます。その後に通常素材を追加すると、360°背景は最後へ繰り下がり、番号も更新されます。API画像生成では、アプリが対応づけて送信するため、並べ直しや再添付は不要です。</p>
       </div>
       {(imageInputError || !imageInputBudget.fits) && (
         <p role="alert" className="mb-4 rounded-lg border border-amber-500/50 bg-amber-950/30 p-3 text-xs text-amber-200 leading-relaxed">
