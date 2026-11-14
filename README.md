@@ -12,6 +12,11 @@ OpenAI starts in free-layout mode with four to eight panels and also supports a 
 
 [![Open the Super FURU AI 4-koma System demo / デモサイトを開く。リンク先: https://furuyan1234.github.io/nano-banana-pro/](docs/assets/demo-site-button.png)](https://furuyan1234.github.io/nano-banana-pro/)
 
+[![Download the Windows local app ZIP / Windows用ローカルアプリZIPをダウンロード](docs/assets/local-download-banner.png)](https://github.com/FURUYAN1234/nano-banana-pro/archive/refs/heads/main.zip)
+
+**Local app ZIP / ローカルアプリZIP:** Download and extract the entire ZIP, then double-click `start_app.bat` on Windows. Node.js LTS / npm must be installed first. Internet access and the selected provider's API key are required for AI API features; API charges are separate. / ZIP全体をダウンロードしてすべて展開し、Windowsで `start_app.bat` をダブルクリックします。Node.js LTS / npm を事前に導入。AIのAPI機能にはインターネット接続と利用する事業者のAPIキーが必要で、API利用料金は別途かかります。
+
+
 Demo URL / デモサイト: [https://furuyan1234.github.io/nano-banana-pro/](https://furuyan1234.github.io/nano-banana-pro/)
 
 [![Read the note article: features, examples and getting started / note記事で特徴・作例・始め方を読む](docs/assets/note-article-button.png)](https://note.com/happy_duck780/n/ndf063558c1f5)
