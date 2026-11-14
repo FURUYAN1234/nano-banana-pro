@@ -25,6 +25,8 @@ import ExplanationPanel from './components/ExplanationPanel';
 import Step4Panel from './components/Step4Panel';
 import { getEffectiveEngine } from './lib/engine-state';
 import { hasStep1WorkflowInput, shouldScrollToEmptyStep1, scheduleWorkflowScroll, scrollToWorkflowAction, scrollToWorkflowStep } from './lib/step-navigation.js';
+import { isEmergencyStopWorkActive } from './lib/emergency-stop-ui.js';
+import { getApiWorkSignal } from './lib/api-work-cancellation.js';
 import ControlBar from './components/ControlBar';
 import SystemHeader from './components/SystemHeader';
 import GenerationPreview from './components/GenerationPreview';
@@ -112,6 +114,7 @@ function App() {
     is360CameraWorking,
     isAborting,
     isApiProcessing,
+    pendingAutomaticWork,
     stopApiProcessing,
     isAnalyzing,
     isAssembling,
@@ -222,6 +225,9 @@ function App() {
   const workflowScrollBusy = isAnalyzing || is360Analyzing || isSearching || isAssembling || isEnhancing
     || is360CameraWorking || isGeneratingImage || isFixingPolicy || isAborting;
   const emptyStep1ScrollBusy = workflowScrollBusy || isFullAutoMode || isEndlessMode;
+  const emergencyStopActive = isEmergencyStopWorkActive({ isAnalyzing, is360Analyzing, isSearching, isEnhancing,
+    isAssembling, isGeneratingImage, isFixingPolicy, is360CameraWorking, policyAutoRetrying, isAborting,
+    pendingAutomaticWork }, getApiWorkSignal());
   const nextActionReady = currentStep === 2 || (currentStep === 3 && scenarioModeValid && !isColorModeLocked)
     || (currentStep === 4 && Boolean(finalPrompt?.trim()));
 
@@ -353,6 +359,7 @@ function App() {
         isEndlessModeRef={isEndlessModeRef}
         isAborting={isAborting}
         isApiProcessing={isApiProcessing}
+        emergencyStopActive={emergencyStopActive}
         onStopApiProcessing={stopApiProcessing}
         handleFullAutoToggle={handleFullAutoToggle}
         isFullAutoMode={isFullAutoMode}
@@ -394,7 +401,7 @@ function App() {
               disabled={isApiProcessing}
             />
           )}
-          <aside className="workflow-edit-notice"><strong>✎ 白い入力欄は、生成後も編集できます</strong><p>人物情報・台本・描画指示に手を入れてから次のSTEPへ進めます。自動処理を使う場合は「解析・生成強制ストップ」で止めてから編集してください。</p></aside>
+          <aside className="workflow-edit-notice"><strong>✎ 白い入力欄は、生成後も編集できます</strong><p>人物情報・台本・描画指示に手を入れてから次のSTEPへ進めます。自動処理を使う場合は「緊急停止」で止めてから編集してください。</p></aside>
           <div  className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             <SampleCharacterSheetsButton processFiles={processFiles} disabled={isAnalyzing || isApiProcessing} />

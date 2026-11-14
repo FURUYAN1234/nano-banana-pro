@@ -172,23 +172,30 @@ button { border-radius: 8px !important; }
   top: calc(20px + env(safe-area-inset-top));
   right: calc(12px + env(safe-area-inset-right));
   z-index: 2147483647;
-  min-height: 44px;
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
   max-width: calc(100vw - 24px);
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: 2px solid #dc2626;
-  border-bottom-width: 4px;
+  border-bottom-width: 2px;
   border-radius: 0;
   background-color: #b91c1c;
   color: #ffffff;
   font-weight: 700;
+  font-size: 14px;
+  line-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   opacity: 1;
   flex-shrink: 0;
   cursor: pointer;
 }
 
 .api-force-stop:disabled {
-  background-color: #7f1d1d;
-  border-color: #991b1b;
+  background-color: #4b5563;
+  border-color: #9ca3af;
   color: #ffffff;
   opacity: 1;
   cursor: not-allowed;
@@ -734,4 +741,4 @@ body {
 @media (max-width:420px) { .workflow-progress { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; } .workflow-progress-step { min-width:0; } }
 
 /* Reserve a separate top row for the viewport emergency control. */
-.workflow-header-row { padding-top: 76px; }
+.workflow-header-row { padding-top: 72px; }

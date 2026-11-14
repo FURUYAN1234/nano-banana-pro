@@ -94,7 +94,7 @@ test('STOP removes old image-wait status and preserves the acquired data', async
   assert.ok(!logs.some(log=>log.startsWith('[WAIT]')));
 });
 
-test('fixed control bar always shows a red/white stop button, enabled only for processing', async () => {
+test('fixed control bar has a grey disabled stop and red active stop with compact geometry', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
   try {
     const { EmergencyStopButton } = await server.ssrLoadModule('/src/components/ControlBar.jsx');
@@ -109,9 +109,9 @@ test('fixed control bar always shows a red/white stop button, enabled only for p
     }
     const css = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
     assert.match(css, /top: calc\(20px \+ env\(safe-area-inset-top\)\);/);
-    assert.match(css, /padding-top: 76px;/);
+    assert.match(css, /padding-top: 72px;/);
     assert.match(css, /position: fixed;[\s\S]*right: calc\(12px \+ env\(safe-area-inset-right\)\);[\s\S]*z-index: 2147483647;/);
-    assert.match(css, /\.api-force-stop:disabled\s*\{[^}]*background-color: #7f1d1d;[^}]*color: #ffffff;[^}]*opacity: 1;/);
+    assert.match(css, /\.api-force-stop:disabled\s*\{[^}]*background-color: #4b5563;[^}]*color: #ffffff;[^}]*opacity: 1;/);
     assert.match(css, /\.api-force-stop,\s*\.api-force-stop:disabled\s*\{[^}]*background-color: #b91c1c;[^}]*color: #ffffff;[^}]*opacity: 1;/);
     assert.match(css, /\.api-force-stop,\s*\.api-force-stop:disabled\s*\{[^}]*border-radius: 0;/);
   } finally {

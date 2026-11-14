@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+const source = (await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 
 // Exercise the actual finally blocks with a fixed clock and React-style setters.
 function finish(name, overrides = {}) {

@@ -1,3 +1,8 @@
+## Emergency-stop UI v7.5.4 candidate — 2026-11-14
+
+- Current editing/full-auto guidance now quotes the actual 緊急停止 button. Idle/stopped controls are grey and disabled; active work remains red. Height40px/top20px/right12px/header reservation72px retain a clear gap.
+- UI-only work observation distinguishes an armed full-auto toggle from an owned active run, stage gaps, retry waits and queued loop triggers. Existing controller cancellation and result preservation are unchanged. Same-step readiness and repeated-empty-reset scroll fixes remain intact.
+- No provider, model, prompt, parser or generation routing change. Root owns final live UI/API acceptance and publication. Prior7.5.3 scroll acceptance remains evidence for unchanged scrolling; new grey/compact/lifecycle display needs root candidate acceptance.
 ## Action-readiness scroll correction v7.5.3 — 2026-11-14
 
 - Root90e50 live UI confirmed empty reset3/3 and normal Step2 action y862–896 below header. It then exposed invalid-to-valid manual scenario at the same currentStep3: disabled action became enabled offscreen y1610–1644 without a new scroll because only step number/busy/lock were observed.

@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.5.3** / 現在のソース版: **v7.5.3**
+> Current source version: **v7.5.4** / 現在のソース版: **v7.5.4**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -350,7 +350,7 @@ STEP2 keeps the material story, acting and camera audit. For balloon-only defect
 
 STEP3 distinguishes quoted descriptions from spoken dialogue, preserving quotations inside each utterance. If balloon layout data is inconsistent, the text AI repairs only the affected layout fields in one additional request, then continues assembly and review. Dialogue, camera, actions and other panels remain unchanged. If repair cannot complete, the original script is retained with the affected panel, exact dialogue and failure reason. / STEP3は状況説明中の引用と実際の発言を区別し、台詞の中の引用もそのまま保持します。配置データに不整合がある場合は、文章AIへの追加1リクエストで該当コマの配置だけを自動修復し、指示文の構築・精査へ進みます。台詞・カメラ・状況・正常なコマは変更しません。修復を完了できない場合は元の台本を保持し、該当コマ・台詞・修復できなかった理由を表示します。
 
-Malformed text-review responses receive one format-repair request before adoption; still-invalid results remain unverified. Image QA does not make a second format-repair request. Force Stop cancels active image-stream reading as well as the request, removes the obsolete waiting indicator and preserves acquired work. / 文章精査の返答形式が不正な場合は、採用前にAIへ1回の形式修復を依頼します。修復後も不正な返答は未確認のままです。画像QAでは形式修復のための2回目のAPIを呼びません。緊急停止はリクエストに加えて画像ストリームの受信待ちも中断し、古い待機表示を消して取得済みの作業を保持します。
+Malformed text-review responses receive one format-repair request before adoption; still-invalid results remain unverified. Image QA does not make a second format-repair request. Emergency Stop cancels active image-stream reading as well as the request, removes the obsolete waiting indicator and preserves acquired work. / 文章精査の返答形式が不正な場合は、採用前にAIへ1回の形式修復を依頼します。修復後も不正な返答は未確認のままです。画像QAでは形式修復のための2回目のAPIを呼びません。緊急停止はリクエストに加えて画像ストリームの受信待ちも中断し、古い待機表示を消して取得済みの作業を保持します。
 
 Automatic endings are chosen from the topic rather than a random forced category. The story audit checks whether the final action makes the change readable, with evidence and a correction for material failures. A coherent dream, sleeping action, loop, silence or surreal contrast remains allowed; a selected ending is preserved. / おまかせの結末は型の抽選で強制せず、題材から選びます。構成監査は最後の行動から何が変わったか読めるかを確認し、重大な欠落には根拠と具体的な修正を求めます。成立する夢・睡眠・ループ・沈黙・シュールは残し、指定したオチを勝手に別の型へ変えません。実際の分かりやすさは生成台本・画像での確認が必要です。
 
@@ -511,7 +511,7 @@ STEP1 shows the count and remaining capacity. If a drop or file selection would 
 
 Official specifications / 公式仕様: [OpenAI image editing](https://developers.openai.com/api/reference/resources/images/methods/edit), [Gemini Nano Banana 2.1](https://ai.google.dev/gemini-api/docs/models/gemini-nano-banana-2.1).
 
-Next-action guidance: after rebuilding STEP2, STEP3 pulses; after rebuilding STEP3, STEP4 pulses even when an earlier image is retained; after image generation finishes, the repair button pulses. Busy actions do not pulse. The fixed top bar contains Force Stop for STEP1–4, image repair, full-auto and loop mode. It aborts the current API communication, discards late responses and cancels automatic continuation while keeping received text and images. Already-submitted provider work may still be billed. / 次の操作を点滅で案内します。STEP2再生成完了後はSTEP3、STEP3再生成完了後は以前の画像を保持したままSTEP4、画像生成完了後は修正ボタンが点滅し、処理中は点滅を止めます。上部の固定枠にある「緊急停止」はSTEP1～4・画像修正・全自動・ループに共通です。API通信を中断し、停止後の応答と自動進行・次の周回予約を無効にします。取得済みの文章・画像は保持します。送信済みの処理には課金が発生する場合があります。
+Next-action guidance: after rebuilding STEP2, STEP3 pulses; after rebuilding STEP3, STEP4 pulses even when an earlier image is retained; after image generation finishes, the repair button pulses. Busy actions do not pulse. The fixed top bar contains Emergency Stop for STEP1–4, image repair, full-auto and loop mode. It aborts the current API communication, discards late responses and cancels automatic continuation while keeping received text and images. Already-submitted provider work may still be billed. / 次の操作を点滅で案内します。STEP2再生成完了後はSTEP3、STEP3再生成完了後は以前の画像を保持したままSTEP4、画像生成完了後は修正ボタンが点滅し、処理中は点滅を止めます。上部の固定枠にある「緊急停止」はSTEP1～4・画像修正・全自動・ループに共通です。API通信を中断し、停止後の応答と自動進行・次の周回予約を無効にします。取得済みの文章・画像は保持します。送信済みの処理には課金が発生する場合があります。
 
 Acceptance policy / 採用基準: Harmless, physically coherent differences with grounded impact evidence remain warnings; uncertain observations alone do not trigger paid image regeneration. Anatomically reversed hands, extra/missing limbs, incorrect dialogue or speakers, and broken cast/story structure remain repair targets. A foot outside the frame is advisory when the intended action and dramatic angle remain readable. Warning acceptance is not a claim that every detail was verified. / 物理的に自然で作品の理解や演技に影響しない違いは、根拠を添えて注意事項として採用します。判定不能だけでは有料の画像再生成を行いません。手の左右逆、手足の増減、台詞・話者・人数・物語の破綻は修正対象です。アオリや演技が成立する足先の見切れは注意事項とし、全項目を確認済みとは表示しません。
 
@@ -693,7 +693,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.5.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.5.4](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.4のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -753,7 +753,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -823,6 +823,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.5.4 (2026-11-14)
+- **[Fix & UX]** Align guidance with Emergency Stop, use grey disabled idle/stopped styling and a slightly shorter control, retaining active and queued-work cancellation. / 停止案内を実ボタン名「緊急停止」に統一し、待機・停止後をグレーにして高さを少し低くしました。実行中と後続予約の中断は維持します。
 
 ### v7.5.3 (2026-11-14)
 - **[Fix & UX]** Highlight the emergency stop button with a red background and white text while retaining idle disabling / 緊急停止ボタンを画面右上の赤い背景と白文字で強調し、非通信時の非活性を維持
@@ -937,6 +940,6 @@ Image edits lead with requested changes and preservation rules, retaining the en
 
 Earlier versions / 過去の版: [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases)
 
-The red, white-text emergency stop control is enabled only during active AI work, including thinking and response reception; idle and stopped states disable it. Existing cancellation and output preservation are unchanged. / 赤地・白文字の強制ストップは、思考待ちや応答受信を含むAI処理中だけ有効で、待機中・停止後は非活性です。通信中断と取得済み結果の保持は従来の処理を維持します。
+The emergency stop is red during active AI work and owned automatic continuations, including reasoning, response reception, retry waits and scheduled loop rounds; idle/armed-only and stopped states are grey and disabled. Existing cancellation and output preservation are unchanged. / 緊急停止は、思考待ち・応答受信や実行中ジョブの段階間・再試行待ち・次周回の予約中は赤色で押せます。全自動の入力待機だけの場合や停止後はグレーの非活性です。通信中断と取得済み結果の保持は従来の処理を維持します。
 
-After API setup, the emergency stop stays at the top right of the viewport (hidden before setup) above processing overlays; idle and stopped states remain readable and disabled. / 初期API設定中は緊急停止を隠し、設定後は画面右上に固定し、処理中の覆いより手前に表示します。待機中・停止済みは読みやすい暗赤色で非活性です。
+After API setup, the emergency stop stays at the top right of the viewport (hidden before setup) above processing overlays; idle and stopped states remain readable, grey and disabled. / 初期API設定中は緊急停止を隠し、設定後は画面右上に固定し、処理中の覆いより手前に表示します。待機中・停止済みは読みやすいグレーで非活性です。

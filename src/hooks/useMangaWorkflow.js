@@ -5,6 +5,7 @@ import { resolveAutoScenarioMode } from '../lib/scenario-validation.js';
 import { getBuiltinPanelMediumReference } from '../lib/builtin-panel-medium-reference.js';
 import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
 import { beginApiWork as startApiWork, cancelApiWork, getApiWorkSignal, createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS } from '../lib/api-work-cancellation.js';
+import { hasPendingAutomaticWork } from '../lib/emergency-stop-ui.js';
 import { useState, useRef, useEffect } from 'react';
 
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
@@ -343,6 +344,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // eslint-disable-next-line no-unused-vars
   const [fullAutoCountdown, setFullAutoCountdown] = useState(0); // カウントダウン表示用
   const [triggerFullAuto, setTriggerFullAuto] = useState(0); // [v2.78] Effect Trigger
+  const consumedFullAutoTriggerRef = useRef(triggerFullAuto);
   const fullAutoAbortRef = useRef(false); // 中断フラグ（useRefで即時反映）
   const scenarioRunEpochRef = useRef(0); // Late STEP2/STEP3 results may update only their current run.
   const [isAborting, setIsAborting] = useState(false); // 中断処理中フラグ
@@ -3133,6 +3135,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   // [v2.78] フルオート生成トリガー監視
   useEffect(() => {
+    consumedFullAutoTriggerRef.current = triggerFullAuto;
     if (triggerFullAuto > 0 && !fullAutoAbortRef.current) {
       const resume = !scenarioRunEpochRef.nextFullAutoRound;
       scenarioRunEpochRef.nextFullAutoRound = false;
@@ -3358,7 +3361,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     }
     if (isAnalyzing || is360Analyzing || isSearching || isEnhancing || isAssembling
       || isGeneratingImage || isFixingPolicy || is360CameraWorking || policyAutoRetrying) {
-      showStatus('処理が終わるか「解析・生成強制ストップ」で停止してから、フルオートを開始してください。');
+      showStatus('処理が終わるか「緊急停止」で停止してから、フルオートを開始してください。');
       return;
     }
     scenarioRunEpochRef.fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
@@ -3420,6 +3423,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     imageSource: generationHistory.find(item => item.img === generatedImage)?.workflowSource });
   const isApiProcessing = isAnalyzing || is360Analyzing || isSearching || isEnhancing || isAssembling
     || isGeneratingImage || isFixingPolicy || is360CameraWorking || policyAutoRetrying || isFullAutoMode;
+  const pendingAutomaticWork = hasPendingAutomaticWork({ isFullAutoMode, fullAutoStep, triggerFullAuto,
+    consumedFullAutoTrigger: consumedFullAutoTriggerRef.current, automaticAborted: fullAutoAbortRef.current });
 
   // --- Return all 113 variables needed by JSX ---
   return {
@@ -3494,6 +3499,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     is360CameraWorking,
     isAborting,
     isApiProcessing,
+    pendingAutomaticWork,
     stopApiProcessing,
     isAnalyzing,
     isAssembling,

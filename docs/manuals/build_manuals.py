@@ -58,7 +58,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v7.5.3対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v7.5.4対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -124,7 +124,7 @@ page('基本の流れ：4つのSTEP',
  ('body','上部の完了したSTEPをクリックすると、入力・台本・生成物を保持して戻れます。空のSTEP1では自動保存設定が見える上部へ戻ります。次の実行ボタンは固定ヘッダーの下と画面端に余白を取り、画面内へ移動します。TabキーとEnterキーでも操作できます。上部には白い欄が編集可能である案内があり、STEP1・STEP2・STEP4にも「編集できます」と次の操作を示します。STEP2で台詞や演技を変えたらSTEP3を実行し、作った指示文はSTEP4の白い「最終プロンプト」で編集して画像化します。現在・未完了のSTEPは表示のみです。処理中・停止処理中・全自動ON・未接続時は移動できません。編集後は移動先の実行ボタンで再生成します。'),
  ('rows',[['工程','入力 → 出力'],['STEP1 解析','人物・背景・小物の画像 → 種類・特徴・人物設定'],['STEP2 シナリオ','題材と設定 → タイトル・4コマ／4〜8コマ台本・SNS説明'],['STEP3 プロンプト','台本と描画条件 → 画像指示文'],['STEP4 画像生成','画像指示文 → API画像、またはWeb手動生成用コピー']]),
  ('body','OpenAIのフルオートOFFではSTEP2の上のスライドスイッチでコマ数を選びます。Geminiはカラー・白黒とも4コマ固定です。初期状態は右・緑色の「4～8コマ生成」です。左・水色にすると「4コマ生成（横長コマ）レガシー」へ切り替わります。まず手動で1作品を作ると、設定が反映される工程を確認できます。前工程の内容を変えた場合は、その後の指示文や画像を作り直してください。設定変更だけでは完成画像は変わりません。4コマ・4～8コマとも最終プロンプトの全文を直接編集できます。台本側を変更した場合はSTEP3を再実行します。'),
- ('box','処理中の表示と停止','STEP2再生成後はSTEP3、STEP3再構築後はSTEP4、画像生成後は修正ボタンが点滅します。初期API設定中は非表示です。接続後の画面右上固定の赤地・白文字の「緊急停止」は、待機中と停止後は非活性です。思考・応答受信中に押すと各STEP・画像修正・全自動・ループのAPI通信と後続処理を止め、取得済み文章・画像を保持します。送信済み処理の費用は取り消せません。')),
+ ('box','処理中の表示と停止','STEP2再生成後はSTEP3、STEP3再構築後はSTEP4、画像生成後は修正ボタンが点滅します。初期API設定中は非表示です。接続後の画面右上の「緊急停止」は、実処理と後続の自動予約中は赤色で押せます。全自動の入力待機だけの場合や停止後は、グレーの非活性です。思考・応答受信中に押すと各STEP・画像修正・全自動・ループのAPI通信と後続処理を止め、取得済み文章・画像を保持します。送信済み処理の費用は取り消せません。')),
 page('API接続と処理先の選択',
  ('body','上部の入力欄へGeminiまたはOpenAIのキーを入力し、「接続」を押します。接続先はSTEP1～4で共通です。Gemini経路のニュース検索はGoogleの検索連携、OpenAI経路はOpenAIのWeb検索を使います。'),
  ('body','API入力画面では「使い方マニュアル」「OpenAI APIマニュアル」「Gemini APIマニュアル」を同じグループから別タブで開けます。狭い画面ではグループ全体が縦に並び、接続前にも読めます。キーはブラウザ内メモリで保持し、再読み込み後は再入力が必要です。Web版の契約とAPI料金は別です。'),
@@ -221,7 +221,7 @@ page('STEP3  カラー／白黒の選択',
  ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
 page('タイトル・モザイク・ウオーターマーク',
  ('body','STEP3の出力モード直下に「タイトルを表示」があります。初期状態と全設定クリア後はONです。OFFでは題字と専用の帯を描かず、その領域をコマに配分します。指定タチキリの辺を除き、A4縦の外枠と余白、コマ間隔を保ちます。台本のタイトルは制作情報とファイル名に保持し、台詞や看板などの場面内文字は削除しません。選択は工程移動やコマ数切替でも保持し、再読み込み・全設定クリアではONへ戻ります。切替後はSTEP3を作り直します。切替だけではAPIを呼びません。'),
- ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.6 / GPT-6 Luna / FURU AI 4-koma v7.5.3。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
+ ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.6 / GPT-6 Luna / FURU AI 4-koma v7.5.4。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
  ('rows',[['設定','反映する工程'],['タイトルを表示','STEP3から作り直して反映。初期状態ON'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初期状態ON']]),
  ('body','モザイクは台本の動作で描く既存作品の人物への描画指示です。登録したシート人物は自動モザイクから除外し、生成・品質検査へ同じ除外リストを渡します。原文で本人への遮蔽を明示した場合は、その対象・領域だけ例外です。除外リストが現在のキャストと合わない場合は、STEP3から再構築してください。'),
  ('body','ウオーターマークは画像下部の生成情報とクレジットです。OFFで左右の描画指示を外します。ONでは下部へ1回ずつ配置を試みますが、絵への重なり・全隠れ・見切れを許容します。人物・台詞・題字・タチキリを優先し、注記を見せるための白帯や絵の縮小を求めません。この許容状態だけでは自動修正しません。'),
@@ -382,7 +382,7 @@ SYSTEM.append(page('自動保存の初回動作確認',
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v7.5.3 / 2026-11-14')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v7.5.4 / 2026-11-14')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -424,7 +424,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v7.5.3対応 | 2026年11月14日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v7.5.4対応 | 2026年11月14日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -464,7 +464,7 @@ def verify_and_render(path,layout,pages):
  assert len(r.pages)==len(pages)
  for page_index,pdf_page in enumerate(r.pages,1):
   assert f'{page_index:02d}/{len(r.pages)}' in re.sub(r'\s+','',pdf_page.extract_text()), 'Incorrect footer page count'
- assert all('v7.5.3対応' in p.extract_text() and '2026年11月14日更新' in p.extract_text() for p in r.pages)
+ assert all('v7.5.4対応' in p.extract_text() and '2026年11月14日更新' in p.extract_text() for p in r.pages)
  validate_manual_scope(path.name,text)
  if 'full-manual' in path.name:
   for required in ['14枚','10枚','1枚に複数人','人数による固定上限','保証','保持','認識できない','小物']:
@@ -475,7 +475,7 @@ def verify_and_render(path,layout,pages):
    assert obsolete not in text,obsolete
   for required in ['シリアス：9種類','ギャグ：13種類','怒り・抗議','逆転・反撃','激怒・逆ギレ','自業自得・ブーメラン','立場逆転']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v7.5.3'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v7.5.4'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)
