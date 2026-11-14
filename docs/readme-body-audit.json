@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
-  "manualVersion": "7.5.2",
-  "manualSourceSha256": "87231aaa5ef9c5934c68cbc7d0b4b9e5553dcab4ea6569cf5f64be6c2e9493da",
+  "manualVersion": "7.5.3",
+  "manualSourceSha256": "eacc63907b8c77d95faac3eee77128916650a699b515a864299d15d8cae0c747",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "8bc1c4a0685094c61e93681d300da9301c706aa697762f247e96a7f9d74d2108"
+      "sha256": "5bfcd55a5da6360717562478cfb1558dfbf1a5dcf1abdf2345f22ed491178b77"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "9a64b89ec3a3134418d9eb734c3dac154e3ea309b300f609595ff76b3b89aa32"
+      "sha256": "aea1ac21c9f6ee0aed289e8039976a24a1ce65024d9ab04959ab7c38b47e634a"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "f3b1c66c8862538911772b1a26e803f2ad96d9fc1dd385712bf80c8cd3dfa79f"
+      "sha256": "374b38fbfded42752c5c073b1304cce09d02ef2d619f216dcbece0bd77bd4430"
     }
   ],
-  "readmeSha256": "0f9766036a1016754fe0fad00fb5941579ab9ed89c1f32aa8f06bdbb7e45b655",
+  "readmeSha256": "e93454a46a4d62a67e31abb6cf0c1e966fed5b07ffce9467c9d1ae94cd7c6039",
   "readmeLanguageGaps": [],
   "sourceTree": "71f9c96cdf106113daca5e5a974ca56a41cecb70",
   "publicTree": "409931e41f8db8af9949856b37548241a6b729e8",
-  "packageSha256": "9f3dcd2836da1ace24168ccd66ba59bb737c35f3d82a54df672c0a3e3bc74923",
+  "packageSha256": "5e16df11863ea758598af4196f4191446189573ae9316457fc5e43df4addb9da",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,11 +41,11 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-14T05:56:42.649Z",
-  "findings": "v7.5.1の未変更本文監査を継承し、今回のREADME差分と全見出し一覧を照合。冒頭の人物画像なし設定・実画像取込の分岐・年齢違い、What this project doesの素材/人物説明、Quick startの素材投入・Web添付手順、ComfyUI配布欄、FAQ、更新履歴を英日で読み、候補7.5.2へ同期。十分なSTEP1人物設定をAPI/Webの両方へ渡す契約をreference-assets/prompt-assembler/experimental-mangaと照合。人物画像ありの同一性優先、背景/描法見本の区別、不十分な入力の拒否を保持。配布リンクは候補公開用であり、Release実在・公開確認は未実施。sourceTree/publicTreeは最終レビュー済み候補コミットのsrc/public treeと一致。コード差分・README・PDFの対応を確認し、実APIと最終決定的修正の再評価を区別して記録。 追加のv7.5.2更新行を英日で照合：別時点の局所人物を枠越え身体から分離し、画像なしNORMALに既存描画基準を共有する修正を反映。実画像は微差を許容して保持し、検査を無条件合格へ変更しない。 追加の関連アプリ案内を英日で照合。STEP1はキャラクターメーカー、STEP2はStory Makerで、別タブと貼付先の説明を常時表示。初期API接続画面も同じ案内を使用。README追記と実コンポーネントのリンク先・文言を照合。 最終READMEの素材詳細位置/自動展開と人物登録前提条件をfreeze sourceへ照合し英日同期。実API/公開完了は主担当の別証拠による。 2026-11-14公開前にremote6675be4のREADME関連リンク9行を英日対応と既存行の保持で再照合し統合。Codex UsageのGitHubラベルに日本語を補完。runtime/src/public/PDFは変更なし。",
-  "manualFindings": "候補7.5.2のPDF3冊72ページ（全機能41/Gemini12/OpenAI19）を既存原稿から生成。全頁のA4・文字境界・ページ番号・版・privacy scanに合格し全13一覧画像を目視。以降の変更頁だけ追加確認を実施。最終ソースfreezeでは全機能6/7ページを再レンダーし、素材別の名前/説明は人物欄の上・認識済み画像で自動open・textonly/空closed、白い共通6行/160px欄は人物のみ、と同期。背景/小物/360追加には人物1名以上、Storyの有効人物textも人物と数え、人物+背景の同時追加可、人物削除後の背景のみは次工程停止と人物追加で復帰、styleJSON単独対象外を説明。変更6/7頁を実画像で確認し切れ/重なりなし、41頁と目次不変。API接続前PDFグループと各STEP編集案内を反映した既確認3/4/5頁、残り未変更頁の確認を継承。公開PDFへ同期しSHA一致。",
+  "checkedAt": "2026-11-14T08:38:49.064Z",
+  "findings": "v7.5.1の未変更本文監査を継承し、今回のREADME差分と全見出し一覧を照合。冒頭の人物画像なし設定・実画像取込の分岐・年齢違い、What this project doesの素材/人物説明、Quick startの素材投入・Web添付手順、ComfyUI配布欄、FAQ、更新履歴を英日で読み、候補7.5.2へ同期。十分なSTEP1人物設定をAPI/Webの両方へ渡す契約をreference-assets/prompt-assembler/experimental-mangaと照合。人物画像ありの同一性優先、背景/描法見本の区別、不十分な入力の拒否を保持。配布リンクは候補公開用であり、Release実在・公開確認は未実施。sourceTree/publicTreeは最終レビュー済み候補コミットのsrc/public treeと一致。コード差分・README・PDFの対応を確認し、実APIと最終決定的修正の再評価を区別して記録。 追加のv7.5.2更新行を英日で照合：別時点の局所人物を枠越え身体から分離し、画像なしNORMALに既存描画基準を共有する修正を反映。実画像は微差を許容して保持し、検査を無条件合格へ変更しない。 追加の関連アプリ案内を英日で照合。STEP1はキャラクターメーカー、STEP2はStory Makerで、別タブと貼付先の説明を常時表示。初期API接続画面も同じ案内を使用。README追記と実コンポーネントのリンク先・文言を照合。 最終READMEの素材詳細位置/自動展開と人物登録前提条件をfreeze sourceへ照合し英日同期。実API/公開完了は主担当の別証拠による。 2026-11-14公開前にremote6675be4のREADME関連リンク9行を英日対応と既存行の保持で再照合し統合。Codex UsageのGitHubラベルに日本語を補完。runtime/src/public/PDFは変更なし。 7.5.3 delta review: emergency stop bilingual explanation and changelog reviewed; existing banners, download links and unchanged README sections retained. Top-right viewport emergency control, dark-red readable disabled state; existing banners retained. Initial API setup hides emergency stop; active requests retain stop; top20px+safearea/right12px and76px header reservation.",
+  "manualFindings": "候補7.5.2のPDF3冊72ページ（全機能41/Gemini12/OpenAI19）を既存原稿から生成。全頁のA4・文字境界・ページ番号・版・privacy scanに合格し全13一覧画像を目視。以降の変更頁だけ追加確認を実施。最終ソースfreezeでは全機能6/7ページを再レンダーし、素材別の名前/説明は人物欄の上・認識済み画像で自動open・textonly/空closed、白い共通6行/160px欄は人物のみ、と同期。背景/小物/360追加には人物1名以上、Storyの有効人物textも人物と数え、人物+背景の同時追加可、人物削除後の背景のみは次工程停止と人物追加で復帰、styleJSON単独対象外を説明。変更6/7頁を実画像で確認し切れ/重なりなし、41頁と目次不変。API接続前PDFグループと各STEP編集案内を反映した既確認3/4/5頁、残り未変更頁の確認を継承。公開PDFへ同期しSHA一致。 7.5.3: all three generated PDFs updated; changed operation-manual page 3 rendered and visually checked without clipping. Unchanged sections reuse prior full-page review; generator text/bounds checks passed. Right-top emergency-stop description updated in operation PDF; generated layout checks passed.",
   "pricingReview": {
-    "version": "7.5.2",
+    "version": "7.5.3",
     "sourceSha256": "3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a",
     "checkedAt": "2026-11-14T01:30:17.441Z",
     "sources": [
@@ -59,7 +59,7 @@
       "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst.md",
       "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare.md"
     ],
-    "findings": "2026-11-14に両社公式料金表を読み、現在の画面用設定・README価格本文・PDF原稿の単価へ照合。OpenAI Standard短文はAstra10/50、Sol6.1 2/10、Terra6.1 1/5（cached input .05）、Luna6 .1/.5。旧モデルの個別公式ページでSol6 2/10、Sol5.6 4/20（11月30日までのpromotion）、Terra5.6 2/12、Luna5.6 .2/1.2を確認。Image2.6Sunburstと2.5Sunburst/Flareは画像input8/cached2/output30、text input5/cached1.25。Gemini3.8Flashはinput .75/output3.75（12月31日まで。翌年1月1日から1.5/7.5）、Nano2.1はinput1.5、text/thinking7.5、image30/1K一枚.0336（2K.0504/4K.113）。すべてUSD/100万tokenの通常Standard料金で、Batch/Flexの割引表を使っていない。現在の実装単価に変更なし。価格確認日以外のソース・公開状態・実APIを本監査から保証しない。"
+    "findings": "2026-11-14に両社公式料金表を読み、現在の画面用設定・README価格本文・PDF原稿の単価へ照合。OpenAI Standard短文はAstra10/50、Sol6.1 2/10、Terra6.1 1/5（cached input .05）、Luna6 .1/.5。旧モデルの個別公式ページでSol6 2/10、Sol5.6 4/20（11月30日までのpromotion）、Terra5.6 2/12、Luna5.6 .2/1.2を確認。Image2.6Sunburstと2.5Sunburst/Flareは画像input8/cached2/output30、text input5/cached1.25。Gemini3.8Flashはinput .75/output3.75（12月31日まで。翌年1月1日から1.5/7.5）、Nano2.1はinput1.5、text/thinking7.5、image30/1K一枚.0336（2K.0504/4K.113）。すべてUSD/100万tokenの通常Standard料金で、Batch/Flexの割引表を使っていない。現在の実装単価に変更なし。価格確認日以外のソース・公開状態・実APIを本監査から保証しない。 Version 7.5.3 retains identical pricing-source bytes; original official-read timestamp retained."
   },
-  "candidateReviewStatus": "候補7.5.2の追加仕様を最終検証中。実3アプリ連携と6コマ画像の目視受入れは完了。最新の人物前提チェック・カメラ範囲判定は正常/異常回帰とbuild/security成功。背景のみ拒否は実API成功。人物あり背景追加・最終STEP3/APIとWebコピー・最終UI確認は未完了。公開未実施、デプロイ許可はまだ依頼しない。"
+  "candidateReviewStatus": "local-precommit; refresh source/public tree after root candidate commit"
 }

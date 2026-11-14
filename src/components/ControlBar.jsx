@@ -1,8 +1,17 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Check, RefreshCw, Zap, Square, Loader2 } from 'lucide-react';
 import { AutoSaveStartDialog } from './AutoSaveGuide';
 import DiagnosticLogPanel from './DiagnosticLogPanel';
 import FallbackChainViewer from './FallbackChainViewer';
+
+export function EmergencyStopButton({ isApiProcessing = false, workReady = false, onStopApiProcessing }) {
+  if (!workReady && !isApiProcessing) return null;
+  return (<button type="button" id="ai-emergency-stop" className="api-force-stop"
+        disabled={!isApiProcessing} aria-disabled={!isApiProcessing}
+        onClick={onStopApiProcessing}
+        title={isApiProcessing ? '思考待ち・応答受信中のAPI通信を中断し、取得済みの内容を保持します。送信済み処理の課金は取り消せません。' : 'AI通信は停止中です。思考待ち・応答受信中に使用できます。'}>緊急停止</button>);
+}
 
 export default function ControlBar({
   embedded = false,
@@ -43,6 +52,8 @@ export default function ControlBar({
   };
 
   return (
+    <>
+      {typeof document !== 'undefined' && createPortal(<EmergencyStopButton workReady={Boolean(apiKey)} isApiProcessing={isApiProcessing} onStopApiProcessing={onStopApiProcessing} />, document.body)}
     <div ref={controlBarRef} className={`${embedded ? 'workflow-controls-embedded' : 'fixed top-0 left-0 right-0 z-[100]'} bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden`}>
       <div className="workflow-header-row flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
         
@@ -122,15 +133,7 @@ export default function ControlBar({
             {isFullAutoMode ? (isAborting ? '停止処理中...' : '⚡ 全自動モード（フルオート） ON') : '⚡ 全自動モード（フルオート） OFF'}
           </button>
           
-          <button
-            type="button"
-            disabled={!isApiProcessing}
-            onClick={onStopApiProcessing}
-            title="進行中のAPI通信と自動進行を中断し、取得済みの台本・画像を保持します。送信済み処理の課金は取り消せません。"
-            className="api-force-stop"
-          >
-            解析・生成強制ストップ
-          </button>
+
         </div>
 
         {/* 説明文 */}
@@ -158,5 +161,6 @@ export default function ControlBar({
       }} />}
 
     </div>
+    </>
   );
 }

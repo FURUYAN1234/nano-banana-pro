@@ -5,10 +5,10 @@ import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 
-let server, ControlBar, AutoSaveGuide, AutoSaveSettingsButton, AutoSaveStartDialog, Step4Panel;
+let server, ControlBar, EmergencyStopButton, AutoSaveGuide, AutoSaveSettingsButton, AutoSaveStartDialog, Step4Panel;
 before(async () => {
   server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
-  ({ default: ControlBar } = await server.ssrLoadModule('/src/components/ControlBar.jsx'));
+  ({ default: ControlBar, EmergencyStopButton } = await server.ssrLoadModule('/src/components/ControlBar.jsx'));
   ({ default: AutoSaveGuide, AutoSaveSettingsButton, AutoSaveStartDialog } = await server.ssrLoadModule('/src/components/AutoSaveGuide.jsx'));
   ({ default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx'));
 });
@@ -47,7 +47,7 @@ test('mode starts require the guide confirmation; cancellation never starts; sto
   calls.length = 0; pending = null;
   button(tree({ isFullAutoMode: true }), '全自動モード（フルオート） ON').props.onClick();
   button(tree({ isEndlessMode: true }), '連続ループ生成 ON').props.onClick();
-  button(tree(), '解析・生成強制ストップ').props.onClick();
+  EmergencyStopButton(props).props.onClick();
   assert.equal(pending, null);
   assert.deepEqual(calls, [['auto'], ['endless', false], ['stop']]);
 });

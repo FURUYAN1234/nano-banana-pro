@@ -94,19 +94,25 @@ test('STOP removes old image-wait status and preserves the acquired data', async
   assert.ok(!logs.some(log=>log.startsWith('[WAIT]')));
 });
 
-test('fixed control bar always shows a pale-orange/red stop button, enabled only for processing', async () => {
+test('fixed control bar always shows a red/white stop button, enabled only for processing', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
   try {
-    const { default: ControlBar } = await server.ssrLoadModule('/src/components/ControlBar.jsx');
+    const { EmergencyStopButton } = await server.ssrLoadModule('/src/components/ControlBar.jsx');
+    assert.equal(renderToStaticMarkup(React.createElement(EmergencyStopButton)), '');
+    assert.match(renderToStaticMarkup(React.createElement(EmergencyStopButton, { isApiProcessing: true })), /緊急停止/);
     for (const busy of [false, true]) {
-      const html = renderToStaticMarkup(React.createElement(ControlBar, { isApiProcessing: busy }));
-      const button = html.match(/<button([^>]*)class="api-force-stop"([^>]*)>解析・生成強制ストップ<\/button>/);
+      const html = renderToStaticMarkup(React.createElement(EmergencyStopButton, { workReady: true, isApiProcessing: busy }));
+      const button = html.match(/<button([^>]*)class="api-force-stop"([^>]*)>緊急停止<\/button>/);
       assert.ok(button);
-      assert.equal((button[1] + button[2]).includes('disabled'), !busy);
-      assert.match(html, /fixed top-0/);
+      assert.equal(/(?:^|\s)disabled=/.test(button[1] + button[2]), !busy);
+      assert.match(html, /id="ai-emergency-stop"/);
     }
     const css = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
-    assert.match(css, /\.api-force-stop,\s*\.api-force-stop:disabled\s*\{[^}]*background-color: #fed7aa;[^}]*color: #b91c1c;[^}]*opacity: 1;/);
+    assert.match(css, /top: calc\(20px \+ env\(safe-area-inset-top\)\);/);
+    assert.match(css, /padding-top: 76px;/);
+    assert.match(css, /position: fixed;[\s\S]*right: calc\(12px \+ env\(safe-area-inset-right\)\);[\s\S]*z-index: 2147483647;/);
+    assert.match(css, /\.api-force-stop:disabled\s*\{[^}]*background-color: #7f1d1d;[^}]*color: #ffffff;[^}]*opacity: 1;/);
+    assert.match(css, /\.api-force-stop,\s*\.api-force-stop:disabled\s*\{[^}]*background-color: #b91c1c;[^}]*color: #ffffff;[^}]*opacity: 1;/);
     assert.match(css, /\.api-force-stop,\s*\.api-force-stop:disabled\s*\{[^}]*border-radius: 0;/);
   } finally {
     await server.close();

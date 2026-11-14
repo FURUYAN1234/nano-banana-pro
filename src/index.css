@@ -168,12 +168,18 @@ button { border-radius: 8px !important; }
 
 .api-force-stop,
 .api-force-stop:disabled {
-  padding: 1px 6px;
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  z-index: 2147483647;
+  min-height: 44px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 16px;
   border: 2px solid #dc2626;
   border-bottom-width: 4px;
   border-radius: 0;
-  background-color: #fed7aa;
-  color: #b91c1c;
+  background-color: #b91c1c;
+  color: #ffffff;
   font-weight: 700;
   opacity: 1;
   flex-shrink: 0;
@@ -181,6 +187,10 @@ button { border-radius: 8px !important; }
 }
 
 .api-force-stop:disabled {
+  background-color: #7f1d1d;
+  border-color: #991b1b;
+  color: #ffffff;
+  opacity: 1;
   cursor: not-allowed;
 }
 
@@ -722,3 +732,6 @@ body {
 .workflow-progress-step[data-state="active"] { border:2px solid #7dd3fc; padding:4px 7px; background:#164563; color:#fff; }
 .workflow-progress-step[data-state="active"] .workflow-progress-status { color:#e0f2fe; font-weight:700; }
 @media (max-width:420px) { .workflow-progress { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; } .workflow-progress-step { min-width:0; } }
+
+/* Reserve a separate top row for the viewport emergency control. */
+.workflow-header-row { padding-top: 76px; }
