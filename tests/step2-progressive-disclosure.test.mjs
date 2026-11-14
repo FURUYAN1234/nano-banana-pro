@@ -90,7 +90,8 @@ test('STEP2 generation keeps the real progress log visible while hiding stale re
 
   assert.match(html, /SCENARIO GENERATING/);
   assert.match(html, /AI応答を待機中/);
-  assert.doesNotMatch(html, /生成されたシナリオ/);
+  assert.doesNotMatch(html, /<textarea[^>]*aria-label="生成されたシナリオ"/);
+  assert.doesNotMatch(html, /以前のシナリオ/);
   assert.doesNotMatch(html, /シナリオをコピー/);
   assert.doesNotMatch(html, /シナリオ強化/);
 });
@@ -98,7 +99,8 @@ test('STEP2 generation keeps the real progress log visible while hiding stale re
 test('STEP2 result controls return after generation finishes', () => {
   const html = renderStep2({ currentStep: 3, scenario: '生成済みシナリオ' });
 
-  assert.match(html, /生成されたシナリオ/);
+  assert.match(html, /<textarea[^>]*aria-label="生成されたシナリオ"/);
+  assert.match(html, /生成済みシナリオ/);
   assert.match(html, /シナリオをコピー/);
   assert.match(html, /シナリオ強化/);
 });

@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {reconcileReferenceCast, remapReferenceNumbers, mergeReferenceAnalysis, buildRecognitionEditorText, buildWebReferencePlan, editReferenceAsset, editReferenceCast} from '../src/lib/reference-assets.js';
+import {reconcileReferenceCast, remapReferenceNumbers, mergeReferenceAnalysis, buildRecognitionEditorText, buildWebReferencePlan, editReferenceAsset, parseCharacterEditorText, getReferenceCharacterRequirement} from '../src/lib/reference-assets.js';
 import {DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID} from '../src/lib/openai-model-routes.js';
+import {getWorkflowStep} from '../src/lib/generation-history.js';
 
 const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
 // Execute the actual event/transition functions with observable state setters.
@@ -12,7 +13,7 @@ function workflow() {
   const b = {image:'b',analysisCompleted:true,items:[{kind:'prop',name:'box',description:'User box'}]};
   const state = {castList:'## A\nFront view',images:['a','b'],scenario:'old scenario',finalPrompt:'old prompt',manualTopic:'画像2を使う。画像3を舞台にする。',bg360Image:'panorama',isAnalyzing:true,is360Analyzing:true};
   const ctx = { promptAssemblyRunRef:{current:0}, DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID,
-    DEFAULT_CATEGORIES:[], reconcileReferenceCast,remapReferenceNumbers,editReferenceAsset,editReferenceCast,castNameBaselineRef:{current:state.castList},finishScenarioTiming:()=>{},cancelApiWork:()=>{state.cancelled=true;},
+    DEFAULT_CATEGORIES:[], reconcileReferenceCast,remapReferenceNumbers,editReferenceAsset,parseCharacterEditorText,castNameBaselineRef:{current:state.castList},finishScenarioTiming:()=>{},cancelApiWork:()=>{state.cancelled=true;},
     invalidatePromptAssembly:()=>{},showStatus:()=>{},resetScenarioModelId:()=>{},
     scenarioRunEpochRef:{current:5},scenarioUsedModelRef:{current:null},qualityRetryAbortRef:{current:false},fullAutoAbortRef:{current:false},
     isFullAutoModeRef:{current:true},isEndlessModeRef:{current:true},isAnalyzingRef:{current:true},
@@ -31,6 +32,59 @@ function workflow() {
   for (const name of ['invalidateScenarioRun','invalidateReferenceOutputs','setImages','setCastList','setReferenceAssets','setBg360Image','setBg360Enabled','resetPageCaches','partialReset','step1Reset','hardReset','editReferenceItem','editCastList']) ctx[name]=bind(name);
   return {state,ctx,a,b};
 }
+
+test('the actual STEP1 textarea callback retains an invalid paste, blocks generation/copy, then accepts Story format',()=>{
+  const step1=readFileSync(new URL('../src/components/Step1Panel.jsx',import.meta.url),'utf8');
+  const app=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8');
+  const textarea=step1.match(/<textarea\s+id="reference-recognition-editor"[\s\S]*?\/>/)[0];
+  const callback=textarea.match(/onChange=\{\(e\) => (\w+)\(e.target.value\)\}/)[1];
+  assert.match(app,new RegExp(callback+'=\\{'+callback+'\\}'),'the UI callback is the one supplied by the app');
+  assert.match(textarea,/value=\{castEditorText\}/);assert.match(app,/castEditorText=\{castEditorText\}/);
+  assert.match(source,/castEditorText: castDraft \?\? castList/,'rejected drafts remain visible in the actual textarea');
+  const {state,ctx}=workflow();ctx.setImages([]);
+  const stepExpression=source.match(/const currentStep = ([\s\S]*?);/)[1];
+  const step=()=>new Function('referenceEditorError','castList','scenario','finalPrompt','generatedImage','promptAssemblyRunRef','generationHistory','getWorkflowStep',`return ${stepExpression};`)(state.referenceEditorError,ctx.castListRef.current,state.scenario,state.finalPrompt,null,{},[],getWorkflowStep);
+  const invalid='Topic: 動作確認\nScenario:\n[1コマ目] これは人物情報ではありません。';
+  ctx[callback](invalid);
+  assert.equal(state.castDraft,invalid);assert.equal(ctx.castListRef.current,'');assert.match(state.referenceEditorError,/Story Maker/);assert.equal(step(),1);
+  const copyExpression=step1.match(/const canCopyRecognition = ([\s\S]*?);/)[1];
+  const canCopy=()=>new Function('isAnalyzing','recognitionText','referenceEditorError','images','referenceAssets','imageInputError','imageInputBudget',`return ${copyExpression};`)(false,buildRecognitionEditorText(ctx.castListRef.current,ctx.referenceAssetsRef.current,ctx.imagesRef.current),state.referenceEditorError,ctx.imagesRef.current,ctx.referenceAssetsRef.current,'',null);
+  assert.equal(canCopy(),false);
+  const normal='## 1. 葵\n外見: 黒い短髪\n服装: 青灰色の作業着';ctx[callback](normal);
+  assert.equal(ctx.castListRef.current,normal);assert.equal(state.castDraft,null);assert.equal(state.referenceEditorError,'');assert.equal(canCopy(),true);assert.equal(step(),2);
+  ctx[callback](invalid);assert.equal(ctx.castListRef.current,normal,'invalid replacement never becomes an accepted cast');assert.equal(state.castDraft,invalid);assert.equal(canCopy(),false);assert.equal(step(),1);
+  ctx[callback]('');assert.equal(ctx.castListRef.current,'');assert.equal(state.referenceEditorError,'');assert.equal(canCopy(),false);
+});
+
+test('the actual character editor merges Story profiles without losing other images or local name edits',()=>{
+  const {ctx,state}=workflow();
+  ctx.editCastList('## 1. 葵\n外見: 黒い短髪\n服装: 青灰色の作業着');
+  assert.match(ctx.castListRef.current,/## A/);assert.match(ctx.castListRef.current,/## 1\. 葵/);
+  assert.deepEqual(ctx.referenceAssetsRef.current.map(a=>a.image),['a','b']);
+  assert.equal(ctx.referenceAssetsRef.current[1].items[0].name,'box');
+  const accepted=ctx.castListRef.current;
+  ctx.editCastList('Topic: 動作確認\nScenario:\n[1コマ目] これは人物情報ではありません。');
+  assert.match(state.referenceEditorError,/Story Maker/);assert.equal(ctx.castListRef.current,accepted);
+});
+
+test('deleting or clearing the last actor leaves supporting materials intact and blocks downstream work until a person returns',()=>{
+  const {ctx,state}=workflow();
+  const expression=source.match(/const referenceEditorError = ([^;]+);/)[1];
+  const currentError=()=>new Function('referenceEditorInputError','getReferenceCharacterRequirement','castList','referenceAssets','images','bg360Enabled','bg360Image',`return ${expression};`)(state.referenceEditorError||'',getReferenceCharacterRequirement,ctx.castListRef.current,ctx.referenceAssetsRef.current,ctx.imagesRef.current,ctx.bg360EnabledRef.current,ctx.bg360ImageRef.current);
+  assert.equal(currentError(),'');
+  ctx.setImages(['b']);
+  assert.equal(ctx.castListRef.current,'');assert.match(currentError(),/人物を1人以上/);assert.doesNotMatch(currentError(),/受け入れていません/);
+  assert.equal(ctx.referenceAssetsRef.current[0].items[0].kind,'prop');assert.equal(ctx.bg360ImageRef.current,'panorama');
+  const character='## 1. 葵\n外見: 黒い短髪\n服装: 青灰色の作業着';ctx.editCastList(character);
+  assert.equal(currentError(),'');assert.equal(ctx.castListRef.current,character);
+  ctx.editCastList('');assert.match(currentError(),/人物を1人以上/);
+  ctx.setImages([]);assert.match(currentError(),/人物を1人以上/,'360 background alone has the same requirement');
+  ctx.setBg360Enabled(false);assert.equal(currentError(),'','an empty start has no misleading material error');
+  for(const callback of ['generateScenarioFromNews','assemblePrompt','runFullAuto']) {
+    const start=source.indexOf(`const ${callback} = `),body=source.slice(start,source.indexOf('\n  };',start));
+    assert.match(body,/if \(referenceEditorError\)/,`${callback} respects the same derived prerequisite`);
+  }
+});
 
 test('actual STEP1 handlers synchronize in both directions, including clear-then-type and subsequent deletion',()=>{
   const {state,ctx}=workflow();

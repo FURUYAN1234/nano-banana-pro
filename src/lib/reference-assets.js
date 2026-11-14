@@ -13,6 +13,20 @@ export function hasCharacterReferenceImages(images = [], assets = []) {
   });
 }
 
+export function getReferenceCharacterRequirement(castList = '', assets = [], images = [], hasPanorama = false) {
+  if (collectCastNameEntries(castList).length) return '';
+  const hasSupportingMaterial = hasPanorama || images.some(image => assets.find(asset => asset.image === image)?.items?.some(item => item.kind === 'background' || item.kind === 'prop'));
+  return hasSupportingMaterial ? '背景・小物の画像を使うには、人物を1人以上登録してください。人物のシートを一緒に読み込むか、先にStory Makerの人物設定を貼り付けてください。' : '';
+}
+
+export function assertReferenceCharacterRequirement(castList, assets, images, hasPanorama) {
+  const message = getReferenceCharacterRequirement(castList, assets, images, hasPanorama);
+  if (!message) return;
+  const error = new Error(message + '今回追加した素材は受け入れていません。');
+  error.code = 'REFERENCE_CHARACTER_REQUIRED';
+  throw error;
+}
+
 const MATERIAL_MARKER = '【画像ごとの認識】';
 const CAST_MARKER = '【人物設定】';
 const PANORAMA_MARKER = '【360°背景の認識】';
@@ -26,9 +40,41 @@ export function buildRecognitionEditorText(castList = '', assets = [], images = 
   return [materialText, characterText, panoramaText].filter(Boolean).join('\n\n');
 }
 
+const normalizeCharacterPaste = text => {
+  const content = String(text).replace(/^##[ \t]+(\d+)．/gm, '## $1.');
+  // Character Maker's image-design copy contains layout/background instructions,
+  // not a cast roster. Keep the editable draft and reject this known schema.
+  if (/^An elaborate and professional character design sheet\.[ \t]*$/m.test(content.replace(/\r/g,''))
+    && /^OVERALL LAYOUT:[^\r\n]+/m.test(content)
+    && /^## 1\. LAYOUT INSTRUCTIONS \(ABSOLUTE PRIORITY\)/m.test(content)
+    && /^## [34]\. CHARACTER (?:INFORMATION|APPEARANCE)/m.test(content)) {
+    const error = new Error('Character Makerの「テキストCopy」はシート作成用です。生成したシート画像をSTEP1へ読み込むか、Story Makerの「人物設定」をコピーして貼り付けてください。入力テキストは保持しています。');
+    error.code = 'CHARACTER_DESIGN_PROMPT_NOT_CAST';
+    throw error;
+  }
+  if (/^Topic:|^Scenario:|^\[\d+コマ目\]/m.test(content)) assertStoryCharacterFormat(content);
+  return content;
+};
+
+const assertStoryCharacterFormat = content => {
+  if (content.trim() && !isCanonicalCharacterPaste(content)) {
+    fail('Story Makerの人物設定書式（「## 1. 名前」から順に、各人物に「外見:」「服装:」）で貼り付けてください。台本はSTEP2へ貼り付けます');
+  }
+};
+
 // One editable result surface, with separate typed character/material data downstream.
-export function parseRecognitionEditorText(text, images = [], panorama = null, previousAssets = []) {
-  let content = String(text);
+export function parseRecognitionEditorText(text, images = [], panorama = null, previousAssets = [], previousCast = '') {
+  let content = normalizeCharacterPaste(text);
+  if ((images.length || panorama) && isCanonicalCharacterPaste(content)) {
+    const assets=images.map(image=>getReferenceAsset(previousAssets,image));
+    const current=castSections(previousCast || reconcileReferenceCast('',[],assets));
+    for(const [name,profile] of castSections(content).profiles) current.profiles.set(name,profile);
+    const castList=[current.preamble,...current.profiles.values()].filter(Boolean).join('\n\n');
+    // Validate existing roles/names against the merged roster without replacing
+    // provenance, user edits, analysis state, image ordering or material data.
+    parseReferenceAnalysis(JSON.stringify({castList,references:assets.map((asset,index)=>({imageIndex:index+1,items:asset.items}))}),images,castList);
+    return {castList,assets,background:panorama};
+  }
   let background = null;
   if (panorama) {
     const pieces = content.split(PANORAMA_MARKER);
@@ -40,7 +86,10 @@ export function parseRecognitionEditorText(text, images = [], panorama = null, p
     }
     if (!['indoor', 'outdoor', 'mixed'].includes(background.spatialType)) fail('360°背景の空間タイプが不正');
   }
-  if (!images.length) return { castList: content.trim(), assets: [], background };
+  if (!images.length) {
+    assertStoryCharacterFormat(content);
+    return { castList: content.trim(), assets: [], background };
+  }
   const sections = content.split(CAST_MARKER);
   if (sections.length !== 2 || !sections[0].trim().startsWith(MATERIAL_MARKER)) fail('画像ごとの認識または人物設定が欠落');
   const references = new Map();
@@ -58,7 +107,13 @@ export function parseRecognitionEditorText(text, images = [], panorama = null, p
   }
   const castList = sections[1].trim();
   const result = parseReferenceAnalysis(JSON.stringify({ castList, references: [...references.values()] }), images, castList);
-  result.assets = result.assets.map(asset => ({ ...previousAssets.find(previous => previous.image === asset.image), ...asset }));
+  result.assets = result.assets.map(asset => {
+    const previous=previousAssets.find(entry=>entry.image===asset.image);
+    return {...previous,...asset,items:asset.items.map(item=>{
+      const matches=previous?.items?.filter(old=>old.kind===item.kind&&old.name===item.name)||[];
+      return {...(matches.length===1?matches[0]:{}),...item};
+    })};
+  });
   return { ...result, background };
 }
 
@@ -71,6 +126,18 @@ const castSections = text => {
     else if (section.trim()) preamble += `${preamble ? '\n' : ''}${section.trim()}`;
   }
   return { profiles, preamble };
+};
+
+const isCanonicalCharacterPaste = text => {
+  const content=String(text).replace(/\r\n?/g,'\n').trim();
+  const headings=[...content.matchAll(/^##[ \t]+(\d+)[.．][ \t]*([^\n]+)$/gm)];
+  if(!headings.length||headings[0].index!==0||headings.some((h,i)=>Number(h[1])!==i+1))return false;
+  if(/^【(?:画像ごとの認識|人物設定|360°背景の認識)】|^Topic:|^Scenario:|^\[\d+コマ目\]/m.test(content))return false;
+  const entries=collectCastNameEntries(content),allHeadings=[...content.matchAll(/^##(?!#)[ \t]/gm)];
+  if(entries.length!==headings.length||headings.length!==allHeadings.length||new Set(entries.map(entry=>entry.displayName)).size!==entries.length)return false;
+  return [...castSections(content).profiles.values()].every(profile=>
+    /^外見[ \t]*[:：][ \t]*\S[^\n]*$/m.test(profile)
+    &&/^服装[ \t]*[:：][ \t]*\S[^\n]*$/m.test(profile));
 };
 
 // 名前だけを変更しても、元画像と人物設定の対応・削除時の寿命を維持する。
@@ -161,6 +228,18 @@ export function editReferenceCast(previousCast, text, assets) {
   if (!renames.size) return unchanged;
   // The heading has already been edited. Only old occurrences and linked data change.
   return renameCharacters(text, assets, renames, previousCast);
+}
+
+// The current STEP1 textarea edits characters separately from material rows.
+// Keep image-derived profile/name editing, while sharing the text-only format
+// and known design-prompt guard with the serialized recognition editor.
+export function parseCharacterEditorText(text, images = [], assets = [], previousCast = '') {
+  const content = normalizeCharacterPaste(text);
+  if (!images.length || !previousCast.trim()) assertStoryCharacterFormat(content);
+  const edited = editReferenceCast(previousCast, content, assets);
+  if (!images.length || !isCanonicalCharacterPaste(content) || edited.assets !== assets) return edited;
+  const merged = parseRecognitionEditorText(content, images, null, assets, previousCast);
+  return editReferenceCast(previousCast, merged.castList, merged.assets);
 }
 
 const derivedCast = assets => {

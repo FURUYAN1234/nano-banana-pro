@@ -4,16 +4,18 @@ import test from 'node:test';
 
 const readSource = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('STEP 1 keeps one persistent wide white material button with black text', async () => {
+test('STEP 1 keeps one white material button inside the primary image-drop surface', async () => {
   const [source, css] = await Promise.all([readSource('src/components/Step1Panel.jsx'), readSource('src/index.css')]);
   assert.match(source, /素材画像を選択 \(STEP 1\)/);
   assert.equal((source.match(/type="file"/g) || []).length, 1);
   assert.match(source, /materialInputRef\.current\?\.click\(\)/);
   assert.match(css, /\.reference-file-selection button \{[^}]*width: 100%;[^}]*background: #ffffff;[^}]*color: #000000;/);
   assert.match(source, /onDrop=/);
-  assert.doesNotMatch(css.match(/\.reference-file-selection button \{[^}]*\}/)[0], /padding|border-radius|height|font/);
+  assert.match(css, /\.reference-upload-primary \.reference-file-selection button \{[^}]*min-height: 36px/);
   assert.match(source, /ボタンでも、STEP1の枠内全体へのドロップでもできます/);
-  assert.doesNotMatch(source, /reference-add-input|素材を再解析|<details/);
+  assert.doesNotMatch(source, /reference-add-input|素材を再解析/);
+  assert.match(source, /この青い枠の内側すべてが画像のドロップ範囲/);
+  assert.match(source, /<details className="reference-material-details"/);
 });
 
 test('reference count is white, bold and slightly larger than guidance', async () => {

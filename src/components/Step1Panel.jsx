@@ -8,6 +8,7 @@ import {
   Copy
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
+import RelatedAppLink from './RelatedAppLink';
 import { REFERENCE_KIND_LABELS } from '../lib/reference-assets.js';
 
 /**
@@ -22,6 +23,7 @@ export default function Step1Panel({
   referenceAssets = [],
   recognitionText = '',
   castList = '',
+  castEditorText = castList,
   editCastList,
   editReferenceItem,
   bg360Analysis,
@@ -44,21 +46,32 @@ export default function Step1Panel({
   setStyleJson
 }) {
   const materialInputRef = useRef(null);
-  const recognitionScrollRef = useRef(null);
-  // One scroll surface: grow each text field to its content, including after
-  // image mutations and width changes, instead of nesting textarea scrollbars.
+  const materialDetailsRef = useRef(null);
+  const materialReadyState = images.map(image => {
+    const asset = referenceAssets.find(entry => entry.image === image);
+    return asset?.items?.length && (asset.analysisCompleted === true || asset.items.some(item => item.kind !== 'unknown')) ? 'ready' : 'pending';
+  }).join(',');
+  const panoramaReady = Boolean(bg360Enabled && bg360Analysis);
+  const hasRecognizedMaterials = materialReadyState.includes('ready') || panoramaReady;
+  // Open newly recognized/current materials, without reopening on name or
+  // description edits after the user has deliberately collapsed the list.
   useLayoutEffect(() => {
-    const container = recognitionScrollRef.current;
+    if (materialDetailsRef.current) materialDetailsRef.current.open = hasRecognizedMaterials;
+  }, [images, materialReadyState, panoramaReady, hasRecognizedMaterials, isAnalyzing]);
+  // Only per-material descriptions grow. The common character field keeps its
+  // six-line base height and its own scrollbar/manual resize before and after AI.
+  useLayoutEffect(() => {
+    const container = materialDetailsRef.current;
     if (!container) return;
     const fit = () => {
-      const scrollTop = container.scrollTop;
+      if (!container.open) return;
       container.querySelectorAll('textarea').forEach(field => {
         field.style.height = '0px';
         field.style.height = `${field.scrollHeight + 2}px`;
       });
-      container.scrollTop = scrollTop;
     };
     fit();
+    container.addEventListener('toggle', fit);
     let width = container.clientWidth;
     const observer = new ResizeObserver(() => {
       if (container.clientWidth !== width) {
@@ -67,8 +80,8 @@ export default function Step1Panel({
       }
     });
     observer.observe(container);
-    return () => observer.disconnect();
-  }, [images, referenceAssets, castList, bg360Analysis, bg360Enabled, isAnalyzing]);
+    return () => { container.removeEventListener('toggle', fit); observer.disconnect(); };
+  }, [images, referenceAssets, bg360Analysis, bg360Enabled, isAnalyzing]);
   const canCopyRecognition = !isAnalyzing && Boolean(recognitionText.trim()) && !referenceEditorError
     && images.every(image => referenceAssets.some(asset => asset.image === image
       && asset.items?.length > 0 && (asset.analysisCompleted === true || asset.items.every(item => item.kind !== 'unknown'))));
@@ -82,55 +95,53 @@ export default function Step1Panel({
   return (
     <section
       onDragOver={(e) => {
+        if (!Array.from(e.dataTransfer.types || []).includes('Files')) return;
         e.preventDefault();
-        if (apiKey) setIsDragging(true);
+        e.dataTransfer.dropEffect = isAnalyzing ? 'none' : 'copy';
+        setIsDragging(true);
       }}
-      onDragLeave={() => setIsDragging(false)}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setIsDragging(false);
+      }}
       onDrop={(e) => {
+        if (!e.dataTransfer.files?.length) return;
         e.preventDefault();
         setIsDragging(false);
-        if (apiKey) processFiles(e.dataTransfer.files);
+        if (isAnalyzing) return;
+        if (!apiKey) setShowModal(true);
+        else processFiles(e.dataTransfer.files);
       }}
-      className={`reference-step-panel group p-8 rounded-xl border-2 transition-all flex flex-col relative overflow-hidden duration-500 min-h-[300px] justify-center
-        ${isDragging ? 'border-blue-500 bg-blue-500/20 border-solid scale-105 shadow-2xl z-20' : 'border-dashed border-slate-700 bg-[#0f1115] hover:border-slate-500 hover:bg-[#161b22]'}
-        ${currentStep === 1 && !isDragging ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.1)]' : ''}
-        ${currentStep > 1 ? 'border-blue-500/30 bg-blue-900/5' : ''}
-      `}
+      aria-label="STEP1 キャラクターシート読み込み・画像ドロップ範囲"
+      className={'reference-step-panel group p-8 rounded-xl flex flex-col relative min-h-[300px]' + (isDragging ? ' is-dragging' : '')}
     >
       <div className="flex items-center justify-between mb-6 z-10">
         <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 1 ? 'text-blue-400' : 'text-slate-500'} `}>
-          <Camera size={18} /> STEP 01: 素材の認識（人物・背景・小物）
+          <Camera size={18} /> STEP 01: キャラクターシート読み込み
         </div>
         {isAnalyzing && <Loader2 size={18} className="animate-spin text-blue-400" />}
         {currentStep > 1 && <CheckCircle2 size={18} className="text-blue-500" />}
       </div>
 
-      <div className="reference-intake-guidance" aria-live="polite">
-        <p>人物画像がなくても、下の「人物設定」に名前・外見・服装などを記入すれば生成できます。Story Makerの「STEP1用」テキストも貼り付けられます。人物画像がない場合はこのテキストを人物の基準とし、API生成とWeb用指示文の両方へ反映します。背景や描法見本は人物シートの代わりには使いません。</p>
-        <p>素材の追加は、下の「素材画像を選択」ボタンでも、STEP1の枠内全体へのドロップでもできます。後からの追加も同じ操作です。</p>
-        <p>追加・削除・背景ON/OFF後は認識結果と人物設定を更新し、シナリオ以降を作り直します。画像をすべて外した人物は設定も削除し、差し替え画像は新たに解析します。残る人物と手入力人物の編集は保持します。Webへ貼付済みの指示文・添付画像は、新しい内容と現在の番号順に差し替えてください。</p>
-        <p className="reference-image-count">参照素材画像：{imageInputBudget.characterImageCount} / {imageInputBudget.maxCharacterImages}枚（あと{imageInputBudget.remaining}枚・OpenAI／Gemini共通）</p>
-        <p className="mt-1 text-[11px] text-slate-400">
-          {bg360Enabled ? '360°背景ON：その他の参照素材は合計10枚まで。API用に4コマ分の背景枠を確保します。Webへは元の360°背景1枚を添付するため、元画像は合計11枚までです。' : '人物・表情集・三面図・通常背景・小物を合わせて14枚まで。360°背景ONでは、その他の参照素材は合計10枚までです。'}
-          作風JSONは枚数に含めません。上限を超える追加は受け付けず、既存の画像・設定を保持します。
-        </p>
-        <p className="mt-1 text-[11px] text-slate-400">素材をまとめてドロップすると、AIが種類・同じ人物・関係・使いどころを判断し、シナリオとAPI／Webの描画指示へ極力反映します。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。素材全点の登場や完全再現を保証するものではありません。</p>
-        <p>2D背景と360°背景が両方ある場合、指定がなければ360°背景を舞台の基準にします。自由入力の素材・コマ別指定を優先し、2D背景も場面に合う範囲で使います。添付順は画像番号との対応づけのためで、背景の使用優先度を決めるものではありません。</p>
-        <p className="mt-1 text-[11px] text-slate-400">1枚に複数の人物・素材が載っていても1枚です。同じ人物の表情集・三面図は一人分の資料として扱います。</p>
-        <p className="mt-1 text-[11px] text-slate-400">ChatGPTやGeminiのWeb版で生成するとき、STEP1で画像を読み込んだ場合は同じ素材画像をもう一度添付してください。人物設定テキストだけを使う場合、人物画像の添付は不要です。画像がある場合の添付順は、STEP1に現在表示されている「1、2、3…」の番号順です。360°背景は途中で追加しても最後に表示されます。その後に通常素材を追加すると、360°背景は最後へ繰り下がり、番号も更新されます。API画像生成では、アプリが対応づけて送信するため、並べ直しや再添付は不要です。</p>
+      <div className="reference-upload-primary">
+        <strong>{isDragging ? (isAnalyzing ? '画像を解析中です。完了後に追加できます' : 'この枠内で放して画像を読み込む') : 'キャラクターシートをここへドロップ'}</strong>
+        <p>この青い枠の内側すべてが画像のドロップ範囲です。下の白い人物情報欄の上でも受け付けます。</p>
+        <span>または、ファイルから選択</span>
+        <div className="reference-file-selection">
+        <button type="button" onClick={() => materialInputRef.current?.click()} disabled={isAnalyzing}>
+          素材画像を選択 (STEP 1)
+        </button>
+        <input ref={materialInputRef} type="file" multiple accept="image/*,.json" onChange={handleFileChange} disabled={isAnalyzing} hidden />
+        </div>
       </div>
+
+      <RelatedAppLink app="character" />
+
       {(imageInputError || !imageInputBudget.fits) && (
         <p role="alert" className="mb-4 rounded-lg border border-amber-500/50 bg-amber-950/30 p-3 text-xs text-amber-200 leading-relaxed">
           {imageInputError || `現在のキャラシート画像が上限${imageInputBudget.maxCharacterImages}枚を超えています。画像を減らしてください。`}
         </p>
       )}
 
-      <div className="reference-file-selection">
-        <button type="button" onClick={() => materialInputRef.current?.click()} disabled={isAnalyzing}>
-          素材画像を選択 (STEP 1)
-        </button>
-        <input ref={materialInputRef} type="file" multiple accept="image/*,.json" onChange={handleFileChange} disabled={isAnalyzing} hidden />
-      </div>
       <div className="reference-drop-area" role="region" aria-label="読み込んだ素材画像">
         {images.map((img, i) => (
           <div key={img} className="reference-thumbnail" title={`画像${i + 1}\n${referenceAssets.find(asset => asset.image === img)?.items.map(item => `${REFERENCE_KIND_LABELS[item.kind]}: ${item.name} — ${item.description}`).join('\n') || '解析待ち'}`}>
@@ -178,7 +189,7 @@ export default function Step1Panel({
         {images.length === 0 && !isAnalyzing && (
           <div style={{ minWidth: 0 }} className="flex-1 flex flex-col items-center justify-center text-slate-500">
             <p className="text-xs font-bold text-slate-400">
-              キャラクター設定・表情集・三面図・背景・小物の画像をまとめて選択するか、STEP1の枠内全体にドロップしてください。分類や番号の指定は不要です。後から追加でき、360°背景や作風設定JSONも一緒に読み込めます。
+              人物の表情集・三面図も、背景・小物の画像もまとめて追加できます。分類や画像番号は自動で付けます。
             </p>
             <p className="text-[10px] opacity-60 mt-1">
               ※名前や性格、特徴が書かれた設定シートを推奨。
@@ -208,6 +219,21 @@ export default function Step1Panel({
         )}
       </div>
 
+      <details className="reference-intake-guidance"><summary>素材の追加ルールとWebでの使用</summary>
+        <p>画像がない場合は、Story Makerの「STEP1用」人物情報を白い欄へ貼り付けます。人物名の連番見出し・「外見:」「服装:」が必要です。人物画像がない場合はこのテキストを人物の基準とし、API生成とWeb用指示文へ反映します。背景や描法見本は人物シートの代わりには使いません。</p>
+        <p>素材の追加は、下の「素材画像を選択」ボタンでも、STEP1の枠内全体へのドロップでもできます。後からの追加も同じ操作です。</p>
+        <p>追加・削除・背景ON/OFF後は認識結果と人物設定を更新し、シナリオ以降を作り直します。画像をすべて外した人物は設定も削除し、差し替え画像は新たに解析します。残る人物と手入力人物の編集は保持します。Webへ貼付済みの指示文・添付画像は、新しい内容と現在の番号順に差し替えてください。</p>
+        <p className="reference-image-count">参照素材画像：{imageInputBudget.characterImageCount} / {imageInputBudget.maxCharacterImages}枚（あと{imageInputBudget.remaining}枚・OpenAI／Gemini共通）</p>
+        <p className="mt-1 text-[11px] text-slate-400">
+          {bg360Enabled ? '360°背景ON：その他の参照素材は合計10枚まで。API用に4コマ分の背景枠を確保します。Webへは元の360°背景1枚を添付するため、元画像は合計11枚までです。' : '人物・表情集・三面図・通常背景・小物を合わせて14枚まで。360°背景ONでは、その他の参照素材は合計10枚までです。'}
+          作風JSONは枚数に含めません。上限を超える追加は受け付けず、既存の画像・設定を保持します。
+        </p>
+        <p className="mt-1 text-[11px] text-slate-400">素材をまとめてドロップすると、AIが種類・同じ人物・関係・使いどころを判断し、シナリオとAPI／Webの描画指示へ極力反映します。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。素材全点の登場や完全再現を保証するものではありません。</p>
+        <p>2D背景と360°背景が両方ある場合、指定がなければ360°背景を舞台の基準にします。自由入力の素材・コマ別指定を優先し、2D背景も場面に合う範囲で使います。添付順は画像番号との対応づけのためで、背景の使用優先度を決めるものではありません。</p>
+        <p className="mt-1 text-[11px] text-slate-400">1枚に複数の人物・素材が載っていても1枚です。同じ人物の表情集・三面図は一人分の資料として扱います。</p>
+        <p className="mt-1 text-[11px] text-slate-400">ChatGPTやGeminiのWeb版で生成するとき、STEP1で画像を読み込んだ場合は同じ素材画像をもう一度添付してください。人物設定テキストだけを使う場合、人物画像の添付は不要です。画像がある場合の添付順は、STEP1に現在表示されている「1、2、3…」の番号順です。360°背景は途中で追加しても最後に表示されます。その後に通常素材を追加すると、360°背景は最後へ繰り下がり、番号も更新されます。API画像生成では、アプリが対応づけて送信するため、並べ直しや再添付は不要です。</p>
+      </details>
+
       <div ref={analysisProgressRef} className="reference-analysis-progress">
         <ThinkingLog thought={analyzeThought} />
       </div>
@@ -217,7 +243,9 @@ export default function Step1Panel({
             <h3><label htmlFor="reference-recognition-editor">認識結果（人物・背景・小物／編集できます）</label></h3>
           </div>
           <p className="reference-recognition-note">解析ログの結果をここに表示し、シナリオ・描画指示へ引き継ぎます。人物名欄と人物設定の名前見出しは、どちらを編集しても連動します。同じ人物の別シートにも反映します。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。</p>
-        <div ref={recognitionScrollRef} className="reference-recognition-scroll" role="region" aria-label="認識結果と人物設定" tabIndex={0}>
+        <details className="reference-material-details" ref={materialDetailsRef} open={hasRecognizedMaterials}>
+          <summary>素材ごとの認識詳細：{images.flatMap(image => referenceAssets.find(asset => asset.image === image)?.items || []).map(item => REFERENCE_KIND_LABELS[item.kind] + ' ' + item.name).join(' ／ ') || '解析待ち'}</summary>
+        {!images.length && !panoramaReady && <p>画像の認識結果はありません。人物設定テキストだけを使う場合は、下の人物情報欄へ貼り付けてください。</p>}
         {images.map((image, imageIndex) => {
           const asset = referenceAssets.find(entry => entry.image === image);
           return <div key={image} className="reference-recognition-item">
@@ -235,17 +263,23 @@ export default function Step1Panel({
           {Object.entries({location:'場所', lighting:'光', objects:'小物・設備', mood:'雰囲気'}).map(([field, label]) =>
             <label key={field}>{label}<input value={bg360Analysis[field] || ''} onChange={event => editBackground(field, event.target.value)} /></label>)}
         </div>}
-        <label htmlFor="reference-recognition-editor">人物設定</label>
+        </details>
+        <div className="reference-recognition-scroll" role="region" aria-label="人物設定">
+        <label htmlFor="reference-recognition-editor">人物情報（画像の認識結果／Story Makerから貼り付け） <span className="editable-field-badge">✎ 編集できます</span></label>
+        <p id="reference-character-input-help" className="reference-character-input-help">画像をドロップすると、認識した人物情報がここに入ります。画像がない場合はStory Makerの「STEP1用」人物情報を貼り付けてください。「## 1. 名前」の連番見出し・「外見:」「服装:」が必要です。台本はSTEP2へ貼り付けます。</p>
+        <p className="field-edit-help">名前・外見・服装を修正してからSTEP2へ進めます。台本がある状態で人物設定を変えた場合は、STEP2以降を作り直してください。</p>
         <textarea
           id="reference-recognition-editor"
-          rows={1}
-          value={castList}
+          rows={6}
+          value={castEditorText}
           onChange={(e) => editCastList(e.target.value)}
           className="reference-recognition-editor"
+          aria-describedby="reference-character-input-help"
           aria-invalid={Boolean(referenceEditorError)}
           disabled={isAnalyzing}
-          placeholder="画像をアップロードして特徴を自動抽出、または直接入力して設定を記述します。"
+          placeholder={'キャラクターシート画像をこの欄へドロップ → 認識結果を表示\n画像がない場合：Story Makerの「STEP1用」人物情報を貼り付け\n\n人物情報の形式：\n## 1. 葵\n外見: 短い黒髪、丸い眼鏡。\n服装: 紺色のジャケット、黒いズボン。'}
         />
+
         </div>
         {referenceEditorError && <p role="alert">{referenceEditorError}</p>}
         <div className="mt-2 relative z-50">

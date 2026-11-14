@@ -1,11 +1,13 @@
-## Super FURU AI 4-koma System v7.5.2 candidate — 2026-11-14 (verified; deployment approval pending)
+## Super FURU AI 4-koma System v7.5.2 candidate — 2026-11-14（追加仕様の最終検証中・未公開）
 
-- User-authorized target: no character images plus usable STEP1 profiles should generate API/Web prompts using text as identity; backgrounds/props/style examples are not character sheets. Existing image-present identity behavior is retained. Story Maker profiles paste intoSTEP1 and its4–8-panel scenario intoSTEP2, followed bySTEP3/STEP4.
-- App description, paired English/Japanese README/release notes, three PDFs and note update draft prepared. PDF72pages reviewed by the documentation worker; note remains unpublished. Official pricing compared with unchanged settings and recorded for this candidate.
-- Normal/negative coverage includes legacy STEP3 text-profile propagation, SeriousDocumentary style policy, local cast versus incoming breakouts, frame position labels and cache revision. A missing test-harness dependency was corrected; the final full-suite result below supersedes the earlier diagnostic runs.
-- Actual Story helper profiles827chars/scenario3598chars were pasted through the normal UI with zero character images. STEP3 completed in31.881seconds with a23793-character prompt; Web full copy exactly matched it. STEP4 run6dc6937f-87d1-4e41-82db-bf3e245b9731 used Image2.6 Sunburst/max2240x3168 and Luna QA (bothHTTP200), ending02:15:01.379Z after362seconds. The6-panel story, identities, speech and silent ending were visually accepted; one automatic drawing-style sample was attached, not a character sheet.
-- QA remains unverified, not an automatic pass. The shared compiler now retainsP5's separate local appearance alongsideP6's breakout, with grounded continuity required for fragment exemptions. Replaying the unchanged real API observations removes that false cast_count issue while preserving missingP1 evidence. Image-free NORMAL generation/review share the existing drawing recipe; free-layout labels now follow actual left/right/center/full-width frames. Revision68 invalidates the old cache. These final deterministic corrections were checked by replay and normal/negative tests; the coherent accepted image was retained without a paid redraw.
-- Final full suite2353/2353, targeted215cases, zero-warning lint, build/security and paired Story source checks pass. App/README/threePDFs/note draft agree onSTEP1/STEP2 and optional character images. The local candidate is committed and its source/public trees are bound to the reviewed README/PDF audit; no push/deployment/note publication or backup has occurred. Request concrete deployment approval through the standard transaction before publication.
+- STEP1はキャラクターシートのドロップを主経路とし、共通の人物欄を6行・160pxに統一。素材ごとの認識詳細を人物欄の上に置き、画像認識後は展開、空欄／人物テキストのみは折りたたむ。各STEPの白欄は編集できる旨を表示。
+- Story Makerの連番人物見出し・外見・服装を持つ人物情報はSTEP1へ、台本はSTEP2へ貼り付ける。画像なしではテキストを人物の基準としてAPI／Web指示へ渡す。Character Makerの設計プロンプトや台本の誤貼付は、下書きを保持して拒否する。
+- 背景・小物・360°背景は人物1名以上が前提。有効なStory人物情報も数える。人物画像との同時追加を許容し、人物なしの背景・小物だけは受け入れず既存状態を保持。人物削除後に背景が残る場合は次工程を止め、人物を戻すと再開できる。作風JSON単独は対象外。
+- STEP1にCharacter Maker、STEP2にStory Makerへの別タブ案内を配置。API接続画面にマニュアルとAPIガイドのPDFを揃えて配置。README・PDF・リリース説明・note更新案を同期。
+- 実3アプリ連携：Character Makerで生成して通常保存したPNGをStory Makerへ登録し、6コマ台本（2822文字）を通常コピー。同じPNGと台本を漫画アプリへ入力し、STEP4 run8478a8a9-bb3f-4561-a9b3-eaa96a9682e3は2026-11-14T04:22:48.438Zに完了（439817ms、1回自動修正）。修正後画像の人物・台詞・動作・6場面を目視受入れ。自動再検査は実施されず、自動合格とは扱わない。
+- 上記実画像のcompilerは68。その後、身体の画面内範囲「膝上から…まで」を高いカメラ位置と誤認する原因を修正し、revision69へ更新。構図回帰87＋通常生成経路28件、人物入力関連167件、build/securityは成功。背景だけの拒否も通常UIの実APIで確認済み。人物あり背景追加と最終STEP3実API・Webコピーの再確認は未完了。
+- PC再起動後もソース、PDF、実APIログ、コピー本文、Character PNG、漫画確認用スクリーンショットは保存済み。漫画PNGの通常保存は確認できていない。現在のブラウザー操作接続が利用不可のため最終UI/API確認を継続待ち。新しい全体回帰／監査の最終結果は私的台帳を正本とし、以前の合格数を今回の完成証拠へ流用しない。
+- 作業台帳：`/home/furu/Codex/work/story-manga-contract-20261114/TASK.md`。公開・push・デプロイ・バックアップ未実施。最終検証完了後、既定の公開手順に入る直前に具体的な版と対象の許可を求める。
 
 ## v7.5.1 適応する物語設計・人数誤検出修正（2026-11-13・実API検証済み／正式公開許可済み）
 

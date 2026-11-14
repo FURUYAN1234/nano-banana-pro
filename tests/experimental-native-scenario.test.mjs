@@ -14,6 +14,22 @@ try {
   const inputFor=count=>({enabled:true,scenarioMode:'experimental-manga',castList:'## ユウ',colorMode:'color',scenario:Array.from({length:count},(_,i)=>`[${i+1}コマ目]\n[Camera: 高い位置から俯瞰]\n[EMOTION: NORMAL]\n状況: ユウが道具を順に確かめる。\n${i===2?'セリフなし':`ユウ「確認${i+1}」`}`).join('\n')});
   const planFor=source=>({count:source.panels.length,layout:'two_columns',reason:'動作順を保ち、隣り合う場面を対比する',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'ユウが指定の道具を確かめる。',dialogueIds:p.dialogueIds,breakout:null}))});
 
+  test('native page compiler keeps a low camera when its framing starts above the knees',()=>{
+    const camera='整備台の左前下方から約15度の緩いアオリ。中広角の直線投影でミナトの膝上から後輪までを大きく捉え、手元と歯車を同じ奥行きに見せる。';
+    const input=inputFor(6);
+    input.scenario=input.scenario.replace('[4コマ目]\n[Camera: 高い位置から俯瞰]',`[4コマ目]\n[Camera: ${camera}]`);
+    const source=m.readExperimentalSource(input);
+    const plan=m.validateExperimentalPlan(planFor(source),source);
+    for(const providerFamily of ['chatgpt','gemini']) {
+      const prompt=m.buildExperimentalImagePrompt(plan,source,{...input,providerFamily});
+      const frame=prompt.split('[PAGE FRAME P4 ')[1]?.split('[PAGE FRAME P5 ')[0];
+      assert.ok(frame,'native P4 frame is present');
+      assert.ok(frame.includes(camera),'authored Camera is unchanged');
+      assert.match(frame,/低所:.*見上げ.*同じ仰角/);
+      assert.doesNotMatch(frame,/look down|head\/shoulder tops|高所:|同じ俯角/);
+    }
+  });
+
   test('rejected STEP3 layout answers retain their stage, reason and sanitized response',async()=>{
     const input=inputFor(6),plan=planFor(m.readExperimentalSource(input));
     plan.panels[4].camera='床近くから見上げる';

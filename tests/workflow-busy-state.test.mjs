@@ -1,4 +1,4 @@
-import { hasCharacterReferenceImages } from '../src/lib/reference-assets.js';
+import { hasCharacterReferenceImages, parseRecognitionEditorText } from '../src/lib/reference-assets.js';
 import { resolveAutoScenarioMode } from '../src/lib/scenario-validation.js';
 import { applyOpenAIImageEngineWatermark } from '../src/lib/openai-image-settings.js';
 import assert from 'node:assert/strict';
@@ -16,6 +16,22 @@ import { DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID } from '..
 
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const step2 = await readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8');
+
+test('serialized recognition import preserves a rejected draft, blocks assembly, and recovers with a valid profile or an empty clear',()=>{
+  const {state,bind}=harness({parseRecognitionEditorText,recognitionPanorama:null,castList:'previous accepted character settings',scenario:'current complete scenario text'});
+  const input=bind('setRecognitionText');
+  const disabledExpression=source.match(/const isAssembleDisabled = ([^;]+);/)[1];
+  const isDisabled=()=>new Function('s',`with(s){return ${disabledExpression};}`)(state);
+  input('Topic: これは人物設定ではなく台本');
+  assert.equal(state.recognitionDraft,'Topic: これは人物設定ではなく台本');
+  assert.equal(state.castList,'previous accepted character settings');
+  assert.match(state.referenceEditorError,/Story Maker/);assert.equal(isDisabled(),true);
+  const profile='## 1. 葵\n外見: 黒い短髪\n服装: 青い作業着';
+  input(profile);
+  assert.equal(state.castList,profile);assert.equal(state.referenceEditorError,'');assert.equal(isDisabled(),false);
+  input('');
+  assert.equal(state.castList,'');assert.equal(state.referenceEditorError,'');assert.ok(isDisabled());
+});
 
 // Execute the production callbacks verbatim. Only React's state setters, time,
 // and provider/UI dependencies are substituted; no lifecycle logic is copied.

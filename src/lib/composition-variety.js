@@ -142,6 +142,9 @@ export const isFisheyeCamera = (camera = '') => /fish[ -]?eye|魚眼|フィッ�
 // eye-level viewpoint can be physically near the floor for a seated/chibi subject.
 export const classifyCameraElevation = (camera = '') => {
   const text = affirmativeCameraText(camera).normalize('NFKC')
+    // A body crop's range start (膝上から…まで) is framing, not an
+    // above/below camera origin. Keep separate placement and pitch cues intact.
+    .replace(/(膝|ひざ|腰|胸|肩|首)[上下](?=から[^。;；\n]*?まで)/g, '$1')
     .replace(/(?:^|[。;；\n、])([^。;；\n、]*?)(?:が|は)[^。;；\n、]*/g, (clause, subject) =>
       /カメラ|撮影(?:者|位置)|視点|\bcamera\b/i.test(subject) ? clause : clause.replace(/見上げ|見下ろ[すし]/g, ''));
   const eyeLevelText = text.replace(/(?:above|below)\s+(?:the\s+)?eye[ -]?level/gi, '');

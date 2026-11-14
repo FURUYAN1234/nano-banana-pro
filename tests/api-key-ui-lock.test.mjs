@@ -11,7 +11,7 @@ test('connection badge stays informational without an added switching action', a
   assert.doesNotMatch(app, /onChangeApiKey/);
 });
 
-test('both API dialogs link the bundled PDF next to OpenAI acquisition under a deployment base path', async () => {
+test('both API dialogs group the operation and provider PDFs under a deployment base path', async () => {
   const { createServer } = await import('vite');
   const { default: React } = await import('react');
   const { renderToStaticMarkup } = await import('react-dom/server');
@@ -21,8 +21,14 @@ test('both API dialogs link the bundled PDF next to OpenAI acquisition under a d
     for (const provider of ['google', 'openai']) {
       const html = renderToStaticMarkup(React.createElement(ApiKeyModal, {isOpen: true, provider}));
       assert.match(html, /href="https:\/\/platform.openai.com\/api-keys"/);
-      assert.match(html, /href="\/nano-banana-pro\/downloads\/openai-api-beginner-guide-2026-09-30.pdf" target="_blank" rel="noreferrer"[^>]*>OpenAI APIマニュアル<\/a>/);
-      assert.ok(html.indexOf('platform.openai.com/api-keys') < html.indexOf('OpenAI APIマニュアル'));
+      const group = html.match(/<nav[^>]*aria-label="PDFマニュアル"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
+      assert.ok(group, 'PDF guides stay together in their own navigation group');
+      const guides = ['super-furu-ai-4koma-full-manual-2026-10-01.pdf', 'openai-api-beginner-guide-2026-09-30.pdf'];
+      if (provider === 'google') guides.push('gemini-api-beginner-guide-2026-10-01.pdf');
+      for (const file of guides) {
+        assert.ok(group.includes(`href="/nano-banana-pro/downloads/${file}" target="_blank" rel="noopener noreferrer" class="manual-link-button"`));
+      }
+      assert.equal((group.match(/<a /g) || []).length, guides.length);
     }
     const pdf = await readFile(new URL('../public/downloads/openai-api-beginner-guide-2026-09-30.pdf', import.meta.url));
     assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');

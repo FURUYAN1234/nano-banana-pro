@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
+import RelatedAppLink from './RelatedAppLink';
 
 // --- API Key Modal (Dual Engine Support) ---
 // [v3.59] 起動時モーダル（provider="google"）は Dual Engine 対応:
@@ -162,15 +163,9 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
                 <a href={geminiLinkUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--gemini">
                   🔵 Gemini キー取得（無料）
                 </a>
-                <a href={geminiManualUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--gemini api-key-manual-link">
-                  Gemini APIマニュアル
-                </a>
                 <span className="text-slate-600 text-[10px]">|</span>
                 <a href={openaiLinkUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--openai">
                   🟢 OpenAI キー取得（従量課金）
-                </a>
-                <a href={openaiManualUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--openai">
-                  OpenAI APIマニュアル
                 </a>
               </div>
             </div>
@@ -185,13 +180,20 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
               >
                 {linkText}
               </a>
-              {isOpenAIProvider && (
-                <a href={openaiManualUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--openai">
-                  OpenAI APIマニュアル
-                </a>
-              )}
             </div>
           )}
+          <div className="api-operation-manual">
+            <nav className={`api-pdf-guides ${isDualMode ? 'api-pdf-guides--three' : ''}`} aria-label="PDFマニュアル">
+              <a href={`${import.meta.env.BASE_URL}downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf`} target="_blank" rel="noopener noreferrer" className="manual-link-button">使い方マニュアル（PDF）</a>
+              {(isDualMode || isOpenAIProvider) && <a href={openaiManualUrl} target="_blank" rel="noopener noreferrer" className="manual-link-button">OpenAI APIマニュアル（PDF）</a>}
+              {(isDualMode || !isOpenAIProvider) && <a href={geminiManualUrl} target="_blank" rel="noopener noreferrer" className="manual-link-button">Gemini APIマニュアル（PDF）</a>}
+            </nav>
+            <p>画像の読み込みから編集・漫画生成まで、接続前でも確認できます。別タブで開きます。</p>
+          </div>
+          <nav className="related-apps-key-help" aria-label="人物・シナリオを準備するアプリ">
+            <RelatedAppLink app="character" />
+            <RelatedAppLink app="story" />
+          </nav>
         </div>
       </div>
     </div>

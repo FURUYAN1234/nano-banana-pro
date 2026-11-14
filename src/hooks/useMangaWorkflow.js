@@ -1,4 +1,4 @@
-import { hasCharacterReferenceImages } from '../lib/reference-assets.js';
+import { hasCharacterReferenceImages, getReferenceCharacterRequirement, assertReferenceCharacterRequirement } from '../lib/reference-assets.js';
 import { useWorkflowDiagnostics } from './useWorkflowDiagnostics.js';
 import { diagnosticConsole as console, recordImageQualityReview } from '../lib/diagnostics.js';
 import { resolveAutoScenarioMode } from '../lib/scenario-validation.js';
@@ -20,7 +20,7 @@ import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt, getOpenAIPromptBodyBudget, stripImageReferenceManifest} from '../lib/openai-image-references.js';
 import { assertImagePromptBudget } from '../lib/image-prompt-budget.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
-import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildRecognitionEditorText, parseRecognitionEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers, editReferenceAsset, editReferenceCast } from '../lib/reference-assets.js';
+import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildRecognitionEditorText, parseRecognitionEditorText, parseCharacterEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers, editReferenceAsset } from '../lib/reference-assets.js';
 import { getImageInputBudget, assertImageInputBudget, planImageAddition } from '../lib/image-input-budget.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
@@ -141,6 +141,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   };
   const [targetDate, setTargetDate] = useState(getJSTDate());
   const [castList, setCastListState] = useState("");
+  const [castDraft, setCastDraft] = useState(null);
   const castRevisionRef = useRef(0);
   const castListRef = useRef('');
   const castNameBaselineRef = useRef('');
@@ -149,6 +150,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     castListRef.current = typeof value === 'function' ? value(castListRef.current) : value;
     castNameBaselineRef.current = castListRef.current;
     setCastListState(castListRef.current);
+    setCastDraft(null);
   };
   const [scenario, setScenario] = useState("");
   const [explanation, setExplanation] = useState("");
@@ -194,7 +196,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const [referenceAssets, setReferenceAssetsState] = useState([]);
   const referenceAssetsRef = useRef([]);
   const [recognitionDraft, setRecognitionDraft] = useState(null);
-  const [referenceEditorError, setReferenceEditorError] = useState('');
+  const [referenceEditorInputError, setReferenceEditorError] = useState('');
   const setReferenceAssets = (assets) => {
     referenceAssetsRef.current = assets;
     setReferenceAssetsState(assets);
@@ -375,6 +377,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   }, [genLog]);
 
   // Logic centralization for v1.4.9
+  const referenceEditorError = referenceEditorInputError || getReferenceCharacterRequirement(castList, referenceAssets, images, Boolean(bg360Enabled && bg360Image));
   const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing || Boolean(referenceEditorError);
 
   const recognitionPanorama = bg360Enabled && bg360Analysis ? bg360Analysis : null;
@@ -382,7 +385,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const setRecognitionText = (text) => {
     setRecognitionDraft(text);
     try {
-      const parsed = parseRecognitionEditorText(text, imagesRef.current, recognitionPanorama, referenceAssetsRef.current);
+      const parsed = parseRecognitionEditorText(text, imagesRef.current, recognitionPanorama, referenceAssetsRef.current, castListRef.current);
       setCastList(parsed.castList);
       setReferenceAssets(parsed.assets);
       if (parsed.background) setBg360Analysis(parsed.background);
@@ -462,6 +465,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // silently become a result for a different set of references.
   const invalidateReferenceOutputs = (previousImages, nextImages) => {
     setRecognitionDraft(null);
+    setCastDraft(null);
     cancelApiWork();
     invalidateScenarioRun('素材変更');
     fullAutoAbortRef.current = true;
@@ -497,12 +501,17 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   };
   const editCastList = (text) => {
     invalidateReferenceOutputs();
-    const baseline = castNameBaselineRef.current;
-    const result = editReferenceCast(baseline, text, referenceAssetsRef.current);
-    setCastList(result.castList);
-    if (result.deferBaseline) castNameBaselineRef.current = baseline;
-    setReferenceAssets(result.assets);
-    setReferenceEditorError(result.error);
+    setCastDraft(text);
+    try {
+      const baseline = castNameBaselineRef.current;
+      const result = parseCharacterEditorText(text, imagesRef.current, referenceAssetsRef.current, baseline);
+      setCastList(result.castList);
+      if (result.deferBaseline) castNameBaselineRef.current = baseline;
+      setReferenceAssets(result.assets);
+      setReferenceEditorError(result.error);
+    } catch (error) {
+      setReferenceEditorError(error.message);
+    }
   };
   const editBackground = (field, value) => {
     if (!['location', 'lighting', 'spatialType', 'objects', 'mood'].includes(field)) return;
@@ -740,19 +749,45 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       backgroundEnabled: bg360EnabledRef.current || Boolean(detected360File),
     });
     imageArray = addition.addedImages;
-    setImages(addition.images);
-    if (detectedStyleJson) {
+    const analysisImages = getReferenceImagesToAnalyze(addition.images, referenceAssetsRef.current);
+    const deferAcceptance = collectCastNameEntries(currentCastList).length === 0 && Boolean(analysisImages.length || detected360File);
+    let pendingPanorama = null, pendingPanoramaPart = null;
+    if (deferAcceptance && detected360File && !analysisImages.length) {
+      assertReferenceCharacterRequirement(currentCastList, referenceAssetsRef.current, addition.images, true);
+    }
+    const acceptDeferredInputs = () => {
+      if (!deferAcceptance) return;
+      setImages(addition.images);
+      if (detectedStyleJson) setStyleJson(detectedStyleJson);
+      if (pendingPanorama) {
+        setBg360Image(detected360File.base64);
+        setBg360Enabled(true);
+        setBg360ImageParts(pendingPanoramaPart);
+        setBg360Analysis(pendingPanorama);
+        setCustomLocation(pendingPanorama.location);
+      }
+      invalidateReferenceOutputs();
+      inputEpoch = scenarioRunEpochRef.current;
+      if (armedFullAuto) {
+        fullAutoAbortRef.current = false;
+        isFullAutoModeRef.current = true;
+        setIsFullAutoMode(true);
+        isEndlessModeRef.current = armedEndless;
+        setIsEndlessMode(armedEndless);
+      }
+    };
+    if (!deferAcceptance) setImages(addition.images);
+    if (detectedStyleJson && !deferAcceptance) {
       setStyleJson(detectedStyleJson);
       showStatus(`作風を適用: ${detectedStyleJson.style_name}`);
     }
 
-    if (detected360File) {
+    if (detected360File && !deferAcceptance) {
       setBg360Image(detected360File.base64);
       setBg360Enabled(true);
       setBg360Analysis(null);
     }
-    const analysisImages = getReferenceImagesToAnalyze(addition.images, referenceAssetsRef.current);
-    if (analysisImages.length || detected360File || detectedStyleJson) invalidateReferenceOutputs();
+    if (!deferAcceptance && (analysisImages.length || detected360File || detectedStyleJson)) invalidateReferenceOutputs();
     scenarioRunEpochRef.resume = { step: 1 };
     inputEpoch = scenarioRunEpochRef.current;
     castRevisionAtStart = castRevisionRef.current;
@@ -777,27 +812,33 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         const imagePart = {
           inlineData: { mimeType: detected360File.mimeType, data: base64Data }
         };
-        setBg360ImageParts(imagePart);
+        if (deferAcceptance) pendingPanoramaPart = imagePart;
+        else setBg360ImageParts(imagePart);
 
         setIs360Analyzing(true);
         setAnalyzeThought(prev => prev + `\n> 🌐 360°空間解析を実行中... (API通信保護のため順次処理)`);
         const analysisResult = await callAI(get360AnalysisPrompt(), [imagePart], null, () => {}, { visionModelId: analysisModelId });
         if (inputEpoch !== scenarioRunEpochRef.current) return;
         const analysis = parse360Analysis(analysisResult.text);
-        setBg360Analysis(analysis);
-        setCustomLocation(analysis.location);
+        if (deferAcceptance) pendingPanorama = analysis;
+        else {
+          setBg360Analysis(analysis);
+          setCustomLocation(analysis.location);
+        }
         showStatus(`🌐 360°背景を検出: ${analysis.location}`);
         setAnalyzeThought(prev => prev + `\n> 🌐 空間解析完了: ${analysis.location}`);
       } catch (err) {
         if (inputEpoch !== scenarioRunEpochRef.current) return;
         console.warn('[360° BG] Analysis failed:', err);
-        setBg360Analysis(null);
-        setBg360Enabled(false);
+        if (!deferAcceptance) {
+          setBg360Analysis(null);
+          setBg360Enabled(false);
+        }
         inputEpoch = scenarioRunEpochRef.current;
         isAnalyzingRef.current = true;
         setIsAnalyzing(true);
         beginApiWork('step1');
-        setCustomLocation('');
+        if (!deferAcceptance) setCustomLocation('');
         showStatus('360°背景の空間解析に失敗しました。画像を確認して再試行してください。');
       } finally {
         if (inputEpoch === scenarioRunEpochRef.current) setIs360Analyzing(false);
@@ -844,14 +885,18 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         return;
       }
       const analysis = parseReferenceAnalysis(result.text, analysisImages, currentCastList);
-      if (addition.images.length !== imagesRef.current.length || addition.images.some((image, index) => image !== imagesRef.current[index])) {
+      if (!deferAcceptance && (addition.images.length !== imagesRef.current.length || addition.images.some((image, index) => image !== imagesRef.current[index]))) {
         showStatus('解析中に素材が変更されたため、結果の上書きを中止しました。必要なら素材を再解析してください。');
         return;
       }
       const previousAssets = referenceAssetsRef.current;
       const mergedAssets = mergeReferenceAnalysis(previousAssets, analysis, addition.images);
-      setCastList(reconcileReferenceCast(castListRef.current, previousAssets, mergedAssets));
+      const mergedCast = reconcileReferenceCast(castListRef.current, previousAssets, mergedAssets);
+      assertReferenceCharacterRequirement(mergedCast, mergedAssets, addition.images, Boolean(pendingPanorama || (bg360EnabledRef.current && bg360ImageRef.current)));
+      acceptDeferredInputs();
+      setCastList(mergedCast);
       setReferenceAssets(mergedAssets);
+      setReferenceEditorError('');
       setUsedModel(result.model); // [v1.7.0] Track Model
       // [v2.42] 蓄積ログを保持し、完了メッセージとThinking Traceを追記（上書きしない）
       setAnalyzeThought(prev => {
@@ -883,6 +928,15 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         setShowOpenAIKeyModal(true);
       }
       if (error.code === 'IMAGE_INPUT_LIMIT') setImageInputError(error.message);
+      if (error.code === 'REFERENCE_CHARACTER_REQUIRED') {
+        setImageInputError(error.message);
+        scenarioRunEpochRef.resume = null;
+        scenarioRunEpochRef.analysisFiles = null;
+        fullAutoAbortRef.current = true;
+        isFullAutoModeRef.current = false;
+        setIsFullAutoMode(false);
+        setFullAutoStep(0);
+      }
       const translatedMsg = translateApiError(error);
       setAnalyzeThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("解析エラー: " + error.message);
@@ -3090,6 +3144,12 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // --- [v2.78] フルオート生成モード ---
   // STEP2→3→4を自動連鎖実行する。handleFullAutoToggleから呼ばれる。
   const runFullAuto = async ({ resume = false } = {}) => {
+    if (referenceEditorError) {
+      showStatus(referenceEditorError);
+      setIsFullAutoMode(false);
+      isFullAutoModeRef.current = false;
+      return;
+    }
     if (!castList || castList.length < 20) {
       showStatus("先にキャラクターシートをアップロードしてください。");
       setIsFullAutoMode(false);
@@ -3355,7 +3415,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   };
 
   // Determine Current Step
-  const currentStep = getWorkflowStep({ castList, scenario, finalPrompt, generatedImage,
+  const currentStep = referenceEditorError ? 1 : getWorkflowStep({ castList, scenario, finalPrompt, generatedImage,
     promptAssemblyRun: promptAssemblyRunRef.completedRun,
     imageSource: generationHistory.find(item => item.img === generatedImage)?.workflowSource });
   const isApiProcessing = isAnalyzing || is360Analyzing || isSearching || isEnhancing || isAssembling
@@ -3370,6 +3430,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     referenceAssets,
     editReferenceItem,
     editCastList,
+    castEditorText: castDraft ?? castList,
     editBackground,
     imageEditDrafts,
     setImageEditDraft,

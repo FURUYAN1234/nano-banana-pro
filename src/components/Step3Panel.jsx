@@ -65,6 +65,7 @@ export default function Step3Panel({
       <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest px-2 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'}`}>
         <Wand2 size={24} /> STEP 03: プロンプト生成（画像指示文の構築）
       </div>
+      <p className="field-edit-help">ここで作る描画指示も編集できます。構築後、STEP4の「最終プロンプト」の白い欄で内容を調整してから画像を生成してください。</p>
 
       <fieldset disabled={controlsDisabled} className="manga-color-mode" aria-describedby="manga-color-mode-help">
         <legend>出力モード</legend>

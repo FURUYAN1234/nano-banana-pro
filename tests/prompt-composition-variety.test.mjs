@@ -361,6 +361,25 @@ test('camera elevation classification does not turn subject height into a camera
   assert.equal(classifyCameraElevation('low angle, not eye-level'), 'low');
 });
 
+test('body crop ranges do not override camera elevation', () => {
+  const camera = '整備台の左前下方から約15度の緩いアオリ。中広角の直線投影でミナトの膝上から後輪までを大きく捉え、手元と歯車を同じ奥行きに見せる。';
+  assert.equal(classifyCameraElevation(camera), 'low');
+  assert.match(getPanelShotExecution(camera), /below faces.*look up/);
+  assert.doesNotMatch(getPanelShotExecution(camera), /look down/);
+  for (const body of ['膝', 'ひざ', '腰', '胸', '肩', '首']) {
+    for (const side of ['上', '下']) {
+      const crop = `${body}${side}から頭までを入れる中景。`;
+      assert.equal(classifyCameraElevation(crop), 'unspecified', crop);
+      assert.equal(classifyCameraElevation(`仰角20度。${crop}`), 'low', crop);
+      assert.equal(classifyCameraElevation(`俯角20度。${crop}`), 'high', crop);
+      assert.equal(classifyCameraElevation(`アイレベル。${crop}`), 'eye', crop);
+    }
+  }
+  for (const [origin, elevation] of [['肩の上から撮る。', 'high'], ['机の下から撮る。', 'low'], ['膝上から見下ろす。', 'high'], ['胸下から見上げる。', 'low']]) {
+    assert.equal(classifyCameraElevation(origin), elevation, origin);
+  }
+});
+
 test('relative lateral camera height remains distinct from an actor looking up or down', () => {
   for (const camera of ['右側面から低めの斜め寄り', '机の高さより低い左前からの中景']) {
     assert.equal(classifyCameraElevation(camera), 'low', camera);

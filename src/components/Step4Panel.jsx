@@ -961,6 +961,7 @@ No explanations. No partial results.`;
           <div className="flex items-center justify-between mb-4">
             <label htmlFor="final-prompt-editor" className="text-[11px] font-bold text-orange-300">
               最終プロンプト
+              <span className="editable-field-badge">✎ 編集できます</span>
             </label>
             <div className="flex items-center gap-3">
               {!(isOpenAIImageMode && webCopyPartLengths.length > 1) && (
@@ -977,7 +978,7 @@ No explanations. No partial results.`;
           </div>
 
           <div id="final-prompt-help" className="mt-2 text-[11px] text-slate-400 text-center font-mono">
-            この最終プロンプトを直接編集できます。編集した全文を、API画像生成・分割／全体コピー・全文TXT保存・Web版制作情報JSON保存にそのまま使います。
+            この白い欄で表情・動き・構図などの描画指示を直接編集できます。編集後はSTEP4で画像を生成し直すか、Web用にコピーしてください。編集した全文を、API画像生成・分割／全体コピー・全文TXT保存・Web版制作情報JSON保存にそのまま使います。既に生成した画像は、文章を編集するだけでは変わりません。
           </div>
 
           {Boolean(finalPrompt?.trim()) && !isImportedManga && (

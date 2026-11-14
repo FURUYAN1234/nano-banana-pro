@@ -98,6 +98,7 @@ function App() {
     referenceAssets,
     editReferenceItem,
     editCastList,
+    castEditorText,
     editBackground,
     imageEditDrafts,
     setImageEditDraft,
@@ -384,6 +385,7 @@ function App() {
               disabled={isApiProcessing}
             />
           )}
+          <aside className="workflow-edit-notice"><strong>✎ 白い入力欄は、生成後も編集できます</strong><p>人物情報・台本・描画指示に手を入れてから次のSTEPへ進めます。自動処理を使う場合は「解析・生成強制ストップ」で止めてから編集してください。</p></aside>
           <div  className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             <SampleCharacterSheetsButton processFiles={processFiles} disabled={isAnalyzing || isApiProcessing} />
@@ -405,6 +407,7 @@ function App() {
               editReferenceItem={editReferenceItem}
               castList={castList}
               editCastList={editCastList}
+              castEditorText={castEditorText}
               bg360Analysis={bg360Analysis}
               editBackground={editBackground}
               showStatus={showStatus}

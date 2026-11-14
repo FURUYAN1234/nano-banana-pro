@@ -43,7 +43,7 @@ test('STEP4 omits the API-only reference supplement implementation note', () => 
 });
 
 test('complete-prompt guidance leads into the preview after STEP3 owns the thinking log', () => {
-  const guidanceIndex = step4PanelSource.indexOf('この最終プロンプトを直接編集できます。');
+  const guidanceIndex = step4PanelSource.indexOf('この白い欄で表情・動き・構図などの描画指示を直接編集できます。');
   const promptEditorIndex = step4PanelSource.search(/<textarea\r?\n\s+id="final-prompt-editor"/);
 
   assert.doesNotMatch(step4PanelSource, /<ThinkingLog thought=\{assembleThought\}/);
@@ -51,8 +51,8 @@ test('complete-prompt guidance leads into the preview after STEP3 owns the think
   assert.ok(promptEditorIndex > guidanceIndex);
 });
 
-test('final prompt heading keeps edit guidance out of the title', () => {
-  assert.match(step4PanelSource, />\s*最終プロンプト\s*<\/label>/);
+test('final prompt heading identifies the field and its editable badge', () => {
+  assert.match(step4PanelSource, />\s*最終プロンプト\s*<span className="editable-field-badge">✎ 編集できます<\/span>\s*<\/label>/);
   assert.doesNotMatch(step4PanelSource, /最終プロンプト（直接編集できます）/);
   assert.doesNotMatch(step4PanelSource, /DYNAMIC ENGINE/i);
 });

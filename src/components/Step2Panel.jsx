@@ -12,6 +12,7 @@ import {
   CalendarDays
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
+import RelatedAppLink from './RelatedAppLink';
 import SpeechDictationButton from './SpeechDictationButton';
 import { appendDictatedText } from '../lib/audio-transcription';
 import Panorama360Viewer from './Panorama360Viewer';
@@ -126,16 +127,19 @@ export default function Step2Panel({
         ${currentStep > 2 ? 'border-purple-500/30 bg-purple-900/5 opacity-100' : ''}
       `}
     >
-      {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 */}
-      {(currentStep < 2 || isAnalyzing) && (
-        <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.875rem' }} />
-      )}
       <div className="flex items-center justify-between">
         <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'} `}>
           <FileText size={18} /> STEP 02: シナリオ構築設定（{experimentEnabled ? '4～8コマ' : '4コマ'}のストーリー設定）
         </div>
       </div>
 
+      <RelatedAppLink app="story" />
+
+      <div className="relative">
+      {/* Lock generation controls while keeping the external scenario link available. */}
+      {(currentStep < 2 || isAnalyzing) && (
+        <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.875rem' }} />
+      )}
       <div className="flex flex-col gap-6 mt-4">
         {/* Mode Toggle */}
         <div className="grid grid-cols-2 gap-4 p-1 bg-slate-900/50 rounded-2xl border border-white/5">
@@ -433,13 +437,17 @@ export default function Step2Panel({
             <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
               ▼ 生成されたシナリオ (自由に編集・書き換えができます)
             </span>
+            <span className="editable-field-badge">✎ 編集できます</span>
             {styleJson && scenario && scenario.length > 20 && (
               <span className="px-2 py-0.5 rounded bg-purple-900/50 text-purple-300 text-[10px] font-bold border border-purple-500/30 flex items-center gap-1 shadow-sm">
                 <Sparkles size={10} /> 作風適用済: {styleJson.style_name}
               </span>
             )}
           </div>
+          <p id="scenario-edit-help" className="field-edit-help">台詞・表情・動作・コマ割りなどを、この白い欄で編集できます。台本の書式を保って修正し、STEP3で指示文を構築し直してください。</p>
           <textarea
+            aria-label="生成されたシナリオ"
+            aria-describedby="scenario-edit-help"
             value={scenario}
             onChange={(e) => setScenario(e.target.value)}
             style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
@@ -673,6 +681,7 @@ export default function Step2Panel({
             </div>
           </>
         )}
+      </div>
       </div>
     </section>
   );
