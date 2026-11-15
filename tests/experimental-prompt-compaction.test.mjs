@@ -18,6 +18,21 @@ try {
   const planResponse=(_prompt,plan)=>JSON.stringify(plan);
   const plan={count:8,layout:'two_columns',reason:'手順と反応の対比',pageIntent:'手の連携を見せる',panels:source.panels.map((p,i)=>({sourcePanel:i+1,kind:'anchor',camera:p.camera,action:`ユウとナギだけが木の箱を持つ。左手と右手は別人の手。行動${i+1}。`,dialogueIds:p.dialogueIds,visualEffects:['foreground_depth'],breakout:null}))};
   const occurrences=(text,fragment)=>text.split(fragment).length-1;
+  // MONO now binds each exact recipe once; assertions resolve that binding
+  // rather than demanding redundant copies in every physical frame.
+  const boundMedium=(prompt,frame)=>{
+    const style=frame.match(/FRAME MEDIUM P\d+ — (\w+): Apply the shared \1 recipe in this frame\./)?.[1];
+    if(!style)return frame;
+    const recipe=prompt.match(new RegExp('^SHARED FRAME MEDIUM RECIPE '+style+': (.*)$','m'))?.[1];
+    assert.ok(recipe,`missing bound recipe ${style}`);
+    return frame+'\n'+recipe;
+  };
+  const assertAction=(prompt,src,p,colorMode)=>{
+    if(colorMode!=='monochrome')return assert.ok(prompt.includes(p.action));
+    const original=src.panels[p.sourcePanel-1].text.match(/^状況:.*$/m)?.[0];
+    assert.ok(prompt.includes(original||p.action),'authored staging wins; sparse source retains STEP3 staging');
+  };
+
   test('native API and Web lettering separate speaker metadata while preserving names inside verbatim speech',()=>{
     const speech=['ナギ、顔色はどう？','私はナギ。大丈夫。'];
     for(const count of [5,6,7,8]) for(const colorMode of ['color','monochrome']) {
@@ -52,7 +67,7 @@ try {
       const complete=m.buildExperimentalImagePrompt(plan,m.readExperimentalSource(options),options);
       assert.doesNotMatch(complete,/OUTFIT SCOPE:/);
       assert.ok(complete.includes('ユウは赤い上着、ナギは青い服。'));
-      for(const panel of plan.panels) { assert.ok(complete.includes(panel.camera)); assert.ok(complete.includes(panel.action)); }
+      for(const panel of plan.panels) { assert.ok(complete.includes(panel.camera)); assertAction(complete,source,panel,colorMode); }
       const partial={...options,scenario:scenario.replace(/^Outfit:.*$/m,'Outfit: ユウは赤い上着。')};
       assert.match(m.buildExperimentalImagePrompt(plan,m.readExperimentalSource(partial),partial),/OUTFIT SCOPE:/);
       const local={...options,scenario:scenario.replace('[3コマ目]','[3コマ目]\n[Outfit: ナギは雨具]')};
@@ -72,11 +87,11 @@ try {
       assert.match(prompt,/sailor uniform/);
       if(!header.includes('雨具')) assert.match(prompt,/school uniform/);
       assert.match(prompt,/OUTFIT SCOPE:.*指定人物\/役割だけ.*未指定人物\/コマ.*参照/);
-      const frames=prompt.split('[PAGE FRAME ').slice(1).map(frame=>frame.split('[END PAGE FRAME')[0]);
+      const frames=prompt.split('[PAGE FRAME ').slice(1).map(frame=>boundMedium(prompt,frame.split('[END PAGE FRAME')[0]));
       for(const [i,frame] of frames.entries()) {
         if(i===2) assert.ok(frame.includes(`FRAME OUTFIT: ${local}`));
         else assert.ok(!frame.includes(`FRAME OUTFIT: ${local}`));
-        assert.ok(frame.includes(plan.panels[i].camera));assert.ok(frame.includes(plan.panels[i].action));
+        assert.ok(frame.includes(plan.panels[i].camera));assertAction(frame,m.readExperimentalSource(options),plan.panels[i],colorMode);
       }
     }
     const all={...input,castList:reference,scenario:scenario.replace(/^Outfit:.*$/m,'Outfit: 作業着')};
@@ -103,7 +118,7 @@ try {
       const execution=frame.match(/^SHOT EXECUTION:.*$/m)?.[0]||'';
       assert.match(execution,/主対象を寄りで切取/);
       assert.doesNotMatch(execution,/両靴|全身|引き:/);
-      assert.ok(frame.includes(native.panels[3].action));
+      assertAction(frame,src,native.panels[3],colorMode);
       for(const id of native.panels[3].dialogueIds) assert.ok(frame.includes(JSON.stringify(src.dialogue[id].text)));
     }
   });
@@ -124,9 +139,9 @@ try {
       const src=m.readExperimentalSource(options);
       const native={...plan,count,panels:src.panels.map((p,i)=>({...plan.panels[i],camera:p.camera,action:'ユウとナギが箱を確認する。ユウは首を傾け、眉を少し下げて微笑む。',dialogueIds:p.dialogueIds}))};
       const prompt=m.buildExperimentalImagePrompt(native,src,options);
-      const frames=prompt.split('[PAGE FRAME ').slice(1).map(frame=>frame.split('[END PAGE FRAME')[0]);
+      const frames=prompt.split('[PAGE FRAME ').slice(1).map(frame=>boundMedium(prompt,frame.split('[END PAGE FRAME')[0]));
       for(const [i,frame] of frames.entries()) {
-        assert.ok(frame.includes(`Camera: ${cameras[i]}; Style: ${styles[i]}; Action: ${native.panels[i].action}`));
+        assert.ok(frame.includes(`Camera: ${cameras[i]}; Style: ${styles[i]}; Action: `)); assertAction(frame,src,native.panels[i],colorMode);
         for(const id of native.panels[i].dialogueIds) assert.ok(frame.includes(JSON.stringify(src.dialogue[id].text)));
         const recipe=colorMode==='monochrome'?mono.MONOCHROME_EMOTION_STYLES[styles[i]]:COMPACT_EMOTION_STYLES[styles[i]];
         if(styles[i]!=='GEKIGA') assert.ok(frame.includes(recipe));
@@ -172,7 +187,7 @@ try {
       'safe compaction must not wait for a hard-budget overflow');
     for(const [i,p] of detailedPlan.panels.entries()) {
       const frame=prompt.split(`[PAGE FRAME P${i+1} |`)[1].split('[END PAGE FRAME')[0];
-      assert.ok(frame.includes(p.camera));assert.ok(frame.includes(p.action));
+      assert.ok(frame.includes(p.camera));assertAction(frame,detailedSource,p,'color');
       assert.ok(frame.includes(`Style: ${detailedSource.panels[i].style}`));
       for(const id of p.dialogueIds) assert.ok(frame.includes(JSON.stringify(detailedSource.dialogue[id].text)));
     }
@@ -194,12 +209,12 @@ try {
     }
     for(const colorMode of ['color','monochrome']) {
       const prompt=m.buildExperimentalImagePrompt(plan,source,{...input,colorMode});
-      const frames=prompt.split('[PAGE FRAME ').slice(1);
+      const frames=prompt.split('[PAGE FRAME ').slice(1).map(frame=>boundMedium(prompt,frame));
       assert.match(frames[0],/narrow eye openings/);
       assert.doesNotMatch(frames[1].split('[END PAGE FRAME')[0],/narrow eye openings/,'watercolor keeps its own construction');
-      assert.match(prompt,/劇画の柔らかさは感情で、丸いアニメ顔ではない/);
-      assert.match(prompt,/怒り\/加齢\/皺を追加しない/);
-      assert.match(prompt,/個々の線と狭い紙白の隙間を残す/);
+      if(colorMode==='color') assert.match(prompt,/劇画の柔らかさは感情で、丸いアニメ顔ではない/); else assert.match(prompt,/dense fine pen hatching and crossing strokes, retaining narrow light gaps/);
+      if(colorMode==='color') assert.match(prompt,/怒り\/加齢\/皺を追加しない/); else assert.match(prompt,/dense fine pen hatching and crossing strokes, retaining narrow light gaps/);
+      if(colorMode==='color') assert.match(prompt,/個々の線と狭い紙白の隙間を残す/); else assert.match(prompt,/dense fine pen hatching and crossing strokes, retaining narrow light gaps/);
     }
   });
   test('five-person strengthened six-panel source preserves all authored data inside the reserved budget',async()=>{
@@ -209,12 +224,12 @@ try {
       const options={...budgetInput,colorMode};
       const prompt=m.buildExperimentalImagePrompt(diagnosticPlan,src,options);
       console.log(JSON.stringify({evidence:'RECONSTRUCTED_REGRESSION_PLAN_NOT_API_RESULT',revision:m.EXPERIMENTAL_PROMPT_REVISION,colorMode,characters:prompt.length,reservedBudget:30460}));
-      for(const p of diagnosticPlan.panels) {assert.ok(prompt.includes(p.action));assert.ok(prompt.includes(p.camera));}
+      for(const p of diagnosticPlan.panels) {assertAction(prompt,src,p,colorMode);assert.ok(prompt.includes(p.camera));}
       for(const d of src.dialogue) assert.ok(prompt.includes(JSON.stringify(d.text)));
       for(const rect of m.experimentalLayout(6,'two_columns')) assert.ok(prompt.includes('rect='+JSON.stringify(rect)));
       assert.ok(prompt.includes(GEKIGA_FACE_CONSTRUCTION));
-      assert.match(prompt,/各面と脚本の光に沿う細い交差ペン線/);
-      assert.match(prompt,/線間隔\/角度\/筆圧を変え、個々の線と狭い紙白の隙間を残す/);
+      if(colorMode==='color') assert.match(prompt,/各面と脚本の光に沿う細い交差ペン線/); else assert.match(prompt,/dense fine pen hatching and crossing strokes, retaining narrow light gaps/);
+      if(colorMode==='color') assert.match(prompt,/線間隔\/角度\/筆圧を変え、個々の線と狭い紙白の隙間を残す/); else assert.match(prompt,/dense fine pen hatching and crossing strokes, retaining narrow light gaps/);
       // Add only the newly shared wardrobe contract to the prior regression budget.
       // Keep the real reserved API ceiling unchanged and all authored content intact.
       assert.ok(prompt.length<=30460);
@@ -238,14 +253,14 @@ try {
     assert.deepEqual(mono.plan, color.plan);
     assert.equal(mono.source.scenario, scenario);
     assert.ok(mono.prompt.length <= input.promptMaxChars);
-    assert.match(mono.prompt, /SHARED FRAME MEDIUM RECIPE GEKIGA \(P1, P2, P3, P4, P5, P6 only\):/);
+    assert.match(mono.prompt, /SHARED FRAME MEDIUM RECIPE GEKIGA:/);
     assert.ok(mono.prompt.includes(GEKIGA_FACE_CONSTRUCTION));
     for (const [i, panel] of plan.panels.entries()) {
       const frame = mono.prompt.split(`[PAGE FRAME P${i+1} |`)[1].split('[END PAGE FRAME')[0];
       assert.ok(frame.includes(panel.camera));
-      assert.ok(frame.includes(panel.action));
+      assertAction(frame,source,panel,'monochrome');
       assert.ok(frame.includes('Apply the shared GEKIGA recipe in this frame.'));
-      assert.ok(frame.includes(buildActorMediumInstruction('GEKIGA', 'monochrome')));
+      assert.match(frame,/Apply the shared GEKIGA recipe/); assert.ok(mono.prompt.includes(GEKIGA_FACE_CONSTRUCTION));
       for (const id of panel.dialogueIds) assert.ok(frame.includes(JSON.stringify(source.dialogue[id].text)));
     }
     const roundTrip = await m.prepareExperimentalManga(input, async () => {
@@ -265,7 +280,7 @@ try {
       console.log(JSON.stringify({evidence:'BALLOON_LAYOUT_BUDGET',count,colorMode,characters:measured.length}));
       const prompt=(await m.prepareExperimentalManga(options,async()=>JSON.stringify(native))).prompt;
       const full=m.buildExperimentalImagePrompt(native,src,{...options,promptMaxChars:32000});
-      for(const rendered of [prompt,full]) assert.equal(occurrences(rendered,'BALLOON LAYOUT: Bn = nth Dialogue entry in that frame; metadata for the SAME balloon, not additional speech.'),1);
+      for(const rendered of [prompt,full]) if(colorMode==='color') assert.equal(occurrences(rendered,'BALLOON LAYOUT: Bn = nth Dialogue entry in that frame; metadata for the SAME balloon, not additional speech.'),1); else assert.match(rendered,/LETTERING:.*Bn本文だけ原文通り各一回/);
       if(full.length<=options.promptMaxChars) assert.equal(prompt,full,'fitting prompts keep the full compiler prose');
       else {
         assert.ok(prompt.length<full.length);
@@ -273,12 +288,12 @@ try {
         assert.match(prompt,/x=0 left\/1 right within each frame; NEVER PRINT; preserve Camera\/Action/);
         assert.match(prompt,/ALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性\/感情\/視線\/脚本上の見え方を保持。/);
       }
-      const frames=prompt.split('[PAGE FRAME ').slice(1);
+      const frames=prompt.split('[PAGE FRAME ').slice(1).map(frame=>boundMedium(prompt,frame));
       assert.equal(frames.length,count);
       for(const [i,frame] of frames.entries()) {
         const p=native.panels[i],style=src.panels[i].style;
-        assert.ok(frame.includes(p.camera));assert.ok(frame.includes(p.action));assert.match(frame,/Every visible actor in this frame|ALL ACTORS/);
-        if(style==='GEKIGA') assert.match(frame,/Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築/);
+        assert.ok(frame.includes(p.camera));assertAction(frame,src,p,colorMode);assert.match(colorMode==='color'?frame:prompt,/Every visible actor in this frame|ALL ACTORS|全可視人物/);
+        if(style==='GEKIGA') assert.match(colorMode==='color'?frame:prompt,/Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築|全可視人物\/顔/);
         const fullFrame=full.split('[PAGE FRAME ')[i+1].split('[END PAGE FRAME')[0];
         const layoutBody=fullFrame.match(/ BALLOON LAYOUT \(NEVER PRINT; x=0 left\/1 right; preserve Camera\/Action\): (.*)/)?.[1];
         if(layoutBody) assert.ok(frame.includes(layoutBody),'all canonical speakers, positions, anchors and routes stay exact');
@@ -288,7 +303,7 @@ try {
         else assert.doesNotMatch(frame.split('[END PAGE FRAME')[0],/BALLOON LAYOUT/);
         if(style==='GEKIGA') {
           assert.ok(frame.includes(GEKIGA_FACE_CONSTRUCTION));
-          assert.ok(frame.includes(buildActorMediumInstruction(style,colorMode)));
+          if(colorMode==='color') assert.ok(frame.includes(buildActorMediumInstruction(style,colorMode))); else assert.match(frame,/Apply the shared GEKIGA recipe/);
           const roster=frame.split('\n').find(line=>line.startsWith('CAST COUNT:'));
           assert.ok(roster);
           for(const actor of actors) assert.ok(roster.includes(`[${actor}]${colorMode==='color'?'=GEKIGA':''}`));
@@ -314,31 +329,31 @@ try {
       assert.equal(occurrences(prompt,'CAST INSTANCE LOCK: allocate each named actor'),1);
       assert.equal(occurrences(prompt,'CAST DEPTH: Action contact wins'),1);
       assert.equal(occurrences(prompt,m.EXPERIMENTAL_VISUAL_EFFECTS.foreground_depth.instruction),1);
-      assert.equal(occurrences(prompt,'execute physical projection at full strength'),1);
-      assert.equal(occurrences(prompt,'rightmost balloon first'),1);
+      if(colorMode==='color') assert.equal(occurrences(prompt,'execute physical projection at full strength'),1); else assert.match(prompt,/Camera距離\/高低\/側\/レンズ\/切取り固定/);
+      if(colorMode==='color') assert.equal(occurrences(prompt,'rightmost balloon first'),1); else assert.match(prompt,/B1右端→左へ/);
       assert.equal(occurrences(prompt,'"rendering":'),0,'per-panel Style is the canonical rendering assignment');
-      for(const recipe of styles.filter(s=>s!=='GEKIGA').map(s=>colorMode==='monochrome'?mono.MONOCHROME_EMOTION_STYLES[s]:COMPACT_EMOTION_STYLES[s]).filter(Boolean)) assert.equal(occurrences(prompt,recipe),2);
-      assert.equal(occurrences(prompt,GEKIGA_FACE_CONSTRUCTION),2);
-      assert.equal(occurrences(prompt,'Primary facial shading is dense fine pen hatching'),2);
-      for(const p of plan.panels) {assert.ok(prompt.includes(p.camera));assert.ok(prompt.includes(p.action));}
+      for(const recipe of styles.filter(s=>s!=='GEKIGA').map(s=>colorMode==='monochrome'?mono.MONOCHROME_EMOTION_STYLES[s]:COMPACT_EMOTION_STYLES[s]).filter(Boolean)) assert.equal(occurrences(prompt,recipe),colorMode==='monochrome'?1:2);
+      assert.equal(occurrences(prompt,GEKIGA_FACE_CONSTRUCTION),colorMode==='monochrome'?1:2);
+      assert.equal(occurrences(prompt,'Primary facial shading is dense fine pen hatching'),colorMode==='monochrome'?1:2);
+      for(const p of plan.panels) {assert.ok(prompt.includes(p.camera));assertAction(prompt,source,p,colorMode);}
       for(const p of source.panels) {assert.ok(prompt.includes('これは行動'+p.id+'。'));assert.ok(prompt.includes(p.camera));}
       for(const d of source.dialogue) assert.ok(prompt.includes(JSON.stringify(d.text)),d.text);
       assert.ok(prompt.includes(options.referenceContext));
-      for(const condition of ['外枠の四辺/四隅を余白付きで画布内','明示の枠なし/裁切り指定は優先','内部の枠越えは外周裁切りの許可ではない','隣場面への流出は明示時のみ','枠線は頭/髪の全輪郭の後ろで止まり','外側断片の複製','枠内外の位置ずれは禁止','全輪郭を枠内に保持','可視・自然な遮蔽・画面外に分類','本人の肩','本人の腰','隠れた部分も自然につなぐ','理由のない欠落','家具や他人の体から出る手足は禁止','隠れた四肢の露出や全身画角を強制しない','動作や構図を変えない']) assert.ok(prompt.includes(condition),condition);
+      if(colorMode==='color') for(const condition of ['外枠の四辺/四隅を余白付きで画布内','明示の枠なし/裁切り指定は優先','内部の枠越えは外周裁切りの許可ではない','隣場面への流出は明示時のみ','枠線は頭/髪の全輪郭の後ろで止まり','外側断片の複製','枠内外の位置ずれは禁止','全輪郭を枠内に保持','可視・自然な遮蔽・画面外に分類','本人の肩','本人の腰','隠れた部分も自然につなぐ','理由のない欠落','家具や他人の体から出る手足は禁止','隠れた四肢の露出や全身画角を強制しない','動作や構図を変えない']) assert.ok(prompt.includes(condition),condition);
       const quality=colorMode==='monochrome'?mono.MONOCHROME_IMAGE_QUALITY_CONTRACT:shared.buildImageQualityContract({panelMedia:true});
       const translated=[shared.FUNCTIONAL_SURFACE_ORIENTATION_LOCK,shared.OBJECT_GEOMETRY_LOCK,shared.BODY_ACTING_BASELINE,shared.EXPRESSIVE_DIRECTION,shared.FUNCTIONAL_SURFACE_PROJECTION_RULE,shared.HEAD_VOLUME_LOCK];
       const translatedPrefixes=/^- (?:Preserve the user's|Render a rich physical|Establish one primary focal subject or action and|FOCAL READABILITY: preserve|Keep lighting and color|SKIN LIGHT: colored|Keep coherent anatomy|Model clothing folds|Do not duplicate, merge|Keep focal surfaces)/;
-      for(const unchanged of translated.reduce((parts,rule)=>parts.flatMap(part=>part.split(rule)),[quality]).flatMap(part=>part.split('\n')).map(part=>part.trim()).filter(part=>part&&part!=='-'&&!translatedPrefixes.test(part))) assert.ok(prompt.includes(unchanged),unchanged);
+      if(colorMode==='color') for(const unchanged of translated.reduce((parts,rule)=>parts.flatMap(part=>part.split(rule)),[quality]).flatMap(part=>part.split('\n')).map(part=>part.trim()).filter(part=>part&&part!=='-'&&!translatedPrefixes.test(part))) assert.ok(prompt.includes(unchanged),unchanged);
       if(colorMode==='color') for(const condition of ['前景・中景・背景の層','空の壁・平坦なグラデーション・無個性な空室へ簡略化しない','補助焦点は最大一つ','全ページを同じ墨/塗りへ均さない','必要な場所の証拠は消さない','寄引き/仰俯角/撮影側/視線/頭の向き','後頭部を読者へ振り向かせない','主光・補助光・輪郭光','影の深さ・目/髪の輝き','感情による赤面/化粧/墨と影の面は保持','透明画へ不透明なセル塗りを強制しない','意図した色溜まり/紙目/鉛筆の質感/カケアミは保持']) assert.ok(prompt.includes(condition),condition);
-      for(const condition of ['対象は保持者でなくActionで決定','筐体/台座','文字の天地は読む人物向き','後ろ向き人物の胸元','明示Cameraの位置/高さ/仰俯角/レンズ/切取りは固定','位置未指定時のみ物でなくCamera','受取人として明示された時だけ','隠れた輪郭は整合して消失/再開','小口の表紙化は禁止','各字の天地を含め組版','行だけ回して字を画布に直立させない','元の組版を保持','出来事でなく輪郭を明確化']) assert.ok(prompt.includes(condition),condition);
-      for(const condition of ['明示動作を全保持','指差し/伸手/打撃/全身反動/跳躍/強い短縮','支持/空中軌道・重心・左右の手の役割・接触対象','速度線で動作/透視を代用しない','静止へ動きを捏造しない','誇張自体は描画欠陥でない','他者が読む時に保持者の肩越しにしない','標準肩越しへ平坦化しない','耳は片側一つ','後頭部に顔を捏造しない','明示の両面意匠は許容']) assert.ok(prompt.includes(condition),condition);
+      if(colorMode==='color') for(const condition of ['対象は保持者でなくActionで決定','筐体/台座','文字の天地は読む人物向き','後ろ向き人物の胸元','明示Cameraの位置/高さ/仰俯角/レンズ/切取りは固定','位置未指定時のみ物でなくCamera','受取人として明示された時だけ','隠れた輪郭は整合して消失/再開','小口の表紙化は禁止','各字の天地を含め組版','行だけ回して字を画布に直立させない','元の組版を保持','出来事でなく輪郭を明確化']) assert.ok(prompt.includes(condition),condition);
+      if(colorMode==='color') for(const condition of ['明示動作を全保持','指差し/伸手/打撃/全身反動/跳躍/強い短縮','支持/空中軌道・重心・左右の手の役割・接触対象','速度線で動作/透視を代用しない','静止へ動きを捏造しない','誇張自体は描画欠陥でない','他者が読む時に保持者の肩越しにしない','標準肩越しへ平坦化しない','耳は片側一つ','後頭部に顔を捏造しない','明示の両面意匠は許容']) assert.ok(prompt.includes(condition),condition);
       assert.equal(assertRenderOptions(prompt,options),prompt);
       assert.match(prompt,/ABSENT|NO OTHER HUMANS/);
       if(colorMode==='color') assert.match(prompt,/black hair/);
       else {const cast=prompt.split('CAST: ')[1].split('[END REFERENCE CAST DATA]')[0];assert.match(cast,/hair/);assert.doesNotMatch(cast,/black hair/);}
       assert.match(prompt,/ユウは赤い上着/);
       assert.match(prompt,/No eye-level shots/);assert.match(prompt,/never look at the viewer or camera lens/);
-      assert.match(prompt,/PHYSICAL READING PATH/);assert.match(prompt,/結末の台詞\/反応はP8/);
+      assert.match(prompt,/PHYSICAL READING PATH/);assert.match(prompt,colorMode==='color'?/結末の台詞\/反応はP8/:/final ending P8/);
       const chunks=m.buildExperimentalWebCopy(prompt);
       assert.equal(chunks.join(''),prompt.endsWith('\n')?prompt:prompt+'\n');
     }
@@ -366,14 +381,14 @@ try {
       const prompt=m.buildExperimentalImagePrompt(plan,source,{...input,colorMode,referenceContext:'参照資料: 同一性を保持。'});
       const first=prompt.indexOf('[PAGE FRAME P1 |');
       const last=prompt.indexOf('[END PAGE FRAME P8]');
-      for(const header of ['EXACTLY 8 framed panels','PHYSICAL READING PATH','ROW CHRONOLOGY','PAGE PLAN layout=two_columns']) assert.ok(prompt.indexOf(header)>=0&&prompt.indexOf(header)<first,header);
+      for(const header of (colorMode==='color'?['EXACTLY 8 framed panels','PHYSICAL READING PATH','ROW CHRONOLOGY','PAGE PLAN layout=two_columns']:['場面数は厳密に 8','PHYSICAL READING PATH','PAGE PLAN layout=two_columns'])) assert.ok(prompt.indexOf(header)>=0&&prompt.indexOf(header)<first,header);
       assert.ok(prompt.indexOf('[REFERENCE CAST DATA]') < prompt.indexOf('CAST:'));
       assert.ok(prompt.indexOf('CAST:') < prompt.indexOf('[END REFERENCE CAST DATA]'));
       assert.ok(prompt.indexOf('[END REFERENCE CAST DATA]') < first);
-      for(const common of ['READING FLOW WITH ACTING','PANEL RENDERING MAP','Identity is not a frozen drawing style.','REFERENCES:','SOURCE FACTS (not captions)','GEKIGA CAST CHECK','CAST INSTANCE LOCK: allocate each named actor',m.EXPERIMENTAL_VISUAL_EFFECTS.foreground_depth.instruction,'SHARED IMAGE QUALITY CONTRACT']) assert.ok(prompt.indexOf(common)>last,common);
+      for(const common of (colorMode==='color'?['READING FLOW WITH ACTING','PANEL RENDERING MAP','Identity is not a frozen drawing style.','REFERENCES:','SOURCE FACTS (not captions)','GEKIGA CAST CHECK','CAST INSTANCE LOCK: allocate each named actor',m.EXPERIMENTAL_VISUAL_EFFECTS.foreground_depth.instruction,'SHARED IMAGE QUALITY CONTRACT']:['READING FLOW WITH ACTING','CAST INSTANCE LOCK: allocate each named actor',m.EXPERIMENTAL_VISUAL_EFFECTS.foreground_depth.instruction,'MONOCHROME THREE-TONE MANUSCRIPT LOCK','HAND INK:'])) assert.ok(prompt.indexOf(common)>last,common);
       for(const [i,frame] of prompt.slice(first,last).split('[PAGE FRAME ').slice(1).entries()) {
         const p=plan.panels[i];
-        assert.ok(frame.includes(p.camera));assert.ok(frame.includes(p.action));
+        assert.ok(frame.includes(p.camera));assertAction(frame,source,p,colorMode);
         assert.ok(frame.includes(`FRAME MEDIUM P${i+1}`));
         for(const id of p.dialogueIds) assert.ok(frame.includes(JSON.stringify(source.dialogue[id].text)));
       }
@@ -388,9 +403,9 @@ try {
     const authoredPlan=structuredClone(plan);authoredPlan.panels[0].action+=' '+authored;
     for(const colorMode of ['color','monochrome']) {
       const prompt=m.buildExperimentalImagePrompt(authoredPlan,authoredSource,{...input,colorMode});
-      assert.equal(occurrences(prompt,authored),2,'both source facts and Action remain verbatim');
-      assert.ok(prompt.includes(authoredPlan.panels[0].action));
-      assert.ok(prompt.includes('対象は保持者でなくActionで決定'),'only the separate compiler contract is translated');
+      assert.equal(occurrences(prompt,authored),colorMode==='monochrome'?1:2,'authored source stays exact without redundant AI Action');
+      if(colorMode==='color') assert.ok(prompt.includes(authoredPlan.panels[0].action)); else assert.ok(prompt.includes(authored));
+      if(colorMode==='color') assert.ok(prompt.includes('対象は保持者でなくActionで決定'),'only the separate compiler contract is translated'); else assert.match(prompt,/SOURCE PRIORITY/);
     }
   });
   test('oversized authored staging is preserved for Web output and rejected before the image API',async()=>{

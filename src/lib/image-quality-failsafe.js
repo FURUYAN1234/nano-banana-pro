@@ -487,7 +487,7 @@ export async function runPageImageQuality(contract, options) {
   const outcome=()=>({candidate,originalReview,finalReview,repairReview:null,attempts,
     validationWarning:!finalReview.skipped&&!finalReview.notRechecked&&!finalReview.pass,
     fallbackToOriginal:candidate===originalCandidate,repairError,history,candidates,
-    canContinue:stopReason!=='cancelled'&&Boolean(candidate?.base64Img),stopReason});
+    canContinue:!['cancelled','non_comic_output'].includes(stopReason)&&Boolean(candidate?.base64Img),stopReason});
   if(shouldStop()) {stopReason='cancelled';return outcome();}
   if(!allowRepair&&!reviewOnly) {
     onProgress('自動修正OFF：品質検査を行わず、生成画像をそのまま表示・保存します。');
@@ -498,6 +498,7 @@ export async function runPageImageQuality(contract, options) {
   originalReview=originalReview||createUnverifiedReview('Empty quality response');
   finalReview=originalReview;candidates[0].review=originalReview;
   onProgress(formatReviewProgress('総合検査結果',originalReview,originalPrompt));
+  if(originalReview.nonComicOutput===true){stopReason='non_comic_output';return outcome();}
   if(shouldStop()) {stopReason='cancelled';return outcome();}
   if(isReviewBudgetExhausted()) {stopReason='review_timeout';return outcome();}
   if(originalReview.requestFailed||originalReview.pass||!allowRepair||reviewOnly)return outcome();

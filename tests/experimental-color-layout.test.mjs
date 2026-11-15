@@ -44,7 +44,7 @@ try {
       assert.equal(next.plan.layout,original.plan.layout);
       assert.deepEqual(next.plan.panels,original.plan.panels);
       assert.equal(next.source.colorMode,colorMode);
-      assert.equal(next.prompt.includes('BLACK AND WHITE ink and screentones only'),colorMode==='monochrome');
+      assert.equal(next.prompt.includes('MONOCHROME THREE-TONE MANUSCRIPT LOCK'),colorMode==='monochrome');
       previous=next;
     }
     assert.equal(requests,0);

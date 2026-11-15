@@ -1,0 +1,34 @@
+[
+  {
+    "styles": [
+      "GEKIGA"
+    ],
+    "repair": false,
+    "sha256": "28d1c5c64590d2ad72ada17ff8b53f0483ef078b89ac12cef701c00ab0149967"
+  },
+  {
+    "styles": [
+      "GEKIGA"
+    ],
+    "repair": true,
+    "sha256": "6a8ef09e81cf414f67c2eb19d328f5d11aa9cb4d92b1ae0197729d1be776f7e2"
+  },
+  {
+    "styles": [
+      "POP_ART",
+      "WATERCOLOR",
+      "GEKIGA"
+    ],
+    "repair": false,
+    "sha256": "95e75325562a1ac47f3598e1e8c02099d0585ba35b840f9db197e03c59a2db36"
+  },
+  {
+    "styles": [
+      "POP_ART",
+      "WATERCOLOR",
+      "GEKIGA"
+    ],
+    "repair": true,
+    "sha256": "15135e3aceb32e95790166697223cdfc6c30926def1d2089d6edfcd1a67d8fe5"
+  }
+]

@@ -14,9 +14,12 @@ test('current README explains the default page mode and scoped technique guide',
     /右・緑色の「4～8コマ生成」は自由配置で、初期選択です/,
     /再読み込み後は右の「4～8コマ生成」です/,
     /reload resets the switch to the right, 4–8-panel position/,
-    /カラーのPOP・水彩・劇画/,
-    /白黒、カスタム画風.*SeriousDocumentary.*添付しません/,
+    /カラー・白黒とも、POP・水彩・劇画/,
+    /カスタム画風、参照絵柄.*SeriousDocumentary.*添付しません/,
     /nano-panel-media\.png.*最後に添付/,
+    /白黒では墨線・ハッチ・網点の描法を参照/,
+    /紙白と台本の肌・素材の割当トーンを優先/,
+    /見本の色や彩色のにじみは写しません/,
   ]) assert.ok(expected.test(current), `Missing current documentation: ${expected}`);
   assert.ok(!/初期状態(?:は|が)左の「4コマ生成」|Six- and eight-panel pages exclude/.test(current));
 });

@@ -194,3 +194,19 @@ test('typed Japanese contract failures remain validation errors with rejected ca
  assert.equal(event.failureContext.scenario,'生成候補');
  assert.equal(event.failureContext.validationError,'breakouts[0].panel');
 });
+
+ test('image request fingerprint comes from actual JSON/FormData prompt and never logs payload or credentials',async()=>{
+  const prompt='private manga request with Unicode \u7dda';
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(prompt));
+  const expected=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  for(const multipart of [false,true]){
+   const events=[];let body;
+   if(multipart){body=new FormData();body.set('model','gpt-image-2.6-sunburst');body.set('prompt',prompt);body.set('image[]',new Blob(['private image']),'image.png');}
+   else body=JSON.stringify({model:'gpt-image-2.6-sunburst',prompt,n:1,images:[{image_url:'private image'}]});
+   const options={method:'POST',headers:{Authorization:'Bearer sk-private'},body};
+   const request=createDiagnosticFetch(async(_url,sent)=>{assert.equal(sent,options);assert.equal(sent.body,body);return new Response('ok');},(event,details)=>events.push(makeDiagnosticEvent(event,details)),()=>({promptLength:1}));
+   await request('https://api.openai.com/v1/images/'+(multipart?'edits':'generations'),options);
+   for(const event of events){assert.equal(event.requestPromptLength,prompt.length);assert.equal(event.requestPromptSha256,expected);}
+   assert.doesNotMatch(JSON.stringify(events),/private|Bearer|image_url|Authorization/);
+  }
+ });

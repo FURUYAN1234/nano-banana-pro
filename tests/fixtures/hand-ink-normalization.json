@@ -1,0 +1,22 @@
+{
+  "scope": "Only the reviewed hand-ink cue and its equivalent FOCAL/medium compaction; all other bytes remain protected by old hashes. New cue is separately asserted on real unnormalized outputs.",
+  "cue": "HAND INK: 水彩/鉛筆に墨強制なし。墨は筆圧太細/入り抜き/自然な微小揺らぎ。影/ハッチングのみかすれ。描込/省略差、眼鏡明瞭。一律太線なし。",
+  "mappings": [
+    [
+      "各媒体の顔/塗りの構築を守る。",
+      "GEKIGA carved ink planes; WATERCOLOR washes; CHIBI simplified forms."
+    ],
+    [
+      "各コマ主焦点=人物/動作一つ、補助焦点は最大一つ。大小/配置/明暗/枠媒体で顔/手/道具を明瞭に。人物/顔/服/道具/背景は枠媒体、全ページを同じ墨/塗りへ均さない。補助細部だけ省略、必要な場所の証拠は消さない。",
+      "各コマの主焦点は主対象または動作一つ、補助焦点は最大一つ。大きさ・配置・明暗・指定媒体の輪郭で演技する顔/手/物語の道具を明瞭に。人物/顔/服/道具/背景すべてをその枠の媒体で描き、全ページを同じ墨/塗りへ均さない。補助細部を整理しても必要な場所の証拠は消さない。"
+    ],
+    [
+      "FOCAL READABILITY: 寄引き/仰俯角/撮影側/視線/頭の向き/必要身体・道具の可視性固定。反応/文字/接触は指定媒体で明瞭、別媒体強制なし。後頭部を読者へ振り向かせない。",
+      "FOCAL READABILITY: 寄引き/仰俯角/撮影側/視線/頭の向き/必要な身体と道具の可視性固定。反応/文字/接触は指定媒体で明瞭、別媒体の輪郭強制なし。後頭部を読者へ振り向かせない。"
+    ],
+    [
+      "墨は媒体通り、NORMALは筆圧先細り。Camera距離/高さ/側/頭向固定、可視部のみ。",
+      "Focal ink follows the panel recipe; NORMAL=pressure-taper. Camera scale/height/side/head turn fixed; visible features only."
+    ]
+  ]
+}

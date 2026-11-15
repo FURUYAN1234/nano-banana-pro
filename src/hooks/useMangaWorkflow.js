@@ -2485,11 +2485,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             observations[`${evidence.panel ?? '?'}コマの観察`]=JSON.stringify(evidence);
           }
           if(review.validationErrors?.length) observations['検査で確認できなかった項目']=review.validationErrors.join(' / ');
+          if(review.pageContent)observations['画像形式の観察']=JSON.stringify(review.pageContent);
           const observationLabel=reviewContext?.candidateLabel?`${reviewContext.candidateLabel}の検査`:'今回の候補の検査';
           for(const [key,value] of Object.entries(observations)) {
             if(value) statCallback(`[${observationLabel} / ${key}] ${value}`);
           }
           const result={pass:review.status==='pass',
+            ...(review.nonComicOutput===true?{nonComicOutput:true}:{}),...(review.pageContent?{pageContent:review.pageContent}:{}),
             issues:[...experimentalRepairIssues(review,reviewContract.plan),
               ...review.issues.map(reason=>({type:'unverified',panel:null,reason}))],
             evidenceContext:{panelCount:experimentalPrepared.plan.count},
@@ -2683,9 +2685,10 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       // size and spacing. Text defects belong to the bounded image repair above;
       // a local font substitution must never restyle every correct balloon.
       void recordImageQualityReview(qualityOutcome,{finalPrompt:currentPrompt,
-        observations:experimentalPrepared?originalCandidate.experimentalReview?.evidence||[]
+        observations:experimentalPrepared?originalCandidate.experimentalReview?.unboundObservations||originalCandidate.experimentalReview?.evidence||[]
           :qualityOutcome.originalReview.bubbleInventory||qualityOutcome.originalReview.observations||[]});
       const qualityResult = qualityOutcome.finalReview;
+      if(qualityOutcome.stopReason==='non_comic_output'){rejectNonComicOutput(finalImageStr,qualityResult);return false;}
       const hasDefiniteFinalFailure = qualityResult?.pass !== true
         && Array.isArray(qualityResult?.issues)
         && qualityResult.issues.some(issue => isMaterialImageQualityIssue(issue, qualityResult.evidenceContext));
@@ -3036,6 +3039,21 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         setPolicyAutoRetrying(false);
       }
     }
+  };
+
+  const rejectNonComicOutput = (image, review) => {
+    if(!image||review?.nonComicOutput!==true)return false;
+    setIsGenerationError(true);
+    setImageQualityNeedsRepair(false); // Never offer this photograph as the automatic repair source.
+    fullAutoAbortRef.current=true;isFullAutoModeRef.current=false;isEndlessModeRef.current=false;
+    setIsFullAutoMode(false);setIsEndlessMode(false);setTriggerFullAuto(false);
+    scenarioRunEpochRef.resume={step:4};
+    setGenerationHistory(items=>items.map(item=>item.img===image?{...item,workflowSource:null,
+      qualityPass:false,selected:false,rejectedReason:'non_comic_output',qualityIssues:review.issues}:item));
+    setGenLog(prev=>[...prev,'[ERROR] 漫画として不合格：別形式・別内容の画像を検出したため不採用です。調査用に保持し、自動修正・自動保存・全自動/ループを停止しました。',
+      ...(review.issues||[]).map(issue=>`[不合格の根拠] ${issue.reason}`)]);
+    showStatus('漫画として不合格です。画像を修正元にせず、STEP4で元の描画指示から新規生成してください。');
+    return true;
   };
 
   const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {

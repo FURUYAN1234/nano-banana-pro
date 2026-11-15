@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import { buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt,
   getOpenAIPromptBodyBudget } from '../src/lib/openai-image-references.js';
 import { buildGeneratedImageMetadata, embedGeneratedImageMetadata,
@@ -31,10 +33,10 @@ test('normal and native scenarios select only the actual special media, without 
   assert.deepEqual(select({ scenario: '[1コマ目]\n人物「[画風: POP_ART]と書いてある。」\n[2コマ目]\n[EMOTION: NORMAL]' }), []);
 });
 
-test('monochrome, explicit source-style lock and custom style exclude the automatic guide', () => {
+test('explicit source-style lock and custom style exclude the automatic guide in either output mode', () => {
   const source = scenario(['POP_ART', 'WATERCOLOR', 'GEKIGA', 'NORMAL']);
   for (const options of [
-    { colorMode: 'monochrome' }, { preserveReferenceStyle: true },
+    { preserveReferenceStyle: true },
     { styleJson: { style_name: '指定画風', reproduction_prompt: '作者の指定を優先' } },
     { punchlineType: 'SeriousDocumentary' },
   ]) assert.deepEqual(select({ scenario: source, ...options }), []);
@@ -115,7 +117,7 @@ test('invalid or multiple guides and styles fail before transport; existing imag
     medium(['POP_ART', 'UNKNOWN']), medium(['POP_ART', 'POP_ART']), { imageUrl: 'https://example.invalid/a.png', styles: ['GEKIGA'] }]) {
     assert.throws(() => buildOpenAIReferencePlan({ mediumReference: value }), /描法|画風|画像/);
   }
-  assert.throws(() => buildOpenAIReferencePlan({ colorMode: 'monochrome', mediumReference: medium(['POP_ART']) }), /カラー/);
+  assert.throws(() => buildOpenAIReferencePlan({ colorMode: 'invalid', mediumReference: medium(['POP_ART']) }), /カラー|出力モード/);
   for (const options of [{ characterImages: [guide] }, { backgroundEnabled: true, backgroundImage: guide },
     { originalCandidate: { mimeType: 'image/png', base64Img: guide.split(',')[1] } }]) {
     assert.throws(() => buildOpenAIReferencePlan({ ...options, mediumReference: medium(['POP_ART']) }), /用途/);
@@ -155,4 +157,34 @@ test('style role and guide hash survive metadata PNG roundtrip without becoming 
   assert.match(restored.inputs[1].sha256, /^[a-f0-9]{64}$/);
   assert.equal(restored.reference_context, null);
   assert.doesNotMatch(JSON.stringify(restored), /data:image/);
+});
+
+
+test('native monochrome selects only authored supported media and keeps reference-style and custom-style protection',()=>{
+ const source=scenario(['NORMAL','POP_ART','WATERCOLOR','GEKIGA','SKETCH','CHIBI_GAG']);
+ assert.deepEqual(select({scenario:source,colorMode:'monochrome'}),['POP_ART','WATERCOLOR','GEKIGA']);
+ for(const protection of [{preserveReferenceStyle:true},{styleJson:{name:'custom'}},{punchlineType:'SeriousDocumentary'}])assert.deepEqual(select({scenario:source,colorMode:'monochrome',...protection}),[]);
+ assert.deepEqual(select({scenario:scenario(['NORMAL','SKETCH','CHIBI_GAG','NORMAL']),colorMode:'monochrome'}),[]);
+});
+test('monochrome guide has a style-only role with paper/skin/material tone priority and no inherited pigment or identity',()=>{
+ const plan=buildOpenAIReferencePlan({colorMode:'monochrome',mediumReference:medium(['POP_ART','GEKIGA'])});
+ assert.deepEqual(plan.counts,{character:0,background:0,original:0,styleReference:1});
+ assert.deepEqual(plan.referenceRoles,['style_reference']);
+ const line=plan.rolePrompt.split('\n').find(x=>x.startsWith('Image 1:'));
+ assert.match(line,/STYLE ONLY/);assert.match(line,/TOP LEFT=POP_ART.*MIDDLE LEFT=GEKIGA/);
+ assert.doesNotMatch(line,/undefined|pigment washes|painted edges|MATERIAL M/);
+ assert.match(line,/紙白/);assert.match(line,/肌.*素材.*トーン/);assert.match(line,/色.*借りない|色.*複製しない|色.*保持しない/);
+ assert.match(line,/人物参照\/STEP1素材\/修復・編集元ではなくM番号なし/);
+ const repair=buildOpenAIReferencePlan({colorMode:'monochrome',characterImages:Array.from({length:14},(_,i)=>image('actor'+i)),mediumReference:medium(['GEKIGA']),originalCandidate:{mimeType:'image/png',base64Img:Buffer.from('original').toString('base64')}});
+ assert.equal(repair.imageInputs.length,16);assert.equal(repair.referenceRoles.at(-1),'style_reference');
+ assert.ok(getOpenAIPromptBodyBudget(repair)<32000);
+ assert.throws(()=>appendOpenAIReferencePrompt('x'.repeat(32000),repair),/上限|長|超/);
+});
+
+test('adding native monochrome reference support leaves COLOR initial/repair plans byte-identical',()=>{
+ const before=JSON.parse(readFileSync(new URL('./fixtures/monochrome-medium-color-before.json',import.meta.url)));
+ for(const row of before){
+  const plan=buildOpenAIReferencePlan({colorMode:'color',characterImages:[image('person')],mediumReference:medium(row.styles),originalCandidate:row.repair?{mimeType:'image/png',base64Img:Buffer.from('original').toString('base64')}:null});
+  assert.equal(createHash('sha256').update(JSON.stringify(plan)).digest('hex'),row.sha256);
+ }
 });

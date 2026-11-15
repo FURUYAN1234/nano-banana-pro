@@ -105,8 +105,8 @@ test('each production planner uses its current scenario instead of a stale displ
   }
 });
 
-test('all actual call sites exclude mono, custom style, source-style lock and ordinary media', () => {
-  for (const overrides of [{ colorMode: 'monochrome' }, { styleJson: { style_name: '利用者指定', reproduction_prompt: '指定描法' } },
+test('all actual call sites retain custom style, source-style lock and ordinary-media exclusions', () => {
+  for (const overrides of [{ styleJson: { style_name: '利用者指定', reproduction_prompt: '指定描法' } },
     { punchlineType: 'SeriousDocumentary', activePunchlineType: 'SeriousDocumentary', resolvedPunchlineTypeRef: { current: 'SeriousDocumentary' } },
     { scenario: normal, sourceScenario: normal, currentScenario: normal, generationScenario: normal }]) {
     const h = setup(overrides);
@@ -197,7 +197,7 @@ test('App passes the selected guide to Web export without displaying an unsolici
     assert.ok(expression);
     assert.equal(evaluate(step4, expression, { mediumReference: selected }), selected.imageUrl);
   }
-  for (const overrides of [{ colorMode: 'monochrome' }, { styleJson: { style_name: '固定' } }, { scenario: normal }]) {
+  for (const overrides of [{ styleJson: { style_name: '固定' } }, { scenario: normal }]) {
     assert.equal(evaluate(app, prop.value.expression, setup({ isOpenAIImageMode: true, enableChatGPTMode: true, ...overrides }).context), null);
   }
   const syntax = nodes(step4);
@@ -211,4 +211,22 @@ test('App passes the selected guide to Web export without displaying an unsolici
     assert.equal(Boolean(evaluate(step4, exportGuard.left, { isChatGPTWebGuide, finalPrompt: 'ready' })), expected);
     assert.equal(Boolean(evaluate(step4, exportGuard.left, { isChatGPTWebGuide, finalPrompt: '' })), false);
   }
+});
+
+
+test('all actual planners and App pass the selected guide for native monochrome without changing material ownership',()=>{
+ const h=setup({colorMode:'monochrome'});
+ for(const node of calls('buildOpenAIReferencePlan')){
+  const plan=evaluate(workflow,node,h.context);
+  assert.equal(guideInputs(plan).length,1);
+  assert.equal(plan.imageInputs.length,3);
+  assert.deepEqual(plan.referenceRoles,['character_reference','character_reference','style_reference']);
+  const role=plan.rolePrompt.split('\n').find(line=>line.startsWith('Image 3:'));
+  assert.match(role,/STYLE ONLY.*紙白/);assert.doesNotMatch(role,/MATERIAL M|pigment washes|painted edges/);
+ }
+ const panel=nodes(app).find(node=>node.type==='JSXOpeningElement'&&node.name.name==='Step4Panel');
+ const prop=panel.attributes.find(node=>node.name?.name==='mediumReference');
+ const selected=evaluate(app,prop.value.expression,h.context);
+ assert.deepEqual(selected.styles,['POP_ART','WATERCOLOR','GEKIGA']);
+ assert.ok(selected.imageUrl.startsWith('data:image/png;base64,'));
 });

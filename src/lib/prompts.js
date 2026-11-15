@@ -878,7 +878,7 @@ export const ART_STYLE_DIFFERENCE_QA_LOCK = 'ART-STYLE DIFFERENCE QA LOCK: Ident
 export const OPENAI_COLOR_STYLE_QA = 'ART-STYLE DIFFERENCE QA LOCK: Preserve gaze and emotional intent, not reference facial geometry. Redraw eyes, nose, mouth and jaw in each panel\'s medium. Keep Camera/Action/identity/age/wardrobe; linework/folds follow panel medium, not fixed anime; no numeric quota.';
 export const OPENAI_COLOR_FOCAL_READABILITY = FOCAL_READABILITY
   .replace('readability never changes shot scale or elevation, camera side or head turn; visible features only.', 'keep shot scale/elevation/camera side/head turn; visible features only.')
-  .replace(/Focal G-pen:.*?Story-critical/, 'Focal strokes follow panel medium. NORMAL/unmarked only: G-pen pressure taper, thick-to-hairline focal contour accents. GEKIGA carved ink planes; WATERCOLOR washes; CHIBI simplified forms. Legible faces in that medium. Story-critical')
+  .replace(/Focal G-pen:.*?Story-critical/, 'Focal strokes follow panel medium. NORMAL/unmarked only: G-pen pressure taper, thick-to-hairline focal contour accents. 各媒体の顔/塗りの構築を守る。 Legible faces in that medium. Story-critical')
   .replace('Support/BG thinner, lower contrast; local light/dark value and warm/cool color planes, motivated edge light and clear gaps at faces/hands.', 'Support/BG: thinner, lower contrast; light/dark and warm/cool planes, motivated edge light, clear face/hand gaps.')
   .replace('strengthen focal G-pen.', 'strengthen focal separation in the panel medium.');
 export const OPENAI_COLOR_FOLD_PRIORITY = 'FOLD PRIORITY: 2-4 triangular overlap/pinch shadows in panel medium; hard cel edges NORMAL/unmarked only; no geometric patterns.';

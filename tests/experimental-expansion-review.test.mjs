@@ -48,9 +48,9 @@ try {
     assert.match(prompt,/GEKIGA CAST CHECK \(P3 only\)/);
     assert.doesNotMatch(m.buildExperimentalImagePrompt(plan,{...source,panels:source.panels.map(p=>({...p,style:'NORMAL'}))},input),/HATCH-FIRST FACE CONSTRUCTION/);
     const mono=m.buildExperimentalImagePrompt(plan,source,{...input,colorMode:'monochrome'});
-    assert.match(mono,/HATCH-FIRST FACE CONSTRUCTION/);
+    assert.match(mono,/SHARED FRAME MEDIUM RECIPE GEKIGA:.*narrow eye openings/);
     assert.doesNotMatch(mono,/主となるハッチの下に不透明色/);
-    assert.match(mono,/墨と紙白。顔の陰影はペン線で、均一な灰色網点にしない/);
+    assert.match(mono,/Primary facial shading is dense fine pen hatching and crossing strokes/); assert.match(mono,/retaining narrow light gaps/);
   });
   test('gekiga requests deliberately deep facial relief instead of merely more fine shading',()=>{
     const prompt=m.buildExperimentalImagePrompt(plan,source,input);
@@ -84,8 +84,8 @@ try {
       const frames=prompt.split('[PAGE FRAME ').slice(1);
       assert.equal(frames.length,5);
       for(const [i,frame] of frames.entries()) {
-        assert.equal(frame.includes(buildActorMediumInstruction('GEKIGA',colorMode)),i===2);
-        assert.ok(frame.includes(buildActorMediumInstruction(i===2?'GEKIGA':'WATERCOLOR',colorMode)));
+        if(colorMode==='color') assert.equal(frame.includes(buildActorMediumInstruction('GEKIGA',colorMode)),i===2); else assert.equal(frame.includes('Apply the shared GEKIGA recipe'),i===2);
+        if(colorMode==='color') assert.ok(frame.includes(buildActorMediumInstruction(i===2?'GEKIGA':'WATERCOLOR',colorMode))); else assert.ok(frame.includes(`Apply the shared ${i===2?'GEKIGA':'WATERCOLOR'} recipe`));
       }
     }
     const ordinary=m.buildExperimentalImagePrompt(plan,{...source,panels:source.panels.map(p=>({...p,style:'NORMAL'}))},input);
@@ -124,7 +124,7 @@ try {
     for(const colorMode of ['color','monochrome']) {
       const prompt=m.buildExperimentalImagePrompt(plan,source,{...input,colorMode});
       assert.doesNotMatch(prompt,/identity\/style\/asset references/);
-      assert.match(prompt,/REFERENCES:.*identity.*asset.*selected panel recipe determines.*face\/eye construction/i);
+      assert.match(prompt,colorMode==='color'?/REFERENCES:.*identity.*asset.*selected panel recipe determines.*face\/eye construction/i:/FRAME MEDIUM: 全可視人物\/顔.*各レシピで再構築/);
     }
   });
   test('every frame binds its complete medium to all visible actors, including successive watercolor panels',()=>{
@@ -137,16 +137,16 @@ try {
       for(const [i,frame] of frames.entries()) {
         const style=mixed.panels[mediaPlan.panels[i].sourcePanel-1].style;
         assert.match(frame,new RegExp(`FRAME MEDIUM P${i+1} — ${style}:`));
-        assert.match(frame,/Every visible actor in this frame|ALL ACTORS\./);
+        assert.match(colorMode==='color'?frame:prompt,/Every visible actor in this frame|ALL ACTORS\.|FRAME MEDIUM: 全可視人物/);
         if(frame.includes('ALL ACTORS.')) assert.match(prompt,/ALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性\/感情\/視線\/脚本上の見え方を保持。/);
         if(style==='WATERCOLOR') {
-          assert.match(frame,/水彩|wash|pigment/i);
+          assert.match(colorMode==='color'?frame:prompt.match(/^SHARED FRAME MEDIUM RECIPE WATERCOLOR:.*$/m)[0],/水彩|wash|pigment|Painterly softness/i);
           assert.ok(!frame.includes(buildActorMediumInstruction('GEKIGA','color')));
           assert.doesNotMatch(frame,/fully redraw faces as realistic GEKIGA|\]=GEKIGA/);
         }
         if(style==='GEKIGA') {
-          assert.ok(frame.includes(GEKIGA_FACE_CONSTRUCTION));
-          assert.match(frame,/narrow eye openings, small irises partly covered by thick anatomical lids/);
+          assert.ok((colorMode==='color'?frame:prompt.match(/^SHARED FRAME MEDIUM RECIPE GEKIGA:.*$/m)[0]).includes(GEKIGA_FACE_CONSTRUCTION));
+          assert.match(colorMode==='color'?frame:prompt.match(/^SHARED FRAME MEDIUM RECIPE GEKIGA:.*$/m)[0],/narrow eye openings, small irises partly covered by thick anatomical lids/);
         }
       }
     }

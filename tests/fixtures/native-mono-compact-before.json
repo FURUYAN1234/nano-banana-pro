@@ -1,0 +1,101 @@
+{
+  "styles": [
+    "NORMAL",
+    "GEKIGA",
+    "WATERCOLOR",
+    "POP_ART",
+    "CHIBI_GAG"
+  ],
+  "scenario": "## タイトル: 木箱の展示\nLocation: 作業室\nOutfit: 甲は作業着。\n[1コマ目]\n[Camera: 左上から見下ろす望遠]\n[EMOTION: NORMAL]\n状況: SOURCE_FACT_0。甲が箱を持ち、乙が手元を確かめる。\n甲「これは0番です。」\n[2コマ目]\n[Camera: 右下から見上げる広角]\n[EMOTION: GEKIGA]\n状況: SOURCE_FACT_1。甲が箱を持ち、乙が手元を確かめる。\n甲「これは1番です。」\n[3コマ目]\n[Camera: 左上から見下ろす望遠]\n[EMOTION: WATERCOLOR]\n状況: SOURCE_FACT_2。甲が箱を持ち、乙が手元を確かめる。\n甲「これは2番です。」\n[4コマ目]\n[Camera: 右下から見上げる広角]\n[EMOTION: POP_ART]\n状況: SOURCE_FACT_3。甲が箱を持ち、乙が手元を確かめる。\n甲「これは3番です。」\n[5コマ目]\n[Camera: 左上から見下ろす望遠]\n[EMOTION: CHIBI_GAG]\n状況: SOURCE_FACT_4。甲が箱を持ち、乙が手元を確かめる。\n甲「これは4番です。」",
+  "castList": "## 甲\n外見: 黒髪、眼鏡、成人\n肌: 小麦色\n## 乙\n外見: 茶髪の成人\n肌: 明るい肌色",
+  "rows": [
+    {
+      "colorMode": "color",
+      "providerFamily": "chatgpt",
+      "sha256": "961311c2c357935e6d1a7e33ba751a4804c50ef50b9b19e597b1a7008bb0a435",
+      "length": 15158
+    },
+    {
+      "colorMode": "color",
+      "providerFamily": "gemini",
+      "sha256": "ec0ff795bf86d0f2345293c103fc47cc9cc40d327ff63928afd888fc06e90d78",
+      "length": 15159
+    },
+    {
+      "colorMode": "monochrome",
+      "providerFamily": "chatgpt",
+      "sha256": "18a80d3ac6edddc1ff593932fbf5610820dfb94538863cb49bf39a0960e39a9e",
+      "length": 19030
+    },
+    {
+      "colorMode": "monochrome",
+      "providerFamily": "gemini",
+      "sha256": "18a80d3ac6edddc1ff593932fbf5610820dfb94538863cb49bf39a0960e39a9e",
+      "length": 19030
+    }
+  ],
+  "recipes": {
+    "NORMAL": "Pressure-taper black penwork; bold focal silhouettes, distinct fine face/hand strokes and purposeful black accents.",
+    "GEKIGA": "In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. Rebuild faces as sculptural GEKIGA: narrow eye openings, small irises partly covered by thick anatomical lids; projecting nose bridge, sidewalls and nostril wings; distinct cheekbone and jaw angles. 全人物を劇画化。顔にも写実的な陰影と斜線。背景・服だけ劇画にしない。 Primary facial shading is dense fine pen hatching and crossing strokes, retaining narrow light gaps between lines. Solid black is a secondary accent in local occlusion/contact shadows. Keep recognizable identity/age, scripted emotion, gaze, Camera/Action and body acting. BLACK AND WHITE ink on paper.",
+    "WATERCOLOR": "Painterly softness through sparse broken ink contours and open white paper. Screen only inside assigned material/shadow masks; never wash or dots over lit light skin.",
+    "POP_ART": "顔/髪/服/小物/背景を極太の黒い輪郭、大胆な白黒のflat面、大粒で明瞭な規則的Ben-Day網点で印刷絵へ再構築。白肌明部は白、網点は許可された影/素材面のみ。Camera/Action・演技/表情・同一性/既定トーン・台詞/吹出配置を保持。",
+    "CHIBI_GAG": "Super-deformed chibi anatomy: normally 2-3 heads tall, unless explicit proportions override. Enlarge the skull; compress torso and jointed limbs, not merely eyes. Preserve Camera/Action, body acting, individual gaze/reactions, hair/glasses. Project this redesigned body into the same shot, not a zoom or lineup. Black accents on white."
+  },
+  "plan": {
+    "count": 5,
+    "layout": "mixed_rows",
+    "reason": "展示順",
+    "panels": [
+      {
+        "sourcePanel": 1,
+        "kind": "anchor",
+        "camera": "左上から見下ろす望遠",
+        "action": "PLAN_NOTE_0。甲と乙が箱を支える。",
+        "dialogueIds": [
+          0
+        ],
+        "breakout": null
+      },
+      {
+        "sourcePanel": 2,
+        "kind": "anchor",
+        "camera": "右下から見上げる広角",
+        "action": "PLAN_NOTE_1。甲と乙が箱を支える。",
+        "dialogueIds": [
+          1
+        ],
+        "breakout": null
+      },
+      {
+        "sourcePanel": 3,
+        "kind": "anchor",
+        "camera": "左上から見下ろす望遠",
+        "action": "PLAN_NOTE_2。甲と乙が箱を支える。",
+        "dialogueIds": [
+          2
+        ],
+        "breakout": null
+      },
+      {
+        "sourcePanel": 4,
+        "kind": "anchor",
+        "camera": "右下から見上げる広角",
+        "action": "PLAN_NOTE_3。甲と乙が箱を支える。",
+        "dialogueIds": [
+          3
+        ],
+        "breakout": null
+      },
+      {
+        "sourcePanel": 5,
+        "kind": "anchor",
+        "camera": "左上から見下ろす望遠",
+        "action": "PLAN_NOTE_4。甲と乙が箱を支える。",
+        "dialogueIds": [
+          4
+        ],
+        "breakout": null
+      }
+    ]
+  }
+}

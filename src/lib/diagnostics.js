@@ -111,8 +111,9 @@ export function makeDiagnosticEvent(event, details = {}, {now = Date.now(), sess
     const value = safeModel(details[key]);
     if (value !== undefined) row[key] = value;
   }
+  if (typeof details.requestPromptSha256 === 'string' && /^[a-f0-9]{64}$/.test(details.requestPromptSha256)) row.requestPromptSha256 = details.requestPromptSha256;
   if (['openai', 'gemini'].includes(details.provider)) row.provider = details.provider;
-  for (const key of ['step', 'imageCount', 'characterCount', 'scenarioLength', 'promptLength', 'promptMaxChars', 'status', 'elapsedMs', 'inputTokens', 'outputTokens', 'panelCount']) {
+  for (const key of ['step', 'imageCount', 'characterCount', 'scenarioLength', 'promptLength', 'requestPromptLength', 'promptMaxChars', 'status', 'elapsedMs', 'inputTokens', 'outputTokens', 'panelCount']) {
     if (typeof details[key] === 'number' && Number.isFinite(details[key]) && details[key] >= 0) row[key] = Math.round(details[key]);
   }
   for (const key of ['fullAuto', 'experimental', 'fallback', 'ok']) if (typeof details[key] === 'boolean') row[key] = details[key];
@@ -159,7 +160,8 @@ export function recordImageQualityReview(result, {observations = [], ...invocati
     ...(!ok&&outcome!=='skipped'?{failureContext:{...invocation,stage:'image_quality',
       validationError:error?String(error.message||error):'',
       validationResponse:JSON.stringify({outcome,originalPass:original.pass===true,
-        originalIssues:original.issues||[],finalIssues:final.issues||[],notRechecked:final.notRechecked===true,observations})}}:{}),
+        originalIssues:original.issues||[],finalIssues:final.issues||[],notRechecked:final.notRechecked===true,
+        ...(original.pageContent?{pageContent:original.pageContent}:{}),observations})}}:{}),
   });
 }
 
@@ -320,12 +322,27 @@ function requestMetadata(url, options) {
   } catch { return null; }
 }
 
+// Fingerprint only the actual outgoing image prompt; never retain its body/images/credentials.
+async function imageRequestFingerprint(metadata, options) {
+  if(metadata.provider!=='openai'||!['v1.images.generations','v1.images.edits'].includes(metadata.endpoint)) return {};
+  try {
+    const prompt=typeof options?.body==='string'?JSON.parse(options.body)?.prompt
+      :typeof FormData!=='undefined'&&options?.body instanceof FormData?options.body.get('prompt'):null;
+    if(typeof prompt!=='string')return {};
+    const result={requestPromptLength:prompt.length};
+    if(globalThis.crypto?.subtle){const digest=await globalThis.crypto.subtle.digest('SHA-256',new TextEncoder().encode(prompt));
+      result.requestPromptSha256=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');}
+    return result;
+  } catch { return {}; } // Observability must not change the request outcome.
+}
+
 export function createDiagnosticFetch(fetcher, sink = recordDiagnostic, getContext = () => context) {
   const emit = (event, data) => { try { Promise.resolve(sink(event, data)).catch(() => {}); } catch { /* observation cannot break a request */ } };
   return async (url, options) => {
     const metadata = requestMetadata(url, options);
     if (!metadata) return fetcher(url, options);
     const request = {...getContext(), ...metadata, requestId: id()};
+    Object.assign(request, await imageRequestFingerprint(metadata, options));
     const startedAt = Date.now();
     emit('api.request', request);
     try {

@@ -50,7 +50,7 @@ try {
     assert.match(result.prompt,/FULL BLEED P3.*right.*bottom/);
     assert.match(result.prompt,/REQUIRED BREAKOUT/);
     assert.match(result.prompt,/CROSSING EDGE: P3\.top -> P1\.bottom/);
-    assert.match(result.prompt,/INCOMING FROM P3:.*bottom.*P3.*身体/);
+    assert.match(result.prompt,/INCOMING FROM P3:.*bottom.*P3.*身体|INCOMING FROM P3: preserve its connected body, SOURCE Camera and medium/);
     assert.doesNotMatch(result.prompt,/外枠の四辺\/四隅を余白付きで画布内へ収め、切落とし\/画外拡張は禁止/);
     assert.doesNotMatch(result.prompt,/If a clean crossing is impossible, keep the body inside its source panel/);
     assert.match(m.buildExperimentalReviewPrompt(result.plan,result.source),/AUTHORED PAGE COMPOSITION/);
@@ -194,7 +194,7 @@ try {
     const result=await m.prepareExperimentalManga(input,async()=>JSON.stringify(planFor(source)));
     assert.equal(result.plan.layout,'two_columns');
     assert.doesNotMatch(result.prompt,/FULL BLEED P/);
-    assert.match(result.prompt,/外枠の四辺\/四隅を余白付きで画布内/);
+    assert.match(result.prompt,/外枠の四辺\/四隅を余白付きで画布内|外周四辺を画布内/);
     assert.deepEqual(result.plan.expectedDialogue,source.dialogue);
   });
   test('full-body framing keeps the authored breakout connected across frames instead of containing it',async()=>{
@@ -223,12 +223,12 @@ try {
     }
     const input={...inputFor(null),showWatermarks:false},source=m.readExperimentalSource(input);
     const result=await m.prepareExperimentalManga(input,async()=>JSON.stringify(planFor(source)));
-    assert.match(result.prompt,/leave the bottom margin blank/);
+    assert.match(result.prompt,/leave the bottom margin blank|leave footer blank/);
     const topInput={...inputFor({...composition,breakouts:[],bleed:[{panel:1,edges:['top']}]}),showWatermarks:true};
     const topSource=m.readExperimentalSource(topInput);
     const topResult=await m.prepareExperimentalManga(topInput,async()=>JSON.stringify(planFor(topSource)));
     assert.doesNotMatch(topResult.prompt,/Top title EXACTLY[^\n]*白地中央/);
-    assert.match(topResult.prompt,/Top title EXACTLY[^\n]*上端/);
+    assert.match(topResult.prompt,/Top title EXACTLY[^\n]*(?:上端|上タチキリ)/);
     assert.match(topResult.prompt,/FOOTER ONLY: Bottom-left EXACTLY/);
   });
   test('native page-text verification keeps required title but does not require hidden footer credits',async()=>{

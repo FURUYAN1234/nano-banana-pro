@@ -326,7 +326,7 @@ try {
     const gemini=buildGeminiImageApiPrompt(web,{rolePrompt:''});
     const frames=value=>value.split('[PAGE FRAME ').slice(1).map(frame=>frame.split('[END PAGE FRAME')[0]);
     const original=frames(api),recipes=colorMode==='monochrome'?MONOCHROME_EMOTION_STYLES:COMPACT_EMOTION_STYLES;
-    assert.equal(api.includes(' ALL ACTORS.'),compact,'exercise the requested full or compact renderer');
+    if(colorMode==='color') assert.equal(api.includes(' ALL ACTORS.'),compact,'exercise the requested full or compact renderer'); else assert.match(api,/SHARED FRAME MEDIUM RECIPE/);
     assert.equal(web,api+'\n','Web paste retains the entire API prompt');
     for(const [transport,prompt] of [['API',api],['Web',web],['Gemini',gemini]]) {
       const rendered=frames(prompt);assert.equal(rendered.length,styles.length);
@@ -336,16 +336,17 @@ try {
         assert.equal(medium.length,1,`${transport} P${i+1} has one local medium`);
         assert.ok(medium[0].startsWith(prefix));
         assert.equal(medium[0],original[i].split('\n').find(line=>line.startsWith(prefix)),`${transport} retains the exact medium recipe`);
-        if(style==='NORMAL') assert.match(medium[0],/established source\/reference character drawing style/);
+        const selectedRecipe=colorMode==='color'?medium[0]:prompt.match(new RegExp('^SHARED FRAME MEDIUM RECIPE '+style+': (.*)$','m'))?.[1]; assert.ok(selectedRecipe);
+        if(style==='NORMAL') assert.match(selectedRecipe,/established source\/reference character drawing style/);
         else if(style==='GEKIGA') {
-          assert.ok(medium[0].includes(GEKIGA_FACE_CONSTRUCTION));
-          assert.match(medium[0],/Primary facial shading is dense fine pen hatching and crossing strokes/);
-          assert.ok(medium[0].includes(colorMode==='monochrome'?'BLACK AND WHITE ink on paper.':'FULL COLOR; opaque local color beneath the pen drawing.'));
-          assert.ok(frame.includes(buildActorMediumInstruction('GEKIGA',colorMode)));
+          assert.ok(selectedRecipe.includes(GEKIGA_FACE_CONSTRUCTION));
+          assert.match(selectedRecipe,/Primary facial shading is dense fine pen hatching and crossing strokes/);
+          assert.ok(selectedRecipe.includes(colorMode==='monochrome'?'BLACK AND WHITE ink on paper.':'FULL COLOR; opaque local color beneath the pen drawing.'));
+          if(colorMode==='color') assert.ok(frame.includes(buildActorMediumInstruction('GEKIGA',colorMode))); else assert.match(frame,/Apply the shared GEKIGA recipe/);
           if(colorMode==='color') assert.match(frame,/CAST COUNT: \[ユウ\]=GEKIGA each EXACTLY ONCE/);
           else assert.doesNotMatch(frame,/\]=GEKIGA/);
-        } else assert.ok(medium[0].includes(recipes[style]),`${transport} retains the ${colorMode} ${style} recipe`);
-        assert.ok(frame.includes(`Camera: ${plan.panels[i].camera}; Style: ${style}; Action: ${plan.panels[i].action}`));
+        } else assert.ok(selectedRecipe.includes(recipes[style]),`${transport} retains the ${colorMode} ${style} recipe`);
+        assert.ok(frame.includes(`Camera: ${plan.panels[i].camera}; Style: ${style}; Action: `)); assert.ok(frame.includes(colorMode==='color'?plan.panels[i].action:source.panels[i].text.match(/^状況:.*$/m)[0]));
         const metadata=value=>value.split('\n').filter(line=>line.startsWith('TAIL TIP LOCK (NEVER PRINT'));
         assert.deepEqual(metadata(frame),metadata(original[i]),`${transport} retains separate nonprinting ownership`);
         assert.match(frame,/TAIL TIP LOCK \(NEVER PRINT[^)]*\): B1=>\[ユウ\] mouth\/head\./);

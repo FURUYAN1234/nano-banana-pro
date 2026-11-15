@@ -58,8 +58,8 @@ export function buildOpenAIReferencePlan({
     if (!mediumReference || typeof mediumReference !== 'object' || Array.isArray(mediumReference)) {
       throw new Error('描法参照は画像と画風を持つ1件のオブジェクトで指定してください。');
     }
-    if (colorMode !== 'color') throw new Error('描法参照はカラー生成でのみ利用できます。');
-    mediumInstruction = buildPanelMediumReferenceInstruction(mediumReference.styles);
+    if (!['color','monochrome'].includes(colorMode)) throw new Error('描法参照の出力モードはカラーまたは白黒で指定してください。');
+    mediumInstruction = buildPanelMediumReferenceInstruction(mediumReference.styles, colorMode);
   }
   const entries = [];
   const seen = new Map();
@@ -88,6 +88,7 @@ export function buildOpenAIReferencePlan({
     original: 'SOURCE IMAGE TO EDIT. Preserve its already-correct content; change only the specified defects, necessary local physical consequences and required monochrome medium. Do not preserve source hues or tints as correct content; render native black ink, white paper and assigned screens while keeping cast, Camera, Action and panel styles.',
     character: `CHARACTER REFERENCE. ${CHARACTER_REFERENCE_IDENTITY_RULE} Never copy source hues or tints. Translate hair/outfit boundaries and accents to black/white/assigned screens; retain canonical skin-base mapping and panel styles. Do not copy sheet layout, captions, background, or static pose.`,
     background: 'BACKGROUND REFERENCE. Preserve environment geometry, spatial cues and light direction; redraw them with native black ink, white paper and assigned screens. Never copy source hues or tints, colored lighting or painted washes. Do not copy its aspect ratio, people, text or page layout.',
+    ...(mediumReference ? {styleReference: mediumInstruction} : {}),
   } : {
     original: 'SOURCE IMAGE TO EDIT. Preserve its already-correct content; change only the specified defects and necessary local physical consequences.',
     character: `CHARACTER REFERENCE. ${CHARACTER_REFERENCE_IDENTITY_RULE} Do not copy sheet layout, captions, background, or static pose.`,

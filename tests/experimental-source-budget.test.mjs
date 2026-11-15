@@ -17,7 +17,7 @@ try {
   for(const p of plan.panels){assert.ok(prepared.prompt.includes(p.camera));assert.ok(prepared.prompt.includes(p.action));}
   for(const d of source.dialogue)assert.ok(prepared.prompt.includes(JSON.stringify(d.text)));
   assert.deepEqual(prepared.plan.composition,source.composition);
-  assert.match(prepared.prompt,/GEKIGA CAST CHECK/);assert.match(prepared.prompt,/PANEL EDGE CONTINUITY LOCK/);
+  assert.match(prepared.prompt,/SHARED FRAME MEDIUM RECIPE GEKIGA:.*narrow eye openings/);assert.match(prepared.prompt,/PANEL EDGE CONTINUITY LOCK/);
  });
  test('rewritten planner staging fits without requiring exact source paragraph duplication',async()=>{
   const plan=makePlan();
@@ -26,15 +26,19 @@ try {
   plan.panels[0].action+=authoredCompilerPhrase;
   const prepared=await m.prepareExperimentalManga(input,async()=>JSON.stringify(plan));
   assert.ok(prepared.prompt.length<=28880);
-  for(const p of plan.panels){assert.ok(prepared.prompt.includes(p.camera));assert.ok(prepared.prompt.includes(p.action));}
+  for(const p of plan.panels)assert.ok(prepared.prompt.includes(p.camera));
+  assert.ok(!prepared.prompt.includes(authoredCompilerPhrase),'planner-only paraphrase must not become authored truth');
   for(const original of source.panels)assert.ok(prepared.prompt.includes(original.text.match(/^状況:\s*(.+)$/m)[1]));
   for(const d of source.dialogue)assert.ok(prepared.prompt.includes(JSON.stringify(d.text)));
  });
  test('unshareable authored overflow still rejects without clipping or paid replanning',async()=>{
-  const plan=makePlan();plan.panels[0].action+='独立した追加指定。'.repeat(4000);let calls=0;
-  await assert.rejects(m.prepareExperimentalManga(input,async()=>{calls++;return JSON.stringify(plan);}),error=>{
-   assert.equal(error.code,'IMAGE_PROMPT_BUDGET');assert.ok(error.diagnosticContext.finalPrompt.includes(plan.panels[0].action));
-   assert.equal(error.diagnosticContext.scenario,input.scenario);return true;
+  const extra='独立した追加指定。'.repeat(4000);
+  const oversized={...input,scenario:input.scenario.replace(/^状況:/m,'状況: '+extra)};
+  const oversizedSource=m.readExperimentalSource(oversized);
+  const plan=applyPageComposition({...makePlan(),panels:oversizedSource.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:p.text.match(/^状況:\s*(.+)$/m)[1],dialogueIds:p.dialogueIds,breakout:null}))},oversizedSource);let calls=0;
+  await assert.rejects(m.prepareExperimentalManga(oversized,async()=>{calls++;return JSON.stringify(plan);}),error=>{
+   assert.equal(error.code,'IMAGE_PROMPT_BUDGET');assert.ok(error.diagnosticContext.finalPrompt.includes(extra));
+   assert.equal(error.diagnosticContext.scenario,oversized.scenario);return true;
   });
   assert.equal(calls,1);
  });

@@ -242,13 +242,14 @@ try {
       for (const [index, frame] of rendered.entries()) {
         const style = item.selectedStyles[index];
         const instruction = actorInstruction(style, item.colorMode);
-        if (instruction) assert.equal(count(frame, instruction), 1, `${transport} P${index + 1} receives one local construction instruction`);
+        if (instruction&&item.colorMode==='color') assert.equal(count(frame, instruction), 1, `${transport} P${index + 1} receives one local construction instruction`);
+        else if(instruction) { assert.ok(frame.includes(`Apply the shared ${style} recipe`)); assert.match(prompt,new RegExp('^SHARED FRAME MEDIUM RECIPE '+style+': .+','m')); }
         else assert.doesNotMatch(frame, /ACTOR MEDIUM\b/, `${transport} ${style} has no new drawing override`);
         for (const other of transformed.filter(value => value !== style)) {
           assert.ok(!frame.includes(actorInstruction(other, item.colorMode)), `${transport} P${index + 1} cannot inherit ${other}`);
         }
         assert.ok(frame.includes(plan.panels[index].camera), 'camera strength and side remain exact');
-        assert.ok(frame.includes(plan.panels[index].action), 'calm acting and hand ownership remain exact');
+        assert.ok(frame.includes(item.colorMode==='color'?plan.panels[index].action:source.panels[index].text.match(/^状況:.*$/m)[0]), 'authored calm acting and hand ownership remain exact');
         if (index === rendered.length - 1) {
           assert.match(frame, /Dialogue: SILENT/);
           assert.doesNotMatch(frame, /TEXT \(PRINT VALUES ONLY\)|Inside it, print exactly/);

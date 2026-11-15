@@ -53,3 +53,24 @@ test('retries once without streaming when the browser stream fetch fails', async
     setOpenAIApiKey('');
   }
 });
+
+test('normal generation accepts an ordinary JSON response without changing production request fields',async()=>{
+ const savedFetch=globalThis.fetch;const sent=[];setOpenAIApiKey('test-key');
+ globalThis.fetch=async(url,options)=>{sent.push({url,body:JSON.parse(options.body)});return new Response(JSON.stringify({data:[{b64_json:'json-final'}]}),{headers:{'content-type':'application/json'}});};
+ try{const prompt='approved five-scene monochrome manga';const result=await generateImageWithOpenAI(prompt,()=>{},{quality:'sunburst-max',size:'2240x3168'});
+  assert.equal(result.base64Img,'json-final');assert.equal(sent.length,1);assert.ok(sent[0].url.endsWith('/images/generations'));
+  assert.deepEqual(sent[0].body,buildOpenAIImageRequestBody(prompt,{stream:true,quality:'sunburst-max',size:'2240x3168'}));
+  assert.equal(sent[0].body.stream,true);assert.equal(sent[0].body.partial_images,1);
+ }finally{globalThis.fetch=savedFetch;setOpenAIApiKey('');}
+});
+test('generation preserves HTTP failure and cancellation without retry',async()=>{
+ const savedFetch=globalThis.fetch;setOpenAIApiKey('test-key');let calls=0;
+ try{
+  globalThis.fetch=async()=>{calls++;return new Response(JSON.stringify({error:{message:'provider failed'}}),{status:500});};
+  await assert.rejects(generateImageWithOpenAI('approved',()=>{},{}),/OpenAI API Error: 500/);assert.equal(calls,1);
+  calls=0;const controller=new AbortController();
+  globalThis.fetch=async(_url,options)=>{calls++;return new Promise((_resolve,reject)=>{const abort=()=>reject(new DOMException('cancelled','AbortError'));if(options.signal.aborted)abort();else options.signal.addEventListener('abort',abort,{once:true});});};
+  const pending=generateImageWithOpenAI('approved',()=>{},{signal:controller.signal});controller.abort();
+  await assert.rejects(pending,/停止|中断|cancelled/i);assert.ok(calls<=1);
+ }finally{globalThis.fetch=savedFetch;setOpenAIApiKey('');}
+});

@@ -6,7 +6,7 @@ import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
 import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily, buildMonochromePanelInkLock } from './prompt-assembler.js';
 import { translateMonochromeCompilerRules } from './monochrome-compiler-prose.js';
-import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
+import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_FOCAL_READABILITY, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
 import { buildRenderOptionsContract, buildRenderOptionsQa, buildProtectedCastContract, allowsWatermarkOverlap, COPYRIGHT_MOSAIC_TARGET_SCOPE, NO_PAGE_TITLE } from './render-options.js';
 import { createApiError, formatApiErrorDetails, getApiErrorInfo, sanitizeErrorMessage } from './api-errors.js';
@@ -458,6 +458,8 @@ const reviewFormats = {
       panel:{type:['integer','null']},subject:reviewText,observed:reviewText,expected:reviewText,correction:reviewText,
       materialImpact:{type:'string',enum:['material','minor_variation','none','uncertain']},impactReason:reviewText,
     })),
+    pageContent:reviewObject({kind:{type:'string',enum:['comic','non_comic','uncertain']},
+      category:{type:'string',enum:['sequential_art','single_photograph','unrelated_image','blank_or_error_screen','uncertain']},evidence:reviewText}),
     status:{type:'string',enum:['pass','warning','unverified']},observedCount:{type:['integer','null'],description:'Number of physical comic FRAMES on the full page, never the number of bodies or cast appearances.'},
     readingOrder:reviewVerdict,camera:reviewVerdict,style:reviewVerdict,story:reviewVerdict,anatomy:reviewVerdict,pageText:reviewVerdict,
     breakout:{type:'string',enum:['pass','fail','uncertain','not_requested']},issues:reviewArray({type:'string'}),pageEvidence:reviewText,
@@ -609,9 +611,12 @@ export async function reviewExperimentalImage({image,plan,prompt,signal,reviewCo
     "MATERIAL DEFECTS FIRST: inspect duplicate/missing identities, connected limbs and joint directions, actual gaze targets and scripted gaze changes, physical panel chronology, dialogue/speaker ownership, and missing story-critical actions or props. Inspect every panel once. A harmless coherent pose/expression, natural foreshortening, occlusion, subtle shading or finish variation is not a defect. Check the requested medium, not an ideal amount of detail. Use the shortest sufficient observation per field; expand only a concrete material defect with an actionable correction. Do not repeat the source or narrate the inspection. Uncertainty never authorizes repair.",responseInstructions].join('\n'),spatial.images,signal,{responseFormat:'json_object'});
   cancelled(signal);
   const assessed=parseExperimentalReview(response.text,{...response,stage:'assessment'});
+  const pageContent=normalizePageContent(assessed.pageContent);
+  if(isConfirmedNonComic(pageContent))return {review:validateExperimentalReview({...assessed,pageContent,unboundObservations:assessed},plan),
+    model:response.model,finishReason:response.finishReason,characters:response.text.length,attachedImages:spatial.images.length,requests:1};
   if(wholePage) {
     const geometry=validateExperimentalReview({inspectionKind:'whole-page-geometry',complete:assessed.complete,
-      observedFrames:assessed.observedFrames},plan);
+      observedFrames:assessed.observedFrames,pageContent,unboundObservations:assessed},plan);
     const observed=geometry.observedFrames;
     const validBinding=observed.length===plan.count&&assessed.observedCount===observed.length
       &&orderObservedFrames(assessed.observedFrames).every((frame,i)=>frame.panel===i+1);
@@ -699,12 +704,84 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, provider
   const recipes={NORMAL:hasCharacterReferences?'Use the established source/reference character drawing style throughout faces, clothing, props and setting. Preserve the usual eye geometry and clean contours; do not inherit another frame’s special medium or hatch treatment.':buildNormalPanelRendering(colorMode),...(colorMode==='monochrome'?MONOCHROME_EMOTION_STYLES:COMPACT_EMOTION_STYLES),
     GEKIGA:`In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. ${GEKIGA_FACE_CONSTRUCTION} Primary facial shading is dense fine pen hatching and crossing strokes, retaining narrow light gaps between lines. Solid black is a secondary accent in local occlusion/contact shadows. Keep recognizable identity/age, scripted emotion, gaze, Camera/Action and body acting. ${colorMode==='monochrome'?'BLACK AND WHITE ink on paper.':'FULL COLOR; opaque local color beneath the pen drawing.'}`};
   const effects=[...new Set(plan.panels.flatMap(p=>p.visualEffects??[]))];
+  // Native monochrome is drawn directly, not a color manuscript followed by
+  // grayscale conversion. Bind each exact medium recipe once and keep authored
+  // facts/dialogue local. The color renderer below deliberately remains intact.
+  if(colorMode==='monochrome') {
+    const dominant=Boolean(plan.composition?.foregrounds?.length);
+    const media=styles.map(style=>`SHARED FRAME MEDIUM RECIPE ${style}: ${recipes[style]}`).join('\n');
+    const frames=plan.panels.map((p,i)=>{
+      const orig=source.panels[p.sourcePanel-1];
+      // The source beat already contains the complete authored acting. Do not
+      // repeat a potentially contradictory AI paraphrase as QA's Action truth.
+      const authoredAction=extractActionOnly(orig.text,source.castList).trim();
+      // extractActionOnly's explicit no-description fallback is compiler text,
+      // not authored acting; keep the STEP3 staging in that sparse-input case.
+      const sourceAction=authoredAction&&authoredAction!=='Characters interacting dynamically based on dialogue.'
+        ?sourceFacts[p.sourcePanel-1].replace(/^Source beat[^\n]*\n/, '').replace(/\r?\n/g, ' ')
+        :p.action;
+      const incoming=plan.panels.flatMap((other,j)=>other.breakout?.required&&other.breakout.into===i+1
+        ?[`INCOMING FROM P${j+1}: preserve its connected body, SOURCE Camera and medium; reserve local action/dialogue space.`]:[]);
+      for(const f of plan.composition?.foregrounds||[])if(f.over.includes(i+1))incoming.push(`PAGE FIGURE FROM P${f.panel}: ${f.character}; connected foreground keeps P${f.panel} medium; local actors keep this frame's medium.`);
+      const edge=p.breakout?.required?breakoutEdge(rects[i],rects[p.breakout.into-1]):null;
+      const opposite={top:'bottom',bottom:'top',left:'right',right:'left'};
+      return `[PAGE FRAME P${i+1} | ${physicalPanelPosition(rects[i],plan.layout==='free'?rects:null)}${i===plan.count-1?' | FINAL ENDING':''}]
+rect=${JSON.stringify(rects[i])}; source beat=${p.sourcePanel}; kind=${p.kind};
+Camera: ${orig.camera}; Style: ${orig.style}; Action: ${sourceAction}
+${getPanelShotExecution(orig.camera,{compact:true,breakout:p.breakout,foreground:plan.composition?.foregrounds?.find(f=>f.panel===i+1)})}
+${panelOutfits[p.sourcePanel-1]?`FRAME OUTFIT: ${panelOutfits[p.sourcePanel-1]}\n`:''}FRAME MEDIUM P${i+1} — ${orig.style}: Apply the shared ${orig.style} recipe in this frame. ${incoming.length?'LOCAL ACTORS ONLY; incoming foreground keeps SOURCE MEDIUM.':''}
+${buildMonochromePanelInkLock(orig.text,monochromeIdentity)}
+${castRules[i].filter(rule=>(commonCast.get(rule)?.length??0)<2).join('\n')}
+Dialogue: ${p.dialogueIds.length?compactDialogue[i]:'SILENT'}
+${incoming.join('\n')}${edge?`\nCROSSING EDGE: P${i+1}.${edge} -> P${p.breakout.into}.${opposite[edge]}. 指定部位を共有辺へ。`:''}
+${p.breakout?`${p.breakout.required?'REQUIRED BREAKOUT: ':''}${p.breakout.part} of P${i+1} crosses into P${p.breakout.into}. One connected source-owned silhouette; gutter stops behind it and resumes. Preserve adjacent faces, hands, props and dialogue. ${p.breakout.required?'Keep authored crossing; adjust negative space, never sever or omit.':'If impossible keep body inside source frame.'}`:''}
+[END PAGE FRAME P${i+1}]`;
+    }).join('\n');
+    return sharePanelShotExecution(`日本の白黒漫画を一ページ描く。場面数は厳密に ${plan.count} ${dominant?'（ページ大前景を含む）':'コマ'}。A4縦。白紙に墨/限定トーンで直接描く。写真や灰色wash禁止。
+${showTitle?'上6.5%題字、中91.3%漫画/溝、下2.2%フッター。':'題字帯なし、旧題字領域も漫画に配分。下2.2%フッター。'} 左右余白各0.6%、白溝。${plan.composition?.bleed.length?'明示FULL BLEED辺だけ画布端へ。':'外周四辺を画布内へ。'}
+${plan.composition?pageCompositionRendering(plan)+'\n'+pageCompositionForeground(plan,source):''}
+${showTitle?`Top title EXACTLY ${JSON.stringify(title)}、極太長体ゴシック、囲み/帯/罫線なし。${topBleed?'上タチキリの絵を止めず安全域に題字。':'題字背景は紙白。'}`:NO_PAGE_TITLE}
+PHYSICAL READING PATH (never print): ${rects.map((_,i)=>`P${i+1}`).join(' -> ')}. RTL READING ORDER: right to left, top to bottom; final ending P${plan.count}. ${spans.join(' ')} ${readingPairs.join('; ')}
+PAGE PLAN layout=${plan.layout}: 漫画領域内の正規化座標、x=左,y=上。またぎ矩形は未分割一枠。順序/原配置保持。演技/可読性の境界調整は許容、主役を縮めない。
+PAGE DIRECTION: ${typeof plan.pageIntent==='string'?plan.pageIntent:plan.reason}
+SOURCE PRIORITY: 各ActionはSource beat原文の事実。原文のCamera/台詞/衣装が正本で、plannerの言換えで上書きしない。全出来事/物の状態/時点を保持、結末先取り/捏造禁止。source-dialogue IDはDialogue原文を参照。
+[${hasCharacterReferences?'REFERENCE CAST DATA':'TEXT-ONLY CAST'}]
+CAST: ${sanitizeMonochromeSourceDescription(referenceCast)}
+[END ${hasCharacterReferences?'REFERENCE CAST DATA':'TEXT-ONLY CAST'}]
+${hasCharacterReferences?MONOCHROME_REFERENCE_SEPARATION:'人物設定テキストが正本。未添付シート不要。描法/背景見本の人物へ置換しない。'}
+${sceneOutfit}SOURCE FACTS (not captions): ${renderedContext}
+${referenceContext}
+${WARDROBE_COMPONENT_LOCK}
+${scopedOutfit||panelOutfits.some(Boolean)?OUTFIT_SCOPE_CONTRACT:''}
+${media}
+FRAME MEDIUM: 全可視人物/顔/髪/服/道具/背景を各レシピで再構築。年齢/髪/眼鏡/同一性保持、全ページ同じ墨へ均さない。越境前景は受入枠でなくSOURCE媒体/Cameraを保持。
+${frames}
+${[...commonCast].filter(([,panels])=>panels.length>1).map(([rule,panels])=>`Applies only to ${panels.map(n=>`P${n}`).join(', ')}: ${rule}`).join('\n')}
+${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects??[]).includes(id)?[`P${i+1}`]:[]).join(', ')}: ${EXPERIMENTAL_VISUAL_EFFECTS[id].instruction}`).join('\n')}
+LETTERING: Dialogueの引用符内Bn本文だけ原文通り各一回、漫画明朝の縦書き。ID/話者名/metadata/Camera/Style/Actionは非印字。B1右端→左へ。TAIL TIP LOCK: 近さで話者を変えない。SILENTは発話なし。
+${VERTICAL_DIALOGUE_GEOMETRY}
+${hasScriptedSfx(source.scenario)?MANGA_SFX_LETTERING_LOCK:''}
+場面内の隣接/前後/向かい/席位置を移動/転換の根拠なく入替えない。画面左右の固定ではない。俯瞰/アオリ/切返し/アップ/望遠の奥行圧縮/寄引き/遮蔽と自然な移動を許容。登場指定を守り、全員を毎回横一列にしない。
+${READING_FLOW_DIRECTION}
+${MONOCHROME_FOCAL_READABILITY}
+BODY ACTING: 原文の身振り/視線/表情、head pitch/shoulder tension、重心/四肢支持/接触/強い短縮を保持。参照ポーズを反復しない。Camera距離/高低/側/レンズ/切取り固定。high/low/wide/telephoto/fisheye/rearを正面水平バストへ均さない。後姿に顔を捏造しない。
+LIMB OWNERSHIP CHECK: 手→手首→肘→本人の肩、足→足首→膝→本人の腰を辿る。自然な遮蔽は隠す。余分/融合/分離/道具貫通/全身画角強制禁止。情報操作面は作中の読者/操作者/受取人へ向け、Camera通り表裏と文字を投影。漫画読者へ回転しない。
+PANEL EDGE CONTINUITY LOCK: 明示タチキリ以外の外周保持。越境は元人物の一続きの層。輪郭後ろで枠/溝を止め再開。頭の切断/複製、必要顔/手/道具/台詞の遮蔽禁止。大前景/REQUIRED BREAKOUTを省かず、身体でなく隣の余白を調整。別時点間の干渉禁止。
+${MONOCHROME_RENDERING_LOCK_COMPACT}
+${MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT}
+BACKGROUND: 不要な背景テクスチャ密度だけ減らし、環境形状/遠近/手掛かり/明部の紙白と境界ある影を残す。背景一面の網点膜/背景消去は禁止。非焦点defocusは輪郭/細部の焦点差で、紙白へ薄灰を掛けない。ペンかすれは局所、紙全体の汚れ/粒子にしない。暗い肌/素材の割当トーンと根拠ある影は保持。
+${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks,showTitle,bottomBleed})}
+${mosaicCopyrightedCharacters?'':COPYRIGHT_MOSAIC_TARGET_SCOPE}
+${buildProtectedCastContract(collectCastNameEntries(source.castList).map(entry=>entry.displayName))}
+${showWatermarks?`FOOTER ONLY: Bottom-left EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780". Bottom-right EXACTLY ${JSON.stringify(watermark)}. Horizontal once each; never on story objects.`:bottomBleed?'No watermark/footer; continue bottom bleed artwork.':'No watermark/footer text; leave footer blank.'}
+非印字確認: 正確なコマ数/順序/原文出来事/結末/全台詞/話者、強いCamera/演技、各指定媒体、明瞭な墨と紙白。`);
+  }
   // Translate only compiler-owned prose. Authored facts, actions and recipes stay exact.
   const qualityContract=(colorMode==='monochrome'?MONOCHROME_IMAGE_QUALITY_CONTRACT:buildImageQualityContract({panelMedia:true}))
     .replace("Preserve the user's requested cast, action, setting, and camera. Quality enrichment must support those directions, never replace them.", '指定の人物・動作・場所・Cameraを保持。品質補強は指定を支え、置換しない。')
     .replace('Render a rich physical setting with meaningful environmental anchors and layered foreground, midground, and background; do not default to empty walls, flat gradients, or generic blank rooms unless physical emptiness is explicitly requested.', '意味のある環境の手掛かりと前景・中景・背景の層を豊かに描く。物理的な空虚さの明示指定がなければ、空の壁・平坦なグラデーション・無個性な空室へ簡略化しない。')
-    .replace("Establish one primary focal subject or action and at most one supporting cue per panel. Use scale, placement, value and medium-appropriate edges to make the acting face, hand and story prop readable. Render actors, faces, clothing, props AND background in that panel's assigned medium; do not apply one generic ink or paint treatment across the page. Simplify secondary detail without erasing required setting evidence.", '各コマの主焦点は主対象または動作一つ、補助焦点は最大一つ。大きさ・配置・明暗・指定媒体の輪郭で演技する顔/手/物語の道具を明瞭に。人物/顔/服/道具/背景すべてをその枠の媒体で描き、全ページを同じ墨/塗りへ均さない。補助細部を整理しても必要な場所の証拠は消さない。')
-    .replace("FOCAL READABILITY: preserve shot scale, elevation, side, gaze, head turn and required body/prop visibility. Keep reactions, lettering and contact readable using the assigned medium's edges, pigment or ink, not an imposed contour style. Never turn a rear head toward the viewer for clarity.", 'FOCAL READABILITY: 寄引き/仰俯角/撮影側/視線/頭の向き/必要な身体と道具の可視性固定。反応/文字/接触は指定媒体で明瞭、別媒体の輪郭強制なし。後頭部を読者へ振り向かせない。')
+    .replace("Establish one primary focal subject or action and at most one supporting cue per panel. Use scale, placement, value and medium-appropriate edges to make the acting face, hand and story prop readable. Render actors, faces, clothing, props AND background in that panel's assigned medium; do not apply one generic ink or paint treatment across the page. Simplify secondary detail without erasing required setting evidence.", '各コマ主焦点=人物/動作一つ、補助焦点は最大一つ。大小/配置/明暗/枠媒体で顔/手/道具を明瞭に。人物/顔/服/道具/背景は枠媒体、全ページを同じ墨/塗りへ均さない。補助細部だけ省略、必要な場所の証拠は消さない。')
+    .replace("FOCAL READABILITY: preserve shot scale, elevation, side, gaze, head turn and required body/prop visibility. Keep reactions, lettering and contact readable using the assigned medium's edges, pigment or ink, not an imposed contour style. Never turn a rear head toward the viewer for clarity.", 'FOCAL READABILITY: 寄引き/仰俯角/撮影側/視線/頭の向き/必要身体・道具の可視性固定。反応/文字/接触は指定媒体で明瞭、別媒体強制なし。後頭部を読者へ振り向かせない。')
     .replace('Keep lighting and color coherent between cast and setting: use a motivated key light, fill, and rim or equivalent emotional lighting, with the cast clear against a softer, lower-contrast background.', '人物と場所の光/色を整合。根拠のある主光・補助光・輪郭光または相応の感情照明を使い、柔らかく低コントラストの背景から人物を明確に分離。')
     .replace(SKIN_LIGHTING, 'SKIN LIGHT: 肌の基調色を保ち、ハイライトは小さく柔らかく控えめに。鼻/頬の白墨状の塊は禁止。主光/補助光/輪郭光・影の深さ・目/髪の輝きを保持。明示の濡れ/光沢/様式化照明を優先し、白黒では紙白規則。CHEEK RENDERING: 物語/参照の識別特徴と指定媒体に従う（水彩は肌になじむ淡彩）。全員に定型の頬染め判子/縞を付けない。感情による赤面/化粧/墨と影の面は保持。参照シートに偶然ある頬染めを恒久的特徴にしない。')
     .replace('Keep coherent anatomy and joint direction at the neck, shoulder, elbow, wrist, hip, knee, and ankle. Use exactly the limbs implied by each visible character; preserve natural prop ownership, grip, contact, support, and left/right orientation.', '首/肩/肘/手首/腰/膝/足首の解剖と関節方向を整合。各可視人物に必要な四肢の数を厳守し、道具の所有/握り/接触/支持/左右を自然に保つ。')
@@ -830,7 +907,7 @@ function buildExperimentalReviewPromptBase(plan, source, options={}) {
     left:'ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780',
     right:buildMangaWatermark({imageEngineLabel:options.imageEngineLabel||'Gemini',scenarioModelLabel:options.scenarioModelLabel,systemVersion:SYSTEM_VERSION,isChatGPTFamily:/^ChatGPT/.test(options.imageEngineLabel||'')})
   }:null;
-  return `Read the actual attached generated manga. Return ONLY JSON with status (pass|warning|unverified), observedCount (integer or null), readingOrder/camera/style/story/anatomy/pageText (pass|fail|uncertain), breakout (pass|fail|uncertain|not_requested), issues (array of Japanese observed problems, empty when none), pageEvidence (STRING: transcribe actual title/footer lettering seen, including missing/unreadable text), evidence (one item for EVERY panel, with panel number, Japanese view.evidence/style_observation.evidence/story/anatomy observations, and breakout observation when requested). ${buildExperimentalReadingReviewContract(plan)} Never copy example text, source descriptions, or Camera labels as observed evidence. Defaults for anything not observable are uncertain/null, never pass. ${pageCompositionReview(plan)} Optional border breakouts and visualEffects may be omitted if needed for a clean coherent composition; their absence alone is not a material failure or a reason for regeneration. Distinguish translucent prop motion trails from solid duplicate props or extra limbs. Observe slanted borders as borders, not a change to the physical Camera.
+  return `Read the actual attached generated manga. Return ONLY JSON with pageContent (kind comic|non_comic|uncertain, category sequential_art|single_photograph|unrelated_image|blank_or_error_screen|uncertain, evidence of actual visible format/content; lack of borders alone is not non_comic), status (pass|warning|unverified), observedCount (integer or null), readingOrder/camera/style/story/anatomy/pageText (pass|fail|uncertain), breakout (pass|fail|uncertain|not_requested), issues (array of Japanese observed problems, empty when none), pageEvidence (STRING: transcribe actual title/footer lettering seen, including missing/unreadable text), evidence (one item for EVERY panel, with panel number, Japanese view.evidence/style_observation.evidence/story/anatomy observations, and breakout observation when requested). ${buildExperimentalReadingReviewContract(plan)} Never copy example text, source descriptions, or Camera labels as observed evidence. Defaults for anything not observable are uncertain/null, never pass. ${pageCompositionReview(plan)} Optional border breakouts and visualEffects may be omitted if needed for a clean coherent composition; their absence alone is not a material failure or a reason for regeneration. Distinguish translucent prop motion trails from solid duplicate props or extra limbs. Observe slanted borders as borders, not a change to the physical Camera.
 ${READING_FLOW_DIRECTION}
 Inspect exact panel count/reading order, ALL required camera elevations/projections/crops and style differences, original action/facts/ending/dialogue ownership and connected anatomy; adjacent faces/text remain legible. Locate each observation in the actual page, describe visible body extent and occlusion; never infer hidden/cropped feet or a breakout from the plan. Cropped feet alone are advisory, never a camera failure or a regeneration reason. Camera observations describe visible head/shoulder planes, horizon and perspective; style observations describe actor faces/bodies and background pigment/ink separately, not tag names. Keep each observation concise.
 BALLOON OWNERSHIP — ANONYMOUS GEOMETRY: For EVERY physical_bodies entry, independently measure head_bounds:[left,top,width,height] tightly enclosing its actual visible head/hair silhouette in the assigned panel. This is separate from the whole-body bounds. A visible rear head has head_bounds; an entirely unseen head uses null with the actual gaze.visibility_basis. Do not infer head coordinates from names, speaking, balloon placement or the source. For each speech_balloon record tail_targets:[{root:[x,y],tip:[x,y],region:head|mouth|uncertain,evidence}]. root is the center of the tail's visible base on the balloon outline; tip is its actual pointed endpoint. Trace the drawn triangle from base to tip; do not substitute the speaker's location for either point. Describe the observed outline and direction without character names. Do NOT assign body_id or choose a speaker: the program intersects this observed direction with independently measured head rectangles, then binds cast identity. All coordinates are within the same observed panel, x=0 left/1 right and y=0 top/1 bottom. Shared balloons need each actual branch. Missing/untraceable tails use null, never invented geometry; non-speech regions use null. Correct wording or the source speaker does not prove correct ownership.
@@ -908,6 +985,8 @@ function independentlyObservedCompositionIssues(review,plan) {
 }
 
 export function experimentalRepairIssues(review, plan) {
+  if(review?.nonComicOutput===true&&isConfirmedNonComic(normalizePageContent(review.pageContent)))return [{type:'story_integrity',panel:null,
+    subject:'page content',reason:review.pageContent.evidence,correction:'不合格画像は編集せず、元の台本・描画指示から新規生成する。'}];
   const located=review?.observedCount===plan.count&&(!review.validationErrors?.length
     ||review.validationErrors.every(error=>/^evidence\[[1-9]\d*\]\./.test(error)));
   const depictionIssues=located&&review?.inspectionVersion>=12?(plan.expectedCast||[]).flatMap(({panel,depictedNames})=>
@@ -1014,7 +1093,24 @@ function inspectIndependentBodyGaze(bodies, incompleteCensus, structured = false
   return {direction,observations};
 }
 
+function normalizePageContent(value) {
+  if(!value||typeof value!=='object'||Array.isArray(value))return null;
+  const kind=['comic','non_comic','uncertain'].includes(value.kind)?value.kind:'uncertain';
+  const category=['sequential_art','single_photograph','unrelated_image','blank_or_error_screen','uncertain'].includes(value.category)?value.category:'uncertain';
+  return {kind,category,evidence:typeof value.evidence==='string'?sanitizeErrorMessage(value.evidence).trim():''};
+}
+function isConfirmedNonComic(value) {
+  return value?.kind==='non_comic'&&['single_photograph','unrelated_image','blank_or_error_screen'].includes(value.category)
+    &&value.evidence.length>=8;
+}
+
 export function validateExperimentalReview(review, plan) {
+  const pageContent=normalizePageContent(review?.pageContent);
+  if(isConfirmedNonComic(pageContent))return {inspectionKind:'page-content',inspectionVersion:EXPERIMENTAL_INSPECTION_VERSION,
+    pageContent,nonComicOutput:true,unboundObservations:review.unboundObservations||review,
+    status:'warning',observedCount:null,observedFrames:[],evidence:[],readingOrder:'uncertain',camera:'uncertain',
+    style:'fail',story:'fail',anatomy:'uncertain',pageText:'uncertain',breakout:'uncertain',pageEvidence:review.pageEvidence||null,
+    issues:[`漫画として不合格: ${pageContent.evidence} 無関係な画像は修正元にせず、元の台本から新規生成してください。`]};
   if(review?.inspectionKind==='whole-page-geometry') {
     let frames=[];
     if(review.complete===true&&Array.isArray(review.observedFrames)&&review.observedFrames.every(frame=>
@@ -1026,6 +1122,7 @@ export function validateExperimentalReview(review, plan) {
     const layoutIssue=observedSpanningLayoutIssue(frames,plan);
     return {inspectionKind:'whole-page-geometry',inspectionVersion:EXPERIMENTAL_INSPECTION_VERSION,
       complete:frames.length>0,observedCount:frames.length||null,observedFrames:frames,evidence:[],
+      ...(pageContent?{pageContent}:{}),...(review.unboundObservations?{unboundObservations:review.unboundObservations}:{}),
       status:countIssue||layoutIssue?'warning':'unverified',readingOrder:countIssue||layoutIssue?'fail':'uncertain',
       camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'uncertain',pageEvidence:null,
       issues:[countIssue,layoutIssue,frames.length?'全体画像でコマ枠だけを観察しました。コマごとの台詞・人物・画風・カメラは目視確認してください。':

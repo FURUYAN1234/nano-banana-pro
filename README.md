@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.5.9** / 現在のソース版: **v7.5.9**
+> Current source version: **v7.6.0** / 現在のソース版: **v7.6.0**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -153,11 +153,13 @@ Style instructions apply to faces, hair, clothes, props and backgrounds while pr
 
 POP requests printed color shapes and dots on faces too; watercolor requests transparent pigment layers on faces and hair; GEKIGA requests facial structure and intersecting pen lines. Ordinary four-panel and four- to eight-panel routes share these character-rendering instructions. The latter separates reference appearance data from each panel's drawing recipe: hair, skin, glasses and identifying facial features remain, while stylized eye size and painting follow the panel's medium. An explicit reference-style lock takes priority. / POPでは人物の顔にも印刷の色面と網点、水彩では顔・髪にも透明な顔料の重なり、劇画では顔の骨格と交差するペン線を指定します。通常4コマと4～8コマで共通の人物描画指示を使います。4～8コマでは参照シートの外見情報をコマの描画指示と分け、髪・肌・眼鏡・顔の識別点を残しながら、目の様式的な大きさや塗り方を各コマの画風に合わせます。参照絵柄を固定する設定では、その固定を優先します。
 
-For OpenAI image generation, a built-in technique guide is attached automatically only when a color scenario includes POP, watercolor or GEKIGA. It guides the relevant panels' rendering; it does not supply identity, clothes, poses, composition or lettering. Monochrome, custom-style and reference-style-preserving modes, including SeriousDocumentary, omit it, as do scenarios containing only NORMAL, SKETCH and CHIBI_GAG. For OpenAI Web generation, save `nano-panel-media.png` from STEP4 and attach it last, after all STEP1 source images. A guide does not guarantee style compliance; inspect the cast and rendering afterward. / OpenAI画像APIでは、カラーのPOP・水彩・劇画を含む台本に、組み込みの描法見本を自動添付します。見本は該当コマの描き方だけに使い、人物の同一性・衣装・ポーズ・構図・文字は写さない指示です。白黒、カスタム画風、参照絵柄を保持する設定（SeriousDocumentaryを含む）では添付しません。通常・スケッチ・ちびギャグだけの台本にも添付しません。OpenAI向けWeb貼り付けでは、STEP4に表示される見本を nano-panel-media.png として保存し、STEP1の元画像をすべて添付した後、最後に添付してください。描法見本があっても指定どおりの描写を保証するものではないため、生成後の人物と画風を確認してください。
+For OpenAI image generation, a built-in technique guide is attached automatically when a color or monochrome scenario includes POP, watercolor or GEKIGA. It guides only the selected panels' rendering, not identity, clothes, poses, composition or lettering. Monochrome borrows ink, hatching and screen technique while preserving paper white and the script's skin/material tone assignments; it does not copy the guide's colors or painted washes. Custom-style and reference-style-preserving modes, including SeriousDocumentary, omit it, as do scenarios containing only NORMAL, SKETCH and CHIBI_GAG. For OpenAI Web generation, save `nano-panel-media.png` from STEP4 and attach it last, after all STEP1 source images. A guide does not guarantee style compliance; inspect the cast and rendering afterward. / OpenAI画像APIでは、カラー・白黒とも、POP・水彩・劇画を含む台本に組み込みの描法見本を自動添付します。見本は指定されたコマの描き方だけに使い、人物の同一性・衣装・ポーズ・構図・文字は写さない指示です。白黒では墨線・ハッチ・網点の描法を参照し、紙白と台本の肌・素材の割当トーンを優先します。見本の色や彩色のにじみは写しません。カスタム画風、参照絵柄を保持する設定（SeriousDocumentaryを含む）では添付しません。通常・スケッチ・ちびギャグだけの台本にも添付しません。OpenAI向けWeb貼り付けでは、STEP4に表示される見本を nano-panel-media.png として保存し、STEP1の元画像をすべて添付した後、最後に添付してください。描法見本があっても指定どおりの描写を保証するものではないため、生成後の人物と画風を確認してください。
 
 
 
 
+
+Hand-ink cues use pressure variation, entry/lift, slight wobble and dry accents only in shadows/hatching. Selected media, readable faces/hands/text, camera and acting remain primary; watercolor/pencil are not forced into ink. / 墨の媒体では筆圧の太細・入り抜き・微小な揺らぎと、影やハッチ部分だけのかすれを加える指示です。各画風・顔や手と文字の判読性・カメラ・演技を保ち、水彩や鉛筆へ墨を強制しません。
 
 ## Visual direction and reading / 演出と読みやすさ
 
@@ -623,6 +625,8 @@ Manual-topic changes use a dedicated input gateway and separate field identifier
 
 ## Prompt and image safeguards / プロンプトと画像の確認
 
+In the 4–8-panel comprehensive review with automatic repair ON, positive visual evidence that an output is not a comic rejects that candidate, stops full-auto/loop processing and prevents its use as an automatic repair source or automatic save. Retry STEP4 from the original drawing prompt. Uncertain panel boundaries alone do not trigger this verdict; automatic repair OFF skips the review. / 自動修正ONの4～8コマ用総合検査で、画像上の根拠から漫画以外と判定した候補は不採用にします。その画像を自動修正元・自動保存に使わず、全自動・連続生成を止めます。STEP4で元の描画指示から再生成してください。境界不明だけではこの判定にせず、自動修正OFFでは検査を行いません。
+
 An authored breakout is composed as one foreground body across its source and receiving panels; the receiving panel's camera and medium apply to its local actors. An incomplete review remains unverified, while a separately grounded failure of the required composition can still enter the same bounded repair. Missing observations or uncertain boundaries alone never authorize a repair. / 指定した枠越えは、元のコマと受け入れるコマをまたぐ一つの身体として配置します。受け入れ側のカメラと描法は、その場面の独立した人物へ適用します。検査の欠落は未確認を維持しつつ、実際の枠境界と指定構図の失敗を独立に確認できた場合は、同じ最大1回の修復へ渡します。観察の不足や境界不明だけでは修復を起動しません。
 
 Visual QA requests ordinary JSON objects and arrays, retaining actors, hands, text, coordinates and checks instead of imposing a second positional table format. Compatible older table responses are still validated and expanded; malformed reports and output-limit termination remain unverified and cannot authorize image repair. Required evidence takes priority over a fixed brevity target. QA reads cast contracts from both compact and full provider prompts. This does not guarantee that every API review fits its output limit. / 画像QAは通常のJSON形式で回答を求め、人物・手・文字・座標・検査項目を保持します。位置依存の表形式への変換を追加要求しません。以前の表形式の回答も検証・展開できますが、不正な回答や出力上限での終了は未確認として扱い、画像修正の根拠にはしません。固定の短文化目標より必須の根拠を優先し、短縮版・通常版のプロンプト双方から人物一覧を読み取ります。すべてのAPI検査が上限内に収まる保証ではありません。
@@ -709,7 +713,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.5.9](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.9のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.5.9](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.6.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.9のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.6.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -761,7 +765,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **A missing-dialogue warning at STEP3 / STEP3の台詞なし警告** A panel without speech can continue with its warning in both four-panel and 4–8-panel modes. The original panel, action, camera and other speech remain unchanged; no dialogue is invented. Broken dialogue quotes and invalid panel numbering remain blocking errors with specific reasons. / 台詞がないコマの警告だけなら、4コマ・4〜8コマとも台本を保持して継続します。台詞を勝手に追加せず、コマ・描写・カメラ・他コマの台詞を保持します。台詞の括弧破損やコマ番号の不備は、具体的な理由を示して停止します。
 
-**How can I report a bug? / 不具合の調査ログは？** Use “不具合調査ログ” beside STEP4 in the top progress bar. Its panel opens directly below the Super FURU title frame, with smaller explanatory text and space before auto-save settings. The top controls through the Super FURU frame are always fixed; opening the log extends that same fixed block through the panel, with no gap or title drift during page scrolling; explanations, actions and a white-background/black-text JSON preview share one scroll area. New terminal errors open it automatically; recoverable scenario-review findings, normal results and user cancellation do not. Refresh it after a failure. Give the investigating AI the complete JSON and a short symptom description. STEP2 validation failures retain the rejected generated candidate and exact reasons, separately from the previously displayed scenario. Page-composition failures use page-schema repair guidance instead of panel-count guidance. STEP3 failures retain the original error name, code and reduced source location in that JSON; failureContext also preserves invocation-time scenario, cast, topic and final prompt, plus failed balloon-repair responses, rejected scenario-quality reviews and per-panel evidence. Known credentials and image data are omitted; originalLengths/truncatedFields declare text caps. Sharing this JSON shares those texts. Generic API bodies and arbitrary exception messages remain excluded. Older exports that lost these fields cannot recover the original cause. Every export includes readable UTC timestamps, operation labels, a generic application specification and an investigation guide; these do not contain personal or material-specific proper names. IndexedDB retains logs after ordinary browser closure or restart; keeping the browser running is unnecessary. The same browser/origin retains the most recent seven days, with oldest-first eviction at 2 MiB of event data or 2,000 events; database overhead is additional. Pruning runs on startup, writes, reads and hourly while open. Public and localhost logs are separate. If browser storage fails, the viewer warns that only temporary memory recording is available. / 上部の「4 画像生成」の横にある「不具合調査ログ」を押すと、Super FURUのタイトル枠の直下に説明枠が開きます。説明文を小さくし、自動保存欄との間に余白を設けています。通常は上部の操作欄からSuper FURU枠の下端まで、開くとログ枠の下端までを一つの固定枠とし、全体スクロールでも隙間やずれが出ないようにしています。説明・操作・白背景黒文字のJSONプレビューを枠全体でスクロールできます。処理を停止する新たなエラー時は自動で開き、修復・候補保持を続ける台本検査の指摘、正常終了、利用者による中断では開きません。不具合後は「最新に更新」してください。JSONには読みやすいUTC時刻・操作名・固有名詞を含まない仕様要約・調査手順が毎回入り、そのまま調査担当のAIへ渡せます。簡単な症状をひと言添えてください。STEP2の検査失敗では不採用の生成候補と具体的な理由を残し、以前の表示台本と区別します。ページ構成の不備にはコマ数ではなく構成JSONの修正指示を返します。STEP3の失敗では元の例外の種類・コード・縮約した発生位置をJSONへ残します。失敗時の台本・人物設定・入力・描画指示はfailureContextへ残し、吹き出し修復の応答、シナリオ品質検査の不合格内容と各コマの不一致も記録します。既知の認証文字列と画像本体は除外し、長文の省略はoriginalLengthsとtruncatedFieldsに明記します。共有すると作品の文章も相手へ渡ります。一般API本文や任意の例外全文は記録しません。旧版で失われた原因情報は復元できません。通常のブラウザー終了・再起動では消えないIndexedDBに保存します。起動し続ける必要はありません。同じブラウザー・同じURLの保存領域に直近7日分を残し、記録データ2MiBまたは2,000件を超えると古い方から削除します（DBの管理容量は別）。起動・記録・閲覧時と、画面を開いている間は1時間ごとに削除を確認します。公開版とlocalhostは別記録です。保存できない場合は一時記録のみであることを表示します。
+**How can I report a bug? / 不具合の調査ログは？** Use “不具合調査ログ” beside STEP4 in the top progress bar. Its panel opens directly below the Super FURU title frame, with smaller explanatory text and space before auto-save settings. The top controls through the Super FURU frame are always fixed; opening the log extends that same fixed block through the panel, with no gap or title drift during page scrolling; explanations, actions and a white-background/black-text JSON preview share one scroll area. New terminal errors open it automatically; recoverable scenario-review findings, normal results and user cancellation do not. Refresh it after a failure. Give the investigating AI the complete JSON and a short symptom description. STEP2 validation failures retain the rejected generated candidate and exact reasons, separately from the previously displayed scenario. Page-composition failures use page-schema repair guidance instead of panel-count guidance. STEP3 failures retain the original error name, code and reduced source location in that JSON; failureContext also preserves invocation-time scenario, cast, topic and final prompt, plus failed balloon-repair responses, rejected scenario-quality reviews and per-panel evidence. Known credentials and image data are omitted; originalLengths/truncatedFields declare text caps. Sharing this JSON shares those texts. Additional image-request matching records only prompt length and SHA-256, without adding prompt bodies, image data or credentials. Generic API bodies and arbitrary exception messages remain excluded. Older exports that lost these fields cannot recover the original cause. Every export includes readable UTC timestamps, operation labels, a generic application specification and an investigation guide; these do not contain personal or material-specific proper names. IndexedDB retains logs after ordinary browser closure or restart; keeping the browser running is unnecessary. The same browser/origin retains the most recent seven days, with oldest-first eviction at 2 MiB of event data or 2,000 events; database overhead is additional. Pruning runs on startup, writes, reads and hourly while open. Public and localhost logs are separate. If browser storage fails, the viewer warns that only temporary memory recording is available. / 上部の「4 画像生成」の横にある「不具合調査ログ」を押すと、Super FURUのタイトル枠の直下に説明枠が開きます。説明文を小さくし、自動保存欄との間に余白を設けています。通常は上部の操作欄からSuper FURU枠の下端まで、開くとログ枠の下端までを一つの固定枠とし、全体スクロールでも隙間やずれが出ないようにしています。説明・操作・白背景黒文字のJSONプレビューを枠全体でスクロールできます。処理を停止する新たなエラー時は自動で開き、修復・候補保持を続ける台本検査の指摘、正常終了、利用者による中断では開きません。不具合後は「最新に更新」してください。JSONには読みやすいUTC時刻・操作名・固有名詞を含まない仕様要約・調査手順が毎回入り、そのまま調査担当のAIへ渡せます。簡単な症状をひと言添えてください。STEP2の検査失敗では不採用の生成候補と具体的な理由を残し、以前の表示台本と区別します。ページ構成の不備にはコマ数ではなく構成JSONの修正指示を返します。STEP3の失敗では元の例外の種類・コード・縮約した発生位置をJSONへ残します。失敗時の台本・人物設定・入力・描画指示はfailureContextへ残し、吹き出し修復の応答、シナリオ品質検査の不合格内容と各コマの不一致も記録します。既知の認証文字列と画像本体は除外し、長文の省略はoriginalLengthsとtruncatedFieldsに明記します。共有すると作品の文章も相手へ渡ります。画像リクエストの送信照合用に追加する記録は、prompt文字数とSHA-256だけです。本文・画像本体・キーは新たに増記しません。一般API本文や任意の例外全文は記録しません。旧版で失われた原因情報は復元できません。通常のブラウザー終了・再起動では消えないIndexedDBに保存します。起動し続ける必要はありません。同じブラウザー・同じURLの保存領域に直近7日分を残し、記録データ2MiBまたは2,000件を超えると古い方から削除します（DBの管理容量は別）。起動・記録・閲覧時と、画面を開いている間は1時間ごとに削除を確認します。公開版とlocalhostは別記録です。保存できない場合は一時記録のみであることを表示します。
 
 Log preparation shows a floating progress card and enables export once the snapshot is ready. Refreshing an existing snapshot keeps that snapshot available for save/copy and shows its capture time. The on-screen preview contains only the latest 10 events, capped at 16,000 characters; JSON save and copy retain the full export, including the application contract and investigation guide. Viewing a persisted log uses a read-only transaction without rewriting the stored rows. Recoverable review findings are recorded as `workflow.warning` with the same sanitized failure context; `workflow.review` records the final scenario review outcome and whether it passed without warnings. An export taken before that outcome is a partial record, not proof of failure or success. / ログ準備中はフローティング表示で案内し、準備完了後に保存・コピーを使えます。更新中も取得済みのログは保存・コピーでき、取得時刻を表示します。画面は直近10件・最大16,000文字のプレビューに限定し、JSON保存・コピーには全件と仕様・調査手順を含めます。保存済みログの閲覧では全件の書き戻しを行いません。台本検査中の回復可能な指摘は `workflow.warning` として元台本・判定内容を保持し、最終結果は `workflow.review` に採否と警告なしの合格かを記録します。最終結果より前に取得したJSONは途中記録であり、失敗・合格の証明とは扱いません。
 
@@ -771,7 +775,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.6.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.6.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -842,6 +846,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ## 📋 ChangeLog / 更新履歴
 
+### v7.6.0 (2026-11-15)
+- **[Fix & UX]** Strengthen pressure-varied hand ink and local dry accents, support monochrome technique references and shared recipes, and stop evidenced non-comic output without repair or saving. Record outgoing prompt length and SHA-256 for diagnostics. / 墨の筆圧・揺らぎ・局所かすれを補強し、白黒の描法見本と共有レシピに対応。根拠付きの非漫画判定で自動修正・保存・連続処理を止め、送信文字数とSHA-256を診断へ記録。
+
 ### v7.5.9 (2026-11-15)
 - **[Fix & UX]** Restore downstream steps after enhancement without closing it, bring the STEP3 action fully into view, and plan scene-fit composition, depth, lighting and detail before choosing a style / 強化終了後も開いたまま後続STEPを表示し、STEP3ボタン全体への移動を修正。場面に合う構図・奥行き・明暗・描写密度を画風選択より先に検討
 
@@ -894,85 +901,3 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 ### v7.4.6 (2026-11-11)
 - **[Fix & UX]** Fix false camera rejections and page-composition retry misclassification in STEP2; retain the rejected candidate and validation reasons in diagnostics. / STEP2の日本語カメラ指定の誤検出と、ページ構成エラーがコマ数修正へ誤分類される問題を修正。不合格の生成候補と判定理由を不具合ログへ保存。
 
-### v7.4.5 (2026-11-11)
-- **[Fix & UX]** Free page authoring now compares story peaks and the structures of six recent session works, preserving bold hero scenes, breakouts and bleed without diversity-only retries. / 自由配置の固定例を見直し、物語の山場と直近6作品の構図を比較してページを設計。大コマ・枠越え・タチキリを保持し、構図の類似だけでは再生成しません。
-
-### v7.4.4 (2026-11-11)
-- **[Fix & UX]** Clarify the fixed horizontal four-panel legacy mode and the free-layout four-to-eight-panel mode. / 横長4コマを厳守するレガシーと、4コマから自由配置する4～8コマ生成の名称・説明を明確化。
-
-### v7.4.3 (2026-11-11)
-
-- Removed active GPT Image 2.0 selections and fallback routes. GPT Image 2.6 remains the default; provider failures do not silently switch to the retired model. / GPT Image 2.0の選択肢と代替経路を除去しました。既定のGPT Image 2.6を維持し、失敗時に旧モデルへ自動切替しません。
-
-### v7.4.2 (2026-11-11)
-- **[Fix & UX]** Design free page geometry, page-dominant figures across small panels and full bleed from ordinary 4–8-panel scenarios and retain them through rendering and review. Fix conflicting body containment and offscreen cast detection. Allow bottom credits to overlap artwork or remain obscured. / 通常の4～8コマ台本から自由配置・複数小コマに重なる大きな人物・タチキリを設計し、描画と検査へ保持。全身の枠内固定と画面外人物の誤検出を修正。下部クレジットは絵との重なりや遮蔽を許容。
-
-### v7.4.1 (2026-11-10)
-
-- **[STEP3]** Keep the accepted camera directly from the script in 5–8-panel layouts. If the planner proposes a different shot, preserve the original staging in that panel. Invalid dialogue mappings still stop with a diagnostic reason. / 5～8コマのSTEP3では台本のカメラを直接引き継ぎます。配置案が別の撮影を指定したコマは元の状況も維持します。台詞の対応が不正な配置案は、理由を記録して引き続き拒否します。
-- **[Camera and diagnostics]** Use the chosen angle when the script rejects another angle, and include rejected layout responses and reasons in diagnostic JSON. / 否定された角度を描画指示に混ぜず、採用された角度を使います。採用できない配置案は応答と理由を調査JSONに残します。
-
-### v7.4.0 (2026-11-10)
-
-- **[Cast review]** Keep independently identified, out-of-panel cast members in the correction plan. Preserve required actors and remove only the grounded extra bodies; uncertain identities and ordinary background people remain protected. / そのコマに不要な既知の登場人物を、独立した身体と特徴の観察に基づいて修正対象へ引き継ぎます。必要な人物は保持し、同定が不確かな人物や正当な背景人物を削除しません。
-- **[Frame proportions]** Compare measured frame boundaries with the approved comic-area proportions, allowing narrow gutters and outer margins. Large mismatches enter the same bounded repair. / 実測した枠境界を漫画領域内の指定比率と照合します。細い溝や外余白の差は許容し、大きな不一致は同じ1回の修正へ渡します。
-
-- **[Large images]** Send images above the JSON data-URL limit as lossless multipart files to the same image-edit API. Keep original pixels, model, output size and reference order. / JSONの文字数上限を超える画像は、同じ画像編集APIへPNG等のファイル形式で送ります。元画素・モデル・出力寸法・参照順を保持し、生成直後の検査準備で停止する問題を修正しました。
-- **[Scenario]** Separate causal references to an earlier speaker from actors visible in the current panel. New scripts distribute news facts across short utterances and choose physically consistent cameras, without rewriting existing dialogue or explicit user directions. / 前の発言への言及と、そのコマに実際に登場する人物を区別します。新規台本ではニュースの必要情報を短い台詞へ配分し、カメラ位置から見える面と描写を揃えます。既存台詞や明示された指示は書き換えません。
-- **[Review]** Accept omitted unused correction fields only for explicitly passing checks with evidence. Missing verdicts, missing evidence and failures without a correction remain invalid. / 根拠があり明確に合格した項目では、不要な空の修正欄の省略を受け付けます。合否・根拠がない応答や、修正案のない不合格は引き続き未確認です。
-- **[Repair budget]** Share repeated lettering, camera and cast instructions across mixed repairs while retaining every target and the complete original prompt. Log repair failures with their actual budget and review evidence. / 台詞・カメラ・人物が同時に不合格になっても、共通の修正指示を一度にまとめ、全対象と元の指示全文を保持します。修正失敗は実際の送信枠と判定根拠をJSONに残します。
-- **[Panel repair]** Distinguish a clipped figure inside a correct frame from a misplaced page boundary. Boundary repair can move the affected gutter and reflow neighboring panels while preserving their content, cameras and reading order. / 正しい枠内での人物の欠けと、枠位置そのものの誤りを分けます。枠位置の修正では対象の溝と隣接コマを移動・再配置でき、内容・カメラ・読順は保持します。
-- **[Lettering]** Preserve original API lettering and original/repaired image history. Remove the local font overlay; phrase-based column suggestions apply only to confirmed text corrections. / 元のAPI文字と元画像・修正画像の履歴を保持します。ローカルで別フォントへ置き換える処理は撤回し、文節に沿う列案は確認された文字の不一致の修正にだけ使います。
-
-Image review emits anonymous bodies and lettering before identity and verdicts. Luna image QA uses high reasoning effort, with one review and at most one repair. / 画像検査は匿名の身体・文字の観察を先に出力し、その後で人物名と合否を照合します。GPT-6 Lunaの画像検査は `reasoning_effort=high`、検査1回・自動修正最大1回です。
-
-Image edits lead with requested changes and preservation rules, retaining the entire approved prompt as reference. / 画像修正は変更箇所と維持条件を先頭で指定し、元の指示全文を参考契約として保持します。
-- **[Fix & UX]** Distinguish recoverable review findings from terminal errors; add log loading feedback and a bounded preview while retaining full exports and final review outcomes. / 修復途中の品質指摘を停止エラーと区別し、調査ログの準備中表示と軽量プレビューを追加。全文の保存・コピーと検査結果の記録を維持。
-- **[Action]** Strengthen scene selection and review for news-based action: a large preparation pose followed only by a tiny hand movement does not satisfy the selected action direction. Preserve reported facts and explicit motion constraints. / ニュースのアクション演出は、準備姿勢だけを大きくして手先の小さな操作で終える構成を見直し、題材に沿う全身動作を設計・検査します。報道事実と明示された動作条件は維持します。
-- **[Fix]** Interpret authored emotion tags consistently across four-panel and 5–8-panel rendering; preserve the reference-style fallback when no tag is present. / 4コマと5〜8コマで感情タグの描法解釈を統一し、タグなしの場合の参照画風への継承も維持します。
-- **[Image repair]** Allow reported frame clipping to be corrected inside the existing panel rectangle, while preserving intentional crops, breakouts and other panels. / 枠際の欠けを指摘されたコマでは、枠配置を保って内部の切り取り方を修正します。意図した接写・枠越えと他のコマは保持します。
-- **[Review]** When local frame detection is incomplete, inspect the intact 5–8-panel page in the same single review request even without a planned breakout. Unresolved geometry remains unverified; expected rectangles are never used as observed crops. / 5〜8コマの枠検出が不足した場合は、枠越え指定がなくても同じ1回のAPIで全ページを検査します。実境界が未確定なら未確認を保ち、予定位置からの推測切り出しは行いません。
-
-### v7.3.9 (2026-11-10)
-- **[Fix & UX]** Strengthen story-faithful action staging, preserve accepted warnings during balloon repair, and persist failure inputs and repair evidence in diagnostic JSON. / アクションの身体演技を強化。吹き出し修復時の警告判定を統一し、失敗時の入力と修復内容を調査JSONへ記録。
-
-### v7.3.8 (2026-11-09)
-- **[Fix & UX]** Build action across panels from its first movement to the payoff. / アクション選択時は途中から動きが始まり、人物や物の変化が結末につながるよう台本を組み立てます。
-
-### v7.3.7 (2026-11-09)
-- **[Fix & UX]** Add serious and gag action options, clarify spanning frames, and fix camera-position parsing and panel review. / シリアス・ギャグのアクション選択、縦2段のコマ割りと境界検査、カメラ位置の誤読を改善。
-- **[Fix]** Restore artwork SFX, preserve speaker checks without rejecting clear sideways tails, and calculate repair budgets from the actual replacement reference manifest. / 絵としての擬音を復元。明確な横向きの尾を話者違いと誤認せず、修正時の指示文上限を実際の参照一覧で計算します。
-
-### v7.3.6 (2026-11-09)
-- **[Fix]** Share repeated native-page style recipes when a color change would exceed the reserved OpenAI prompt budget. Preserve the layout and authored instructions. / 5〜8コマの白黒切替などで描画指示が上限を超える場合、同じ画風の説明を対象コマにまとめ、元の配置と指示を保持。
-
-### v7.3.5 (2026-11-09)
-- **[Fix & UX]** Align native-page STEP3 handling of missing-dialogue quality warnings with four-panel mode; preserve the scenario and speech, while rejecting broken dialogue or panel structure with specific reasons. / 5〜8コマのSTEP3で台詞なしの品質警告を通常4コマと同じ扱いに統一。台本と台詞を保持し、壊れた台詞やコマ構造は理由を示して停止。
-
-### v7.3.4 (2026-11-09)
-- **[Fix & UX]** Separate clear drawing directions from documentary source text while retaining factual, quotation and retrieved-article checks. / ドキュメンタリーで制作・演出指示を事実本文と混同する誤検出を修正。数値・引用・取得済み記事の検査を維持。
-
-### v7.3.3 (2026-11-07)
-- **[Fix & UX]** Added style-scoped monochrome ink economy for redundant hair strands, fabric wrinkles and background micro-detail, preserving black masses, white reserves, GEKIGA hatching and skin/material tones. / 白黒漫画の通常コマで髪の細線・服のしわ・背景の微細描写を整理する指示を追加。黒ベタと白い余白、劇画のカケアミ、肌と衣服のトーンを保つ。
-
-### v7.3.2 (2026-11-07)
-- **[Fix & UX]** Preserve the original STEP3 exception so diagnostic JSON retains its name, code and reduced source location without storing input or credentials. / STEP3失敗時の元の例外を保持し、診断JSONにエラー名・コード・発生位置を残す。本文・キーは保存しない。
-
-### v7.3.1 (2026-11-07)
-- **[Fix & UX]** Fixed speech and balloon order checks against the final prompt in the standard Gemini four-panel workflow. / Gemini の通常4コマで、最終プロンプトに指定した台詞と吹き出しの読順を正しく照合するよう修正。
-- **[Fix]** Check visible camera pitch and balloon-tail direction; preserve valid OpenAI panel plans when optional effects are invalid. / カメラの上下角と吹き出しの尾を実画像の根拠で確認し、無効な任意演出でOpenAIのコマ割りが止まる不具合を修正。
-
-### v7.3.0 (2026-11-05)
-- Added GPT Image 2.6 Sunburst to STEP4 with availability-based initial selection. / STEP4にGPT Image 2.6 Sunburstを追加。接続先で使えるモデルに応じて初期選択します。
-
-### v7.2.9 (2026-11-04)
-- **[Fix & UX]** Review scenario enhancements against the original via API, distinguish verified gains from partial or unchanged outcomes, and fit vertical dialogue first while preserving artwork. / シナリオ強化を元台本とのAPI比較で判定し、改善・一部改善・元台本保持を区別。フキダシは絵の描き込みを保ちながら縦書きの列割りを優先。
-
-### v7.2.8 (2026-11-04)
-- **[Fix & UX]** Match the browser tab title to the app name. / ブラウザーのタブ名をアプリの正式名称に統一。
-
-Earlier versions / 過去の版: [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases)
-
-The emergency stop is red during active AI work and owned automatic continuations, including reasoning, response reception, retry waits and scheduled loop rounds; idle/armed-only and stopped states are grey and disabled. Existing cancellation and output preservation are unchanged. / 緊急停止は、思考待ち・応答受信や実行中ジョブの段階間・再試行待ち・次周回の予約中は赤色で押せます。全自動の入力待機だけの場合や停止後はグレーの非活性です。通信中断と取得済み結果の保持は従来の処理を維持します。
-
-After API setup, the emergency stop stays at the top right of the viewport (hidden before setup) above processing overlays; idle and stopped states remain readable, grey and disabled. / 初期API設定中は緊急停止を隠し、設定後は画面右上に固定し、処理中の覆いより手前に表示します。待機中・停止済みは読みやすいグレーで非活性です。

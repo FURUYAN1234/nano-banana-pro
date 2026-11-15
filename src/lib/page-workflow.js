@@ -5,7 +5,9 @@ import { buildExperimentalImagePrompt, readExperimentalSource } from './experime
 export function resolvePageWorkflow({ experimentalEnabled, prepared, prompt, input }) {
   if (experimentalEnabled && input?.providerFamily === 'gemini') throw new Error('Geminiは4コマのみ対応しています。');
   if (!experimentalEnabled) {
-    if (/^Create ONE complete Japanese manga page with EXACTLY \d+ (?:framed panels\.|story scenes:)/.test(prompt)) {
+    const compactNative = /^日本の白黒漫画を一ページ描く。場面数は厳密に [4-8] (?:コマ|（ページ大前景を含む）)。/.test(prompt)
+      && /^\[PAGE FRAME P(\d+)\b[^\n]*\]\r?\n[\s\S]*?^\[END PAGE FRAME P\1\]/m.test(prompt);
+    if (compactNative || /^Create ONE complete Japanese manga page with EXACTLY \d+ (?:framed panels\.|story scenes:)/.test(prompt)) {
       throw new Error('実験用の指示文を通常4コマの処理には送れません。STEP3を作り直してください。');
     }
     const kind = inferImageQualityMode(prompt);

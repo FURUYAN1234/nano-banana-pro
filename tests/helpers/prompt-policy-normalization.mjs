@@ -214,3 +214,10 @@ export const restoreFocusBefore756 = (value, { hierarchy = true } = {}) => Strin
   }
   return line;
 }).join('\n');
+
+// Local hand-ink experiment: exact inverse of its bounded compiler-only delta.
+// Frozen historical hashes still reject any other camera, style, actor or source change.
+const handInkContracts = JSON.parse(readFileSync(new URL('../fixtures/hand-ink-normalization.json', import.meta.url), 'utf8'));
+export const restoreHandInkBeforeLocal = value => handInkContracts.mappings.reduce(
+  (text, [current, previous]) => text.replaceAll(current, previous),
+  value.replaceAll(handInkContracts.cue + ' ', ''));

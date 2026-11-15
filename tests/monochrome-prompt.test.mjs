@@ -98,7 +98,7 @@ for (const family of ['chatgpt', 'gemini']) {
     assert.ok(prompt.includes('ローアングル') || prompt.includes('LOW ANGLE'));
     assert.match(prompt, /BODY ACTING|EXPRESSIVE DIRECTION/);
     assert.match(prompt, /G-PEN(?: INK DIRECTION)?:/);
-    assert.match(prompt, /pressure.*taper|taper.*pressure/i);
+    assert.match(prompt, /pressure.*taper|taper.*pressure|筆圧先細り/i);
     assert.match(prompt, /MONOCHROME BACKGROUND CLARITY LOCK/);
     assert.match(prompt, /simplify nonessential textures|omit (?:optional )?textures/i);
     assert.match(prompt, /story-required object or clue|Keep location\/depth\/all story evidence|keep setting\/depth\/story evidence/i);
@@ -342,7 +342,7 @@ test('native manga inking survives compaction without treating facial strokes as
       assert.match(prompt, /selected soft styles vary strokes, never fade facial anchors|白肌・光・柔らかい画風でも消さず/);
       assert.match(prompt, /unassigned=white; no dots\/grain/);
       assert.match(prompt, /G-PEN INK DIRECTION: NORMAL default; panel recipe wins/);
-      assert.match(prompt, /Focal ink follows the panel recipe/);
+      assert.match(prompt, /墨は媒体通り、NORMALは筆圧先細り/);
       assert.doesNotMatch(prompt, /Focal G-pen: strongest|strengthen focal G-pen/);
       assert.match(prompt, /PAPER: unassigned areas match balloon white; no scan haze\/fibers/);
       assert.match(prompt, /tall balloons; vertical text wins over available space|縦長フキダシ。空間より縦書き優先/);

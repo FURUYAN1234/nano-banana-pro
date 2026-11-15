@@ -92,7 +92,7 @@ test('focal ink, sharp story cues and actual exaggerated acting survive every ou
     const panelColorMedia = providerFamily === 'chatgpt' && colorMode === 'color';
     assert.match(prompt, /FOCAL READABILITY:/);
     if (colorMode === 'monochrome') {
-      assert.match(prompt, /Focal ink follows the panel recipe; NORMAL=pressure-taper/);
+      assert.match(prompt, /墨は媒体通り、NORMALは筆圧先細り/);
       assert.match(prompt, /輪郭\/接触を強く、顔\/手の細線を分離/);
       assert.match(prompt, /一律太線\/潰れ禁止/);
       assert.match(prompt, /反応\/道具\/文字を鮮明に/);
@@ -153,7 +153,7 @@ test('case-by-case near/far focus and required background text survive every pro
     assert.ok(prompt.includes('FOCUS PLAN:'), 'FOCUS PLAN missing from generated prompt');
     assert.match(prompt, /nonessential near\/far defocused, not pale\/thin/);
     assert.match(prompt, /Text\/contact\/reactions readable; exposition\/deep focus\/abstraction wins/);
-    assert.match(prompt, /shot scale|Camera scale/);
+    assert.match(prompt, /shot scale|Camera scale|Camera距離/);
     assert.doesNotMatch(prompt, /Clean finish: crisp foreground, softer background/);
   }
 });
@@ -171,7 +171,7 @@ test('focus separation preserves scripted cameras, acting and panel media under 
       colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test' });
     for (const camera of cameras) assert.ok(prompt.includes(camera), camera);
     assert.ok(prompt.includes('FOCUS PLAN:'), 'FOCUS PLAN missing after compaction');
-    assert.match(prompt, /shot scale|Camera scale/);
+    assert.match(prompt, /shot scale|Camera scale|Camera距離/);
     for (const action of ['予定表を指さす', '椅子を引く', '資料を拾う', '静かに目を伏せる']) {
       assert.ok(prompt.includes(action), `scripted acting missing: ${action}`);
     }

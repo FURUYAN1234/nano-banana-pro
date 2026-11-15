@@ -23,9 +23,9 @@ try {
     assert.match(result.prompt,/PAGE DOMINANT FIGURE F1/);
     assert.match(result.prompt,/P2, P3, P4/);
     assert.match(result.prompt,/FULL BLEED P1/);
-    assert.match(result.prompt,/EXACTLY 4 story scenes/);
+    assert.match(result.prompt,/EXACTLY 4 story scenes|場面数は厳密に 4 （ページ大前景を含む）/);
     assert.doesNotMatch(result.prompt,/EXACTLY 4 framed panels|綺麗に越えられなければ全輪郭を枠内に保持/);
-    assert.match(result.prompt,/PAGE DOMINANT FIGURE.*省略しない/);
+    assert.match(result.prompt,/PAGE DOMINANT FIGURE.*省略しない|大前景\/REQUIRED BREAKOUTを省かず/);
     assert.equal(result.prompt.split(composition.foregrounds[0].placement).length-1,1,'authored placement is retained once, not duplicated as JSON');
     assert.ok(result.prompt.includes(composition.reason));
     for(const frame of frames) assert.ok(result.prompt.includes('rect='+JSON.stringify(frame)));

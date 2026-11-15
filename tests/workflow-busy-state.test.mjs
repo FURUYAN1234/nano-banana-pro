@@ -855,3 +855,21 @@ for (const outcome of ['success', 'partial', 'retained', 'short', 'error']) {
     assert.ok(state.enhanceLog);
   });
 }
+
+test('rejected non-comic stays at STEP4, keeps evidence, and resume retries STEP4 instead of a new work',async()=>{
+ const photo='data:image/png;base64,unrelated';const valid='data:image/png;base64,prior-comic';const calls=[];
+ const {state,bind}=harness({generatedImage:photo,isFullAutoMode:true,isEndlessMode:true,
+  finalPrompt:'Approved complete five-scene manga instructions',
+  generationHistory:[{img:photo,selected:true,workflowSource:{promptAssemblyRun:7,finalPrompt:'Approved complete five-scene manga instructions'}},{img:valid,selected:true,workflowSource:{promptAssemblyRun:6,finalPrompt:'old'}}],
+  generateScenarioFromNews:async()=>{calls.push('WRONG NEW SCENARIO');return 'new';},assemblePrompt:async()=>{calls.push('WRONG STEP3');return 'new';},
+  regenerateImage:async()=>{calls.push(4);return false;}});
+ state.promptAssemblyRunRef.completedRun=7;
+ const before=[state.scenario,state.finalPrompt,state.manualTopic];
+ assert.equal(bind('rejectNonComicOutput')(photo,{nonComicOutput:true,issues:[{type:'story_integrity',reason:'single unrelated photograph'}]}),true);
+ assert.equal(state.generatedImage,photo);assert.equal(state.isGenerationError,true);assert.equal(state.imageQualityNeedsRepair,false);
+ assert.equal(state.isFullAutoMode,false);assert.equal(state.isEndlessMode,false);assert.equal(state.scenarioRunEpochRef.resume.step,4);
+ const rejected=state.generationHistory.find(x=>x.img===photo);assert.equal(rejected.qualityPass,false);assert.equal(rejected.selected,false);assert.equal(rejected.workflowSource,null);
+ assert.equal(state.generationHistory.find(x=>x.img===valid).selected,true);
+ assert.equal(getWorkflowStep({castList:state.castList,scenario:state.scenario,finalPrompt:state.finalPrompt,generatedImage:photo,promptAssemblyRun:7,imageSource:rejected.workflowSource}),4);
+ await bind('runFullAuto')({resume:true});assert.deepEqual(calls,[4]);assert.deepEqual([state.scenario,state.finalPrompt,state.manualTopic],before);
+});

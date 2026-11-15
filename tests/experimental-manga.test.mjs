@@ -7,7 +7,7 @@ import { createServer } from 'vite';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import Ajv from 'ajv';
-import { restoreWritingPolicyBefore729, restoreActionProjectionBefore737 } from './helpers/prompt-policy-normalization.mjs';
+import { restoreHandInkBeforeLocal, restoreWritingPolicyBefore729, restoreActionProjectionBefore737 } from './helpers/prompt-policy-normalization.mjs';
 
 const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
 try {
@@ -55,7 +55,7 @@ try {
       assert.match(prompt,/短句\/叫び\/横長も縦組/);
       assert.match(prompt,/横組は縦組の判読不能・絵の遮蔽時か明示指定のみ/);
       assert.match(prompt,/人物(?:描写)?保持。絵の縮小\/簡素化禁止/);
-      assert.match(prompt,/台詞は縦書き漫画明朝/);
+      assert.match(prompt,/台詞は縦書き漫画明朝|漫画明朝の縦書き/);
       assert.match(prompt,/preserve camera strength, drawing quality, style, expression and dramatic energy/);
       assert.ok(prompt.length<=32000);
     }
@@ -102,7 +102,7 @@ try {
     // the reviewed v7.5.6 focus clause and equivalent readability compaction
     // change only one quality-contract line (private focus-snapshot-review.json).
     assert.match(color, /Top title EXACTLY "無題"/);
-    let colorWithoutLayoutAddition=restoreActionProjectionBefore737(color.replace(/^SPANNING FRAMES（非印字）: .*\n/m,''));
+    let colorWithoutLayoutAddition=restoreActionProjectionBefore737(restoreHandInkBeforeLocal(color).replace(/^SPANNING FRAMES（非印字）: .*\n/m,''));
     const sharedOrder='人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定なら対象に応じた自然な頭向きを補う（明示の横目/目だけの移動/顔上げ/背面を優先、顔/対象の遮蔽保持）、可視瞳を指定先へ（対象未指定/閉眼/明示の読者目線保持）→独立Cameraで立体投影→画風';
     if(colorWithoutLayoutAddition.includes(`SHOT P1/P2/P3/P4/P5/P6 ONLY: ${sharedOrder}.\n`)) {
       colorWithoutLayoutAddition=colorWithoutLayoutAddition.replace(`SHOT P1/P2/P3/P4/P5/P6 ONLY: ${sharedOrder}.\n`,'')
@@ -151,9 +151,9 @@ try {
   });
   test('native monochrome shared medium direction cannot reintroduce colored watercolor after ink recipes',()=>{
     const prompt=m.buildExperimentalImagePrompt(six,source,input);
-    const direction=prompt.split('Identity is not a frozen drawing style.')[1].split('\nREFERENCES:')[0];
+    const direction=prompt.includes('Identity is not a frozen drawing style.')?prompt.split('Identity is not a frozen drawing style.')[1].split('\nREFERENCES:')[0]:prompt.match(/^FRAME MEDIUM:.*$/m)[0];
     assert.doesNotMatch(direction,/透明顔料|不透明人物|水彩背景/);
-    assert.match(direction,/墨|紙白/);
+    assert.match(prompt,/墨|紙白/); assert.match(direction,/再構築|drawing style/);
     for (const panel of six.panels) assert.ok(prompt.includes(panel.camera));
     const color=m.buildExperimentalImagePrompt(six,{...source,colorMode:'color'},{...input,colorMode:'color'});
     assert.match(color,/水彩は顔\/服\/背景すべて透明顔料と紙白/);
@@ -945,8 +945,10 @@ try {
     delete panel.cast_instances[0].instances[0].matched_features;
     panel.cast_instances[0].instances[0].feature_indices=[0,1];
     panel.depicted_figures=[];
-    const report={compositionChecks:[],corrections:[],status:'unverified',observedCount:null,readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'not_requested',issues:['細部を確認できない。'],pageEvidence:null,evidence:[panel],wardrobe_observation:null};
+    const report={pageContent:{kind:'uncertain',category:'uncertain',evidence:''},compositionChecks:[],corrections:[],status:'unverified',observedCount:null,readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'not_requested',issues:['細部を確認できない。'],pageEvidence:null,evidence:[panel],wardrobe_observation:null};
     assert.equal(assessment(report),true,JSON.stringify(assessment.errors));
+    const missingPageContent=structuredClone(report);delete missingPageContent.pageContent;
+    assert.equal(assessment(missingPageContent),false,'independent page content observation must be explicit, with uncertainty allowed');
     const missingComposition=structuredClone(report);delete missingComposition.compositionChecks;
     assert.equal(assessment(missingComposition),false,'authored page effects must be represented, using [] when none were requested');
     const missingWardrobe=structuredClone(report);delete missingWardrobe.wardrobe_observation;
@@ -1131,11 +1133,11 @@ try {
   });
   test('panel media override generic ink and cel shading without weakening anatomy or the normal shared contract', () => {
     assert.equal(shared.buildImageQualityContract(),shared.SHARED_IMAGE_QUALITY_CONTRACT);
-    assert.equal(createHash('sha256').update(shared.SHARED_IMAGE_QUALITY_CONTRACT).digest('hex'),'4106f2f734e5957f99b4f6b7856dad979960e0f0a818ccacdcc6ec994b160078');
+    assert.equal(createHash('sha256').update(restoreHandInkBeforeLocal(shared.SHARED_IMAGE_QUALITY_CONTRACT)).digest('hex'),'4106f2f734e5957f99b4f6b7856dad979960e0f0a818ccacdcc6ec994b160078');
     const src=m.readExperimentalSource({...input,colorMode:'color',scenario:scenario.replaceAll('NORMAL','WATERCOLOR')});
     const prompt=m.buildExperimentalImagePrompt(six,src,{...input,colorMode:'color'});
     assert.doesNotMatch(prompt,/strongest G-pen|Focal G-pen|use clean, localized cel-shaded shadow planes/);
-    assert.match(prompt,/人物\/顔\/服\/道具\/背景すべてをその枠の媒体で描き、全ページを同じ墨\/塗りへ均さない/);
+    assert.match(prompt,/人物\/顔\/服\/道具\/背景は枠媒体、全ページを同じ墨\/塗りへ均さない/);
     assert.match(prompt,/透明画へ不透明なセル塗りを強制しない/);assert.match(prompt,/LIMB OWNERSHIP/);
     assert.match(prompt,/no heavy black contours or opaque base/);
     const mixed=m.readExperimentalSource({...input,colorMode:'color',scenario:scenario.replace('[EMOTION: NORMAL]','[EMOTION: GEKIGA]')});
@@ -1345,7 +1347,7 @@ try {
     const chunks=m.buildExperimentalWebCopy(prepared.prompt);
     assert.equal(chunks.join(''),prepared.prompt+'\n');
     assert.ok(chunks.every(chunk=>chunk.length<=9500));
-    assert.match(chunks.join(''),/EXACTLY 6 framed panels/);
+    assert.match(chunks.join(''),/EXACTLY 6 framed panels|場面数は厳密に 6 コマ/);
     assert.match(chunks.join(''),/GEKIGA|NORMAL/);
   });
   test('missing root review stays unverified during cast auditing and retains the existing candidate',async()=>{
@@ -1410,7 +1412,7 @@ try {
   });
   test('page envelope explicitly constrains outside margins without removing gutters',()=>{
     const prompt=m.buildExperimentalImagePrompt(six,source,input);
-    assert.match(prompt,/0\.6%/);assert.match(prompt,/コマ間は白溝/);
+    assert.match(prompt,/0\.6%/);assert.match(prompt,/コマ間は白溝|白溝/);
   });
   test('observed dialogue is checked in physical reading slots, not reordered by the story',()=>{
     const spokenSource=m.readExperimentalSource({...input,scenario:scenario.replace(/セリフなし/g,'人物A：「同じ言葉、私は人物A。」').replace(/同じ言葉、私は人物A。」$/,'結末の言葉」')});
@@ -1441,8 +1443,8 @@ try {
     assert.equal(invalid.status,'unverified');assert.match(invalid.pageEvidence,/実画像の題字/);
     const prompt=m.buildExperimentalImagePrompt(contract,spokenSource,input);
     assert.match(prompt,/PHYSICAL READING PATH/);assert.match(prompt,/FINAL ENDING/);
-    assert.match(prompt,/PANEL RENDERING MAP/);
-    assert.match(prompt,/Identity is not a frozen drawing style/);
+    assert.match(prompt,/PANEL RENDERING MAP|FRAME MEDIUM: 全可視人物/);
+    assert.match(prompt,/Identity is not a frozen drawing style|年齢\/髪\/眼鏡\/同一性保持/);
   });
   test('QA binds observations by their measured location even if the model numbers left first',()=>{
     const spokenSource=m.readExperimentalSource({...input,scenario:scenario.replace(/セリフなし/g,'人物A：「同じ言葉」')});
@@ -1721,7 +1723,7 @@ try {
   test('page boundary rejects cross-mode prompts and changed input before generation',async()=>{
     const prepared=await m.prepareExperimentalManga(input,async request=>planResponse(request,six));
     const {prompt}=prepared;
-    assert.match(prompt,/^Create ONE complete Japanese manga page with EXACTLY 6 framed panels\./);
+    assert.match(prompt,/^(?:Create ONE complete Japanese manga page with EXACTLY 6 framed panels\.|日本の白黒漫画を一ページ描く。場面数は厳密に 6 コマ)/);
     assert.match(prompt,/\nSHOT P\d+(?:\/P\d+)* ONLY:/,'exercise a prompt with shared shot clauses');
     assert.deepEqual(resolvePageWorkflow({experimentalEnabled:false,prompt:'normal four-panel prompt'}),{kind:'four-panel',count:4});
     assert.deepEqual(resolvePageWorkflow({experimentalEnabled:true,prepared,prompt,input}),{kind:'experimental-manga',count:6});

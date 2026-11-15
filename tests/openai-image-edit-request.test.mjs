@@ -237,3 +237,19 @@ test('panel edit preserves the cropped reference aspect through auto size withou
   assert.throws(()=>buildOpenAIImageRequest('not one panel',{imageInputs:[ref,ref],panelEdit:true}),/コマ|panel|画像/i);
   assert.equal(buildOpenAIImageRequest('normal manga',{size:'auto',imageInputs:[ref]}).body.size,'2240x3168');
 });
+
+test('reference-free generation and referenced edit send the same manga text and adopt only their own completed event',async()=>{
+ const savedFetch=globalThis.fetch;const requests=[];setOpenAIApiKey('test-only-image-key');
+ const approved='Create five manga scenes, exact cast/dialogue/Camera, white paper and pressure-tapered ink.';
+ globalThis.fetch=async(url,options)=>{const body=JSON.parse(options.body);requests.push({url,body});
+  const edit=url.endsWith('/edits');const prefix=edit?'image_edit':'image_generation';
+  return new Response('data: '+JSON.stringify({type:prefix+'.partial_image',b64_json:'wrong-partial'})+'\n\n' +
+   'data: '+JSON.stringify({type:(edit?'image_generation':'image_edit')+'.completed',b64_json:'wrong-other-stream'})+'\n\n' +
+   'data: '+JSON.stringify({type:prefix+'.completed',b64_json:edit?'edit-final':'generation-final'})+'\n\n',{headers:{'content-type':'text/event-stream'}});};
+ try {const [generation,edit]=await Promise.all([generateImageWithOpenAI(approved,()=>{},{imageInputs:[]}),generateImageWithOpenAI(approved,()=>{},{imageInputs:[ref]})]);
+  assert.equal(generation.base64Img,'generation-final');assert.equal(edit.base64Img,'edit-final');assert.equal(requests.length,2);
+  const noRef=requests.find(r=>r.url.endsWith('/generations')),withRef=requests.find(r=>r.url.endsWith('/edits'));
+  assert.equal(noRef.body.prompt,approved);assert.equal(withRef.body.prompt,approved);
+  const {images,...editBody}=withRef.body;assert.deepEqual(noRef.body,editBody);assert.equal(images.length,1);
+ }finally{globalThis.fetch=savedFetch;setOpenAIApiKey('');}
+});

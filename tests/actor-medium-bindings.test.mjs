@@ -1,4 +1,4 @@
-import { restoreFocusBefore756 } from './helpers/prompt-policy-normalization.mjs';
+import { restoreHandInkBeforeLocal, restoreFocusBefore756 } from './helpers/prompt-policy-normalization.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
@@ -9,7 +9,7 @@ import { restoreReviewedActorBindings, restoreWritingPolicyBefore729 } from './h
 
 const special = bindingStyles.slice(1, 4);
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/actor-medium-binding-before.json', import.meta.url), 'utf8'));
-const hash = value => createHash('sha256').update(value).digest('hex');
+const hash = value => createHash('sha256').update(restoreHandInkBeforeLocal(value)).digest('hex');
 const namesFrom = text => [...(text.match(/(?:CAST COUNT:|ANTI-CLONE REMINDER:)[^\n]*/)?.[0] || '').matchAll(/\[([^\]]+)\]/g)].map(match => match[1]);
 const bindingsFrom = text => [...(text.match(/(?:CAST COUNT:|ANTI-CLONE REMINDER:)[^\n]*/)?.[0] || '').matchAll(/\[([^\]]+)\]=(POP_ART|WATERCOLOR|GEKIGA)/g)].map(match => ({ name: match[1], style: match[2] }));
 
@@ -68,11 +68,11 @@ try {
       // Measure actor-binding growth against the original lettering policy;
       // the new shared vertical-first rule is checked separately and remains
       // part of the actual API budget below. Never strip artwork instructions.
-      const originalPolicyPrompt = restoreWritingPolicyBefore729(restoreFocusBefore756(prompt));
+      const originalPolicyPrompt = restoreWritingPolicyBefore729(restoreFocusBefore756(restoreHandInkBeforeLocal(prompt)));
       assert.ok(originalPolicyPrompt.length <= baseline[key].chars, `${key}: actor-binding prompt grew`);
       assert.ok(Buffer.byteLength(originalPolicyPrompt) <= baseline[key].bytes, `${key}: actor-binding UTF-8 grew`);
       if (providerFamily === 'chatgpt') assert.ok(prompt.length <= 32000, `${key}: actual image API budget exceeded`);
-      assert.equal(hash(restoreReviewedActorBindings(restoreFocusBefore756(prompt))), baseline[key].sha256, `${key}: only the reviewed binding/duplicate-prose change is permitted`);
+      assert.equal(hash(restoreReviewedActorBindings(restoreFocusBefore756(restoreHandInkBeforeLocal(prompt)))), baseline[key].sha256, `${key}: only the reviewed binding/duplicate-prose change is permitted`);
       const split = value => kind === 'ordinary'
         ? value.split(/^## Panel \d+\s*$/m).slice(1)
         : value.split(/\[PAGE FRAME P\d+ \|/).slice(1).map(frame => frame.split('[END PAGE FRAME')[0]);
@@ -112,7 +112,7 @@ try {
       if (colorMode === 'color' && punchlineType === 'Auto') continue;
       const fixture = bindingFixture(2, false, colorMode);
       const prompt = buildMangaPrompt({ ...fixture, providerFamily, promptMaxChars: 32000, punchlineType, cinematicTechniques: false });
-      if (colorMode === 'color') assert.equal(hash(restoreWritingPolicyBefore729(restoreFocusBefore756(prompt))), baseline[`excluded/${providerFamily}/${colorMode}/${punchlineType}`].sha256);
+      if (colorMode === 'color') assert.equal(hash(restoreWritingPolicyBefore729(restoreFocusBefore756(restoreHandInkBeforeLocal(prompt)))), baseline[`excluded/${providerFamily}/${colorMode}/${punchlineType}`].sha256);
       else {
         assert.match(prompt, /TONE PLACEMENT:.*lit light skin.*paper white/);
         assert.ok(prompt.includes(fixture.camera));
@@ -131,7 +131,7 @@ try {
   test('binding inverse rejects unknown style/construction changes and preserves authored fields', () => {
     const fixture = bindingFixture(2);
     const prompt = buildMangaPrompt({ ...fixture, providerFamily: 'chatgpt', promptMaxChars: 32000, punchlineType: 'Auto', cinematicTechniques: false });
-    const restored = restoreReviewedActorBindings(restoreFocusBefore756(prompt));
+    const restored = restoreReviewedActorBindings(restoreFocusBefore756(restoreHandInkBeforeLocal(prompt)));
     const actorLine = prompt.split('\n').find(line => line.startsWith('ACTOR MEDIUM:'));
     const rosterLine = prompt.split('\n').find(line => line.startsWith('CAST COUNT:') && line.includes('=POP_ART'));
     assert.ok(actorLine && rosterLine);
