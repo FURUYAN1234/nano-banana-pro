@@ -16,7 +16,7 @@
       "sha256": "d23d90b852b10b9d531aab217daae071dcefe4270860e473ddfadc72787f0ba4"
     }
   ],
-  "readmeSha256": "06c37323a5a1929e85ac91bfafc6b779592ef63c98d27c716c9d60c08aeeeef4",
+  "readmeSha256": "db92d6b1b6869ded649ec02200c6499a1c08d32334f7708f0f78412d76905737",
   "readmeLanguageGaps": [],
   "sourceTree": "feaa94d3f7ca0f692d700898a4bdd6c70995626a",
   "publicTree": "6a44820d398990e8c325c2e5f773c4a0a1845405",
@@ -41,9 +41,9 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "6c88b6539d150f05a3752026441dfca449a0efc5",
-  "reviewedAt": "2026-11-15T10:23:29.197Z",
-  "findings": "Reviewed all current README sections against candidate source, preserving unchanged verified sections from v7.5.9. Updated hand-ink/selected MONO guide roles, positive-evidence native4–8noncomic stop only with automatic repair ON, source-authoritative compact frame contracts, diagnostics length/SHA privacy, version/download links and changelog. COLOR byte equivalence, protections,32k/16images, normal/abnormal regressions and real COLOR/MONO acceptance were checked; repaired_unverified is not automatic final QA pass. Actual7.5.9-local API evidence is reused because only the version constant changed afterward; other126source files match accepted manifest.",
+  "sourceCommit": "31e070bc8f30e223a3d0c0609b9836051698ffdf",
+  "reviewedAt": "2026-11-15T10:34:15.029Z",
+  "findings": "Reviewed all current README sections against candidate source, preserving unchanged verified sections from v7.5.9. Updated hand-ink/selected MONO guide roles, positive-evidence native4–8noncomic stop only with automatic repair ON, source-authoritative compact frame contracts, diagnostics length/SHA privacy, version/download links and changelog. COLOR byte equivalence, protections,32k/16images, normal/abnormal regressions and real COLOR/MONO acceptance were checked; repaired_unverified is not automatic final QA pass. Actual7.5.9-local API evidence is reused because only the version constant changed afterward; other126source files match accepted manifest. Restored the existing current Emergency Stop active/queued red versus idle/stopped grey explanation in the main operation guide, outside the15-entry ChangeLog, after fullsuite detected its removal during history trimming. Existing emergency-stop regressions pass without modifying implementation or tests.",
   "manualFindings": "Three A4 Japanese PDFs,72pages total, rebuilt for v7.6.0. Automated version/privacy/links/text-bounds checks pass. All72page footers were rendered/visually inspected. Changed body pages Gemini1 and full manual17/19/24 were inspected at full resolution; remaining68page bodies are pixel-identical to previously reviewed v7.5.9 baseline excluding footer. Explicit source-style protections/hand ink/noncomic stopping scope synchronized. No stale manual version remains.",
   "pricingReview": {
     "checkedAt": "2026-11-15T10:10:22Z",
