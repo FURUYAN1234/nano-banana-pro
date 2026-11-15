@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.5.6** / 現在のソース版: **v7.5.6**
+> Current source version: **v7.5.7** / 現在のソース版: **v7.5.7**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -615,6 +615,8 @@ Within the one comprehensive inspection, readable text is classified by its actu
 
 OpenAI image analysis, scenario writing and prompt construction each use the model selected before STEP1; all three initially use `gpt-6-luna`. Retiring GPT-4 models are excluded from current choices and automatic routes. / OpenAIの画像解析・台本作成・描画指示構築は、STEP1前に個別に選んだモデルを使い、初期値は3つとも`gpt-6-luna`です。終了予定のGPT-4系は現行の選択肢と自動経路から除外しています。
 
+Manual-topic changes use a dedicated input gateway and separate field identifiers from the completed scenario. The diagnostic log records the reason, time, before/after lengths, scenario equality and event provenance; continuous typing is grouped and flushed on blur, before a STEP and before JSON export. No additional input body, clipboard content or credential is recorded. Misrouted field events are rejected without clearing the input; trusted and scripted events are distinguished for observation, not used to reject legitimate input. Existing dictation, image-reference number remapping and resets retain their separate reasons. The cause of the earlier replacement remains unproven because the old log did not record input changes. / 自由入力と完成台本に別の入力識別子を付け、自由入力の更新を専用窓口へ集約しました。診断ログには理由・時刻・前後の文字数・台本との同一性・イベントの入力元を残し、連続入力はまとめて欄を離れる時、次STEP前、JSON取得前に保存します。本文・クリップボードの内容・認証情報は追加記録しません。別欄由来のイベントは入力を消さず拒否し、実入力かスクリプト由来かの真偽は観測だけに使います。既存の音声追記・画像参照番号の補正・リセットも理由を区別します。過去の置換原因は、旧ログに入力変更の記録がないため未確定です。
+
 ## Prompt and image safeguards / プロンプトと画像の確認
 
 An authored breakout is composed as one foreground body across its source and receiving panels; the receiving panel's camera and medium apply to its local actors. An incomplete review remains unverified, while a separately grounded failure of the required composition can still enter the same bounded repair. Missing observations or uncertain boundaries alone never authorize a repair. / 指定した枠越えは、元のコマと受け入れるコマをまたぐ一つの身体として配置します。受け入れ側のカメラと描法は、その場面の独立した人物へ適用します。検査の欠落は未確認を維持しつつ、実際の枠境界と指定構図の失敗を独立に確認できた場合は、同じ最大1回の修復へ渡します。観察の不足や境界不明だけでは修復を起動しません。
@@ -703,7 +705,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.5.6](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.6のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.5.7](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.7のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -763,7 +765,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.6 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.6 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.7 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.7 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -833,6 +835,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.5.7 (2026-11-15)
+- **[Fix & UX]** Constrain manual-topic update paths and record change provenance and lengths without storing additional text / 自由入力の更新経路を限定し、本文を追加保存せず変更理由と文字数を記録
 
 ### v7.5.6 (2026-11-15)
 - **[Fix & UX]** Fix STEP3 identity matching for annotated names, duplicate actor constraints, and prose corruption while renaming characters / STEP3の括弧注記付き人物名による誤停止と同一人物の重複指定、人物名編集時の一般文の誤置換を修正

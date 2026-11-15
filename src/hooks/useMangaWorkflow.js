@@ -1,6 +1,7 @@
 import { hasCharacterReferenceImages, getReferenceCharacterRequirement, assertReferenceCharacterRequirement } from '../lib/reference-assets.js';
 import { useWorkflowDiagnostics } from './useWorkflowDiagnostics.js';
-import { diagnosticConsole as console, recordImageQualityReview } from '../lib/diagnostics.js';
+import { diagnosticConsole as console, recordImageQualityReview, recordDiagnostic, subscribeDiagnosticInputFlush } from '../lib/diagnostics.js';
+import { createManualTopicInput } from '../lib/manual-topic-input.js';
 import { resolveAutoScenarioMode } from '../lib/scenario-validation.js';
 import { getBuiltinPanelMediumReference } from '../lib/builtin-panel-medium-reference.js';
 import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
@@ -111,7 +112,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
   const [selectedEngine, setSelectedEngine] = useState(initialApiSession.provider || 'gemini'); // [v3.59] Dual Engine: 'gemini' | 'openai'
   const [inputMode, setInputMode] = useState("news"); // 'news' | 'manual'
-  const [manualTopic, setManualTopic] = useState("");
+  const [manualTopic, setManualTopicState] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
   const [customLocation, setCustomLocation] = useState(''); // [v1.8.103] Custom Location Override
   const [customOutfit, setCustomOutfit] = useState(''); // [v1.8.103] Custom Outfit Override
@@ -154,6 +155,16 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setCastDraft(null);
   };
   const [scenario, setScenario] = useState("");
+  const manualTopicInputRef = useRef(null);
+  if (!manualTopicInputRef.current) manualTopicInputRef.current = createManualTopicInput({ initialValue: manualTopic, setValue: setManualTopicState, record: recordDiagnostic });
+  const manualTopicInput = manualTopicInputRef.current;
+  manualTopicInput.observeScenario(scenario);
+  const setManualTopic = (value, metadata) => manualTopicInput.update(value, metadata);
+  const flushManualTopicChanges = () => manualTopicInput.flush('blur');
+  useEffect(() => {
+    const unsubscribe = subscribeDiagnosticInputFlush(() => manualTopicInput.flush('export'));
+    return () => { manualTopicInput.flush('unmount'); unsubscribe(); };
+  }, [manualTopicInput]);
   const [explanation, setExplanation] = useState("");
   const [explanationNotice, setExplanationNotice] = useState("");
   const [mangaTitle, setMangaTitle] = useState("");
@@ -366,10 +377,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   });
 
   // Capture the invocation, not whatever text React contains when a late request fails.
-  const beginApiWork = (operation, metadata = {}) => startApiWork(operation, {
+  const beginApiWork = (operation, metadata = {}) => {
+    manualTopicInput.flush('next-step');
+    return startApiWork(operation, {
     ...metadata, failureContext:{scenario,castList,userTopic:manualTopic,finalPrompt,
       punchlineType,scenarioMode:getScenarioMode(),...metadata.failureContext},
-  });
+    });
+  };
 
   // [v2.88] Auto-scroll genLog terminal
   useEffect(() => {
@@ -478,7 +492,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setIsEndlessMode(false);
     setFullAutoStep(0);
     setIsAborting(false);
-    if (previousImages && nextImages) setManualTopic(text => remapReferenceNumbers(text, previousImages, nextImages));
+    if (previousImages && nextImages) setManualTopic(text => remapReferenceNumbers(text, previousImages, nextImages), {reason:'reference-remap',source:'reference-remap'});
     setScenario('');
     setOriginalScenario('');
     setExplanation('');
@@ -1689,7 +1703,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     
     // [v3.91-alpha] カテゴリ選択やシナリオ関連設定を完全に初期化
     setCategories(DEFAULT_CATEGORIES);
-    setManualTopic("");
+    setManualTopic("", {reason:'reset',source:'reset'});
     setSearchTopic("");
     setLockedLocation("");
     setLockedOutfit("");
@@ -1795,7 +1809,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
     // [v3.91-alpha] カテゴリ選択やシナリオ関連設定を完全に初期化
     setCategories(DEFAULT_CATEGORIES);
-    setManualTopic("");
+    setManualTopic("", {reason:'reset',source:'reset'});
     setSearchTopic("");
     setLockedLocation("");
     setLockedOutfit("");
@@ -3593,6 +3607,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setIsPolicyPanelOpen,
     setIsScenarioCopied,
     setManualTopic,
+    flushManualTopicChanges,
     setPolicyErrorMsg,
     setPunchlineType,
     setScenario: setScenarioFromUser,

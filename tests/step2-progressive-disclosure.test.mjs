@@ -4,16 +4,74 @@ import { readFile } from 'node:fs/promises';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
+import { createManualTopicInput, MANUAL_TOPIC_FIELD_ID, SCENARIO_FIELD_ID } from '../src/lib/manual-topic-input.js';
 
-let server, Step2Panel, Step3Panel;
+let server, Step2Panel, Step3Panel, GenerationHistory;
 
 before(async () => {
   server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
   ({ default: Step2Panel } = await server.ssrLoadModule('/src/components/Step2Panel.jsx'));
   ({ default: Step3Panel } = await server.ssrLoadModule('/src/components/Step3Panel.jsx'));
+  ({ default: GenerationHistory } = await server.ssrLoadModule('/src/components/GenerationHistory.jsx'));
 });
 
 after(async () => { await server?.close(); });
+
+test('the actual history selection callback changes only the selected image, retaining topic and scenario', () => {
+  const state = { topic: 'original request', scenario: 'completed scenario', image: 'old' };
+  const tree = GenerationHistory({ generationHistory: [{ id: 1, img: 'retained' }], generatedImage: state.image,
+    setGeneratedImage: value => { state.image = value; }, setGenerationHistory() {} });
+  let select;
+  const walk = element => {
+    if (!element || typeof element !== 'object') return;
+    if (element.key === '1' && element.props.onClick) select = element.props.onClick;
+    React.Children.forEach(element.props?.children, walk);
+  };
+  walk(tree);
+  assert.equal(typeof select, 'function');
+  select();
+  assert.deepEqual(state, { topic: 'original request', scenario: 'completed scenario', image: 'retained' });
+});
+
+test('actual STEP2 field callbacks keep independent identities and reject cross-field dispatch without throwing', () => {
+  const state = { topic: 'original topic', scenario: 'generated scenario' }, events = [];
+  const topic = createManualTopicInput({ initialValue: state.topic, setValue: value => { state.topic = value; }, record: (_event, row) => events.push(row) });
+  topic.observeScenario(state.scenario);
+  const production = Step2Panel;
+  let tree;
+  Step2Panel = props => { tree = production(props); return tree; };
+  try {
+    renderStep2({ manualTopic: state.topic, scenario: state.scenario,
+      setManualTopic: (value, metadata) => topic.update(value, metadata), flushManualTopicChanges: () => topic.flush('blur'),
+      setScenario: value => { state.scenario = value; } });
+  } finally { Step2Panel = production; }
+  const fields = [];
+  const walk = element => {
+    if (!element || typeof element !== 'object') return;
+    if (element.type === 'textarea') fields.push(element);
+    React.Children.forEach(element.props?.children, walk);
+  };
+  walk(tree);
+  const manual = fields.find(field => field.props.id === MANUAL_TOPIC_FIELD_ID);
+  const scenario = fields.find(field => field.props.id === SCENARIO_FIELD_ID);
+  assert(manual && scenario);
+  assert.notEqual(manual.key, scenario.key);
+  assert.notEqual(manual.props['aria-label'], scenario.props['aria-label']);
+  const wrong = { id: SCENARIO_FIELD_ID, value: 'misrouted generated script', dataset: {} };
+  assert.doesNotThrow(() => manual.props.onChange({ currentTarget: wrong, target: wrong, nativeEvent: { inputType: 'insertText', isTrusted: false } }));
+  assert.equal(state.topic, 'original topic');
+  assert.equal(events.at(-1).inputRejected, true);
+  scenario.props.onChange({ target: { value: 'edited scenario only' } });
+  assert.equal(state.topic, 'original topic');
+  assert.equal(state.scenario, 'edited scenario only');
+  const correct = { id: MANUAL_TOPIC_FIELD_ID, value: 'a legitimate pasted full script', dataset: {} };
+  manual.props.onPaste({ currentTarget: correct });
+  manual.props.onChange({ currentTarget: correct, target: correct, nativeEvent: { isTrusted: true } });
+  assert.equal(state.topic, correct.value);
+  assert.equal(events.at(-1).inputReason, 'paste');
+  assert.equal(events.at(-1).inputTrusted, true);
+  assert.doesNotMatch(JSON.stringify(events), /misrouted generated script|legitimate pasted full script/);
+});
 
 const renderStep2 = (overrides = {}) => renderToStaticMarkup(React.createElement(Step2Panel, {
   currentStep: 2,

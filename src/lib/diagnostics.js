@@ -1,14 +1,20 @@
 import { sanitizeFailureContext } from './diagnostic-failure-context.js';
 // Metadata stays structured. Explicit invocation inputs and repair evidence are saved only on failure.
 export const DIAGNOSTIC_LIMITS = Object.freeze({maxAgeMs: 7 * 86400000, maxBytes: 2 * 1024 * 1024, maxEvents: 2000});
-const EVENTS = new Set(['session.start', 'workflow.start', 'workflow.end', 'workflow.error', 'workflow.warning', 'workflow.review', 'workflow.cancel', 'workflow.settings', 'ui.action', 'api.request', 'api.response', 'api.payload', 'api.error', 'runtime.error', 'react.error', 'image.lettering', 'image.review']);
+const EVENTS = new Set(['session.start', 'workflow.start', 'workflow.end', 'workflow.error', 'workflow.warning', 'workflow.review', 'workflow.cancel', 'workflow.settings', 'workflow.input', 'ui.action', 'api.request', 'api.response', 'api.payload', 'api.error', 'runtime.error', 'react.error', 'image.lettering', 'image.review']);
 const sessionId = globalThis.crypto?.randomUUID?.() || `session-${Date.now()}`;
 const responseRequests = new WeakMap();
 const observedRuns = new Map();
 const errorListeners = new Set();
+const inputFlushListeners = new Set();
+export const subscribeDiagnosticInputFlush = listener => {
+  inputFlushListeners.add(listener);
+  return () => inputFlushListeners.delete(listener);
+};
 const operationLabels = Object.freeze({step1:'参照画像・人物設定の解析', step2:'台本の構築', step3:'描画指示の構築', step4:'画像生成',
   enhance:'台本の強化', safe_prompt:'制限理由に基づく描画指示の修正', image_edit:'画像の追加編集', panel_edit:'コマの追加編集', api_work:'API処理'});
 const eventLabels = Object.freeze({'session.start':'画面の起動', 'workflow.settings':'制作設定の変更',
+  'workflow.input':'自由入力の変更',
   'runtime.error':'画面の実行時エラー', 'react.error':'画面描画のエラー', 'workflow.cancel':'利用者による中断',
   'workflow.warning':'処理を継続する検査指摘', 'workflow.review':'台本の品質検査結果', 'image.review':'画像の品質検査と修正結果'});
 const applicationSpec = Object.freeze({
@@ -110,6 +116,17 @@ export function makeDiagnosticEvent(event, details = {}, {now = Date.now(), sess
     if (typeof details[key] === 'number' && Number.isFinite(details[key]) && details[key] >= 0) row[key] = Math.round(details[key]);
   }
   for (const key of ['fullAuto', 'experimental', 'fallback', 'ok']) if (typeof details[key] === 'boolean') row[key] = details[key];
+  if (event === 'workflow.input') {
+    const choices = { inputReason: ['typing', 'paste', 'voice', 'reference-remap', 'reset'], inputSource: ['textarea', 'dictation', 'reference-remap', 'reset', 'other'],
+      inputField: ['manual-topic-input', 'generated-scenario', 'other'], inputTarget: ['manual-topic-input', 'generated-scenario', 'other'], flushReason: ['blur', 'next-step', 'before-change', 'export', 'unmount'],
+      rejectionReason: ['invalid-reason', 'wrong-field', 'wrong-source'],
+      inputType: ['insertText', 'insertFromPaste', 'insertFromDrop', 'insertLineBreak', 'insertCompositionText', 'deleteContentBackward', 'deleteContentForward', 'historyUndo', 'historyRedo', 'other'] };
+    for (const [key, allowed] of Object.entries(choices)) if (allowed.includes(details[key])) row[key] = details[key];
+    for (const key of ['beforeLength', 'afterLength', 'changeCount', 'firstChangedAt', 'lastChangedAt']) {
+      if (Number.isFinite(details[key]) && details[key] >= 0) row[key] = Math.round(details[key]);
+    }
+    for (const key of ['scenarioEqualsBefore', 'scenarioEqualsAfter', 'inputTrusted', 'inputRejected']) if (typeof details[key] === 'boolean') row[key] = details[key];
+  }
   if(event==='image.lettering') {
     for(const key of ['applied','outsideBalloonInteriorsUnchanged'])if(typeof details[key]==='boolean')row[key]=details[key];
     if(['disabled','authored_typography','unresolved_dialogue','canvas_unavailable','invalid_pixels','unresolved_frames','matched_closed_balloons','unresolved_balloons','outside_pixels_changed','no_pixel_change'].includes(details.reason))row.reason=details.reason;
@@ -212,7 +229,7 @@ function enqueue(clear = false, readOnly = false) {
 export function recordDiagnostic(event, details = {}) {
   // All failure paths are isolated from the application/API operation being observed.
   try {
-    const base = details.runId && details.runId !== context.runId ? {} : context;
+    const base = event === 'workflow.input' || (details.runId && details.runId !== context.runId) ? {} : context;
     const failureContext = base.failureContext || details.failureContext ? {
       ...base.failureContext, ...details.failureContext,
       originalLengths:{...base.failureContext?.originalLengths,...details.failureContext?.originalLengths},
@@ -238,6 +255,7 @@ export function recordDiagnostic(event, details = {}) {
 }
 
 export const readDiagnostics = async () => {
+  for (const flush of inputFlushListeners) { try { flush(); } catch { /* diagnostic export is independent */ } }
   const events = await enqueue(false, true);
   return {schemaVersion: 2, exportedAt: new Date().toISOString(), version: appVersion, storageState,
     applicationSpec, investigationGuide, limits: DIAGNOSTIC_LIMITS, scope: 'this-browser-origin', events};

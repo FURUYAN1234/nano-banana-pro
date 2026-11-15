@@ -14,6 +14,7 @@ import {
 import ThinkingLog from './ThinkingLog';
 import RelatedAppLink from './RelatedAppLink';
 import SpeechDictationButton from './SpeechDictationButton';
+import { MANUAL_TOPIC_FIELD_ID, SCENARIO_FIELD_ID } from '../lib/manual-topic-input.js';
 import { appendDictatedText } from '../lib/audio-transcription';
 import Panorama360Viewer from './Panorama360Viewer';
 import { getJapaneseWeekdayLabel, getSeasonContext } from '../lib/seasonal-outfit';
@@ -51,6 +52,7 @@ export default function Step2Panel({
   toggleCategory,
   manualTopic,
   setManualTopic,
+  flushManualTopicChanges,
   bg360Image,
   bg360Enabled,
   setBg360Enabled,
@@ -256,8 +258,19 @@ export default function Step2Panel({
             <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかを指定できます。画風も「通常・POP・水彩・劇画・スケッチ・ちびギャグ」をコマごとに指定できます（例：2コマ目はPOP、4コマ目は劇画）。<br />「4コマ生成（横長コマ）レガシー」は横長4コマの縦一列固定で、入力したコマ数指定は無視します。「4～8コマ生成」では4～8コマで指定でき、指定がなければ内容に合わせて決めます。4コマでも大コマ・縦長・タチキリ・枠からのはみ出しを使った自由配置です。<br />AIが希望をできる範囲で反映し、指定のない部分は内容に合わせて調整します。</p>
             <div className="speech-dictation-field">
               <textarea
+                key={MANUAL_TOPIC_FIELD_ID}
+                id={MANUAL_TOPIC_FIELD_ID}
+                aria-label="自由入力のテーマ・指示"
                 value={manualTopic}
-                onChange={(e) => setManualTopic(e.target.value)}
+                onPaste={e => { e.currentTarget.dataset.topicPaste = '1'; }}
+                onChange={e => {
+                  const element = e.currentTarget;
+                  const inputType = e.nativeEvent?.inputType;
+                  const reason = inputType === 'insertFromPaste' || element.dataset.topicPaste === '1' ? 'paste' : 'typing';
+                  delete element.dataset.topicPaste;
+                  setManualTopic(element.value, {reason, source:'textarea', fieldId:element.id, targetId:e.target.id, inputType, trusted:e.nativeEvent?.isTrusted ?? e.isTrusted});
+                }}
+                onBlur={e => { delete e.currentTarget.dataset.topicPaste; flushManualTopicChanges?.(); }}
                 placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;・https://example.com/news/12345&#13;&#10;&#13;&#10;※WebサイトのURLを入力すると、AIがそのページの内容を読み込んで漫画化します。&#13;&#10;ニュース記事を直接コピー＆ペーストするか、作りたいお話のイメージを文章で入力してください。"
                 style={{ color: '#ffffff', backgroundColor: '#0f1115' }}
                 rows={10}
@@ -266,7 +279,7 @@ export default function Step2Panel({
               <SpeechDictationButton
                 provider={isOpenAIEngine ? 'openai' : 'gemini'}
                 disabled={isSearching || isAnalyzing}
-                onText={text => setManualTopic(current => appendDictatedText(current, text))}
+                onText={text => setManualTopic(current => appendDictatedText(current, text), {reason:'voice',source:'dictation'})}
               />
             </div>
             <p className="text-xs text-slate-400 text-right">音声入力ボタンを押すと録音を開始し、止めると{isOpenAIEngine ? 'OpenAI' : 'Gemini'} APIで文字起こしします（有料）。結果は上の欄で編集できます。</p>
@@ -452,6 +465,8 @@ export default function Step2Panel({
           </div>
           <p id="scenario-edit-help" className="field-edit-help">台詞・表情・動作・コマ割りなどを、この白い欄で編集できます。台本の書式を保って修正し、STEP3で指示文を構築し直してください。</p>
           <textarea
+            key={SCENARIO_FIELD_ID}
+            id={SCENARIO_FIELD_ID}
             aria-label="生成されたシナリオ"
             aria-describedby="scenario-edit-help"
             value={scenario}

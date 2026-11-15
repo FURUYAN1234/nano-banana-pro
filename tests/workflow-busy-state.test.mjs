@@ -13,6 +13,7 @@ import { assertPrintableDialogue } from '../src/lib/bubble-text.js';
 import { assertPromptEndingModeConsistency } from '../src/lib/ending-mode-policy.js';
 import { buildReferenceAssetContext } from '../src/lib/reference-assets.js';
 import { DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID } from '../src/lib/openai-model-routes.js';
+import { createManualTopicInput } from '../src/lib/manual-topic-input.js';
 
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const step2 = await readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8');
@@ -112,6 +113,62 @@ function harness(overrides = {}) {
 
 const result = { topic: 'Generic title', scenario: 'A complete generated scenario', usedModel: 'unchanged' };
 const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+
+function observeTopic({ state }) {
+  const events = [];
+  const input = createManualTopicInput({ initialValue: state.manualTopic, setValue: value => { state.manualTopic = value; }, record: (_event, row) => events.push(row) });
+  input.observeScenario(state.scenario);
+  const definition = source.match(/const setManualTopic = ([^\n]+);/)[1];
+  state.setManualTopic = new Function('manualTopicInput', `return ${definition}`)(input);
+  state.manualTopicInput = input;
+  return events;
+}
+
+test('production generation, enhancement and scenario editing retain the independent topic without input-change records', async () => {
+  const workflow = harness({ generateScenario: async () => result,
+    enhanceScenarioText: async () => ({ text: 'Enhanced accepted scenario', validation: { ok: true } }) });
+  const { state, bind } = workflow, original = state.manualTopic, events = observeTopic(workflow);
+  await bind('generateScenarioFromNews')();
+  assert.match(state.scenario, /complete generated scenario/);
+  assert.equal(state.manualTopic, original);
+  await bind('enhanceScenario')();
+  assert.equal(state.scenario, 'Enhanced accepted scenario');
+  state.setScenarioFromUser('A manually pasted completed scenario');
+  assert.equal(state.manualTopic, original);
+  assert.equal(events.length, 0);
+});
+
+test('production STEP3 failure, retry and success do not copy the scenario into the topic', async () => {
+  let calls = 0;
+  const workflow = harness({ experimentalEnabled: true, assertImageInputBudget() {}, normalizePromptProviderFamily: value => value,
+    prepareFinalPrompt: value => value,
+    prepareExperimentalManga: async input => {
+      calls++;
+      if (calls === 1) throw Object.assign(new Error('layout failure'), { code: 'EXPERIMENTAL_PLAN_INVALID' });
+      return { source: { scenario: input.scenario }, prompt: 'Accepted image prompt', plan: { count: 5, reason: 'Five source scenes retained' }, omittedEffectPanels: [], restoredCameraPanels: [] };
+    } });
+  const { state, bind } = workflow, original = state.manualTopic, events = observeTopic(workflow);
+  const directions = [];
+  state.experimentalInput = scenario => { directions.push(state.manualTopic); return { scenario, userDirection: state.manualTopic }; };
+  const assemble = bind('assemblePrompt');
+  assert.equal(await assemble(), null);
+  assert.equal(state.manualTopic, original);
+  assert.equal(await assemble(), 'Accepted image prompt');
+  assert.equal(state.manualTopic, original);
+  assert.deepEqual(directions, [original, original]);
+  assert.equal(events.length, 0);
+});
+
+test('the production API entry flushes pending topic typing before capturing invocation data', () => {
+  const workflow = harness(), { state, bind } = workflow, events = observeTopic(workflow);
+  state.startApiWork = (_operation, metadata) => { assert.equal(events.length, 1); return metadata; };
+  state.setManualTopic('updated request', { reason: 'typing', source: 'textarea', fieldId: 'manual-topic-input', targetId: 'manual-topic-input', inputType: 'insertText', trusted: true });
+  assert.equal(events.length, 0);
+  const invocation = bind('beginApiWork')('step3');
+  assert.equal(events[0].flushReason, 'next-step');
+  assert.equal(invocation.failureContext.userTopic, 'updated request');
+  assert.equal(invocation.failureContext.scenario, state.scenario);
+});
 
 for (const startStep of [3, 4]) {
   test(`full-auto resumes manual progress at STEP${startStep} without replacing its input or earlier output`, async () => {

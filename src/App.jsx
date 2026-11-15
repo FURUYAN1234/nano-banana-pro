@@ -197,6 +197,7 @@ function App() {
     setIsPolicyPanelOpen,
     setIsScenarioCopied,
     setManualTopic,
+    flushManualTopicChanges,
     setPolicyErrorMsg,
     setPunchlineType,
     setScenario,
@@ -505,6 +506,7 @@ function App() {
               toggleCategory={toggleCategory}
               manualTopic={manualTopic}
               setManualTopic={setManualTopic}
+              flushManualTopicChanges={flushManualTopicChanges}
               bg360Image={bg360Image}
               bg360Enabled={bg360Enabled}
               setBg360Enabled={setBg360Enabled}
