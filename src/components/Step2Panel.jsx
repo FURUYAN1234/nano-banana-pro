@@ -266,7 +266,7 @@ export default function Step2Panel({
                 onChange={e => {
                   const element = e.currentTarget;
                   const inputType = e.nativeEvent?.inputType;
-                  const reason = inputType === 'insertFromPaste' || element.dataset.topicPaste === '1' ? 'paste' : 'typing';
+                  const reason = inputType === 'insertFromPaste' || (!inputType && element.dataset.topicPaste === '1') ? 'paste' : 'typing';
                   delete element.dataset.topicPaste;
                   setManualTopic(element.value, {reason, source:'textarea', fieldId:element.id, targetId:e.target.id, inputType, trusted:e.nativeEvent?.isTrusted ?? e.isTrusted});
                 }}

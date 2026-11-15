@@ -70,6 +70,11 @@ test('actual STEP2 field callbacks keep independent identities and reject cross-
   assert.equal(state.topic, correct.value);
   assert.equal(events.at(-1).inputReason, 'paste');
   assert.equal(events.at(-1).inputTrusted, true);
+  manual.props.onPaste({ currentTarget: correct }); // A cancelled paste has no input event.
+  correct.value = 'typed after a cancelled paste';
+  manual.props.onChange({ currentTarget: correct, target: correct, nativeEvent: { inputType: 'insertText', isTrusted: true } });
+  manual.props.onBlur({ currentTarget: correct });
+  assert.equal(events.at(-1).inputReason, 'typing', 'known native input type takes priority over a stale paste marker');
   assert.doesNotMatch(JSON.stringify(events), /misrouted generated script|legitimate pasted full script/);
 });
 
