@@ -79,3 +79,55 @@ test('background names and description edits remain independent; punctuation and
   const latin=refs.editReferenceAsset('## A\nAppearance: A / Alice',[asset('a','A'),asset('b','Alice')],'a',0,'name','B(仮)');
   assert.match(latin.castList,/Appearance: B\(仮\) \/ Alice/);
 });
+
+test('renaming a one-character Japanese name preserves words in every linked profile',()=>{
+  const text='## 1. さ\n外見: 髪の長さは短め。さは白目。\n服装: 上着。\n\n## 2. リン\n外見: 背が低いとされる。小さな眼鏡。\n服装: さの友人と同じ服。';
+  const assets=[{...asset('front','さ'),castProfiles:{'さ':text.split('\n\n')[0]},items:[{kind:'character',name:'さ',description:'さの表情。髪の長さを維持。'}]},asset('other','リン')];
+  const renamed=refs.editReferenceAsset(text,assets,'front',0,'name','イベント主催者（仮称）');
+  assert.equal(renamed.error,'');
+  assert.equal(renamed.castList,text.replace('## 1. さ','## 1. イベント主催者（仮称）').replace('。さは','。イベント主催者（仮称）は').replace('服装: さの','服装: イベント主催者（仮称）の'));
+  assert.equal(renamed.assets[0].items[0].description,'イベント主催者（仮称）の表情。髪の長さを維持。');
+  assert.match(renamed.assets[0].castProfiles['イベント主催者（仮称）'],/髪の長さは短め/);
+});
+
+test('clear then type Japanese names does not corrupt prose through intermediate names',()=>{
+  const text='## 1. 仮名\n外見: 髪の長さ。さっと振り向く。される。ふるさと。\n服装: 上着。';
+  let result={castList:text,assets:[asset('front','仮名')]};
+  for(const name of ['', 'さ', 'さと', 'さとし']) {
+    result=refs.editReferenceAsset(result.castList,result.assets,'front',0,'name',name,{commit:false});
+    assert.equal(result.castList,text,'typing must not rewrite character prose');
+    assert.ok(result.error,'unfinished name blocks generation');
+  }
+  result=refs.editReferenceAsset(result.castList,result.assets,'front',0,'name','さとし');
+  assert.equal(result.castList,text.replace('## 1. 仮名','## 1. さとし'));
+  assert.equal(result.assets[0].items[0].name,'さとし');
+});
+
+test('short registered names in sentences still follow a committed rename',()=>{
+  const text='## 1. リン\n外見: 隣のリンに箱を渡す。リンは笑う。\n服装: 上着。';
+  const result=refs.editReferenceAsset(text,[{...asset('front','リン'),items:[{kind:'character',name:'リン',description:'隣のリンに注目'}]}],'front',0,'name','葵');
+  assert.equal(result.castList,text.replaceAll('リン','葵'));
+  assert.equal(result.assets[0].items[0].description,'隣の葵に注目');
+});
+
+test('profile heading drafts defer linked renames until editing is complete',()=>{
+  const original='## 1. 仮名\n外見: 髪の長さ。される。ふるさと。隣の仮名は笑う。\n服装: 上着。';
+  const assets=[{...asset('front','仮名'),castProfiles:{'仮名':original}}];
+  for(const name of ['さ','さと','さとし']) {
+    const draft=original.replace('## 1. 仮名',`## 1. ${name}`);
+    const result=refs.parseCharacterEditorText(draft,['front'],assets,original,{commit:false});
+    assert.equal(result.castList,draft);
+    assert.deepEqual(result.assets,assets);
+    assert.equal(result.deferBaseline,true);
+    assert.ok(result.error);
+  }
+  const committed=refs.parseCharacterEditorText(original.replace('## 1. 仮名','## 1. さとし'),['front'],assets,original);
+  assert.equal(committed.castList,original.replaceAll('仮名','さとし'));
+  assert.equal(committed.assets[0].items[0].name,'さとし');
+});
+
+test('a single kanji name remains linked without replacing compound words',()=>{
+  const text='## 1. 光\n外見: 日光を浴びる。光景を眺め、光は笑う。\n服装: 光の上着。';
+  const result=refs.editReferenceAsset(text,[asset('front','光')],'front',0,'name','葵');
+  assert.equal(result.castList,'## 1. 葵\n外見: 日光を浴びる。光景を眺め、葵は笑う。\n服装: 葵の上着。');
+});

@@ -803,6 +803,7 @@ export const readOffscreenCast = (source, castList, extraNames = []) => {
   const location = '(?:[^。！？\\n、はがを]{1,40}?(?:に|で))?';
   const absent = new Set();
   const rules = [
+    new RegExp(`${group}(?:は|を)\\s*(?:描かない|描かず|描くな|表示しない|映さない|写さない|登場しない)(?=[。！？\\n、]|$)`, 'gu'),
     new RegExp(`${group}(?:は|が)\\s*(?:引き続き|そのまま)?${location}${outside}(?:の(?:前コマ|元の)?位置を維持|(?:の[^。！？\\n]{1,24}?(?:側|場所|位置))?に(?:いる|居る|残(?:る|っている)|留まる)|で(?!は?(?:ない|なく))|[。\\n]|$)`, 'gu'),
     new RegExp(`${outside}の${group}(?=へ|に|を|は|が|[、。！？\\n])`, 'gu'),
     new RegExp(`${group}(?:は|が)[^。！？\\n]{0,60}姿を見せ(?:ず|ない)[^。！？\\n]{0,30}(?:声だけ|声のみ)`, 'gu'),
@@ -1915,9 +1916,11 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // It is neither a new local actor nor an absent character to erase here.
   const scriptedNames = (options.scriptedNames || []).filter(name => typeof name === 'string' && name.trim());
   const entries = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true, asEntries: true, withSourceSpeaker: true});
-  const scriptedFigures = scriptedFigurePresence(fullPanelText, castList, scriptedNames);
+  const scriptedFigures = scriptedFigurePresence(fullPanelText, castList, scriptedNames)
+    .map(figure => ({ ...figure, name: flatCharLookup[figure.name] || figure.name }));
   const scriptedDepictions = [...new Set([...scriptedFigures.filter(figure => figure.kind === 'depicted').map(figure => figure.name),
-    ...screenOnlyCast(fullPanelText,castList,[...scriptedNames,...Object.values(flatCharLookup),...entries.map(entry=>entry.speaker)])])];
+    ...screenOnlyCast(fullPanelText,castList,[...scriptedNames,...Object.values(flatCharLookup),...entries.map(entry=>entry.speaker)])]
+    .map(name => flatCharLookup[name] || name))];
   const resolvePageName = name => flatCharLookup[name] || (scriptedNames.includes(name) ? name : null);
   const incomingCast=new Set((options.incomingCast||[]).map(resolvePageName).filter(Boolean));
   const overlayCast=new Set((options.overlayCast||[]).map(resolvePageName).filter(Boolean));
@@ -2034,9 +2037,10 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       }
     });
   }
+  const visibleActionMentions = actionAndMetaText.replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, '');
   validCharacters.forEach(charName => {
     const canonicalName = charLookup[charName].name;
-    if (!offscreenCast.has(canonicalName) && !allPanelCharacters.includes(canonicalName) && actionAndMetaText.includes(charName)) {
+    if (!offscreenCast.has(canonicalName) && !allPanelCharacters.includes(canonicalName) && visibleActionMentions.includes(charName)) {
       allPanelCharacters.push(canonicalName);
     }
   });

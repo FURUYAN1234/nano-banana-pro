@@ -280,9 +280,27 @@ export function validateExperimentalPlan(plan, source) {
   });
   const expectedDialogue=resolveExperimentalDialogue(plan,source);
   const expectedCast=extractPanelCastContracts(plan.panels.map((p,i)=>`## Panel ${i+1}\n${experimentalCastRule(p,source)}`).join('\n'));
+  // The shared cast parser emits a registered name without its parenthetical
+  // annotation. Match only an unambiguous declared alias, never infer a person
+  // from the foreground manifest or strip annotations from arbitrary guests.
+  const castIdentities=new Map();
+  const identityKey=name=>String(name).normalize('NFKC').trim();
+  for(const entry of collectCastNameEntries(source.castList)) {
+    for(const alias of entry.aliases) {
+      const key=identityKey(alias);
+      if(!castIdentities.has(key))castIdentities.set(key,new Set());
+      castIdentities.get(key).add(identityKey(entry.displayName));
+    }
+  }
+  const sameOwner=(authored,visible)=>{
+    const a=identityKey(authored),b=identityKey(visible);
+    if(a===b)return true;
+    const ownersA=castIdentities.get(a),ownersB=castIdentities.get(b);
+    return ownersA?.size===1&&ownersB?.size===1&&[...ownersA][0]===[...ownersB][0];
+  };
   for(const f of plan.composition?.foregrounds||[]) {
     const cast=expectedCast.find(p=>p.panel===f.panel);
-    if(!cast?.names.includes(f.character)&&!cast?.depictedNames?.includes(f.character))fail('ページ大の前景には、その大コマに実際に登場する可視人物の正式名を指定してください。');
+    if(![...(cast?.names||[]),...(cast?.depictedNames||[])].some(name=>sameOwner(f.character,name)))fail('ページ大の前景には、その大コマに実際に登場する可視人物の正式名を指定してください。');
   }
   return {...plan,expectedDialogue,expectedCast};
 }

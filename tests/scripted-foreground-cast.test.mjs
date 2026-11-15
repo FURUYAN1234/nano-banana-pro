@@ -20,6 +20,38 @@ try {
     assert.match(result.prompt,/PAGE DOMINANT FIGURE F1: 客演者/);
     assert(result.plan.expectedCast.slice(1).every(p=>!p.names.includes('客演者')),'incoming figure must not add local guest bodies');
   });
+  test('a registered foreground annotation resolves to its one visible canonical actor',async()=>{
+    for(const foreground of ['案内係（仮名）','案内係(仮名)']) {
+      const input=makeInput('案内係が大きく手を振る。ユウが横で見上げる。','\n案内係（仮名）「どうぞ。」');
+      input.castList+='\n## 1. 案内係（仮名）\n黒い短髪。';
+      input.scenario=input.scenario.replaceAll('客演者',foreground);
+      const result=await prepare(input);
+      assert.deepEqual(result.plan.expectedCast[0].names,['ユウ','案内係']);
+      assert.equal(result.plan.composition.foregrounds[0].character,foreground,'authored foreground is not rewritten');
+      assert(result.plan.expectedCast.slice(1).every(p=>!p.names.includes('案内係')),'the connected foreground is not an extra local actor');
+      assert(result.source.scenario===input.scenario,'dialogue and source text remain verbatim');
+    }
+  });
+  test('a full annotated name in visible action does not create a second copy of its canonical actor',async()=>{
+    const input=makeInput('案内係（仮名）は大きく手を振る。ユウが横で見上げる。','\n案内係（仮名）「どうぞ。」');
+    input.castList+='\n## 案内係（仮名）\n黒い短髪。';
+    input.scenario=input.scenario.replaceAll('客演者','案内係（仮名）');
+    const result=await prepare(input);
+    assert.deepEqual(result.plan.expectedCast[0].names,['ユウ','案内係']);
+    assert.equal(result.plan.expectedDialogue.filter(d=>d.speaker==='案内係').length,1);
+  });
+  test('registered aliases cannot authorize an absent, quoted, or ambiguous foreground owner',async()=>{
+    for(const action of ['ユウが天井を見上げる。','案内係は画面外で待機する。ユウが見上げる。','案内係は描かない。ユウが見上げる。','ユウが「案内係は手を振る」という文字だけを見る。']) {
+      const input=makeInput(action);
+      input.castList+='\n## 案内係（仮名）\n黒い短髪。';
+      input.scenario=input.scenario.replaceAll('客演者','案内係（仮名）');
+      await assert.rejects(prepare(input),/可視人物/,action);
+    }
+    const ambiguous=makeInput('案内係が大きく手を振る。ユウが横で見上げる。','\n案内係（受付）「どうぞ。」');
+    ambiguous.castList+='\n## 案内係（受付）\n黒い短髪。\n## 案内係（警備）\n白い短髪。';
+    ambiguous.scenario=ambiguous.scenario.replaceAll('客演者','案内係（受付）');
+    await assert.rejects(prepare(ambiguous),/可視人物/,'a shared short alias cannot prove which registered person owns the foreground');
+  });
   test('foreground review distinguishes a later scene from a detached part of the same body', async()=>{
     const input=makeInput('客演者は片膝をゆるめ、片手を腰に置いた大きなポーズ。ユウが横で見上げる。');
     const result=await prepare(input);

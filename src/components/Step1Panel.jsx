@@ -252,7 +252,10 @@ export default function Step1Panel({
             {asset?.items?.length ? asset.items.map((item, itemIndex) => <div key={itemIndex} className="reference-recognition-row">
               <span>{itemIndex === 0 ? `画像${imageIndex + 1}` : ''}</span>
               <label>{REFERENCE_KIND_LABELS[item.kind]}：<input aria-label={`画像${imageIndex + 1}の素材${itemIndex + 1}の名前`}
-                value={item.name} onChange={event => editReferenceItem(image, itemIndex, 'name', event.target.value)} /></label>
+                value={item.name}
+                onChange={event => editReferenceItem(image, itemIndex, 'name', event.target.value, {commit:false})}
+                onBlur={event => editReferenceItem(image, itemIndex, 'name', event.target.value, {commit:true})}
+                onKeyDown={event => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) event.currentTarget.blur(); }} /></label>
               <textarea aria-label={`画像${imageIndex + 1}の素材${itemIndex + 1}の認識内容`} rows={1}
                 value={item.description} onChange={event => editReferenceItem(image, itemIndex, 'description', event.target.value)} />
             </div>) : <span>画像{imageIndex + 1}：解析待ち</span>}
@@ -272,7 +275,8 @@ export default function Step1Panel({
           id="reference-recognition-editor"
           rows={6}
           value={castEditorText}
-          onChange={(e) => editCastList(e.target.value)}
+          onChange={(e) => editCastList(e.target.value, {commit:false})}
+          onBlur={(e) => editCastList(e.target.value, {commit:true})}
           className="reference-recognition-editor"
           aria-describedby="reference-character-input-help"
           aria-invalid={Boolean(referenceEditorError)}

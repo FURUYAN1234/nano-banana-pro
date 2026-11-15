@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.5.5** / 現在のソース版: **v7.5.5**
+> Current source version: **v7.5.6** / 現在のソース版: **v7.5.6**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -168,6 +168,8 @@ POP panels redraw faces, hair, clothes, props and backgrounds with extra-bold bl
 **Story-led page composition / シナリオに合うページ構成**: STEP2 first chooses the most effective story moment, then compares distinct page structures in the same request. The last six accepted session scripts provide geometry-only comparison data. Story impact and legibility take priority; novelty only breaks ties between suitable alternatives. Explicit layouts and meaningful repetition remain valid. No extra layout API call or similarity-only regeneration is added. The comparison resets on reload or full reset. / STEP2はシナリオの動き・表情・間・オチから最も効果的な見せ場を選び、上下の横長大コマ、左右の縦長、中央の見せ場などを同じリクエスト内で比較します。この画面で採用した直近6作品の構図を参考にしますが、内容への効果と読順を優先します。同程度に適した案があるときに偏りを抑え、違う構図にするためだけに話を変えたり、人物を小さくしたりしません。明示された配置や物語に必要な反復は使えます。比較専用のAPI呼び出しや、構図の類似だけを理由とする再生成は追加しません。比較履歴は再読み込み・全設定リセットで消去されます。横長4段のレガシーはこの変更の対象外です。
 
 **Panel-count switch / 4コマ生成・4～8コマ生成**: The switch above STEP2 defaults to the right-hand 4–8-panel mode and retains the selection until reload. Four-panel mode shows a short guide; 4–8-panel mode shows detailed direction and operation guidance. Four-panel STEP2 creates four panels and ignores total-count requests such as "six panels", while preserving valid style and direction requests for panels 1–4. The other mode writes 4–8 panels from the start. STEP3 retains that script’s count and order while preparing layouts and drawing instructions. It may use large and small panels, tall panels and actors extending into adjacent panels. The last six layouts provide comparison material, including alternatives without merged panels. Story-motivated repetition is allowed; layout repetition alone never triggers paid regeneration. Candidates must have a clear reading order; arbitrary layouts are not guaranteed. / STEP2の上にあるスイッチは初期状態が右の「4～8コマ生成」で、選択はリロードまで保持します。4コマ生成では短い案内、4～8コマ生成では演出と操作の詳しい説明を表示します。4コマ生成はSTEP2で通常の4コマを作り、自由入力の「6コマ」などの総コマ数指定は採用しません。1〜4コマへの有効な画風・演出指定は保持します。4～8コマ生成は最初から4～8コマのシナリオを作ります。STEP3では台本と同じコマ数・順番を保って配置と描画指示を作ります。大小のコマ、縦のぶち抜き、隣のコマへの身体の枠越えを必要に応じて試します。直近6枚の配置を比較資料にし、結合コマを使わない構成も比較します。物語上必要な反復は許容し、配置の重複だけで有料再生成はしません。配置は読む順番が明確な候補から選び、自由な配置全般を保証する機能ではありません。
+
+STEP3 matches annotated character names to a unique registered alias before checking page foreground ownership. A full name and its canonical short form refer to one actor, so they do not create duplicate cast constraints. Missing, offscreen, quoted-only or ambiguous owners do not authorize a page foreground. / STEP3は括弧注記付きの人物名を、一意に対応する登録名と照合して前景の所有者を確認します。正式名とその基本名を同一人物として扱い、人数指定を二重に作りません。不在・画面外・引用内だけの名前や、対応が曖昧な人物ではページ前景を確定しません。
 
 Camera validation accepts an elevated placement followed by a comma and a shot direction, such as a high position followed by a front or side view. Actor or prop height alone and explicitly negated high/low camera positions do not establish a camera angle; a real camera origin before an actor description remains valid. The existing eye-level and fisheye restrictions remain. / カメラ検査では「高い位置、正面から…」のように撮影位置を読点で区切って方位を続けた記述も認識します。人物や小道具の高さだけの記述、否定された高低の撮影位置は撮影角度とみなしません。人物の説明より前にある実際の撮影起点は保持し、アイレベルと魚眼の既存制限も維持します。
 
@@ -495,7 +497,7 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 
 #### Drop materials together / 素材をまとめて投入する
 
-Add images either with the “Select material images” button or by dropping them anywhere inside STEP1; both methods also support later additions. Hover over a thumbnail to see its current image number and recognition. Per-image recognition and character settings share one scroll area; each recognized item uses a compact row without empty category slots. Names and descriptions remain editable, and all results can be copied together. After addition or deletion, numbers follow the current images while edits stay attached to their source image. / 「素材画像を選択」ボタン、またはSTEP1の枠内全体へのドロップで追加できます。後からの追加も同じ操作です。画像にマウスを重ねると、現在の画像番号と認識内容を表示します。画像ごとの認識と人物設定は同じ枠内でスクロールし、認識した項目だけをコンパクトな行で表示します。空の種類別欄は作りません。名前・説明は編集でき、結果全体をまとめてコピーできます。追加・削除後は現在の画像順に番号が更新され、編集内容は元の画像との対応を保ちます。
+Add images either with the “Select material images” button or by dropping them anywhere inside STEP1; both methods also support later additions. Hover over a thumbnail to see its current image number and recognition. Per-image recognition and character settings share one scroll area; each recognized item uses a compact row without empty category slots. Names and descriptions remain editable, and all results can be copied together. Character-name edits stay as drafts while typing and synchronize when you leave the field; the material name field also accepts Enter. Empty or duplicate names block the next operation until corrected. Ordinary two-character names still follow references within sentences, while single-character matches inside unrelated words are protected. After addition or deletion, numbers follow the current images while edits stay attached to their source image. / 「素材画像を選択」ボタン、またはSTEP1の枠内全体へのドロップで追加できます。後からの追加も同じ操作です。画像にマウスを重ねると、現在の画像番号と認識内容を表示します。画像ごとの認識と人物設定は同じ枠内でスクロールし、認識した項目だけをコンパクトな行で表示します。空の種類別欄は作りません。名前・説明は編集でき、結果全体をまとめてコピーできます。人物名は入力中の下書きを保持し、欄を離れると関連設定へ同期します。素材名欄ではEnterでも確定できます。空欄・別人との同名は直すまで次の操作へ進めません。文中の2文字名の対応を保ち、一般語に含まれる1文字名の誤置換を防ぎます。追加・削除後は現在の画像順に番号が更新され、編集内容は元の画像との対応を保ちます。
 
 Drop character sheets, expression sheets, turnaround views, ordinary backgrounds and key props together. AI recognizes their types, groups views of the same person and determines coherent scene use without asking you to classify them. Recognition is carried into the scenario, both image APIs and the Web paste prompt. Images containing several material types are kept as one image with several roles. / 人物設定・表情集・三面図・通常背景・キーになる小物をまとめてドロップしてください。AIが素材の種類、同じ人物、関係、場面での使いどころを判断するので、分類や番号指定は不要です。認識結果をシナリオ、OpenAI／Geminiの画像API、Web貼付文へ引き継ぎます。1枚に複数種類の素材が載っている場合も、画像は1枚のまま用途を分けます。
 
@@ -699,7 +701,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.5.4](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.4のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.5.6](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.6のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.5.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -759,7 +761,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.5 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.5 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.5.6 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.5.6 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -829,6 +831,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.5.6 (2026-11-15)
+- **[Fix & UX]** Fix STEP3 identity matching for annotated names, duplicate actor constraints, and prose corruption while renaming characters / STEP3の括弧注記付き人物名による誤停止と同一人物の重複指定、人物名編集時の一般文の誤置換を修正
 
 ### v7.5.5 (2026-11-14)
 - **[Fix & UX]** Improve step visibility, scrolling, enhancement, history and SNS copy placement; fix camera validation and untitled script handling. / STEPごとの表示範囲・スクロール・強化欄・履歴とSNSコピー位置を改善。カメラ指定の誤検出と題名なし台本のタイトル処理を修正。

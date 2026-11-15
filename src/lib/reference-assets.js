@@ -164,6 +164,17 @@ const renameCharacters = (castList, assets, renames, knownCast = castList) => {
     // A must not match Appearance/Alice; longer known Japanese names win first.
     if (/^[\w]/.test(name) && /[\w]/.test(input[offset - 1] || '')) return name;
     if (/[\w]$/.test(name) && /[\w]/.test(input[offset + name.length] || '')) return name;
+    // Single-character Japanese names also occur inside words (長さ, 日光).
+    // Treat them as names only at an explicit text boundary, with
+    // punctuation, an honorific or a grammatical particle after the name.
+    // This also protects prose while a name field is being typed character by character.
+    if (/^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]$/u.test(name)) {
+      const before = input[offset - 1] || '';
+      const after = input.slice(offset + name.length);
+      if (/[\p{L}\p{N}_]/u.test(before)) return name;
+      if (/^[\p{L}\p{N}_]/u.test(after)
+        && !/^(?:は|が|を|に|へ|と|も|の|で|や|さん|ちゃん|くん|君|様|氏|先生)/u.test(after)) return name;
+    }
     return renames.get(name) ?? name;
   });
   const result = {
@@ -184,7 +195,7 @@ const renameCharacters = (castList, assets, renames, knownCast = castList) => {
   return result;
 };
 
-export function editReferenceAsset(castList, assets, image, itemIndex, field, value) {
+export function editReferenceAsset(castList, assets, image, itemIndex, field, value, {commit = true} = {}) {
   const asset = assets.find(entry => entry.image === image);
   const item = asset?.items[itemIndex];
   if (!item || !['name', 'description'].includes(field)) return {castList, assets, error: ''};
@@ -202,6 +213,7 @@ export function editReferenceAsset(castList, assets, image, itemIndex, field, va
     }),
   });
   if (field !== 'name' || item.kind !== 'character') return {castList, assets: edited, error: nameSyncError(castList, edited)};
+  if (!commit) return {castList, assets: edited, error: nameSyncError(castList, edited)};
   const name = value.trim();
   if (!name) return {castList, assets: edited, error: '人物名を入力してください。設定の対応は保持しています。'};
   if (name !== oldName && (profiles.has(name) || assets.some(entry => entry.items.some(candidate =>
@@ -211,7 +223,7 @@ export function editReferenceAsset(castList, assets, image, itemIndex, field, va
   return renameCharacters(castList, edited, new Map([[oldName, name]]));
 }
 
-export function editReferenceCast(previousCast, text, assets) {
+export function editReferenceCast(previousCast, text, assets, {commit = true} = {}) {
   const before = collectCastNameEntries(previousCast).map(entry => entry.displayName);
   const after = collectCastNameEntries(text).map(entry => entry.displayName);
   const unchanged = {castList: text, assets, error: nameSyncError(text, assets), deferBaseline: after.length < before.length};
@@ -226,6 +238,7 @@ export function editReferenceCast(previousCast, text, assets) {
       && body(previousProfiles.get(name)) === body(nextProfiles.get(nextName))) renames.set(name, nextName);
   });
   if (!renames.size) return unchanged;
+  if (!commit) return {...unchanged, deferBaseline: true, error: '人物名の編集を完了してください。欄の外をクリックすると名前を反映します。'};
   // The heading has already been edited. Only old occurrences and linked data change.
   return renameCharacters(text, assets, renames, previousCast);
 }
@@ -233,13 +246,13 @@ export function editReferenceCast(previousCast, text, assets) {
 // The current STEP1 textarea edits characters separately from material rows.
 // Keep image-derived profile/name editing, while sharing the text-only format
 // and known design-prompt guard with the serialized recognition editor.
-export function parseCharacterEditorText(text, images = [], assets = [], previousCast = '') {
+export function parseCharacterEditorText(text, images = [], assets = [], previousCast = '', options = {}) {
   const content = normalizeCharacterPaste(text);
   if (!images.length || !previousCast.trim()) assertStoryCharacterFormat(content);
-  const edited = editReferenceCast(previousCast, content, assets);
-  if (!images.length || !isCanonicalCharacterPaste(content) || edited.assets !== assets) return edited;
+  const edited = editReferenceCast(previousCast, content, assets, options);
+  if (!images.length || !isCanonicalCharacterPaste(content) || edited.assets !== assets || edited.deferBaseline) return edited;
   const merged = parseRecognitionEditorText(content, images, null, assets, previousCast);
-  return editReferenceCast(previousCast, merged.castList, merged.assets);
+  return editReferenceCast(previousCast, merged.castList, merged.assets, options);
 }
 
 const derivedCast = assets => {

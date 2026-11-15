@@ -493,20 +493,24 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setIsMetaSaved(false);
   };
 
-  const editReferenceItem = (image, itemIndex, field, value) => {
+  const editReferenceItem = (image, itemIndex, field, value, options = {}) => {
     if (!['name', 'description'].includes(field)) return;
+    const item = referenceAssetsRef.current.find(asset => asset.image === image)?.items[itemIndex];
+    if (options.commit && field === 'name' && item?.name === value
+      && (item.castName ?? item.name) === value.trim()) return;
     invalidateReferenceOutputs();
-    const result = editReferenceAsset(castListRef.current, referenceAssetsRef.current, image, itemIndex, field, value);
+    const result = editReferenceAsset(castListRef.current, referenceAssetsRef.current, image, itemIndex, field, value, options);
     setCastList(result.castList);
     setReferenceAssets(result.assets);
     setReferenceEditorError(result.error);
   };
-  const editCastList = (text) => {
+  const editCastList = (text, options = {}) => {
+    if (options.commit && text === castListRef.current && text === castNameBaselineRef.current) return;
     invalidateReferenceOutputs();
     setCastDraft(text);
     try {
       const baseline = castNameBaselineRef.current;
-      const result = parseCharacterEditorText(text, imagesRef.current, referenceAssetsRef.current, baseline);
+      const result = parseCharacterEditorText(text, imagesRef.current, referenceAssetsRef.current, baseline, options);
       setCastList(result.castList);
       if (result.deferBaseline) castNameBaselineRef.current = baseline;
       setReferenceAssets(result.assets);

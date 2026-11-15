@@ -37,7 +37,8 @@ test('the actual STEP1 textarea callback retains an invalid paste, blocks genera
   const step1=readFileSync(new URL('../src/components/Step1Panel.jsx',import.meta.url),'utf8');
   const app=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8');
   const textarea=step1.match(/<textarea\s+id="reference-recognition-editor"[\s\S]*?\/>/)[0];
-  const callback=textarea.match(/onChange=\{\(e\) => (\w+)\(e.target.value\)\}/)[1];
+  const callback=textarea.match(/onChange=\{\(e\) => (\w+)\(e.target.value, \{commit:false\}\)\}/)[1];
+  assert.match(textarea,/onBlur=\{\(e\) => editCastList\(e.target.value, \{commit:true\}\)\}/);
   assert.match(app,new RegExp(callback+'=\\{'+callback+'\\}'),'the UI callback is the one supplied by the app');
   assert.match(textarea,/value=\{castEditorText\}/);assert.match(app,/castEditorText=\{castEditorText\}/);
   assert.match(source,/castEditorText: castDraft \?\? castList/,'rejected drafts remain visible in the actual textarea');
@@ -99,6 +100,23 @@ test('actual STEP1 handlers synchronize in both directions, including clear-then
   assert.equal(ctx.referenceAssetsRef.current[0].castProfiles.Final,'## Final\nFront view');
   ctx.setImages(['b']);
   assert.equal(ctx.castListRef.current,'');
+});
+
+test('actual name edit handlers keep drafts out of prose and leave completed outputs on unchanged blur',()=>{
+  const {state,ctx}=workflow();
+  ctx.editReferenceItem('a',0,'name','さ',{commit:false});
+  assert.match(ctx.castListRef.current,/## A/);
+  assert.equal(ctx.referenceAssetsRef.current[0].items[0].name,'さ');
+  assert.match(state.referenceEditorError,/人物名の編集/);
+  ctx.editReferenceItem('a',0,'name','さとし',{commit:false});
+  ctx.editReferenceItem('a',0,'name','さとし',{commit:true});
+  assert.match(ctx.castListRef.current,/## さとし/);
+  assert.equal(state.referenceEditorError,'');
+  state.scenario='retained scenario';state.finalPrompt='retained prompt';
+  ctx.editReferenceItem('a',0,'name','さとし',{commit:true});
+  ctx.editCastList(ctx.castListRef.current,{commit:true});
+  assert.equal(state.scenario,'retained scenario');
+  assert.equal(state.finalPrompt,'retained prompt');
 });
 
 for(const action of ['partialReset','step1Reset','hardReset']) test(`${action} releases recognition state and synchronous guard, rejecting obsolete completion`,()=>{
