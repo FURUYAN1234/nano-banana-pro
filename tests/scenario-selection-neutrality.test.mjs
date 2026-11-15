@@ -116,3 +116,20 @@ test('automatic choices retain six visible drawing media and preserve excluded m
   }
   assert.match(prompt, /同系統のタグ差だけでは.*描法変更/);
 });
+
+test('scene-fit contrast precedes medium choice without forcing quiet panels into watercolor or sketch', () => {
+  for (const scenarioMode of ['four-panel', 'experimental-manga']) for (const punchlineType of ['GagAuto', 'SeriousAuto']) {
+    const prompt = getScenarioPrompt({ ...options, scenarioMode, punchlineType,
+      manualTopic: '静かな準備の場面。全コマ水彩で、人物と看板を明瞭に。' });
+    assert.match(prompt, /まず構図・距離と奥行き・光と影・描写密度の強弱を設計/);
+    assert.match(prompt, /画風変更だけをメリハリの代用にせず/);
+    assert.match(prompt, /静かな場面を自動的に水彩やスケッチへ割り当てない/);
+    assert.match(prompt, /内容に合う同じ画風の継続と全コマ固定の明示指定を優先/);
+    assert.match(prompt, /巡回や最低種類数は課さない/);
+    assert.ok(prompt.includes('全コマ水彩で、人物と看板を明瞭に。'));
+    assert.match(prompt, /静かな会話でも俯瞰・アオリ・望遠・広角・寄り引き/);
+    assert.match(prompt, /焦点は撮影位置・レンズと別軸/);
+    assert.match(prompt, /Cameraや動作を弱めない/);
+    assert.doesNotMatch(prompt, /水彩やスケッチを禁止|毎コマ.*画風を変える|ぼかしを必ず/);
+  }
+});

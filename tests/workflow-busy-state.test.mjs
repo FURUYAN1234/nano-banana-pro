@@ -833,3 +833,25 @@ A「次へ。」`).join('\n');
     assert.deepEqual(state.generationHistory,outgoing);
   });
 }
+
+for (const outcome of ['success', 'partial', 'retained', 'short', 'error']) {
+  test(`settled enhancement ${outcome} retains lifecycle evidence for open downstream view, including revert`, async () => {
+    const pending = deferred();
+    const { state, bind } = harness({ enhanceScenarioText: () => pending.promise });
+    const original = state.scenario;
+    const running = bind('enhanceScenario')();
+    assert.equal(state.isEnhancing, true);
+    assert.ok(state.enhanceLog);
+    if (outcome === 'error') pending.reject(new Error('provider failed'));
+    else pending.resolve({ text: outcome === 'short' ? '' : 'Enhanced scenario containing enough complete content',
+      validation: { ok: outcome !== 'partial' }, validationWarning: outcome === 'partial',
+      fallbackToOriginal: outcome === 'retained' });
+    await running;
+    assert.equal(state.isEnhancing, false);
+    assert.ok(state.enhanceLog, 'every completion including error has stable lifecycle evidence');
+    if (['retained', 'short', 'error'].includes(outcome)) assert.equal(state.scenario, original);
+    bind('revertScenario')();
+    assert.equal(state.scenario, original);
+    assert.ok(state.enhanceLog);
+  });
+}

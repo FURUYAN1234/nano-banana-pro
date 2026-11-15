@@ -8,7 +8,7 @@ test('unavailable STEP3 contributes no scrollable space before STEP2 finishes, i
  const source=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8');
  const gate=source.match(/\{([^\r\n{}]+?) && \(\s*<div\s+ref=\{step3Ref\}/)?.[1];
  assert.ok(gate,'STEP3 must be absent from layout until its prerequisite is complete');
- const visible=new Function('currentStep','isAnalyzing','isSearching','enhancementViewOpen = false',`return Boolean(${gate});`);
+ const visible=new Function('currentStep','isAnalyzing','isSearching','enhancementFocusActive = false',`return Boolean(${gate});`);
  for(const step of [1,2])assert.equal(visible(step,false,false),false);
  for(const step of [3,4,5]){
   assert.equal(visible(step,false,false),true);
@@ -16,7 +16,7 @@ test('unavailable STEP3 contributes no scrollable space before STEP2 finishes, i
   assert.equal(visible(step,false,true),false);
   assert.equal(visible(step,false,false,true),false,'open enhancement temporarily hides later steps');
  }
- assert.match(source,/\{!enhancementViewOpen && Boolean\(finalPrompt\?\.trim\(\) \|\| generatedImage\) && \(<div>/,'empty output wrapper must not leave a downstream gap');
+ assert.match(source,/\{!enhancementFocusActive && Boolean\(finalPrompt\?\.trim\(\) \|\| generatedImage\) && \(<div>/,'empty output wrapper must not leave a downstream gap');
 });
 
 test('next action is centered between measured fixed header and viewport margins, with reduced motion respected',()=>{
@@ -74,13 +74,48 @@ test('actual App reset callback and empty-view effect scroll after repeated same
 test('actual App scroll effect reacts once when the same STEP3 becomes valid, not on further valid edits',()=>{
  const source=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  const readiness=source.match(/const nextActionReady = ([\s\S]*?);/);assert.ok(readiness,'App must observe actual action readiness');
- const effect=source.match(/useEffect\(\(\) => \{(\n    if \(currentStep < 2[\s\S]*?)\n  \}, (\[currentStep,[^\]]+\])\);/);assert.ok(effect);
+ const effect=source.match(/useEffect\(\(\) => \{(\n    const wasEnhancementOpen =[\s\S]*?if \(currentStep < 2[\s\S]*?)\n  \}, (\[currentStep,[^\]]+\])\);/);assert.ok(effect);
  const queued=[],moves=[];const browserWindow={innerHeight:1338,scrollY:2373,requestAnimationFrame:fn=>{queued.push(fn);return queued.length;},cancelAnimationFrame(){},scrollTo:options=>{moves.push(options);browserWindow.scrollY=options.top;}};
  const target={getBoundingClientRect:()=>({top:3983.59-browserWindow.scrollY,height:34})};
- const context=vm.createContext({currentStep:3,scenarioModeValid:false,isColorModeLocked:false,finalPrompt:'',isMainLocked:false,workflowScrollBusy:false,enhancementViewOpen:false,step2ActionRef:{current:null},scenarioEnhanceToggleRef:{current:target},step3ActionRef:{current:null},step4ActionRef:{current:null},measuredHeaderHeightRef:{current:419},scheduleWorkflowScroll,scrollToWorkflowAction,window:browserWindow});
+ const context=vm.createContext({currentStep:3,scenarioModeValid:false,isColorModeLocked:false,finalPrompt:'',isMainLocked:false,workflowScrollBusy:false,enhancementViewOpen:false,previousEnhancementViewOpenRef:{current:false},enhancementFocusActive:false,step2ActionRef:{current:null},scenarioEnhanceToggleRef:{current:null},step3ActionRef:{current:target},step4ActionRef:{current:null},measuredHeaderHeightRef:{current:419},scheduleWorkflowScroll,scrollToWorkflowAction,window:browserWindow});
  const runEffect=vm.runInContext(`() => {${effect[1]}\n}`,context);let previousDeps,cleanup;
  const render=()=>{context.nextActionReady=vm.runInContext(readiness[1],context);const deps=Array.from(vm.runInContext(effect[2],context));if(!previousDeps||deps.some((value,index)=>!Object.is(value,previousDeps[index]))){cleanup?.();cleanup=runEffect();previousDeps=deps;}};
  render();assert.equal(queued.length,0);assert.equal(moves.length,0,'invalid scenario must not target a disabled action');
  context.scenarioModeValid=true;render();assert.equal(queued.length,1);queued[0]();assert.equal(moves.length,1);const y=target.getBoundingClientRect().top;assert.ok(y>=435&&y+34<=1322);
  context.scenario='another valid edit';render();render();assert.equal(queued.length,1);assert.equal(moves.length,1);assert.equal(context.currentStep,3);
+ // Same step: opening an unstarted enhancement hides its action; settlement reveals it.
+ context.enhancementFocusActive=true;render();assert.equal(queued.length,1);
+ context.workflowScrollBusy=true;render();assert.equal(queued.length,1);
+ context.workflowScrollBusy=false;context.enhancementFocusActive=false;render();assert.equal(queued.length,2);
+ queued[1]();assert.equal(moves.length,1,'already-visible button needs no extra movement');
+ browserWindow.scrollY=100;render();assert.equal(queued.length,2,'manual scrolling after settlement is preserved');
+ // Retry then completion in a short viewport still exposes the entire action.
+ context.workflowScrollBusy=true;context.enhancementFocusActive=true;render();
+ browserWindow.innerHeight=600;
+ context.workflowScrollBusy=false;context.enhancementFocusActive=false;render();queued[2]();
+ const shortY=target.getBoundingClientRect().top;assert.ok(shortY>=435&&shortY+34<=584);
+ render();assert.equal(queued.length,3);
+ // Completed collapse/reopen changes layout without changing the focus cap.
+ for(const open of [true,false,true]){
+ browserWindow.scrollY=100;context.enhancementViewOpen=open;const count=queued.length;render();
+ if(open){assert.equal(queued.length,count,'intentional reopen preserves access to enhancement controls');}
+ else{assert.equal(queued.length,count+1);queued.at(-1)();const y=target.getBoundingClientRect().top;
+ assert.ok(y>=435&&y+34<=584,'completed collapse exposes the whole STEP3 action');}
+ }
+ assert.equal(queued.length,4);
+
+
 });
+
+ test('open enhancement caps only unstarted or active work, and settled outcomes restore downstream without closing',()=>{
+ const source=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8');
+ const expression=source.match(/const enhancementFocusActive = ([^;]+);/);assert.ok(expression);
+ const focus=new Function('enhancementViewOpen','isEnhancing','enhanceLog',`return Boolean(${expression[1]});`);
+ assert.equal(focus(true,false,''),true);
+ for(const log of ['success','partial acceptance','original retained','request error','reverted']){
+ assert.equal(focus(true,false,log),false,log);assert.equal(focus(true,true,log),true,'retry hides downstream until settled');
+ assert.equal(focus(false,false,log),false);
+ }
+ assert.equal(focus(false,true,''),false,'full auto never enters accordion focus');
+ assert.equal(focus(true,false,''),true,'reset clears completion');
+ });

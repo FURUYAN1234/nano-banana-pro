@@ -232,6 +232,9 @@ function App() {
   const nextActionReady = currentStep === 2 || (currentStep === 3 && scenarioModeValid && !isColorModeLocked)
     || (currentStep === 4 && Boolean(finalPrompt?.trim()));
   const enhancementViewOpen = !isFullAutoMode && isEnhancePanelOpen && scenario.length > 20;
+  // Logs are cleared with a new scenario/reset and retained for every settled outcome.
+  // Busy wins during retry; opening a completed run must not conceal its next action.
+  const enhancementFocusActive = enhancementViewOpen && (isEnhancing || !enhanceLog);
 
   useEffect(() => {
     if (isFullAutoMode) setIsEnhancePanelOpen(false);
@@ -257,6 +260,7 @@ function App() {
   const scenarioEnhanceActionRef = useRef(null);
   const scenarioEnhanceProgressRef = useRef(null);
   const [requestedStepNavigation, setRequestedStepNavigation] = useState(null);
+  const previousEnhancementViewOpenRef = useRef(enhancementViewOpen);
   const handleStep1Reset = () => {
     step1Reset();
     requestStep1ResetScroll(epoch => epoch + 1);
@@ -315,11 +319,15 @@ function App() {
   }, [isGeneratingImage, imageResultRef]);
 
   useEffect(() => {
-    if (currentStep < 2 || !nextActionReady || isMainLocked || workflowScrollBusy || enhancementViewOpen) return;
+    const wasEnhancementOpen = previousEnhancementViewOpenRef.current;
+    previousEnhancementViewOpenRef.current = enhancementViewOpen;
+    // An intentional reopen is for editing enhancement controls, not a new STEP arrival.
+    if (!wasEnhancementOpen && enhancementViewOpen && !enhancementFocusActive) return;
+    if (currentStep < 2 || !nextActionReady || isMainLocked || workflowScrollBusy || enhancementFocusActive) return;
     const activeActionRef = currentStep === 2
       ? step2ActionRef
       : currentStep === 3
-        ? scenarioEnhanceToggleRef
+        ? step3ActionRef
         : currentStep === 4
           ? step4ActionRef
           : null;
@@ -327,25 +335,25 @@ function App() {
     return scheduleWorkflowScroll(() => {
       scrollToWorkflowAction(activeActionRef?.current, { browserWindow: window, headerOffset: measuredHeaderHeightRef.current });
     }, window);
-  }, [currentStep, nextActionReady, isMainLocked, workflowScrollBusy, enhancementViewOpen]);
+  }, [currentStep, nextActionReady, isMainLocked, workflowScrollBusy, enhancementFocusActive, enhancementViewOpen]);
 
   useEffect(() => {
-    if (!enhancementViewOpen || isMainLocked) return;
+    if (!enhancementFocusActive || isMainLocked) return;
     return scheduleWorkflowScroll(() => scrollToWorkflowAction(scenarioEnhanceActionRef.current,
       { browserWindow: window, headerOffset: measuredHeaderHeightRef.current }), window);
-  }, [enhancementViewOpen, isMainLocked]);
+  }, [enhancementFocusActive, isMainLocked]);
 
   useEffect(() => {
-    if (!enhancementViewOpen || !isEnhancing || isMainLocked) return;
+    if (!enhancementFocusActive || !isEnhancing || isMainLocked) return;
     return scheduleWorkflowScroll(() => scrollToWorkflowAction(scenarioEnhanceProgressRef.current,
       { browserWindow: window, headerOffset: measuredHeaderHeightRef.current }), window);
-  }, [enhancementViewOpen, isEnhancing, isMainLocked]);
+  }, [enhancementFocusActive, isEnhancing, isMainLocked]);
 
   const apiKeyForUnlockedUi = isMainLocked ? "" : apiKey;
   const isStepNavigationDisabled = isMainLocked || isApiProcessing || isAborting || isFullAutoMode;
   const handleNavigateToStep = step => {
     if (isStepNavigationDisabled || !Number.isInteger(step) || step < 1 || step > 4 || step > currentStep) return false;
-    if (step >= 3 && enhancementViewOpen) {
+    if (step >= 3 && enhancementFocusActive) {
       setIsEnhancePanelOpen(false);
       setRequestedStepNavigation(step);
       return true;
@@ -358,7 +366,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (requestedStepNavigation === null || enhancementViewOpen) return;
+    if (requestedStepNavigation === null || enhancementFocusActive) return;
     return scheduleWorkflowScroll(() => {
       scrollToWorkflowStep(requestedStepNavigation, {
         currentStep, disabled: isStepNavigationDisabled, browserWindow: window,
@@ -367,7 +375,7 @@ function App() {
       });
       setRequestedStepNavigation(null);
     }, window);
-  }, [requestedStepNavigation, enhancementViewOpen, currentStep, isStepNavigationDisabled, fixedHeaderHeight, step2Ref, step3Ref, outputRef]);
+  }, [requestedStepNavigation, enhancementFocusActive, currentStep, isStepNavigationDisabled, fixedHeaderHeight, step2Ref, step3Ref, outputRef]);
 
   return (
     <div className="app-shell min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30">
@@ -558,7 +566,7 @@ function App() {
             /></div>
           </div>
 
-          {!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3 && (
+          {!isAnalyzing && !isSearching && !enhancementFocusActive && currentStep >= 3 && (
             <>
               <GenerationPreview
                 scenario={scenario}
@@ -572,8 +580,8 @@ function App() {
               />
             </>
           )}
-          {!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3 && <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />}
-          {!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3 && (
+          {!isAnalyzing && !isSearching && !enhancementFocusActive && currentStep >= 3 && <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />}
+          {!isAnalyzing && !isSearching && !enhancementFocusActive && currentStep >= 3 && (
               <div ref={step3Ref} className="flex flex-col gap-4">
 
                 {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
@@ -602,7 +610,7 @@ function App() {
 
 
           {/* 出力結果 */}
-          {!enhancementViewOpen && Boolean(finalPrompt?.trim() || generatedImage) && (<div>
+          {!enhancementFocusActive && Boolean(finalPrompt?.trim() || generatedImage) && (<div>
           {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim() || generatedImage) && (<Step4Panel
               onNavigateToStep={handleNavigateToStep}
               isStepNavigationDisabled={isStepNavigationDisabled}

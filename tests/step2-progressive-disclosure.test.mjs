@@ -221,7 +221,7 @@ test('STEP2 completion log and final time remain beside the generated scenario',
 
 test('preview waits for a scenario and the page-mode switch precedes STEP2', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
-  assert.match(app, /\{!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3 && \(\s*<>\s*<GenerationPreview[\s\S]*?<\/?>\s*\)\}/);
+  assert.match(app, /\{!isAnalyzing && !isSearching && !enhancementFocusActive && currentStep >= 3 && \(\s*<>\s*<GenerationPreview[\s\S]*?<\/?>\s*\)\}/);
   assert.match(app, /<ExperimentalMangaPanel[\s\S]*?currentStep=\{currentStep\} isAnalyzing=\{isAnalyzing\} isSearching=\{isSearching\}[\s\S]*?\/>[\s\S]*?<Step2Panel/);
   assert.doesNotMatch(app, /<\/ExperimentalMangaPanel>/);
 });

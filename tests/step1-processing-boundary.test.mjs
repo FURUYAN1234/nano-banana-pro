@@ -8,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 test('downstream steps and footer cannot extend the page past the active recognition progress', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
   assert.match(app, /<div hidden=\{isAnalyzing\}><Step2Panel/);
-  assert.match(app, /\{!isAnalyzing && !isSearching && !enhancementViewOpen && currentStep >= 3/);
+  assert.match(app, /\{!isAnalyzing && !isSearching && !enhancementFocusActive && currentStep >= 3/);
   assert.match(app, /\{!isAnalyzing && !isSearching && !isAssembling && Boolean\(finalPrompt/);
   assert.match(app, /\{!isAnalyzing && !isSearching && !isAssembling && <footer/);
 });
