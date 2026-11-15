@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "0d6c56a471fdfacd45d604dc059c315431bb07ece6cb3f8b2bfa854ccd2bc0e1",
-  "manualVersion": "7.6.0",
-  "manualSourceSha256": "5b136d3d905ea4f7d874e08b7f341f9916a022afe53ecdae81034f778d5898f3",
+  "manualVersion": "7.6.1",
+  "manualSourceSha256": "496f81ec1911d83f17b05494f4cc7323b7e066b7fca47d16d6141368328804f1",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "4af149c45a2f982bb7ff258ac4fdaa16ba59fa07def26822cd8f85b4150d26bd"
+      "sha256": "3bc8b6504ddf9d21d5b5f30863ee8f90af79b5909bd0e87d86ab247b13d6e77d"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "a4f776591dd8bfbb6425719c14db2e3fb74dff42d58aa512ebd1b68431092032"
+      "sha256": "42103fa7f4cdc15b04074dbb8f04c00b740b5e7012d036045d021c8087d3a2c0"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "d23d90b852b10b9d531aab217daae071dcefe4270860e473ddfadc72787f0ba4"
+      "sha256": "452c3f65d73b97587b190f8d24a32a7016649b77b078783a80ecadece63eac74"
     }
   ],
-  "readmeSha256": "db92d6b1b6869ded649ec02200c6499a1c08d32334f7708f0f78412d76905737",
+  "readmeSha256": "96006209eed73f5f866c84c577c5cfb7ca63f02c1d0a149fe2ab1def75128ef8",
   "readmeLanguageGaps": [],
-  "sourceTree": "feaa94d3f7ca0f692d700898a4bdd6c70995626a",
-  "publicTree": "6a44820d398990e8c325c2e5f773c4a0a1845405",
-  "packageSha256": "7986e15d1812f2f6b74eec7568292bd7f0952b4af3f106a40441878328a1f165",
+  "sourceTree": "d5c54fc15e778768a53187e2c2eed194925d8904",
+  "publicTree": "6784ee1b5a118a323daf8ada558184ba29de0d96",
+  "packageSha256": "130540fb2ad96dd3d19f8ea3cc5ef0f78dac221c302a7befecef9f04d14b8fbc",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,12 +41,12 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "31e070bc8f30e223a3d0c0609b9836051698ffdf",
-  "reviewedAt": "2026-11-15T10:34:15.029Z",
-  "findings": "Reviewed all current README sections against candidate source, preserving unchanged verified sections from v7.5.9. Updated hand-ink/selected MONO guide roles, positive-evidence native4–8noncomic stop only with automatic repair ON, source-authoritative compact frame contracts, diagnostics length/SHA privacy, version/download links and changelog. COLOR byte equivalence, protections,32k/16images, normal/abnormal regressions and real COLOR/MONO acceptance were checked; repaired_unverified is not automatic final QA pass. Actual7.5.9-local API evidence is reused because only the version constant changed afterward; other126source files match accepted manifest. Restored the existing current Emergency Stop active/queued red versus idle/stopped grey explanation in the main operation guide, outside the15-entry ChangeLog, after fullsuite detected its removal during history trimming. Existing emergency-stop regressions pass without modifying implementation or tests.",
-  "manualFindings": "Three A4 Japanese PDFs,72pages total, rebuilt for v7.6.0. Automated version/privacy/links/text-bounds checks pass. All72page footers were rendered/visually inspected. Changed body pages Gemini1 and full manual17/19/24 were inspected at full resolution; remaining68page bodies are pixel-identical to previously reviewed v7.5.9 baseline excluding footer. Explicit source-style protections/hand ink/noncomic stopping scope synchronized. No stale manual version remains.",
+  "sourceCommit": "ae98ac3a6847ece95280d89ed44a219b30000d34",
+  "reviewedAt": "2026-11-15T11:55:29.482Z",
+  "findings": "Compared current README body and all sections with prior published v7.6.0 and current diff. Only static STEP4 single-image button/header changes and version/changelog/download reference synchronization apply. Exact supplied hand-drawn text17209characters and emotional8911 are distinguished;9500guideline scoped to emotional only. UI/clipboard/keyboard/wide/mobile real checks passed. Existing generation/API/models/styles/QA/workflow code unchanged, preserving prior verified sections. Latest15changelog entries retained without removing emergency-stop body guidance. Added asset-specific -text Git attribute after verifying default normalization would alter497CRLF sequences. Working file, committed blob and source archive now preserve exact17236bytes/17209JScharacters and originalSHA256bdd5c8c38b7ccc6bd46c97f0b7361e965c40730796a67d172174bac4492a64de. Browser clipboard proof remains valid because working asset content did not change.",
+  "manualFindings": "Rebuilt all3JapaneseA4PDFs72pages for7.6.1. Full manual new button body pages21/30 were visually accepted by implementation owner and root. Compared new PDFs to the accepted local760body: all normalized body text unchanged, body pixels only Gemini1/full19 version examples; remaining70bodies identical. Viewed both version-only body pages and all72rendered footer strips; no clipping/overlap. Automated privacy, links, textbounds and version checks pass.",
   "pricingReview": {
-    "checkedAt": "2026-11-15T10:10:22Z",
+    "checkedAt": "2026-11-15T11:45:41Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://aistudio.google.com/docs/pricing",
@@ -58,8 +58,8 @@
       "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare.md",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Root re-read official Standard (not Batch) prices at2026-11-15T10:10:22Z; Gemini legacy URL redirects to AI Studio. Current Astra10/50,6.1Sol2/10,6.1Terra1/5,6Luna0.1/0.5; Image2.6 image8/cache2/out30,text5/cache1.25. Prior4models and2.5image were individually reread; Gemini3.8Flash0.75/3.75 through2026-12-31 and Nano2.1 configured text/image/token/resolution prices match. No fee/config change.",
-    "version": "7.6.0",
+    "findings": "Root freshly read official Standard not Batch pricing at2026-11-15T11:45:41Z. Current and legacy OpenAI scenario/image models and Gemini3.8Flash/Nano2.1 prices match unchanged settings; Google legacy pricing URL redirects toAIStudio. No fee changes.",
+    "version": "7.6.1",
     "sourceSha256": "0d6c56a471fdfacd45d604dc059c315431bb07ece6cb3f8b2bfa854ccd2bc0e1"
   }
 }
