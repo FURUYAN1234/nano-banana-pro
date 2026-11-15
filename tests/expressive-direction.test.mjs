@@ -151,8 +151,8 @@ test('case-by-case near/far focus and required background text survive every pro
       continue;
     }
     assert.ok(prompt.includes('FOCUS PLAN:'), 'FOCUS PLAN missing from generated prompt');
-    assert.match(prompt, /optional near\/far soft/);
-    assert.match(prompt, /Required text\/contact\/reactions readable; explicit deep focus\/abstract style wins/);
+    assert.match(prompt, /nonessential near\/far defocused, not pale\/thin/);
+    assert.match(prompt, /Text\/contact\/reactions readable; exposition\/deep focus\/abstraction wins/);
     assert.match(prompt, /shot scale|Camera scale/);
     assert.doesNotMatch(prompt, /Clean finish: crisp foreground, softer background/);
   }

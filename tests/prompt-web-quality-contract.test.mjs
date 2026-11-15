@@ -164,7 +164,8 @@ test('both provider prompts preserve physical settings while allowing density co
     assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omission|omit)|setting or scripted abstraction|scripted abstraction may omit scenery, not required props/i);
     assert.match(prompt, /never remove story evidence|props stay/i);
     assert.match(prompt, /focal speaker\/reaction partner\/main action readable|Focal speaker\/reaction\/action and required props\/text\/contact readable/i);
-    assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|real shots (?:retain setting\/depth;|keep setting\/depth,) far blur|keep setting\/depth and foreground\/midground\/background shapes; optional nonfocal near\/far blur\/thin\/pale|retain environmental shapes, light masses and perspective; nonfocal near\/far planes may blur or use thinner\/paler detail/i);
+    assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|real shots (?:retain setting\/depth;|keep setting\/depth,) far blur|keep setting\/depth and foreground\/midground\/background shapes[.;]|name sharp acting and visibly blurred nonessential near\/far planes/i);
+    assert.match(prompt, /nonessential near\/far defocused, not pale\/thin/);
     assert.match(prompt, /quiet beats[^\n]*(?:reduce|lower)|peak\/quiet beat, negative space\/density|negative space; clear story\/joke, peak\/quiet, density/i);
   }
 });

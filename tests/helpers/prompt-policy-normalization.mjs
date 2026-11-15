@@ -203,3 +203,14 @@ export const restorePrePolicyContracts = value => restoreFooterPolicyBefore742(v
   .replaceAll('CAST INSTANCE LOCK: 各人物は背景も実体1人。紙/画面の像で代替不可。\n', '')
   .replaceAll('below all faces (crouched/chibi too); look up: chin/jaw/prop undersides, forehead recedes, low horizon, upward convergence. Face/body/setting share projection, no frontal face on tilted BG; keep scripted height/pitch/proportions', 'low camera below faces including crouched/chibi; look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background; preserve scripted height/pitch/proportions')
   .replaceAll('CAST INSTANCE LOCK: allocate each named actor one physical body silhouette at scripted depth, including background actors. Every Camera/Action/dialogue/reaction mention updates that same physical body; never clone, omit a required actor, or substitute a depicted replica. Preserve scripted crops, hidden faces and expressive depth.', 'CAST INSTANCE LOCK: allocate each named actor one body silhouette (a full-size physical actor), in one depth position, one time in this panel. Every Camera/Action/dialogue/reaction mention updates that same physical body; never create another full-size body from a repeated mention, even across foreground/background or panel-edge occlusion.');
+
+// v7.5.6: invert only the reviewed compiler focus clauses for older isolation
+// snapshots. Actual focus, cameras, media and budgets have separate regressions.
+const focus756 = JSON.parse(readFileSync(new URL('../fixtures/focus-756-normalization.json', import.meta.url), 'utf8'));
+export const restoreFocusBefore756 = (value, { hierarchy = true } = {}) => String(value).split('\n').map(line => {
+  for (const { scope, current, previous } of focus756) {
+    if (!hierarchy && current.startsWith('FOCUS PLAN:')) continue;
+    if (new RegExp(scope).test(line)) line = line.replace(current, previous);
+  }
+  return line;
+}).join('\n');

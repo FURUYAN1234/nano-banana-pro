@@ -18,7 +18,7 @@ export const EXPRESSIVE_DIRECTION = 'EXPRESSIVE DIRECTION: clear/lively manga; b
 
 // Keep the same short contract at every compression tier and in single images.
 // These are generation goals, not additional paid-regeneration predicates.
-export const FOCAL_DEPTH_HIERARCHY = 'FOCUS PLAN: scene-led speaker/reaction partner/main action sharp; optional near/far soft/thin/pale; equal depth=same focus. Required text/contact/reactions readable; explicit deep focus/abstract style wins. Keep setting shapes.';
+export const FOCAL_DEPTH_HIERARCHY = 'FOCUS PLAN: useful sharp/blur planes: speaker/reaction/action sharp; nonessential near/far defocused, not pale/thin. Camera/Action fixed; same depth=same focus. Text/contact/reactions readable; exposition/deep focus/abstraction wins; setting shapes.';
 
 export const FOCAL_READABILITY = `FOCAL READABILITY: readability never changes shot scale or elevation, camera side or head turn; visible features only. Rear acting: head pitch, shoulder tension, weight; keep scripted profiles/turns. Focal G-pen: strongest pressure-tapered thick-to-hairline strokes, bold outer silhouette/hair/jaw/shoulder and overlap accents, fine eyes/mouth/fingers. Never uniform thick outlines or black-clogged features. Story-critical reactions/required props/lettering stay sharp; other props follow depth. Support/BG thinner, lower contrast; local light/dark value and warm/cool color planes, motivated edge light and clear gaps at faces/hands. If depth-of-field blur still merges focal, lighten/desaturate BG or deepen behind light silhouettes; strengthen focal G-pen. Keep setting texture/shadow depth, no glow over ink; identity/light/mono and gaze/diagonal/negative-space flow. ${FOCAL_DEPTH_HIERARCHY}`;
 

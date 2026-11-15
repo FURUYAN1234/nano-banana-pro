@@ -171,7 +171,14 @@ const renameCharacters = (castList, assets, renames, knownCast = castList) => {
     if (/^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]$/u.test(name)) {
       const before = input[offset - 1] || '';
       const after = input.slice(offset + name.length);
-      if (/[\p{L}\p{N}_]/u.test(before)) return name;
+      if (/[\p{L}\p{N}_]/u.test(before)) {
+        // A relational position plus an honorific or unmistakable human acting
+        // can identify a name inside prose (隣の光は笑う). A particle alone
+        // cannot: 窓の光が差す and 右の光は明るい remain ordinary words.
+        const relational = /(?:隣|隣席|後ろ|手前|左|右)の$/u.test(input.slice(0, offset));
+        const person = /^(?:(?:さん|ちゃん|くん|君|様|氏|先生)(?:は|が|を|に|へ|と|も|の|で|や|[、。！？\s]|$)|(?:は|が)(?:笑う|微笑む|頷く|うなずく|話す|答える|返事する|叫ぶ|見上げる|振り向く|歩く|座る))/u.test(after);
+        if (!relational || !person) return name;
+      }
       if (/^[\p{L}\p{N}_]/u.test(after)
         && !/^(?:は|が|を|に|へ|と|も|の|で|や|さん|ちゃん|くん|君|様|氏|先生)/u.test(after)) return name;
     }

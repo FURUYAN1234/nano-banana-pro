@@ -473,7 +473,7 @@ MemberA「The loudest voice wins.」`;
     const panel = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)?.[0] || '';
 
     assert.match(panel, /(?:CAST LIMIT: required cast \[Focus\][.;]|CRITICAL CAST PLACEMENT: Include \[Focus\];)/);
-    assert.match(prompt, /FOCUS PLAN:.*speaker\/reaction partner\/main action sharp/i);
+    assert.match(prompt, /FOCUS PLAN:.*speaker\/reaction\/action sharp/i);
     assert.match(prompt, /preserve scripted front\/back\/left\/right, elevation, crop and lens|Preserve scripted Camera\/Action|Honor scripted front\/back\/left\/right camera side, crop and lens/i);
     assert.match(panel, /(?:FG|FG only|FOREGROUND MUST CONTAIN ONLY): \[Observer\]\./);
     assert.match(panel, /(?:BG|BG only|BACKGROUND MUST CONTAIN ONLY): \[Focus\], \[MemberA\], \[MemberB\], \[MemberC\]\./);

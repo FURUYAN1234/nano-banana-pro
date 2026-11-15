@@ -1,3 +1,4 @@
+import { restoreFocusBefore756 } from './helpers/prompt-policy-normalization.mjs';
 import assert from 'node:assert/strict';
 import test, { before, after } from 'node:test';
 import { createHash } from 'node:crypto';
@@ -11,7 +12,7 @@ import { restorePrePolicyContracts, restorePreSelectionContracts } from './helpe
 // camera, acting and medium instructions remain frozen against the old hash.
 // Normalize only the authorized shared scale wording; the separate final-prompt
 // regression checks its depth/occlusion/ground-plane and stylization safeguards.
-const withoutScaleRepair = value => restorePrePolicyContracts(restorePreSelectionContracts(withoutMosaicRepair(value)))
+const withoutScaleRepair = value => restorePrePolicyContracts(restorePreSelectionContracts(withoutMosaicRepair(restoreFocusBefore756(value, { hierarchy: false }))))
   .replaceAll('Keep required cast once; supporting cast: lower visual emphasis, never miniature bodies; scale follows depth, occlusion and ground plane; preserve scripted size differences and chibi', 'Keep required cast once; supporting cast smaller/lower contrast when Camera/Action permits, not equal portraits')
   .replaceAll('supporting cast: lower visual emphasis, never miniature bodies; scale follows depth, occlusion and ground plane; preserve scripted size differences and chibi', 'supporting cast smaller/lower contrast')
   .replaceAll('脇役縮小禁止。遠近・遮蔽・接地に整合。指定体格差・ちび保持。', 'support smaller/lower-contrast.');

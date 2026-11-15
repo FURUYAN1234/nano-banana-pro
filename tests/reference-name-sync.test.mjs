@@ -131,3 +131,9 @@ test('a single kanji name remains linked without replacing compound words',()=>{
   const result=refs.editReferenceAsset(text,[asset('front','光')],'front',0,'name','葵');
   assert.equal(result.castList,'## 1. 葵\n外見: 日光を浴びる。光景を眺め、葵は笑う。\n服装: 葵の上着。');
 });
+
+test('an unambiguous single-character actor in mid-sentence follows renaming without guessing ordinary light',()=>{
+  const text='## 1. 光\n外見: 隣の光は笑う。後ろの光さんが答える。窓の光が差す。右の光は明るい。日光と光景。\n服装: 光の上着。';
+  const result=refs.editReferenceAsset(text,[asset('front','光')],'front',0,'name','葵');
+  assert.equal(result.castList,'## 1. 葵\n外見: 隣の葵は笑う。後ろの葵さんが答える。窓の光が差す。右の光は明るい。日光と光景。\n服装: 葵の上着。');
+});

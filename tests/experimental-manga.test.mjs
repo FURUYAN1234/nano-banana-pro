@@ -99,7 +99,8 @@ try {
     assert.match(color,/右P3は左の上P4と下P5の高さを合わせた未分割の一枠/);
     // Added projection cues cross the soft compaction threshold. Expand only
     // the exact shared compiler clauses. This title-less fixture now uses 無題;
-    // reverting only that title reproduces the prior color-content hash.
+    // the reviewed v7.5.6 focus clause and equivalent readability compaction
+    // change only one quality-contract line (private focus-snapshot-review.json).
     assert.match(color, /Top title EXACTLY "無題"/);
     let colorWithoutLayoutAddition=restoreActionProjectionBefore737(color.replace(/^SPANNING FRAMES（非印字）: .*\n/m,''));
     const sharedOrder='人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定なら対象に応じた自然な頭向きを補う（明示の横目/目だけの移動/顔上げ/背面を優先、顔/対象の遮蔽保持）、可視瞳を指定先へ（対象未指定/閉眼/明示の読者目線保持）→独立Cameraで立体投影→画風';
@@ -111,7 +112,7 @@ try {
         .replace(/^(FRAME MEDIUM P\d+ — NORMAL: [^\n]*) ALL ACTORS\.$/gm,'$1 Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。');
     }
     assert.equal(createHash('sha256').update(restoreWritingPolicyBefore729(colorWithoutLayoutAddition).replace(/v\d+\.\d+\.\d+/g,'v<VERSION>')).digest('hex'),
-      '1e906dfaec6d5495ce936dc5eb4aa531c59b8a2dced78785120324fe335d9e03');
+      'ba38028e79f20b1b227e91117f26f8934c9f1af6812ece2a354076f16273c0e4');
     for (const count of [5,6,7,8]) {
       const scenario = scenarioFor(count).replaceAll(/行動\d+/g, '葵と凛が木箱を運ぶ。');
       const source = m.readExperimentalSource({scenario, castList, colorMode:'monochrome'});
@@ -544,6 +545,33 @@ try {
       report.evidence[0].style_observation.actors[1].status='fail';
       assert.equal(m.validateExperimentalReview(report,six).style,'fail','visible material mismatch survives another hidden face');
     }
+  });
+  test('mixed frame media preserve a grounded foreground source medium without waiving local actor checks',()=>{
+    const report=styledReview(),target=report.evidence[0],owner=report.evidence[2];
+    const plan={...six,composition:{layout:'free',frames:m.experimentalLayout(6,six.layout),heroPanels:[],foregrounds:[{panel:3,character:'人物A',over:[1],placement:'頭と肩の輪郭をつなぐ。'}],breakouts:[],bleed:[]},expectedCast:[{panel:3,names:['人物A']}]};
+    report.compositionChecks=[{id:'foreground:P3',status:'pass',observed:'大きな頭と肩の輪郭が隣のコマへ一続きにつながる。',materialImpact:'none',impactReason:'台詞と動作を隠さず連続している。'}];
+    owner.physical_bodies=[{...structuredClone(target.physical_bodies[0]),id:'owner'}];
+    owner.cast_instances=[{name:'人物A',status:'ok',observed_count:1,instances:[{body_id:'owner',location:'大きな前景人物',matched_features:['短い黒髪','白い作業服']}]}];
+    owner.style_observation.actors=[{...structuredClone(target.style_observation.actors[0]),body_id:'owner',medium:'WATERCOLOR'}];
+    target.cast_instances=[];
+    target.body_dispositions=[{body_id:'left',kind:'foreground',source_panel:3,source_body_id:'owner',observed_features:['短い黒髪','白い作業服'],evidence:'水彩の髪と服の輪郭が隣の大きな身体から連続して見える。'}];
+    target.style_observation.medium='mixed';
+    target.style_observation.actors[0].medium='WATERCOLOR';
+    assert.equal(m.validateExperimentalReview(report,plan).style,'pass');
+    for(const damage of [
+      r=>{r.evidence[0].body_dispositions[0].source_panel=6;},
+      r=>{r.evidence[0].body_dispositions[0].observed_features=['根拠なし'];},
+      r=>{r.evidence[0].style_observation.actors[0].medium='NORMAL';},
+      r=>{r.evidence[0].style_observation.actors[1].medium='WATERCOLOR';},
+      r=>{r.evidence[0].style_observation.status='fail';},
+    ]) {
+      const invalid=structuredClone(report);damage(invalid);
+      assert.equal(m.validateExperimentalReview(invalid,plan).style,'fail','unknown source, wrong local/source medium and explicit failure stay rejected');
+    }
+    const uncertain=structuredClone(report);uncertain.evidence[0].style_observation.actors[0].status='uncertain';
+    assert.equal(m.validateExperimentalReview(uncertain,plan).style,'uncertain');
+    const absent=structuredClone(report);delete absent.expectedStyles;
+    assert.equal(m.validateExperimentalReview(absent,plan).style,'uncertain','mixed observations cannot invent missing expected media');
   });
   test('style assessment prompt carries source-derived panel media and body-bound observation requirements',()=>{
     const mixed=m.readExperimentalSource({...input,scenario:scenario.replace('[EMOTION: NORMAL]','[EMOTION: GEKIGA]')});
@@ -1103,7 +1131,7 @@ try {
   });
   test('panel media override generic ink and cel shading without weakening anatomy or the normal shared contract', () => {
     assert.equal(shared.buildImageQualityContract(),shared.SHARED_IMAGE_QUALITY_CONTRACT);
-    assert.equal(createHash('sha256').update(shared.SHARED_IMAGE_QUALITY_CONTRACT).digest('hex'),'a898f9df6b1f6718c90bab8928ca71bd81ce1d7bdcb34040217461f6f9307804');
+    assert.equal(createHash('sha256').update(shared.SHARED_IMAGE_QUALITY_CONTRACT).digest('hex'),'4106f2f734e5957f99b4f6b7856dad979960e0f0a818ccacdcc6ec994b160078');
     const src=m.readExperimentalSource({...input,colorMode:'color',scenario:scenario.replaceAll('NORMAL','WATERCOLOR')});
     const prompt=m.buildExperimentalImagePrompt(six,src,{...input,colorMode:'color'});
     assert.doesNotMatch(prompt,/strongest G-pen|Focal G-pen|use clean, localized cel-shaded shadow planes/);

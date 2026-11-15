@@ -1,0 +1,22 @@
+[
+  {
+    "scope": "^(?:- )?FOCAL READABILITY:",
+    "current": "FOCUS PLAN: useful sharp/blur planes: speaker/reaction/action sharp; nonessential near/far defocused, not pale/thin. Camera/Action fixed; same depth=same focus. Text/contact/reactions readable; exposition/deep focus/abstraction wins; setting shapes.",
+    "previous": "FOCUS PLAN: scene-led speaker/reaction partner/main action sharp; optional near/far soft/thin/pale; equal depth=same focus. Required text/contact/reactions readable; explicit deep focus/abstract style wins. Keep setting shapes."
+  },
+  {
+    "scope": "^RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK:",
+    "current": "RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: keep setting/depth and foreground/midground/background shapes. Motivated key, fill and rim light; shadow/color depth. Focal speaker/reaction/action and required props/text/contact readable; equal depth=same focus. Deep focus wins; scripted abstraction may omit scenery, not required props; no default blank backdrop.",
+    "previous": "RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: keep setting/depth and foreground/midground/background shapes; optional nonfocal near/far blur/thin/pale detail. Motivated key, fill and rim light; shadow/color depth. Focal speaker/reaction/action and required props/text/contact readable; equal depth=same focus. Explicit deep focus wins; scripted abstraction may omit scenery, not required props; no default blank backdrop."
+  },
+  {
+    "scope": "^- When useful, name sharp acting",
+    "current": "- When useful, name sharp acting and visibly blurred nonessential near/far planes; pale/thin lines alone are not defocus. Keep Camera/Action and setting shapes. Equal depths, required text/contact/reactions, wide exposition, explicit deep focus and abstract style win.",
+    "previous": "- In physical-setting shots retain environmental shapes, light masses and perspective; nonfocal near/far planes may blur or use thinner/paler detail. Equal depths share focus; required text, contacts and reactions stay readable; explicit deep focus and abstract style win."
+  },
+  {
+    "scope": "^(?:- )?FOCAL READABILITY:",
+    "current": "FOCAL READABILITY: 寄引き/仰俯角/撮影側/視線/頭の向き/必要な身体と道具の可視性固定。反応/文字/接触は指定媒体で明瞭、別媒体の輪郭強制なし。後頭部を読者へ振り向かせない。",
+    "previous": "FOCAL READABILITY: 寄引き/仰俯角/撮影側/視線/頭の向き/必要な身体と道具の見え方を保持。反応/文字/接触は指定媒体の輪郭/顔料/墨で明瞭にし、別媒体の輪郭を強制しない。明瞭化のため後頭部を読者へ振り向かせない。"
+  }
+]

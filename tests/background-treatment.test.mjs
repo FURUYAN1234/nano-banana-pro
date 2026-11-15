@@ -145,7 +145,7 @@ test('six-panel mixed-media pages receive background scope in every frame withou
   const scenario=media.map((style,i)=>`[${i+1}コマ目]\n[Camera: 斜め上から中景]\n[EMOTION: ${style}]\n状況: 葵と蓮が机の手紙を見る。\n葵「確認${i+1}」`).join('\n');
   const input={enabled:true,scenarioMode:'experimental-manga',scenario,castList:'## 葵\n黒髪。\n## 蓮\n茶髪。',colorMode:'color'};
   const source=experimental.readExperimentalSource(input);
-  const prepared=await experimental.prepareExperimentalManga(input,async()=>JSON.stringify({count:6,layout:'hero_bottom',reason:'最後の反応を広くする',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'葵と蓮が机の手紙を見る。',dialogueIds:p.dialogueIds,breakout:null}))}));
+  const prepared=await experimental.prepareExperimentalManga(input,async()=>JSON.stringify({count:6,layout:'hero_bottom',reason:'最後の反応を広くする',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'葵と蓮が机の手紙を見る。',dialogueIds:p.dialogueIds,breakout:null,visualEffects:p.id===1?['foreground_depth']:[]}))}));
   const on=background.setMangaBackgroundSimplification(prepared.prompt,true);
   for(let n=1;n<=6;n++) {
     const frame=on.split(`[PAGE FRAME P${n} |`)[1]?.split(`[END PAGE FRAME P${n}]`)[0];
@@ -165,6 +165,8 @@ test('six-panel mixed-media pages receive background scope in every frame withou
   assert.doesNotMatch(on,/^- 意味のある環境.*簡略化しない/m,'remove compiler-owned scenery-density conflict in experimental pages');
   assert.match(on,/人物はこの枠のFRAME MEDIUM／ACTOR MEDIUMどおり通常の細部まで完成/);
   assert.doesNotMatch(on,/and a readable distant setting\./,'abstract frames must not inherit a mandatory literal far background');
+  assert.match(on,/FOREGROUND DEPTH: BG MODE: focal acting sharp; ABSTRACT uses color fields, not blurred scenery; SPATIAL may defocus nonessential separate-depth planes/);
+  assert.doesNotMatch(on,/FOREGROUND DEPTH: useful nonessential near\/far planes visibly defocused/);
   assert.doesNotMatch(on,/every character[^\n]*at full normal detail/,'keep medium-specific finish instead of imposing NORMAL detail on POP or watercolor actors');
   assert.doesNotMatch(on,/場所に合う普通の背景人物は許容/,'respect exact cast count over generic background-people permission');
   assert.equal(background.setMangaBackgroundSimplification(on,false),prepared.prompt);

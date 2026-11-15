@@ -681,7 +681,7 @@ ${buildAddedEndingGuidance(GAG_ENDING_OPTIONS)}` :
 
              **【A. 撮影位置とレンズ】**: 会話・静止・アクションのいずれでも、出来事を伝える視点を選ぶ。強度は物語に合わせる。
              - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、広角/超広角、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
-             - 全てのCameraで「カメラがどこにあり」「どの面が見えるか」「人物と背景の大きさがどう違うか」を具体化する。静かなコマでも明確な高低差や距離の圧縮を使い、不要な身体の変形や騒がしい効果は足さない。
+             - 全てのCameraで撮影位置・見える面・人物と背景の大小を具体化。静かなコマも高低差や距離圧縮を使える。焦点は撮影位置・レンズと別軸。有効な場面だけActionに鮮明な人物/動作と、別距離の不要な前景/背景を実際にぼかす指定を具体化。説明全景・明示deep focus・抽象画風・必要文字/接触/反応・同距離の人物を優先し、Cameraや動作を弱めない。全コマへ強制しない。
              - 新規台本では撮影位置と見せる面の物理的な整合を先に解く。水平な台の下面より低い視点から、その天面全体を一望する等の両立しない指定を重ねない。低い見上げでは見える前面・縁・下面と演技を焦点にし、上面の情報は別の俯瞰コマへ配分する。必要情報がそのコマの上面にあるなら、強い俯瞰など実際に見える視点を最初から選ぶ。角度だけを名乗る正面図にせず、物語の動作・接触・必要情報・明示されたユーザー指定を保持する。既存の完成台本を扱うときは勝手にCameraや台詞を変えない。
                 * 例（ローアングル）: 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れる」
 
@@ -866,10 +866,10 @@ const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY 
 - Keep story-required physical setting cues and interaction props; vary background detail with the page's reading rhythm instead of imposing the same object count on every panel.
 - Panel VFX follow scripted staging. Explicit abstract beats may omit background scenery; never remove story evidence, interaction props or action contacts.
 - Keep focal speaker/reaction partner/main action readable; clarity never requires every face/hand/prop sharp.
-- In physical-setting shots retain environmental shapes, light masses and perspective; nonfocal near/far planes may blur or use thinner/paler detail. Equal depths share focus; required text, contacts and reactions stay readable; explicit deep focus and abstract style win.
+- When useful, name sharp acting and visibly blurred nonessential near/far planes; pale/thin lines alone are not defocus. Keep Camera/Action and setting shapes. Equal depths, required text/contact/reactions, wide exposition, explicit deep focus and abstract style win.
 - Use negative space and selective detail for quiet beats while keeping the physical setting and spatial continuity. Do not replace a setting with a blank backdrop merely because the beat is quiet; preserve explicit scripted abstraction.`;
 
-export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: keep setting/depth and foreground/midground/background shapes; optional nonfocal near/far blur/thin/pale detail. Motivated key, fill and rim light; shadow/color depth. Focal speaker/reaction/action and required props/text/contact readable; equal depth=same focus. Explicit deep focus wins; scripted abstraction may omit scenery, not required props; no default blank backdrop.';
+export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: keep setting/depth and foreground/midground/background shapes. Motivated key, fill and rim light; shadow/color depth. Focal speaker/reaction/action and required props/text/contact readable; equal depth=same focus. Deep focus wins; scripted abstraction may omit scenery, not required props; no default blank backdrop.';
 
 export const ART_STYLE_DIFFERENCE_QA_LOCK = 'ART-STYLE DIFFERENCE QA LOCK: Identity from refs; facial construction/ink/shading from panel recipe. G-pen subordinate to the panel recipe; linework, not only expression/VFX. Keep Camera/Action/identity/age/wardrobe; no numeric quota.';
 
