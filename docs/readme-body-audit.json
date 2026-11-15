@@ -19,7 +19,7 @@
   "readmeSha256": "06c37323a5a1929e85ac91bfafc6b779592ef63c98d27c716c9d60c08aeeeef4",
   "readmeLanguageGaps": [],
   "sourceTree": "feaa94d3f7ca0f692d700898a4bdd6c70995626a",
-  "publicTree": "e9fbc1b35cab0c9792fd2339bf10bebb9d49164a",
+  "publicTree": "6a44820d398990e8c325c2e5f773c4a0a1845405",
   "packageSha256": "7986e15d1812f2f6b74eec7568292bd7f0952b4af3f106a40441878328a1f165",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,8 +41,8 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "93a1d915c3cda19e9f060de66ecd2b2fcb04e4f3",
-  "reviewedAt": "2026-11-15T10:21:20.462Z",
+  "sourceCommit": "6c88b6539d150f05a3752026441dfca449a0efc5",
+  "reviewedAt": "2026-11-15T10:23:29.197Z",
   "findings": "Reviewed all current README sections against candidate source, preserving unchanged verified sections from v7.5.9. Updated hand-ink/selected MONO guide roles, positive-evidence native4–8noncomic stop only with automatic repair ON, source-authoritative compact frame contracts, diagnostics length/SHA privacy, version/download links and changelog. COLOR byte equivalence, protections,32k/16images, normal/abnormal regressions and real COLOR/MONO acceptance were checked; repaired_unverified is not automatic final QA pass. Actual7.5.9-local API evidence is reused because only the version constant changed afterward; other126source files match accepted manifest.",
   "manualFindings": "Three A4 Japanese PDFs,72pages total, rebuilt for v7.6.0. Automated version/privacy/links/text-bounds checks pass. All72page footers were rendered/visually inspected. Changed body pages Gemini1 and full manual17/19/24 were inspected at full resolution; remaining68page bodies are pixel-identical to previously reviewed v7.5.9 baseline excluding footer. Explicit source-style protections/hand ink/noncomic stopping scope synchronized. No stale manual version remains.",
   "pricingReview": {
