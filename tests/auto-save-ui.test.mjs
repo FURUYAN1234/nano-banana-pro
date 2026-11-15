@@ -118,7 +118,7 @@ test('single-image copy is inside the Web disclosure after video guidance with s
   const disclosure = html.match(/<details class="web-prompt-disclosure">([\s\S]*?)<\/details>/)?.[1];
   assert.ok(disclosure.includes('／1枚絵エモーショナルプロンプト'));
   assert.ok(disclosure.indexOf('ChatGPT用 1枚絵') > disclosure.indexOf('aria-controls="video-guide-content"'));
-  assert.match(disclosure, /style="padding-top:8px"/);
+  assert.match(disclosure, /style="padding-top:8px(?:;[^"]*)?"/);
   assert.doesNotMatch(renderToStaticMarkup(React.createElement(ControlBar)), /ChatGPT用 1枚絵/);
 });
 

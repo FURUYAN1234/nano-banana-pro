@@ -23,6 +23,7 @@ import { prepareGeneratedImageSave, saveImageToChosenLocation } from '../lib/gen
 import { getReferenceAsset, getReferenceMetadataRole } from '../lib/reference-assets.js';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
+import handDrawnSingleImagePrompt from '../assets/chatgpt-handdrawn-single-image.txt?raw';
 import { buildSingleImageEmotionalPrompt } from '../lib/single-image-prompt';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 import { SYSTEM_VERSION } from '../lib/constants';
@@ -414,6 +415,7 @@ export default function Step4Panel({
       extension: 'png'
     });
   };
+  const [isHandDrawnPromptCopied, setIsHandDrawnPromptCopied] = React.useState(false);
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
   const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
   const [isVideoGuideOpen, setIsVideoGuideOpen] = React.useState(false);
@@ -1066,7 +1068,7 @@ No explanations. No partial results.`;
               )}
               <details className="web-prompt-disclosure">
                   <summary className="web-prompt-disclosure-toggle">
-                    {isChatGPTWebGuide ? `ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化${isOpenAIImageMode ? '／1枚絵エモーショナルプロンプト' : ''}` : 'Gemini Webで手動生成／4コマ漫画を動画化'}
+                    {isChatGPTWebGuide ? `ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化${isOpenAIImageMode ? '／1枚絵エモーショナルプロンプト／1枚絵手書き風強化プロンプト' : ''}` : 'Gemini Webで手動生成／4コマ漫画を動画化'}
                   </summary>
                 <div className="space-y-3">
               {isChatGPTWebGuide && finalPrompt && (
@@ -1176,7 +1178,7 @@ No explanations. No partial results.`;
               {webSupportControls}
               {videoGuideControl}
               {isOpenAIImageMode && (
-                <div style={{ paddingTop: '8px' }}>
+                <div style={{ paddingTop: '8px', display: 'grid', gridAutoRows: '1fr', gap: '8px' }}>
                   <button
                     type="button"
                     onClick={async () => {
@@ -1193,9 +1195,33 @@ No explanations. No partial results.`;
                     className="w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg"
                     aria-live="polite"
                   >
-                    <span className="flex items-center gap-1.5 shrink-0">
+                    <span className="flex items-center justify-center gap-1.5 min-w-0 max-w-full">
                       {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
                       <span>{isPolicyCopied ? 'コピー完了！' : '🎬 ChatGPT用 1枚絵エモーショナルプロンプトをコピー'}</span>
+                    </span>
+                    <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center">
+                      【1枚絵用】描きたい内容の後ろに追加し、必要な参照画像と一緒にChatGPTへ一度だけ送信してください。
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await copyTextToClipboard(handDrawnSingleImagePrompt);
+                        setIsHandDrawnPromptCopied(true);
+                        setTimeout(() => setIsHandDrawnPromptCopied(false), 2000);
+                      } catch {
+                        setWebMetadataError('手描き風強化プロンプトをコピーできませんでした。ブラウザーのクリップボード設定を確認してください。');
+                      }
+                    }}
+                    aria-label="ChatGPT用手描き風強化プロンプト【1枚絵用】描きたい内容の後ろに追加し、必要な参照画像と一緒にChatGPTへ一度だけ送信してください。"
+                    style={{ backgroundColor: '#fff', color: '#000', borderColor: '#aaa' }}
+                    className="w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg"
+                    aria-live="polite"
+                  >
+                    <span className="flex items-center justify-center gap-1.5 min-w-0 max-w-full">
+                      {isHandDrawnPromptCopied ? <Check size={16} /> : <Copy size={16} />}
+                      <span>{isHandDrawnPromptCopied ? 'コピー完了！' : 'ChatGPT用手描き風強化プロンプト'}</span>
                     </span>
                     <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center">
                       【1枚絵用】描きたい内容の後ろに追加し、必要な参照画像と一緒にChatGPTへ一度だけ送信してください。

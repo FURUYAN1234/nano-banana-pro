@@ -194,3 +194,31 @@ Hero「行こう。」`;
   assert.match(step4Panel, /import \{ buildSingleImageEmotionalPrompt \}/);
   assert.match(step4Panel, /copyTextToClipboard\(buildSingleImageEmotionalPrompt\(\)\)/);
 });
+
+
+test('hand-drawn copy action preserves the entire supplied appendix and independent feedback', async (t) => {
+  const updates = [];
+  t.mock.method(React, 'useState', initial => [initial, value => updates.push(value)]);
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const prior = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const copied = [];
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { clipboard: { writeText: async text => copied.push(text) } } });
+  t.after(() => { if (prior) Object.defineProperty(globalThis, 'navigator', prior); else delete globalThis.navigator; });
+  const emotionalUpdates = [];
+  const tree = Step4Panel({ selectedEngine: 'openai', currentStep: 4, finalPrompt: 'Fixture', genLog: [], webCopyPartLengths: [], setIsPolicyCopied: value => emotionalUpdates.push(value) });
+  function find(node) {
+    if (!node || typeof node !== 'object') return undefined;
+    if (node.type === 'button' && node.props['aria-label']?.startsWith('ChatGPT用手描き風強化プロンプト')) return node;
+    return [node.props?.children].flat(Infinity).map(find).find(Boolean);
+  }
+  const button = find(tree);
+  assert.ok(button);
+  await button.props.onClick();
+  const bytes = readFileSync(new URL('../src/assets/chatgpt-handdrawn-single-image.txt', import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), 'bdd5c8c38b7ccc6bd46c97f0b7361e965c40730796a67d172174bac4492a64de');
+  assert.deepEqual(copied, [bytes.toString('utf8')]);
+  assert.deepEqual(emotionalUpdates, []);
+  assert.deepEqual(updates, [true]);
+  t.mock.timers.tick(2000);
+  assert.deepEqual(updates, [true, false]);
+});

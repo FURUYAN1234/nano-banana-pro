@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v7.6.0** / 現在のソース版: **v7.6.0**
+> Current source version: **v7.6.1** / 現在のソース版: **v7.6.1**
 
 
 An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
@@ -666,7 +666,7 @@ Monochrome repair decisions require localized, material evidence tied to a suppl
 
 OpenAI monochrome references supply identity, clothing and structure; their colors are interpreted as black ink, white paper and assigned screentones. Four-panel QA also reads native-size RGB pixels without changing the PNG or calling another API. Broad residual color prevents a pass and retains the image; this finding alone does not trigger automatic repair. Tiny channel differences, neutral antialiasing and sparse colored marks do not count as broad color areas. This read-only four-panel check does not apply to color output or Gemini. The separate v7.1.0 API return finish removes residual hue in monochrome manga while preserving native geometry and tone detail; it does not certify shading or style quality. / OpenAI白黒では、参照画像を人物の同一性・衣装・構造の根拠とし、元の色を引き継がず黒インク・白地・指定網点へ解釈します。4コマの原寸RGB検査はPNGを変更せず、追加APIも呼ばない読み取り検査です。広い色残りを検出した場合は合格扱いにせず画像を保持し、この検出だけでは自動修正しません。微小な色差・中立色のアンチエイリアス・疎な色線や点は広い色面として扱いません。この読み取り検査はカラー出力やGeminiへ適用しません。別のv7.1.0白黒API返却処理で、原寸とトーンの細部を保った色成分の除去を確認しています。陰影や画風の品質を保証するものではありません。
 
-**Single-image append prompt / 1枚絵の追加プロンプト**: The ChatGPT single-image copy button is inside the STEP4 Web disclosure, just below four-panel video guidance with extra spacing. The disclosure label ends in "/1枚絵エモーショナルプロンプト". It copies the accepted compact 8,911-character prompt, maintained below the 9,500-character per-paste guideline. Write your image request first, append this text on a new line in the same unsent composer, attach any references, then send once. Explicit user content, style and camera choices take priority; quality directions supplement unspecified details. Paste your request and the appendix separately, because combining them externally may exceed the per-paste guideline. / 「ChatGPT用 1枚絵エモーショナルプロンプトをコピー」は、STEP4のWeb用折り畳み内で、4コマ動画化の下に少し間隔を空けて配置しています。折り畳み名の末尾は「/1枚絵エモーショナルプロンプト」です。採用済みの圧縮版8,911文字をコピーします。ChatGPTの入力欄に描きたい内容を書き、改行してその後ろへ追加文を貼り、必要な参照画像も添えて最後に一度だけ送信してください。ユーザーの内容・画風・カメラ指定を優先し、未指定部分を品質指示で補います。追加文は1回の貼り付け目安9,500文字以内で管理します。ユーザー文と追加文を外部で結合して一括貼付する場合、その合計がこの目安を超えることがあるため、別々に貼ってください。
+**Single-image append prompt / 1枚絵の追加プロンプト**: The ChatGPT single-image copy button is inside the STEP4 Web disclosure, just below four-panel video guidance with extra spacing. The disclosure also contains an equally sized “ChatGPT用手描き風強化プロンプト” button immediately below it, copying the supplied 17,209-character hand-drawn appendix in full with independent copy feedback. Append it after your image request, attach references, and send once; neither button injects text into API manga prompts. The disclosure label ends in “／1枚絵手書き風強化プロンプト”. The emotional prompt button copies the accepted compact 8,911-character prompt, maintained below its 9,500-character per-paste guideline; that guideline does not describe the full hand-drawn appendix. Write your image request first, append this text on a new line in the same unsent composer, attach any references, then send once. Explicit user content, style and camera choices take priority; quality directions supplement unspecified details. Paste your request and the appendix separately, because combining them externally may exceed the per-paste guideline. / 「ChatGPT用 1枚絵エモーショナルプロンプトをコピー」は、STEP4のWeb用折り畳み内で、4コマ動画化の下に少し間隔を空けて配置しています。その直下に同じ大きさの「ChatGPT用手描き風強化プロンプト」ボタンを置き、提供された手描き風追加文17,209文字の全文を独立したコピー完了表示でコピーします。描きたい内容の後ろに追加し、必要な参照画像と一緒に一度だけ送信してください。どちらもAPI用漫画プロンプトへの自動追加は行いません。折り畳み名の末尾は「／1枚絵手書き風強化プロンプト」です。エモーショナル用ボタンは採用済みの圧縮版8,911文字をコピーします。ChatGPTの入力欄に描きたい内容を書き、改行してその後ろへ追加文を貼り、必要な参照画像も添えて最後に一度だけ送信してください。ユーザーの内容・画風・カメラ指定を優先し、未指定部分を品質指示で補います。エモーショナル用の追加文は1回の貼り付け目安9,500文字以内で管理します。この目安は手描き風追加文の全文を示すものではありません。ユーザー文と追加文を外部で結合して一括貼付する場合、その合計がこの目安を超えることがあるため、別々に貼ってください。
 
 **ChatGPT / Work long prompts**: Prompt construction reserves reference instructions within the 32,000-character API budget. The soft target is about 15,000 characters; 4–8-panel prompts also compact before reaching the hard limit. The app shortens its own repeated and common instructions while retaining the source camera directions, acting, expressions, dialogue and complete per-panel style instructions. The result can still exceed the soft target; text is never cut merely to meet it. Web copy, TXT/production-JSON export and the initial API request use the same complete instructions. If later edits exceed the API budget, the character count, split/full copy and exports remain available without truncation; API sending still rejects overflow. / **長文プロンプト**: 構築時は参照画像の説明を含めて **32,000文字** のAPI送信枠に収めます。約15,000文字を圧縮開始の目安とし、4～8コマでも上限に達する前に、アプリが加える重複・共通の説明を短くします。元のカメラ指定・演技・表情・台詞と、各コマの画風の詳細は保持します。必要な指定が多い場合は15,000文字を超えますが、目安に合わせて文章を切り捨てません。Webコピー・TXT／制作情報JSON保存・初回API送信は同じ指示文と参照説明を使います。編集などで上限を超えても、総文字数・分割／全文コピー・保存は利用でき、全文を切り捨てず取り出せます。API送信は上限超過を拒否します。Web側の入力・添付制限は利用環境によって異なります。
 
@@ -715,7 +715,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v7.5.9](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.6.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.9のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.6.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v7.5.9](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.6.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v7.5.9のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.6.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -777,7 +777,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.6.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.6.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.6.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv7.6.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -848,6 +848,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ## 📋 ChangeLog / 更新履歴
 
+### v7.6.1 (2026-11-15)
+- **[Fix & UX]** Added a full-text hand-drawn single-image copy button in STEP4 with matching dimensions and independent copy feedback / STEP4に原文全文をコピーする1枚絵手描き風強化ボタンを追加し、既存ボタンと同寸法・独立した完了表示に統一
+
 ### v7.6.0 (2026-11-15)
 - **[Fix & UX]** Strengthen pressure-varied hand ink and local dry accents, support monochrome technique references and shared recipes, and stop evidenced non-comic output without repair or saving. Record outgoing prompt length and SHA-256 for diagnostics. / 墨の筆圧・揺らぎ・局所かすれを補強し、白黒の描法見本と共有レシピに対応。根拠付きの非漫画判定で自動修正・保存・連続処理を止め、送信文字数とSHA-256を診断へ記録。
 
@@ -899,6 +902,3 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 ### v7.4.7 (2026-11-12)
 - **[Fix & UX]** Fixed STEP3 foreground rejection for silent guests and depicted figures; distinguish visible staging from quoted or absent names. / STEP3で無言のゲストや画中人物を前景から誤って除外する不具合を修正。人物の実描画と引用・不在を区別。
 - **[Fix]** Kept repeated depiction rules concise so multi-panel image corrections retain the complete approved content within the API prompt budget. / 複数コマで繰り返す画中人物の説明を整理し、承認済みの内容を保持した画像修正指示がAPIの文字数上限に収まるよう調整。
-
-### v7.4.6 (2026-11-11)
-- **[Fix & UX]** Fix false camera rejections and page-composition retry misclassification in STEP2; retain the rejected candidate and validation reasons in diagnostics. / STEP2の日本語カメラ指定の誤検出と、ページ構成エラーがコマ数修正へ誤分類される問題を修正。不合格の生成候補と判定理由を不具合ログへ保存。

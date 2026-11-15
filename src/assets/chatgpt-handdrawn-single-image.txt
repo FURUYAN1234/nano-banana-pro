@@ -1,0 +1,498 @@
+[HAND-DRAWN G-PEN MASTER LOCK — ANALOG ANIME INK ENGINE]
+
+PURPOSE — STYLE TRANSFORMATION ONLY
+
+Apply the following rendering and finishing directions to the user's original prompt and any supplied reference images.
+
+Primary objective: Transform the visual execution into an exceptionally convincing, traditionally hand-inked Japanese manga/anime illustration, combining expressive professional G-pen linework, controlled analog imperfections, confident draftsmanship, selective dry-ink texture, and crisp yet subtly irregular anime cel coloring.
+
+This is a STYLE-ONLY OVERRIDE, not a redesign instruction.
+
+Preserve the original subject, character identity, face, hairstyle, age appearance, body proportions, clothing, equipment, gestures, camera angle, framing, composition, intended expression, colors, narrative meaning, and required text.
+
+Never change an explicitly specified character or scene merely to showcase the rendering style.
+
+The final artwork must feel like an illustration drawn and individually finished by a highly skilled human artist, rather than a digitally standardized vector illustration or a mechanically smooth AI-generated image.
+
+1. G-PEN LINEWORK — MASTER PRIORITY
+
+Construct the entire drawing around authentic pressure-sensitive Japanese manga G-pen characteristics.
+
+Every important contour must have deliberate, expressive thickness variation.
+
+Use the broadest, darkest strokes where forms overlap, where fabric compresses, at major silhouette turns, and on the shadow-facing side of important objects.
+
+Use thin, lightly pressured strokes for illuminated edges, delicate facial features, subtle hair strands, lightly indicated anatomy, and secondary details.
+
+Lines must feel produced by a flexible metal nib responding to hand pressure, movement speed, and directional changes.
+
+Required line properties
+
+Strong thick-to-thin stroke transitions.
+
+Smooth pressure buildup followed by naturally tapered releases.
+Occasional sharp, needle-like stroke endings.
+Slightly irregular, hand-directed contour trajectories.
+Natural differences between fast confident strokes and slower descriptive marks.
+Minor variations in ink deposition.
+Selective feathering and tiny dry-ink interruptions.
+Controlled unevenness in stroke edges.
+Organic intersections between primary and secondary strokes.
+Intentional open contours where light dissolves an edge.
+Fine internal construction strokes that vary in pressure.
+Overlapping strokes that suggest the artist's drawing sequence.
+Occasional understated corrective lines.
+Never make all outlines equally thick.
+
+Avoid monoline contours, mechanically uniform black borders, excessively polished vector curves, and automatic-looking edge tracing.
+
+The line art must remain confident, elegant, readable, and anatomically intentional.
+
+Analog imperfection must support the drawing, never damage its structure.
+
+2. HUMAN HAND VARIATION — CONTROLLED IMPERFECTION
+
+Introduce authentic, localized hand-drawn irregularities without making the image messy.
+
+The illustration should contain subtle evidence of manual execution.
+
+Stroke behavior
+
+Allow tiny deviations from mathematically perfect curves.
+
+Permit a slight shift in line momentum when the artist changes direction.
+
+A small number of contour lines may show fine secondary strokes indicating manual reinforcement.
+
+Individual hair strands should have independent flow and pressure.
+
+Closely adjacent marks must not appear digitally duplicated.
+
+Repeated objects, decorative shapes, or fabric details should show natural differences in angle, spacing, and line weight.
+
+Imperfection hierarchy
+
+Primary facial and anatomical contours: highly controlled, expressive, and accurate.
+
+Secondary contour details: moderately irregular.
+
+Texture and shading marks: visibly organic.
+
+Background construction: economical and slightly loose when appropriate.
+
+Decorative microdetails: individually varied, not procedurally repeated.
+
+Avoid artificial wobbling applied uniformly to every stroke.
+
+Avoid random scribbling, excessive jitter, fake amateur drawing mistakes, or intentional anatomical distortion.
+
+The artwork must look professionally hand-drawn, not deliberately damaged.
+
+3. DRY INK, FEATHERING AND INK DEPOSITION
+
+Simulate a real inked illustration in which the pen occasionally deposits ink unevenly.
+
+Use dry-brush-like interruptions only where stylistically meaningful.
+
+Apply selectively to
+
+Heavy shadow contours.
+
+Dense fabric folds.
+
+Dark costume areas.
+
+Hair shadow clusters.
+Wood, stone, leather, or other rough materials.
+Selective contact shadows.
+Strong directional hatching.
+Within a heavy stroke, permit tiny discontinuities or microscopic exposed paper gaps.
+Along some dark edges, allow extremely restrained feathering.
+Preserve solid, saturated black in the deepest shadows.
+
+Do not scatter scratches uniformly over the image.
+
+Do not apply generic grunge overlays.
+
+Do not make every line look old, damaged, or distressed.
+
+The visual effect should originate from the drawing process itself, not from an independent texture filter.
+
+4. PROFESSIONAL MANGA INK HIERARCHY
+
+Organize the ink drawing into clearly differentiated visual levels.
+
+Level A — Primary silhouette
+
+Use bold, decisive contours around the principal subject.
+
+Vary thickness based on lighting, overlap, and visual emphasis.
+
+Keep the silhouette instantly readable.
+
+Level B — Structural contours
+
+Describe anatomy, facial construction, garment seams, equipment, and form transitions using medium-weight ink strokes.
+
+These lines should remain expressive and never mechanically identical.
+
+Level C — Interior detail
+
+Use fine, economical strokes for small creases, embroidery, strands of hair, fingers, ornaments, and surface details.
+
+Avoid filling every region with unnecessary marks.
+
+Level D — Texture and shading
+
+Add restrained, directional hatching and fragmented ink strokes.
+
+Texture must describe form and material.
+
+Level E — Lost and found edges
+
+Intentionally omit or soften line segments where the lighting, overlap, or composition makes a continuous contour unnecessary.
+
+Use stronger ink where clarity is needed and less ink where the viewer can infer the shape.
+
+Do not outline every object with the same intensity.
+
+5. ANIME CEL SHADING — HAND-PAINTED EXECUTION
+
+Color the artwork using carefully organized Japanese anime cel-shading principles.
+
+Keep the color design readable and graphic.
+
+Main color structure
+
+Each material should have a clearly established base color.
+
+Use selective shadow shapes that follow volume, overlap, lighting, and material properties.
+
+Prefer distinct, intentionally designed shadow masses rather than generalized airbrush gradients.
+
+Allow carefully placed intermediate tones when a material requires more depth.
+
+Preserve clean separation between important light and shadow regions.
+
+Shadow edges
+
+Edges should be mostly crisp but not mechanically perfect.
+
+Allow subtle hand-shaped variation in the silhouettes of shadow patches.
+
+Avoid excessive polygonal shadows, randomly fragmented cel-shading, or identical repeated shadow shapes.
+
+Highlights
+
+Highlights must be sparse and deliberate.
+
+Use thin painted accents, small reflective areas, or reserved lighter base colors where appropriate.
+
+Avoid excessive glossy reflections on skin, hair, or cloth.
+
+Skin
+
+Use restrained, natural color transitions.
+
+Keep facial shading economical.
+
+Do not introduce photorealistic pores, hyperreal skin texture, plastic gloss, or excessive soft gradients.
+
+Hair
+
+Use confident clusters of hair rather than hundreds of isolated strands.
+
+Combine broad graphic shadow shapes with occasional thin individual ink strokes.
+
+Vary the shape and width of hair sections.
+
+Use selective sharp highlights.
+
+Avoid symmetric shine patterns and smooth synthetic ribbon-like hair.
+
+Fabric
+
+Build large folds using structural linework and purposeful shadow masses.
+
+Add fine hatching where folds compress.
+
+Let the drawing communicate weight, gravity, and textile thickness.
+
+Avoid repetitive triangular fold patterns or arbitrarily distributed wrinkles.
+
+6. MATERIAL-SPECIFIC HAND-DRAWN TREATMENT
+
+Different materials must receive distinct ink and color behavior.
+
+Cloth
+
+Mostly matte.
+
+Use long, naturally curved contour strokes.
+
+Emphasize compressed folds and overlap points with darker ink.
+
+Apply directional hatching along tension and curvature.
+
+Avoid excessive highlights.
+
+Hair
+
+Use delicate tapered lines, clustered strands, and irregular but coherent flow.
+
+Deepen selected roots and overlapping hair masses.
+
+Avoid uniform hair strand density.
+
+Skin
+
+Preserve clean, elegant contours.
+
+Use very fine lines around eyes, nose, lips, and fingers.
+
+Keep texture minimal.
+
+Do not distress the skin with scratch-like marks.
+
+Wood
+
+Use slightly broken organic lines following the grain.
+
+Allow rougher edges and natural changes in thickness.
+
+Avoid perfectly repeated grain patterns.
+
+Metal
+
+Use more decisive edge definition.
+
+Introduce small, carefully placed reflective highlights.
+
+Do not make every metal surface equally glossy.
+
+Glass and crystals
+
+Preserve transparent or translucent visual logic.
+
+Use selective internal shapes and restrained reflections.
+
+Avoid overwhelming the ink drawing with bloom.
+
+Leather
+
+Use darker edge emphasis and small crease marks.
+
+Maintain material thickness and surface tension.
+
+7. EXPRESSION AND ANATOMICAL DRAFTSMANSHIP
+
+Preserve expressive, carefully observed character anatomy.
+
+The figure must have coherent skeletal structure, believable balance, and convincing weight distribution.
+
+Hands must reflect deliberate anatomy and believable interaction with objects.
+
+Fingers should have varied lengths, natural joints, and accurate contact relationships.
+
+The pose should never appear assembled from disconnected body parts.
+
+Facial drawing
+
+Eyes must follow the curvature and orientation of the head.
+
+Preserve intentional asymmetry.
+
+Vary upper and lower eyelid thickness.
+
+Use subtle, pressure-sensitive eyebrow and eyelash strokes.
+
+Keep nose and mouth construction economical.
+
+Avoid duplicated eye shapes, overly symmetrical facial details, excessively perfect gradients, or a standardized generic anime face.
+
+Preserve the character's specific identity and expression.
+
+8. NON-MECHANICAL DETAIL DENSITY
+
+Control where the viewer sees the greatest amount of drawing information.
+
+Concentrate the most refined linework around the face, hands, and narratively important objects.
+
+Use moderately detailed lines for clothing, major props, and secondary shapes.
+
+Simplify low-priority regions.
+
+Leave intentional open areas.
+
+Do not render all parts of the image with identical sharpness or identical microdetail density.
+
+Avoid algorithmically even texture distribution.
+
+A skilled human artist chooses where to draw and where to stop.
+
+The composition must show the same editorial judgment.
+
+9. NATURAL HATCHING — DIRECTIONAL INK LANGUAGE
+
+When hatching is appropriate, use short or medium-length strokes that reinforce form.
+
+Strokes must follow the curvature, tension, or plane of the underlying object.
+
+Vary their length, pressure, angle, and spacing.
+
+Use denser hatching in compressed shadows and lighter, more open marks near illuminated surfaces.
+
+Occasionally allow hatching strokes to overlap at slightly differing angles.
+
+Avoid ruler-perfect parallel marks.
+
+Avoid repetitive computational patterns.
+
+Avoid uniform crosshatching applied to all surfaces.
+
+Use hatching sparingly enough that the anime color design remains dominant.
+
+Do not replace cel shading with dense black-and-white engraving.
+
+10. COLOR AND INK INTEGRATION
+
+The ink drawing and color layers must feel created as a single coordinated illustration.
+
+Do not treat linework as a generic outline automatically applied over finished color.
+
+Allow the shapes of the shadows to reinforce the artist's ink decisions.
+
+In dark regions, black ink may visually merge with the deepest shadow masses.
+
+In light regions, reserve finer and lighter-feeling strokes.
+
+Preserve strong black values, clean midtones, and intentional highlights.
+
+Use restrained color variation where needed, rather than indiscriminate texture.
+
+Maintain the original palette unless the user explicitly requests a different color treatment.
+
+Avoid global gray overlays or desaturation merely to suggest traditional media.
+
+Avoid muddy colors, weak contrast, excessive bloom, and uniform vintage filters.
+
+11. SURFACE AND PAPER CHARACTER
+
+If the original artwork has a plain or white background, preserve it.
+
+For an illustration where subtle paper character is appropriate, introduce extremely fine, warm off-white paper texture.
+
+Keep the texture nearly invisible at normal viewing size.
+
+Texture must not obscure faces, linework, or flat-color regions.
+
+Do not use large paper fibers, stains, folds, torn edges, or artificial aging unless requested.
+
+Prefer texture originating from actual ink behavior over a global photographic paper overlay.
+
+The final artwork should remain crisp and suitable for high-resolution reproduction.
+
+12. HUMAN FINISHING CHARACTER
+
+Maintain a clear distinction between finished and intentionally economical areas.
+
+The face and focal action should look carefully resolved.
+
+Peripheral folds and minor details may use more suggestive strokes.
+
+Some ink strokes may extend slightly beyond a contour or terminate just before reaching it.
+
+A small number of shading marks may remain visibly separate from the main contour.
+
+Allow controlled visual variety in line density and tonal transitions.
+
+Preserve natural human decisions about what to emphasize.
+
+Do not maximize detail everywhere.
+
+Do not smooth away every sign of the artist's process.
+
+Do not exaggerate irregularity to the point of visual noise.
+
+13. AVOID SYNTHETIC AI-ILLUSTRATION TRAITS
+
+Suppress the following visual tendencies:
+
+Perfectly uniform digital outlines.
+
+Excessive vector-like curve smoothness.
+
+Uniform edge sharpness across the entire drawing.
+
+Repeated identical shadow shapes.
+
+Generic glossy anime hair.
+
+Excessive eye reflections.
+
+Plastic-looking skin.
+
+Automated-looking wrinkle patterns.
+
+Repeated decorative microdetails.
+
+Symmetrical rendering where the design does not require symmetry.
+
+Excessively clean and sterile surfaces.
+
+Global diffusion glow.
+
+Cinematic lens effects unrelated to the scene.
+
+Fake depth of field applied to flat illustrations.
+Unnecessary photographic lighting.
+Dense, randomly distributed fine details.
+Decorative noise that does not follow material structure.
+Random scratch overlays.
+Uniformly distressed ink.
+Weak gray-black linework.
+Lifeless, mechanically precise anatomy.
+Excessive gradient shading.
+Artificially sharpened outlines.
+Overrendering without a clear focal hierarchy.
+Do not add visual effects solely to make the image appear impressive.
+Every mark must contribute to form, emotion, material, lighting, or narrative readability.
+14. FINAL ART-DIRECTION BALANCE
+The intended balance is:
+Professional manga G-pen draftsmanship as the foundation.
+Japanese anime cel coloring as the main color language.
+Subtle physical ink irregularity as the human signature.
+Localized dry-ink and directional hatching as secondary texture.
+Accurate anatomy, expressive design, and coherent materials as non-negotiable fundamentals.
+The result should retain the clarity and appeal of polished anime illustration while exhibiting the tactile, individually constructed qualities of original human-made manga artwork.
+The artwork must feel confidently drawn, not algorithmically polished.
+It should look like a skilled artist completed the linework with a flexible G-pen and then applied carefully controlled animation-style colors.
+The final visual impression should be beautiful, intentional, expressive, crisp, organically imperfect, and unmistakably hand-inked.
+
+15. PRIORITY AND CONFLICT RESOLUTION
+
+When instructions conflict, apply this priority:
+
+Preserve the original prompt's subject and character identity.
+
+Preserve composition, storytelling, expression, and required details.
+
+Maintain correct anatomy and functional object relationships.
+
+Maintain strong professional linework and visual readability.
+
+Apply flexible G-pen pressure variation.
+
+Apply intentional anime cel coloring.
+
+Add localized analog ink character.
+
+Add subtle hatching and material texture.
+
+Introduce minute finishing irregularities.
+
+Avoid unnecessary stylistic effects.
+
+Do not sacrifice a higher-priority requirement to satisfy a lower-priority surface texture instruction.
+
+FINAL STYLE LOCK: HAND-INKED JAPANESE G-PEN × ORGANIC PRESSURE VARIATION × SELECTIVE DRY INK × DIRECTIONAL HATCHING × PROFESSIONAL ANIME CEL SHADING × HUMAN ARTISTIC JUDGMENT.
