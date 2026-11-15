@@ -900,4 +900,3 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ### v7.4.6 (2026-11-11)
 - **[Fix & UX]** Fix false camera rejections and page-composition retry misclassification in STEP2; retain the rejected candidate and validation reasons in diagnostics. / STEP2の日本語カメラ指定の誤検出と、ページ構成エラーがコマ数修正へ誤分類される問題を修正。不合格の生成候補と判定理由を不具合ログへ保存。
-
