@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "0d6c56a471fdfacd45d604dc059c315431bb07ece6cb3f8b2bfa854ccd2bc0e1",
-  "manualVersion": "7.5.9",
-  "manualSourceSha256": "35b2cc34075526952d6d354016ad1ec51db98f0eefa1f1dbf465b363db553570",
+  "manualVersion": "7.6.0",
+  "manualSourceSha256": "5b136d3d905ea4f7d874e08b7f341f9916a022afe53ecdae81034f778d5898f3",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "16820738411308cf6adfa1d31fd8cac3c94a38109b0338f07d39774c5abcea23"
+      "sha256": "4af149c45a2f982bb7ff258ac4fdaa16ba59fa07def26822cd8f85b4150d26bd"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "c433c2ea2c89367a4b038afd15d08e049d25b38b49caf06b4620776bf106d5d1"
+      "sha256": "a4f776591dd8bfbb6425719c14db2e3fb74dff42d58aa512ebd1b68431092032"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "bca2a63de0a906fa4539fb73af91cf675ab11916b018e81fe86198238ecab970"
+      "sha256": "d23d90b852b10b9d531aab217daae071dcefe4270860e473ddfadc72787f0ba4"
     }
   ],
-  "readmeSha256": "638e41caef29f4ecdde6a0fe55f30043c8c5f2a17e1c59d88f32c75b24b13d3c",
+  "readmeSha256": "06c37323a5a1929e85ac91bfafc6b779592ef63c98d27c716c9d60c08aeeeef4",
   "readmeLanguageGaps": [],
-  "sourceTree": "2f37e1d18139b28058d62aacd5d0da2736ee5990",
-  "publicTree": "466004053bd9b47d1b37134dfe6d9f58cd564e39",
-  "packageSha256": "d8ed712f3334a26ff39483a6dd8cbceb36158890c0359fe8489bffb661f675b4",
+  "sourceTree": "feaa94d3f7ca0f692d700898a4bdd6c70995626a",
+  "publicTree": "e9fbc1b35cab0c9792fd2339bf10bebb9d49164a",
+  "packageSha256": "7986e15d1812f2f6b74eec7568292bd7f0952b4af3f106a40441878328a1f165",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,10 +41,12 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-15T04:59:27.604Z",
-  "findings": "v7.5.9 source commit 8e9082ac0adc64cc72e4c6256174afc51c7b7afc reviewed at actual HEAD. Compared all README body sections with the unchanged v7.5.8 reviewed baseline and current targeted source diff. Changed EN/JA scroll/enhancement text matches focus vs open lifecycle, settled error/retained outcomes, intentional reopening, measured header scroll and untouched production data. Art-style paragraph matches scene-first equal-length STEP2 guidance; no ban/quota/new QA. Existing camera strengths, explicit styles, image rendering/QA/model settings remain intact. Fixed stale ZIP-link label and gh-pages version prose against current package6.3.0. All other README body sections and manuals inherit exact unchanged reviewed baseline; no API-price/schema/asset/policy changes.",
+  "sourceCommit": "93a1d915c3cda19e9f060de66ecd2b2fcb04e4f3",
+  "reviewedAt": "2026-11-15T10:21:20.462Z",
+  "findings": "Reviewed all current README sections against candidate source, preserving unchanged verified sections from v7.5.9. Updated hand-ink/selected MONO guide roles, positive-evidence native4–8noncomic stop only with automatic repair ON, source-authoritative compact frame contracts, diagnostics length/SHA privacy, version/download links and changelog. COLOR byte equivalence, protections,32k/16images, normal/abnormal regressions and real COLOR/MONO acceptance were checked; repaired_unverified is not automatic final QA pass. Actual7.5.9-local API evidence is reused because only the version constant changed afterward; other126source files match accepted manifest.",
+  "manualFindings": "Three A4 Japanese PDFs,72pages total, rebuilt for v7.6.0. Automated version/privacy/links/text-bounds checks pass. All72page footers were rendered/visually inspected. Changed body pages Gemini1 and full manual17/19/24 were inspected at full resolution; remaining68page bodies are pixel-identical to previously reviewed v7.5.9 baseline excluding footer. Explicit source-style protections/hand ink/noncomic stopping scope synchronized. No stale manual version remains.",
   "pricingReview": {
-    "checkedAt": "2026-11-14T23:28:34.3431629Z",
+    "checkedAt": "2026-11-15T10:10:22Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://aistudio.google.com/docs/pricing",
@@ -56,10 +58,8 @@
       "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare.md",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "2026-11-15公式Standard料金を実読。Astra10/50、6.1Sol2/10、6.1Terra1/5、6Luna.1/.5。旧個別公式Sol6 2/10、Sol5.6 4/20(11/30までpromotion)、Terra5.6 2/12、Luna5.6 .2/1.2。Image2.6Sunburstと2.5Sunburst/Flareはimage8/cache2/output30、text5/cache1.25。Gemini3.8Flash .75/3.75(12/31まで、翌年1/1から1.5/7.5)、Nano2.1 input1.5/text7.5/image30、1K.0336/2K.0504/4K.113。既存設定・README・PDFの単価と一致。Batch/Flexを混同していない。単価変更なしのため既存表示のas-of日付も保持し、本調査の日付は監査に記録。 Version7.5.6 retains identical model/price values; official-read timestamp retained. Pricing-source bytes changed only by CRLF-to-LF normalization to committed source; previous hash 3cb17271582592a5a06a51e57faf902da2fa80583e37a30f972f2989179a397a, current hash 0d6c56a471fdfacd45d604dc059c315431bb07ece6cb3f8b2bfa854ccd2bc0e1. Version7.5.7 changes no model/price values; reuse the same actual official-read timestamp and unchanged pricing-source hash. Version7.5.8 changes no model/price values; actual official-read timestamp and unchanged pricing-source evidence reused. Version7.5.9 changes no price/model source values. Root re-read current official rates on2026-11-15 and confirmed existing display; retain prior actual official-read timestamp and unchanged source hash, not a fabricated new read time.",
-    "version": "7.5.9",
+    "findings": "Root re-read official Standard (not Batch) prices at2026-11-15T10:10:22Z; Gemini legacy URL redirects to AI Studio. Current Astra10/50,6.1Sol2/10,6.1Terra1/5,6Luna0.1/0.5; Image2.6 image8/cache2/out30,text5/cache1.25. Prior4models and2.5image were individually reread; Gemini3.8Flash0.75/3.75 through2026-12-31 and Nano2.1 configured text/image/token/resolution prices match. No fee/config change.",
+    "version": "7.6.0",
     "sourceSha256": "0d6c56a471fdfacd45d604dc059c315431bb07ece6cb3f8b2bfa854ccd2bc0e1"
-  },
-  "candidateReviewStatus": "User-approved source 8e9082ac0adc64cc72e4c6256174afc51c7b7afc committed. README/manual/pricing audit bound to actual HEAD src/public trees. Root owns final transaction fullvalidation/push/release/Pages/copy/announcements/backup; no automatic final image QA pass is claimed.",
-  "manualFindings": "v7.5.9: regenerated all three PDFs19+12+41=72pages. Normalized text comparison against saved final758 PDFs finds only operation pages3/14/17 changed beyond version labels. These pages viewed side-by-side at1.25scale: readable, no clipping/overlap, fixed page count/index. Generator naming/privacy/A4/link/text-bound checks pass. All other body text remains identical and inherits prior visual review. Public copies equal reviewed generated files. Automatic image QA is not claimed passed: actual image generation plus one scoped repair and root visual review; final repaired_unverified."
+  }
 }
