@@ -18,8 +18,8 @@
   ],
   "readmeSha256": "a242635dc31c89cc601cc498c4cd354190bf4af2b1b5bdea0fc5776e62f3e8bc",
   "readmeLanguageGaps": [],
-  "sourceTree": "132c9d31de65f0c2815de477ef39d7ffb06d19fd",
-  "publicTree": "9828854a730e9c433985ab349b254598fc81e097",
+  "sourceTree": "6526a60089c1512c528ed96fec863e4e1d07faa4",
+  "publicTree": "0090fc3743169680bcf5fb4bc7886c5b0f0b168e",
   "packageSha256": "2a8a0d6b8ffe62b84b2f2aeab10227db148d9e3a5d170b89d69b0bb8cc4cdae4",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -42,9 +42,9 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "aa36b97d97b2e1efa4af697cf43489aec23bc72d",
-  "reviewedAt": "2026-11-16T15:04:50.284Z",
-  "findings": "Reviewed the README changes against the previous accepted body and current MCP contracts/UI source: shared engine boundary; Windows launcher and skill; local app/API requirements; input locking and one stop action; separate utility/STEP rows; ordinary OpenAI 4-8, Gemini 4, explicit book 1-8; persistent references and previous-page auxiliary images; per-page PNG/JSON in one readable book directory, shared materials and factual whole-book provenance; ordinary API PNG and matching JSON in one title-and-time work folder, session-only explicit directory permission, ZIP-folder fallback and paired readback; immutable generation-time metadata and owner-verified title fallback for older MCP history; author-name choice; final-page-only two footer credits and independent page number. Removed obsolete legacy selector instructions, corrected reference-details and diagnostics locations, synchronized current release links and 15-entry changelog. Both languages and linked files checked. This is documentation review, not evidence of completed live generation or publication; the final source/public trees must be renewed after the approved commit.",
+  "sourceCommit": "3f6c989a4027fb8aa211e1b2afd81e6d227567c0",
+  "reviewedAt": "2026-11-16T15:11:05.895Z",
+  "findings": "Reviewed the README changes against the previous accepted body and current MCP contracts/UI source: shared engine boundary; Windows launcher and skill; local app/API requirements; input locking and one stop action; separate utility/STEP rows; ordinary OpenAI 4-8, Gemini 4, explicit book 1-8; persistent references and previous-page auxiliary images; per-page PNG/JSON in one readable book directory, shared materials and factual whole-book provenance; ordinary API PNG and matching JSON in one title-and-time work folder, session-only explicit directory permission, ZIP-folder fallback and paired readback; immutable generation-time metadata and owner-verified title fallback for older MCP history; author-name choice; final-page-only two footer credits and independent page number. Removed obsolete legacy selector instructions, corrected reference-details and diagnostics locations, synchronized current release links and 15-entry changelog. Both languages and linked files checked. This is documentation review, not evidence of completed live generation or publication; the tracked source/public trees are now renewed against approved source commit 3f6c989a4027fb8aa211e1b2afd81e6d227567c0. Re-read the new version-adjacent bilingual intro: MCP-compatible production AI uses the same engine for multipage color/monochrome works with character/prop/background continuity and PNG/JSON; public demo is ordinary single-page and MCP requires the local app. README body/section order, manual sources and three reviewed PDF bytes, package, configured release asset and official-pricing review match the current evidence. This audit commit changes no src/public content and is not publication proof.",
   "manualFindings": "Three Japanese A4 PDFs rebuilt for v8.0.0 on 2026-11-16: full manual 46 pages, Gemini 12 and OpenAI 19. Automated version, privacy, link and text-bound checks passed. Full-manual new MCP section pages 42-46 and revised pages 1/26/27/40/41/43/45/46 were visually reviewed; all 46 pages had been reviewed in the preceding candidate. OpenAI revised page 16 visually checked; other OpenAI changes are metadata/version/date/footer only. Unchanged content inherits the accepted manual review. Public PDFs match the reviewed private PDF bytes by SHA256. No claim of live API or external publication is made by this manual review.",
   "pricingReview": {
     "version": "8.0.0",
@@ -63,5 +63,5 @@
     ],
     "findings": "Live official Standard short-context prices read and current source configuration compared. Values match. Existing confirmation date already2026-11-16; no price value or date edit needed for this same-day task. New source snapshots captured for this update. GPT5.6Sol promotional price through2026-11-30; Gemini3.8Flash promotion through2026-12-31. Standard input/cache/output rates were distinguished from Batch discounts; configured values remained unchanged."
   },
-  "reviewStage": "candidate-documentation; live-MCP acceptance and post-commit release audit remain separate"
+  "reviewStage": "tracked-source-and-public-tree documentation audit; approved v8.0.0 source commit; external publication remains separate"
 }
