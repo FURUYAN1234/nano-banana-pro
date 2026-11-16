@@ -19,11 +19,44 @@ $ProgressPreference='SilentlyContinue'
 foreach($module in @('Microsoft.PowerShell.Utility','Microsoft.PowerShell.Management')){Import-Module (Join-Path $PSHOME ('Modules/'+$module+'/'+$module+'.psd1')) -ErrorAction Stop}
 $script:Repository='FURUYAN1234/nano-banana-pro'
 $script:AssetName='SuperFURU-Manga-MCP.zip'
-function Assert-PlainPath([string]$Path){
- $cursor=[IO.Path]::GetFullPath($Path)
+function Get-MangaReparseTag([string]$Path){
+ if(-not ('MangaReparseMetadata' -as [type])){
+  Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+public static class MangaReparseMetadata {
+ [StructLayout(LayoutKind.Sequential)] struct TagInfo { public uint Attributes; public uint Tag; }
+ [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+ static extern SafeFileHandle CreateFileW(string path,uint access,uint share,IntPtr security,uint disposition,uint flags,IntPtr template);
+ [DllImport("kernel32.dll", SetLastError=true)]
+ static extern bool GetFileInformationByHandleEx(SafeFileHandle handle,int kind,out TagInfo info,uint size);
+ public static uint ReadTag(string path) {
+  using(var handle=CreateFileW(path,0,7,IntPtr.Zero,3,0x02200000,IntPtr.Zero)) {
+   if(handle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
+   TagInfo info;
+   if(!GetFileInformationByHandleEx(handle,9,out info,8)) throw new Win32Exception(Marshal.GetLastWin32Error());
+   return info.Tag;
+  }
+ }
+}
+'@
+ }
+ return [MangaReparseMetadata]::ReadTag($Path)
+}
+function Test-MangaCloudTag([uint32]$Tag){
+ # Microsoft CLOUD and CLOUD_1..F tags are not name-surrogate links.
+ return (($Tag -band [uint32]4294905855) -eq [uint32]2415919130)
+}
+function Assert-PlainPath([string]$Path,[switch]$AllowCloudDirectories,[switch]$AllowCloudShortcutLeaf){
+ $leaf=[IO.Path]::GetFullPath($Path);$cursor=$leaf
  while($cursor){
   $item=Get-Item -LiteralPath $cursor -Force -ErrorAction SilentlyContinue
-  if($item -and ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)){throw "Linked installer paths are not allowed: $cursor"}
+  if($item -and ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)){
+   $cloudCandidate=($AllowCloudDirectories -and $item.PSIsContainer) -or ($AllowCloudShortcutLeaf -and -not $item.PSIsContainer -and $cursor -eq $leaf -and [IO.Path]::GetExtension($cursor) -eq '.lnk')
+   if(-not $cloudCandidate -or -not(Test-MangaCloudTag (Get-MangaReparseTag $cursor))){throw "Linked or unsupported reparse paths are not allowed: $cursor"}
+  }
   $parent=[IO.Path]::GetDirectoryName($cursor);if($parent -eq $cursor){break};$cursor=$parent
  }
 }
@@ -146,11 +179,14 @@ function Install-OfficialRelease([string]$Root,[string]$Node){
 }
 function Get-MangaDesktopDirectory { [Environment]::GetFolderPath('Desktop') }
 function Set-OwnedShortcut([string]$Launcher){
- $desktop=Get-MangaDesktopDirectory;if(-not $desktop){return}
- $file=Join-Path $desktop 'Super FURU Manga MCP.lnk';Assert-PlainPath $file
- try{$shell=New-Object -ComObject WScript.Shell;$link=$shell.CreateShortcut($file)}catch{[Console]::Error.WriteLine('Desktop shortcut could not be inspected; existing files were preserved.');return}
- if(Test-Path -LiteralPath $file){if($link.Description -ne 'SuperFURU Manga managed launcher'){[Console]::Error.WriteLine('An unrelated Desktop shortcut already exists; it was preserved.');return}}
- $link.TargetPath=$Launcher;$link.WorkingDirectory=Split-Path $Launcher;$link.Description='SuperFURU Manga managed launcher';$link.Save()
+ try{
+  $desktop=Get-MangaDesktopDirectory
+  if(-not $desktop -or -not(Test-Path -LiteralPath $desktop -PathType Container)){[Console]::Error.WriteLine('Desktop is unavailable; no shortcut was created. The app can still start.');return}
+  $file=Join-Path $desktop 'Super FURU Manga MCP.lnk';Assert-PlainPath $file -AllowCloudDirectories -AllowCloudShortcutLeaf
+  $shell=New-Object -ComObject WScript.Shell;$link=$shell.CreateShortcut($file)
+  if(Test-Path -LiteralPath $file){if($link.Description -ne 'SuperFURU Manga managed launcher'){[Console]::Error.WriteLine('An unrelated Desktop shortcut already exists; it was preserved.');return}}
+  $link.TargetPath=$Launcher;$link.WorkingDirectory=Split-Path $Launcher;$link.Description='SuperFURU Manga managed launcher';$link.Save()
+ }catch{[Console]::Error.WriteLine('Desktop shortcut was not created; existing files were preserved. The app can still start. '+$_.Exception.Message)}
 }
 function Start-MangaLauncher {
  $root=Get-CanonicalPath $InstallRoot;Assert-PlainPath $root;New-Item -ItemType Directory -Path $root -Force|Out-Null

@@ -30,6 +30,8 @@ Ordinary single-page use is manual: neither the production skill nor MCP control
 
 The default installation is `%LOCALAPPDATA%/SuperFURU-Manga`, with separate `versions`, `launcher` and private `workspace` folders. A managed Desktop shortcut starts the same launcher; an unrelated shortcut is preserved. / 標準の導入先は `%LOCALAPPDATA%/SuperFURU-Manga` です。版ごとのアプリ、共通ランチャー、非公開の作品保存先を分けます。デスクトップにも同じ起動処理へのショートカットを作り、無関係な同名ショートカットは置き換えません。
 
+OneDrive-managed Desktop folders are supported for the managed shortcut. If shortcut creation fails, the launcher warns and continues app startup; installer path and link protections are unchanged. / OneDrive管理のデスクトップでも共通ショートカットを扱います。作成できない場合は警告して本体起動を続け、インストール先のパス・リンク保護は維持します。
+
 | Command / 操作 | Behavior / 動作 |
 |---|---|
 | `Launch-Manga.cmd` | Check the latest release when starting a new service; reuse a running service. / 新規起動時に最新版を確認し、稼働中のサービスがあればそのまま使います。 |

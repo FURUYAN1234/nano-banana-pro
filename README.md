@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.0.1** / 現在のソース版: **v8.0.1**
+> Current source version: **v8.0.2** / 現在のソース版: **v8.0.2**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -19,6 +19,8 @@ OpenAI uses free page composition with four to eight panels; Gemini supports fou
 [![Download the Windows local app ZIP / Windows用ローカルアプリZIPをダウンロード](docs/assets/local-download-banner.png)](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-MCP.zip)
 
 **Local app ZIP / ローカルアプリZIP:** Extract the whole ZIP and double-click `start_app.bat` in the extracted app folder on Windows. After the first setup, use its Desktop shortcut. The launcher obtains a compatible official Node.js runtime if needed. Ordinary single-page creation needs neither the skill nor MCP control permission. API generation requires internet access and a provider key; fees are separate. Developers can use `npm ci` and `npm run dev` from the source folder. / ZIP全体を展開し、Windowsでは展開したアプリフォルダー直下の `start_app.bat` をダブルクリックします。初回導入後はデスクトップのショートカットから起動できます。必要なNode.jsはランチャーが公式配布から取得します。通常の1ページ制作にはスキル導入もMCPの操作許可も不要です。API生成にはネット接続とAPIキーが必要で、料金は別途かかります。開発時はソースフォルダーで `npm ci` と `npm run dev` を使えます。
+
+OneDrive-managed Desktop folders are supported for the managed shortcut. If shortcut creation fails, the launcher warns and continues app startup; installer path and link protections are unchanged. / OneDrive管理のデスクトップでも共通ショートカットを扱います。作成できない場合は警告して本体起動を続け、インストール先のパス・リンク保護は維持します。
 
 
 Demo URL / デモサイト: [https://furuyan1234.github.io/nano-banana-pro/](https://furuyan1234.github.io/nano-banana-pro/)
@@ -753,7 +755,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v8.0.0](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v8.0.0のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v8.0.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v8.0.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -815,7 +817,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -885,6 +887,10 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.0.2 (2026-11-17)
+- **[Fix]** While editing page-composition JSON, incomplete syntax no longer stops the whole screen: the input is retained so editing can continue. Invalid composition still blocks generation until corrected; the app does not rewrite the input. / 構図JSONを編集中でも画面全体を停止せず、入力を保持して修正を続けられます。不正な構図は修正まで生成不可のままとし、入力を自動で書き換えません。
+- **[Fix & UX]** Support OneDrive Desktop shortcuts and continue app startup when shortcut creation fails; installer path protection remains unchanged. / OneDriveのデスクトップでもショートカットを扱い、作成失敗で本体起動を止めないようにしました。インストール先の保護は維持します。
 
 ### v8.0.1 (2026-11-17)
 - **[Fix & UX]** Route the app ZIP start_app.bat through the shared launcher and clarify skill ZIP setup. / アプリZIPのstart_app.batを共通ランチャーへ統一し、スキルZIPの導入案内を整理。

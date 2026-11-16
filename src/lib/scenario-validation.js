@@ -65,12 +65,12 @@ export const getScenarioPanelBlocks = (scenarioText) => {
   }));
 };
 
-const inspectPanelStructure = (scenarioText, scenarioMode) => {
+const inspectPanelStructure = (scenarioText, scenarioMode, composition) => {
   const headers = findPanelHeaders(stripThoughtBlocks(scenarioText));
   const panelCountRange = getScenarioPanelCountRange(scenarioMode);
   const structuralValid = headers.length >= panelCountRange[0] && headers.length <= panelCountRange[1]
     && headers.every((header, index) => header.num === index + 1)
-    && (scenarioMode!=='experimental-manga'||headers.length!==4||Boolean(readPageComposition(scenarioText,4)));
+    && (scenarioMode!=='experimental-manga'||headers.length!==4||Boolean(composition===undefined?readPageComposition(scenarioText,4):composition));
   const expectedCount = Math.min(panelCountRange[1], Math.max(panelCountRange[0], headers.length));
   return {
     structuralValid,
@@ -158,10 +158,10 @@ export const assertGeneratedScenarioStyleContract = (scenarioText, options = {})
 };
 
 export const validateMangaScenario = (scenarioText, castList = '', { scenarioMode = 'four-panel' } = {}) => {
-  const structure = inspectPanelStructure(scenarioText, scenarioMode);
   const panels = getScenarioPanelBlocks(scenarioText);
-  let compositionError = null;
-  try { readPageComposition(scenarioText, panels.length); } catch(error) { compositionError = error.message; }
+  let composition = null, compositionError = null;
+  try { composition = readPageComposition(scenarioText, panels.length); } catch(error) { compositionError = error.message; }
+  const structure = inspectPanelStructure(scenarioText, scenarioMode, composition);
   const invalidDialogue = [];
   const hasDialogue = new Map(panels.filter(panel => panel.found).map(panel => {
     try {

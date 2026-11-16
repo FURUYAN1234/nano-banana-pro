@@ -8,6 +8,36 @@ try {
   const v=await server.ssrLoadModule('/src/lib/scenario-validation.js');
   const c=await server.ssrLoadModule('/src/lib/manga-page-composition.js');
   const renderOptions=await server.ssrLoadModule('/src/lib/render-options.js');
+  test('editing incomplete composition remains invalid without throwing and restores unchanged for 1–8 panels',()=>{
+    for(let count=1;count<=8;count++){
+      const composition={layout:'free',reason:'動作と読順を維持する',frames:Array.from({length:count},(_,i)=>({x:0,y:i/count,w:1,h:1/count})),heroPanels:[1],foregrounds:[],breakouts:[],bleed:[]};
+      const json=JSON.stringify(composition);
+      const panels=Array.from({length:count},(_,i)=>`[${i+1}コマ目]\n[Camera: 斜め上から俯瞰]\n[EMOTION: NORMAL]\n状況: ユウが幕を支える。\nユウ「確認${i+1}」`).join('\n');
+      const modes=[`book-page-${count}-continue`,...(count>=4?['experimental-manga']:[]),...(count===4?['four-panel']:[])];
+      for(const scenarioMode of modes){
+        const original=`Topic: 元の題名\nPageComposition: ${json}\n${panels}`;
+        const valid=v.validateMangaScenario(original,'## ユウ',{scenarioMode});
+        assert.equal(valid.ok,true,`${scenarioMode} original`);
+        for(const draft of [json.slice(0,-1),'',json.replace('"x":0','"x":0.'),'{broken',JSON.stringify({...composition,frames:[]})]){
+          const input=original.replace(json,draft),unchanged=input;
+          let result;
+          assert.doesNotThrow(()=>{result=v.validateMangaScenario(input,'## ユウ',{scenarioMode});},`${scenarioMode}: ${draft.slice(0,30)}`);
+          assert.equal(result.ok,false);
+          assert.match(result.compositionError,/PageComposition/);
+          if(scenarioMode==='experimental-manga'&&count===4)assert.equal(result.structuralValid,false);
+          assert.equal(input,unchanged,'draft input must not be rewritten');
+          assert.throws(()=>v.assertScenarioPanelStructure(input,{scenarioMode}),error=>error.code==='PAGE_COMPOSITION_CONTRACT');
+        }
+        const blankLine=original.replace(`PageComposition: ${json}`,`PageComposition: ${json}\n`);
+        assert.equal(v.validateMangaScenario(blankLine,'## ユウ',{scenarioMode}).ok,true);
+        assert.deepEqual(v.validateMangaScenario(original,'## ユウ',{scenarioMode}),valid,'restoring original text restores validation');
+        if(count===4){
+          const noMetadata=original.replace(`PageComposition: ${json}\n`,'');
+          assert.equal(v.validateMangaScenario(noMetadata,'## ユウ',{scenarioMode}).ok,scenarioMode!=='experimental-manga');
+        }
+      }
+    }
+  });
   const composition={layout:'tall_right_middle',reason:'落ちた幕を受け止める瞬間を大きく見せ、左の反応へつなぐ',heroPanels:[3],breakouts:[{panel:3,part:'ユウの頭髪',into:1}],bleed:[{panel:3,edges:['right','bottom']}]};
   const body=Array.from({length:5},(_,i)=>`[${i+1}コマ目]\n[Camera: 斜め上から俯瞰]\n[EMOTION: NORMAL]\n状況: ユウが幕を支える。\nユウ「確認${i+1}」`).join('\n');
   const inputFor=(c=composition)=>({enabled:true,scenarioMode:'experimental-manga',castList:'## ユウ',colorMode:'monochrome',scenario:(c?`PageComposition: ${JSON.stringify(c)}\n`:'')+body});
