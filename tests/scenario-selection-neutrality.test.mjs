@@ -123,7 +123,8 @@ test('scene-fit contrast precedes medium choice without forcing quiet panels int
       manualTopic: '静かな準備の場面。全コマ水彩で、人物と看板を明瞭に。' });
     assert.match(prompt, /まず構図・距離と奥行き・光と影・描写密度の強弱を設計/);
     assert.match(prompt, /画風変更だけをメリハリの代用にせず/);
-    assert.match(prompt, /静かな場面を自動的に水彩やスケッチへ割り当てない/);
+    assert.match(prompt, /NORMALへ即決せず、水彩の透明な余白が感情や空気、スケッチの走る線や省略が動勢や思考を伝える場面では候補として比較/);
+    assert.match(prompt, /静かさだけで割り当てない/);
     assert.match(prompt, /内容に合う同じ画風の継続と全コマ固定の明示指定を優先/);
     assert.match(prompt, /巡回や最低種類数は課さない/);
     assert.ok(prompt.includes('全コマ水彩で、人物と看板を明瞭に。'));
@@ -131,5 +132,22 @@ test('scene-fit contrast precedes medium choice without forcing quiet panels int
     assert.match(prompt, /焦点は撮影位置・レンズと別軸/);
     assert.match(prompt, /Cameraや動作を弱めない/);
     assert.doesNotMatch(prompt, /水彩やスケッチを禁止|毎コマ.*画風を変える|ぼかしを必ず/);
+  }
+});
+
+
+test('contextual medium consideration preserves explicit styles, fixed documentary and color-independent authoring', () => {
+  for (const scenarioMode of ['four-panel', 'experimental-manga']) {
+    for (const fixed of ['全コマNORMALのアニメ画風を固定する。', '全コマ水彩の画風を固定する。', '全コマ鉛筆スケッチの画風を固定する。']) {
+      const args = { ...options, scenarioMode, punchlineType: 'SeriousAuto', manualTopic: fixed };
+      const prompt = getScenarioPrompt(args);
+      assert.ok(prompt.includes(fixed), 'explicit style instruction is retained verbatim');
+      assert.match(prompt, /ユーザーの画風・頭身指定と、選択したモードの参照画風固定を優先/);
+      assert.match(prompt, /ギャグ用の頭身変形は使わず、参照人物の頭身を保つ/);
+      assert.equal(getScenarioPrompt({ ...args, colorMode: 'color' }), getScenarioPrompt({ ...args, colorMode: 'monochrome' }), 'STEP2 choice is not biased by downstream output color');
+    }
+    const documentary = getScenarioPrompt({ ...options, scenarioMode, punchlineType: 'SeriousDocumentary' });
+    assert.match(documentary, /EMOTION.*必ずNORMAL|必ずNORMAL/);
+    assert.doesNotMatch(documentary, /NORMALへ即決せず|候補として比較/);
   }
 });
