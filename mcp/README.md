@@ -2,7 +2,7 @@
 
 An MCP-compatible AI client can use the application's production functions and carry references and story context across pages. The application remains the shared scenario and image-generation engine. The [architecture guide](ARCHITECTURE.md) explains how the application and production skill can be developed separately. / MCP対応のAIクライアントから、漫画アプリの制作機能を呼び出します。複数ページ作品では、人物や小道具の資料、物語の流れ、ページごとの設定を引き継ぎます。描画・シナリオ生成はアプリの共通処理を使います。 アプリと制作スキルを別々に開発する構成は[設計ガイド](ARCHITECTURE.md)を参照してください。
 
-> This guide accompanies work in development. Check live capabilities; a listed `planned` operation is not runnable. / 開発中の説明書です。導入コマンドと全操作の接続検証が済むまでは、公開版で利用可能という意味ではありません。実際に使える操作は `manga_capabilities` の結果を確認してください。
+> This guide covers the released local MCP functions. Check `manga_capabilities` for the connected version; `planned` means unavailable. / 正式公開済みのローカルMCP機能の導入ガイドです。接続した版の対応機能は `manga_capabilities` で確認し、`planned` は未対応として扱います。
 
 ## Requirements / 必要なもの
 
@@ -15,10 +15,18 @@ Opening the hosted web app does not start a local MCP server. The configuration 
 
 ## Windows launcher / Windowsの導入と更新
 
-1. Download the [application ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-MCP.zip) or [skill ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip), and extract the whole archive. / アプリZIPまたはスキルZIPを、全体をまとめて展開します。
-2. Open `Launch-Manga.cmd` inside `mcp/skills/manga-book-production` in the app ZIP, or inside the extracted skill directory. / アプリZIPなら `mcp/skills/manga-book-production` 内、スキルZIPなら展開したスキル内の `Launch-Manga.cmd` を実行します。
+You can give Codex the downloaded ZIP (attachment or local path) and ask: “Extract this ZIP, install manga-book-production as a complete skill, and configure the MCP connection.” Codex needs local-file and MCP-setting support; follow any actual installation confirmation. The ZIP alone is not automatically enabled. / ダウンロードしたZIPを添付するか保存場所を伝え、Codexに「このZIPを展開して、manga-book-productionをスキルとして導入し、MCP接続を設定して」と依頼できます。ファイルとMCP設定を扱える環境が必要で、導入の確認が出たら内容を確認します。ZIPだけで自動的に有効にはなりません。
+
+1. Download the [application ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-MCP.zip) and extract the whole archive. / アプリZIPをダウンロードし、全体をまとめて展開します。
+2. Double-click `start_app.bat` at the extracted app folder root once. Afterwards use the single Desktop shortcut for update checks, service startup and opening the app; no separate MCP launch is needed. / 展開したアプリフォルダー直下の `start_app.bat` を一度実行します。以後はデスクトップのショートカット1つで更新確認・サービス起動・アプリ表示まで進み、MCPを別に起動する必要はありません。
 3. The launcher checks the official release and its checksum, installs a verified version, then starts the local app and MCP service. / 公式リリースとチェックサムを確認し、検証済みの版を導入してローカルのアプリとMCPサービスを起動します。
-4. Register the stdio adapter in your AI client using the example below. / 次の設定例を使って、AIクライアントへstdio接続を登録します。
+4. Install the complete folder containing `SKILL.md`, then separately register the MCP connection below. Reload the client settings and confirm its manga tools. Connect the API in the app and enable **Allow AI control**; review and approve the outline/detail before generation and PNG/JSON saving. / `SKILL.md`があるフォルダーを一式でスキル導入し、別途、下記のMCP接続を登録します。設定の再読込後に漫画ツールを確認し、アプリでAPI接続と「AI操作を許可」を有効にします。あらすじ・詳細案を確認して承認してから生成・PNG／JSON保存へ進みます。
+
+If you downloaded only the [skill ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip), run `Launch-Manga.cmd` beside `SKILL.md` in the extracted folder. This is an alternative entry to the same launcher, not an additional startup step. / スキルZIPだけを取得した場合は、展開先で `SKILL.md` と同じフォルダーの `Launch-Manga.cmd` を使います。同じ処理への別入口なので、追加で両方を押す必要はありません。
+
+A running MCP service does not itself enable AI control or lock manual controls. / MCPサービスが動いているだけでAI操作が有効になったり、手動入力がロックされたりすることはありません。
+
+Ordinary single-page use is manual: neither the production skill nor MCP control permission is required, even when the launcher starts the service. Developers can use `npm ci` and `npm run dev` from source. / ランチャーがサービスを起動しても、通常の1ページ制作は手動で使え、制作スキルもMCPの操作許可も不要です。開発時はソースから `npm ci` と `npm run dev` を使えます。
 
 The default installation is `%LOCALAPPDATA%/SuperFURU-Manga`, with separate `versions`, `launcher` and private `workspace` folders. A managed Desktop shortcut starts the same launcher; an unrelated shortcut is preserved. / 標準の導入先は `%LOCALAPPDATA%/SuperFURU-Manga` です。版ごとのアプリ、共通ランチャー、非公開の作品保存先を分けます。デスクトップにも同じ起動処理へのショートカットを作り、無関係な同名ショートカットは置き換えません。
 
@@ -56,7 +64,7 @@ For other clients that use `mcpServers` JSON, the following is an example entry 
 }
 ```
 
-The launcher respects PowerShell execution policy. If local policy blocks it, follow your administrator's approved installation procedure rather than disabling the policy. / PowerShellの実行ポリシーを尊重します。組織の設定で起動できない場合は、管理者が認めた導入手順を使ってください。
+The entry runs its bundled bootstrap with process-scoped `-ExecutionPolicy Bypass` so Windows download-zone attributes do not stop startup. It does not change system/user policy or the registry; group policy remains authoritative. If organizational policy blocks startup, use your administrator's approved procedure. / 入口は同梱bootstrapの実行プロセスだけに `-ExecutionPolicy Bypass` を指定し、Windowsのダウンロード属性による起動停止へ対応します。システム・ユーザー設定やレジストリは変えず、グループポリシーを優先します。組織の設定で起動できない場合は、管理者が認めた手順を使ってください。
 
 ## Manual source setup / ソースからの手動導入
 

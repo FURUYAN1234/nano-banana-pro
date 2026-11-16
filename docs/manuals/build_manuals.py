@@ -60,7 +60,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v8.0.0対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v8.0.1対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -222,7 +222,7 @@ page('STEP3  カラー／白黒の選択',
  ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
 page('タイトル・モザイク・ウオーターマーク',
  ('body','STEP3の出力モード直下に「タイトルを表示」があります。初期状態と全設定クリア後はONです。OFFでは題字と専用の帯を描かず、その領域をコマに配分します。指定タチキリの辺を除き、A4縦の外枠と余白、コマ間隔を保ちます。台本のタイトルは制作情報とファイル名に保持し、台詞や看板などの場面内文字は削除しません。選択は工程移動でも保持し、再読み込み・全設定クリアではONへ戻ります。切替後はSTEP3を作り直します。切替だけではAPIを呼びません。'),
- ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.6 / GPT-6 Luna / FURU AI 4-koma v8.0.0。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
+ ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.6 / GPT-6 Luna / FURU AI 4-koma v8.0.1。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
  ('rows',[['設定','反映する工程'],['タイトルを表示','STEP3から作り直して反映。初期状態ON'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初期状態ON']]),
  ('body','モザイクは台本の動作で描く既存作品の人物への描画指示です。登録したシート人物は自動モザイクから除外し、生成・品質検査へ同じ除外リストを渡します。原文で本人への遮蔽を明示した場合は、その対象・領域だけ例外です。除外リストが現在のキャストと合わない場合は、STEP3から再構築してください。'),
  ('body','ウオーターマークは画像下部の生成情報とクレジットです。OFFで左右の描画指示を外します。ONでは下部へ1回ずつ配置を試みますが、絵への重なり・全隠れ・見切れを許容します。人物・台詞・題字・タチキリを優先し、注記を見せるための白帯や絵の縮小を求めません。この許容状態だけでは自動修正しません。'),
@@ -347,13 +347,12 @@ page('完成画像の確認と追加修正の書き方',
 
 SYSTEM.extend([
 page('Windowsでローカル起動する',
- ('body','1. 下のGitHub配布ページを開き、ファイル一覧の上にある「Code」→「Download ZIP」を選びます。Gitの操作やリポジトリのcloneは不要です。'),
- ('body','2. ダウンロードしたZIPを右クリックして「すべて展開」します。ZIPの中から直接実行せず、展開したフォルダー内でstart_app.batとpackage.jsonを確認します。'),
- ('body','3. Node.jsが未導入なら、下の公式サイトからWindows向けLTSをインストールします。npmも必要です。導入後は新しく開いたウィンドウで起動します。'),
- ('body','4. start_app.batをダブルクリックします。初回などnode_modulesがない場合は、npm installで必要な部品を取得するためネット接続が必要です。完了するとローカルサーバーが起動し、ブラウザが開きます。'),
- ('box','起動ウィンドウは閉じない','使用中はバッチのウィンドウを開いたままにします。ブラウザが開かなければ、起動ログのLocalのURL（通常はhttp://localhost:5173/）を開きます。ポート使用中なら別の起動を重ねず、既存画面を確認します。'),
- ('body','ローカルで開いても、AI生成はオフラインではありません。選択プロバイダーのAPIキー・ネット接続・利用料金が必要です。キーはアプリの接続欄へ入力し、ZIPや設定ファイルへ書き込みません。'),
- refs=('github','githubzip','node')),
+ ('body','1. アプリZIPを取得し、右クリックの「すべて展開」で全体を展開します。ZIP内から直接実行しません。'),
+ ('body','2. 展開したアプリフォルダー直下のstart_app.batを一度実行します。公式版とチェックサムを確認して導入し、必要なら公式Node.jsも取得します。初回はネット接続が必要です。'),
+ ('body','3. ブラウザーにアプリが開きます。以後はデスクトップのショートカット1つで、更新確認・MCPサービス起動・アプリ表示まで進みます。別々に起動する必要はありません。MCP制作中の接続や処理は、更新で勝手に置き換えません。'),
+ ('box','通常の1ページ制作はそのまま手動で使えます','スキル導入やMCPの「AI操作を許可」は不要です。MCPサービスが動いているだけでは手動入力はロックされず、通常のSTEP1～4を手動で使えます。開発時はソースからnpm ciとnpm run devを使えます。'),
+ ('body','AIのAPI生成にはネット接続・APIキー・利用料金が必要です。キーはアプリの接続欄へ入力し、ZIPや設定ファイルへ書き込みません。複数ページをCodexへ任せる導入手順は後半のMCPガイドを参照してください。'),
+ refs=('github','skillzip','mcp')),
 page('STEP4の待機・検査と画像の保持',
  ('body','生成開始時は一度だけ画像表示予定枠の中央へ移動します。その中央に回転アイコン・処理名・実経過時間を枠内で折り返して表示し、ログ更新で画面を動かし続けません。動作軽減設定では回転・滑らかなスクロールを止めます。'),
  ('body','前回の画像は今回の画像を受信するまでマスクします。今回取得した画像は、検査・修正中も閲覧と保存が可能です。編集と履歴の操作は処理中ロックし、履歴側へ重複する「生成中」は表示しません。'),
@@ -380,14 +379,16 @@ SYSTEM.append(page('自動保存の初回動作確認',
 SYSTEM.extend([
 page('MCPで複数ページを制作する',
  ('download','skillzip','スキル一式（ZIP）／アプリZIPにも同梱'),
- ('body','基本はCodex用スキルとして使います。他のMCP対応AIには、接続を設定して「同梱のSKILL.mdを読み、この手順で複数ページ漫画を制作して」と指示できます。AIが物語をページに分け、共通資料を引き継ぎながら、アプリのシナリオ・演出・描画処理を呼びます。'),
+ ('body','ZIPを添付するか保存場所を伝え、Codexに「このZIPを展開して、manga-book-productionをスキルとして導入し、MCP接続を設定して」と依頼できます。ファイルとMCP設定を扱える環境が必要です。実際に確認が表示された場合は、内容を確認して進めます。'),
+ ('box','ZIPを渡すだけで自動有効化されるわけではありません','全体を展開し、SKILL.mdがあるフォルダーを一式でスキル導入します。MCP登録は別の設定です。設定の再読込後、Codexが漫画ツールを認識したことを確認します。その後アプリでAPI接続・「AI操作を許可」、あらすじと詳細案の確認・承認、生成とPNG／JSON保存へ進みます。'),
+ ('body','他のMCP対応AIには、接続を設定し「同梱のSKILL.mdを読んで、この手順で制作して」と指示できます。通常の1ページ制作にはスキルもMCP操作許可も不要です。'),
  ('rows',[['担当','役割'],['漫画アプリ','素材解析、物語設計、シナリオ強化、画像指示文、生成、修正。'],['MCP','操作の窓口、作品と実行状態、設定、資料、承認記録、保存。'],['制作スキル','依頼を整理し、構成を提案して確認し、ページ順に制作する。'],['利用者','制作意図、資料、API接続、詳細案への承認。']]),
  ('body','アプリと制作スキルは、呼び出し仕様の互換性を保って別々に改善できます。例えばアプリのGペン描写の改善はMCP経由にも反映され、表紙や物語の進め方はスキル側で改善できます。'),
  ('box','現在の対応機能を確認する','開始・再開時はmanga_capabilitiesと接続状態を確認します。plannedは未実装です。ツールの登録や通信成功だけで、画像生成まで成功したとは判断しません。'),refs=('mcp',)),
 page('MCPの導入と接続',
- ('body','Windowsでは、アプリまたはスキルZIP内のLaunch-Manga.cmdを使います。スキルもこの共通処理を呼び、未導入なら取得、停止中なら最新版を確認・更新してから起動します。公式チェックサムを検証し、必要なら公式ポータブルNode.jsも取得します。稼働中の制作は維持します。'),
- ('rows',[['操作','扱い'],['初回起動','ZIPを全体展開し、Launch-Manga.cmdを実行。'],['AIクライアント','導入ガイドのstdio設定を登録。起動は共通ランチャーを使用。'],['普段の起動','デスクトップのショートカットからも同じ処理。稼働中は再利用。'],['明示的な更新','Launch-Manga.cmd -Update。MCP切断・処理完了後だけ更新。'],['サービス終了','Launch-Manga.cmd -StopOnly。接続中・処理中は終了を拒否。'],['作品と成果物','非公開workspaceへ状態、ダウンロードへ完成PNGとJSON。']]),
- ('body','標準導入先はLOCALAPPDATA内のSuperFURU-Mangaです。最新版を取得できなければ、ハッシュを確認できた導入版がある場合だけ使います。Linuxやソースからの導入、クライアント設定JSONはMCPガイドを参照してください。'),
+ ('body','通常はアプリZIPを全体展開し、直下のstart_app.batを一度実行、以後はデスクトップのショートカット1つを使います。更新確認・MCP起動・アプリ表示は同じ処理です。スキルもこの共通処理を呼び、未導入なら取得、停止中なら最新版を確認・更新してから起動します。公式チェックサムを検証し、必要なら公式ポータブルNode.jsも取得します。稼働中の制作は維持します。'),
+ ('rows',[['操作','扱い'],['初回起動','アプリZIPを全体展開し、直下のstart_app.batを一度実行。'],['AIクライアント','導入ガイドのstdio設定を登録。起動は共通ランチャーを使用。'],['普段の起動','デスクトップのショートカットからも同じ処理。稼働中は再利用。'],['明示的な更新','Launch-Manga.cmd -Update。MCP切断・処理完了後だけ更新。'],['サービス終了','Launch-Manga.cmd -StopOnly。接続中・処理中は終了を拒否。'],['作品と成果物','非公開workspaceへ状態、ダウンロードへ完成PNGとJSON。']]),
+ ('body','スキルZIPだけの場合は、展開先でSKILL.mdと同じフォルダーのLaunch-Manga.cmdを使います。同じ処理への別入口で、両方を押す必要はありません。標準導入先はLOCALAPPDATA内のSuperFURU-Mangaです。最新版を取得できなければ、ハッシュを確認できた導入版がある場合だけ使います。Linuxやソースからの導入、クライアント設定JSONはMCPガイドを参照してください。'),
  ('body','AIが期限付きローカルURLを既存タブで開きます。API未接続なら入力欄を前面に出し「今、キーを入力して『接続』を押してください」と案内します。その後、操作できるAIは「AI操作を許可」を押し、接続済みを確認します。操作できない場合は押すボタンを説明します。接続済みなら再入力は不要です。'),
  ('body','MCP制作中はローカルの画面を開いておきます。画面上段に接続状態、スキル取得・ガイド・マニュアルをまとめ、少し間を空けて不具合調査ログ・Model Chainを置きます。STEP1〜4の進捗とループ／全自動の切り替えは、それぞれ別の行に表示します。公開デモサイトだけではMCP制作を開始できませんが、従来の通常制作はMCPなしで使えます。'),
  ('box','キーの扱い','APIキーはチャット、MCP設定、プロジェクト、制作情報JSONへ貼り付けません。ローカル接続URLにも一時的な接続情報が含まれるため公開しません。'),refs=('mcp','node')),
@@ -421,7 +422,7 @@ page('MCP作品の保存・停止・再開',
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v8.0.0 / 2026-11-16')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v8.0.1 / 2026-11-17')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -473,7 +474,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v8.0.0対応 | 2026年11月16日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v8.0.1対応 | 2026年11月17日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -513,18 +514,18 @@ def verify_and_render(path,layout,pages):
  assert len(r.pages)==len(pages)
  for page_index,pdf_page in enumerate(r.pages,1):
   assert f'{page_index:02d}/{len(r.pages)}' in re.sub(r'\s+','',pdf_page.extract_text()), 'Incorrect footer page count'
- assert all('v8.0.0対応' in p.extract_text() and '2026年11月16日更新' in p.extract_text() for p in r.pages)
+ assert all('v8.0.1対応' in p.extract_text() and '2026年11月17日更新' in p.extract_text() for p in r.pages)
  validate_manual_scope(path.name,text)
  if 'full-manual' in path.name:
   for required in ['14枚','10枚','1枚に複数人','人数による固定上限','保証','保持','認識できない','小物']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
-  for required in ['Download ZIP','Node.js','start_app.bat','npm install','node_modules','ウィンドウ','画像表示予定枠の中央','累計10分','原寸RGB','褐色肌','カケアミ','ページ全体／コマを選んで修正','コマごと','Geminiはカラー・白黒とも4コマ','選んだコマへの指示','候補を破棄して元画像を保つ','移動先を選択','描法見本を保存']:
+  for required in ['Launch-Manga.cmd','Node.js','start_app.bat','SKILL.md','設定の再読込','デスクトップ','スキルとして導入','MCP接続を設定','画像表示予定枠の中央','累計10分','原寸RGB','褐色肌','カケアミ','ページ全体／コマを選んで修正','コマごと','Geminiはカラー・白黒とも4コマ','選んだコマへの指示','候補を破棄して元画像を保つ','移動先を選択','描法見本を保存']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
   for obsolete in ['背面・肩越しカメラの独立検査には','初期状態は左の「4コマ生成（横長コマ）レガシー」','再読み込み後は4コマ生成（横長コマ）レガシー','この画像への追加指示','「AIで画像を再検査」が','保存した漫画を読み込む（追加課金なし）']:
    assert obsolete not in text,obsolete
   for required in ['シリアス：9種類','ギャグ：13種類','怒り・抗議','逆転・反撃','激怒・逆ギレ','自業自得・ブーメラン','立場逆転']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v8.0.0'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v8.0.1'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)

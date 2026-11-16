@@ -1,2 +1,3 @@
 @echo off
-powershell.exe -NoProfile -File "%~dp0bootstrap.ps1" %*
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0bootstrap.ps1" %*
+exit /b %errorlevel%

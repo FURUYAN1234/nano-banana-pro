@@ -1,3 +1,16 @@
+# CURRENT — v8.0.1 approved release preparation (2026-11-17)
+
+This entry supersedes all candidate/pending statements in the history below. v8.0.0 was formally published at `f9dcfd64d224a8434878b1f6d865a6113ba5f7bc`; its tag remains immutable. The user explicitly approved v8.0.1 publication, announcements, local installation and final backup (approval call `75a67b65c00b47bf91bf782916ad89ba`). Source and HEAD-bound audit preparation are authorized; root owns push, tag, deployment, actual installation and backup.
+
+- v8.0.1 changes startup and setup guidance only: app ZIP root `start_app.bat` forwards to the shared launcher; normal use is one initial run then one Desktop shortcut. The skill ZIP's alternative entry is `Launch-Manga.cmd` beside `SKILL.md`, not a required second launch. A running MCP service does not by itself enable AI control or lock manual inputs.
+- The launcher executes only its own bootstrap with process-scoped PowerShell policy. A real Windows unsigned ZoneId=3 stub reproduced the old signature failure; the revised entry passed normal/marked-file execution, arguments, nonzero exit propagation and policy-before/after checks. System/user policy and registry remain unchanged; group policy remains authoritative. Bootstrap digest validation is unchanged.
+- Reuse accepted v8.0.0/R23 engine evidence: original four-page and usual-five three-page works were accepted, current save-status readback and news routing were verified, and R23 payoff repair was checked through the normal API path. The engine/API path is unchanged in8.0.1; no paid regeneration was added for startup/docs changes. Historical aggregate R23:2,635/2,635 tests passed. Official same-HEAD publish validation will rerun the required suite; these historical results do not replace it.
+- Local8.0.1 focused checks:46/46 launcher/version/settings/README tests and4/4 manual-scope checks passed before the final policy-only follow-up; the final real Windows entry tests2/2 and README checks8/8 passed. Root ran `npm run mcp:build` successfully (v801-root-build.log), including current build fingerprint/security checks and the two version-labelled SVGs.
+- README/setup guidance, release notes and12/19/46-page PDFs match8.0.1. Root freshly read official OpenAI/Google Standard pricing2026-11-17 00:49–00:52JST; numeric rates are unchanged and confirmation dates/related assertions now use11/17. Changed manual pages/covers were rendered and inspected. Full evidence remains in private work/manga-mcp-20261116.
+- Next authorized steps: source commit, exact-HEAD package/assets and audit commit, official preflight, then root-owned publication/announcements/local installation and final backup. No8.0.1 public result is claimed here before those steps complete.
+
+## Historical preparation records (superseded by CURRENT above)
+
 # CURRENT — v8.0.0 local MCP candidate, not committed or published (2026-11-16)
 
 This entry supersedes the preparation states in the historical entries below. The v7.6.2 release is completed history; v8.0.0 is a separate local candidate. Keep the existing release-approval rule: obtain concrete version-specific publication approval before commit/publication, then perform the formal audit against the approved HEAD. Do not treat candidate documentation or private ZIP checks as that audit.
