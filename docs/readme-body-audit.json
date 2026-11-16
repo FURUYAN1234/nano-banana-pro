@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "0d6c56a471fdfacd45d604dc059c315431bb07ece6cb3f8b2bfa854ccd2bc0e1",
-  "manualVersion": "7.6.1",
-  "manualSourceSha256": "496f81ec1911d83f17b05494f4cc7323b7e066b7fca47d16d6141368328804f1",
+  "pricingSourceSha256": "82af412c65c7f7abab90d4cc8d401fd6481c64649313dd15e2ceb070a8c83cfe",
+  "manualVersion": "7.6.2",
+  "manualSourceSha256": "38c2a07161c1f03e7731b0cf670f9b9ffeeeab5d5f52bace64047a6dc76d14e6",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "3bc8b6504ddf9d21d5b5f30863ee8f90af79b5909bd0e87d86ab247b13d6e77d"
+      "sha256": "795167971317bc44c7cf710d8d400bddf64754896628c132c8c1581bc4a0bdfe"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "42103fa7f4cdc15b04074dbb8f04c00b740b5e7012d036045d021c8087d3a2c0"
+      "sha256": "ebf3ad8e656402a44566af57fae88d8d0e5037ff08da0cbe21a8a29c4721fb26"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "452c3f65d73b97587b190f8d24a32a7016649b77b078783a80ecadece63eac74"
+      "sha256": "fba198c2aefb896582fa700e970bb9c70e40e99ae6780c60eadb3e492e34f3f0"
     }
   ],
-  "readmeSha256": "96006209eed73f5f866c84c577c5cfb7ca63f02c1d0a149fe2ab1def75128ef8",
+  "readmeSha256": "18bf32bf437973e9dd5cb7bf7bfd1225abe531ac1426279f13e9ff17a052c7cc",
   "readmeLanguageGaps": [],
-  "sourceTree": "d5c54fc15e778768a53187e2c2eed194925d8904",
-  "publicTree": "6784ee1b5a118a323daf8ada558184ba29de0d96",
-  "packageSha256": "130540fb2ad96dd3d19f8ea3cc5ef0f78dac221c302a7befecef9f04d14b8fbc",
+  "sourceTree": "132c9d31de65f0c2815de477ef39d7ffb06d19fd",
+  "publicTree": "9828854a730e9c433985ab349b254598fc81e097",
+  "packageSha256": "f64ffec08f68cae613479dfd7e84640df8bb72f58935ce5b40d578294d16fe0c",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,25 +41,25 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "ae98ac3a6847ece95280d89ed44a219b30000d34",
-  "reviewedAt": "2026-11-15T11:55:29.482Z",
-  "findings": "Compared current README body and all sections with prior published v7.6.0 and current diff. Only static STEP4 single-image button/header changes and version/changelog/download reference synchronization apply. Exact supplied hand-drawn text17209characters and emotional8911 are distinguished;9500guideline scoped to emotional only. UI/clipboard/keyboard/wide/mobile real checks passed. Existing generation/API/models/styles/QA/workflow code unchanged, preserving prior verified sections. Latest15changelog entries retained without removing emergency-stop body guidance. Added asset-specific -text Git attribute after verifying default normalization would alter497CRLF sequences. Working file, committed blob and source archive now preserve exact17236bytes/17209JScharacters and originalSHA256bdd5c8c38b7ccc6bd46c97f0b7361e965c40730796a67d172174bac4492a64de. Browser clipboard proof remains valid because working asset content did not change.",
-  "manualFindings": "Rebuilt all3JapaneseA4PDFs72pages for7.6.1. Full manual new button body pages21/30 were visually accepted by implementation owner and root. Compared new PDFs to the accepted local760body: all normalized body text unchanged, body pixels only Gemini1/full19 version examples; remaining70bodies identical. Viewed both version-only body pages and all72rendered footer strips; no clipping/overlap. Automated privacy, links, textbounds and version checks pass.",
+  "sourceCommit": "aa36b97d97b2e1efa4af697cf43489aec23bc72d",
+  "reviewedAt": "2026-11-16T00:32:54.762Z",
+  "findings": "Reviewed allcurrentREADMEsections against published761source and narrow762diff, inheritingunchangedverifiedbody. STEP2 contextualwatercolor/sketchcomparison, noforcedquotas/rotation, validNORMAL/explicitfixed/referenceprotection/continuity/generalserious/documentaryNORMAL documented English/Japanese. Version/currentreleaseZIPlabels/15entrychangelog/officialpricingdates synchronized; emergency-stop currentbody intact. RootnormalUI realGPT6Luna/no-fallback API passed2independentuntaggedstories: nativecolor5watercolor STEP2 114.516s/STEP3 25.418s/final22094; legacyMONO NORMAL/SKETCH/CHIBI_GAG/WATERCOLOR STEP2 103.135s/STEP3 27.456s/final23754. Input/camera/acting/focus preserved, no imagegenerationadded, no statisticalfrequencyguarantee. All128runtimeworkingfilehashes matchedpreAPI freeze beforecommit. OnlySTEP2paragraph changed192to185chars; renderer/STEP3recipes/camera/acting/focus/Gpen untouched. Pricing4source numericsettings unchanged, datesfreshlyconfirmed11/16.",
+  "manualFindings": "ThreeJapaneseA4PDFs72pages rebuilt for762/2026-11-16 and publiccopiesexactmatch. New selectionbodyfull17 and pricingconfirmationbodyfull23 visuallyread byimplementationownerandroot, no clipping/overlap. All72renderedfooters visuallyread; bodypixelchanges otherwiseonlyGemini1/full19versionexamples,68unchangedbodypixels identicaltoaccepted761baseline. Existingacceptedmanualcontentretained. Automatedversion/scope/privacy/link/textbounds checks pass; all3PDFhashes recorded.",
   "pricingReview": {
-    "checkedAt": "2026-11-15T11:45:41Z",
+    "version": "7.6.2",
+    "checkedAt": "2026-11-16T00:19:49.474Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
+      "https://ai.google.dev/gemini-api/docs/pricing",
       "https://aistudio.google.com/docs/pricing",
-      "https://developers.openai.com/api/docs/models/gpt-6-sol.md",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-sol.md",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-terra.md",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-luna.md",
-      "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst.md",
-      "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare.md",
-      "https://ai.google.dev/gemini-api/docs/pricing"
+      "https://developers.openai.com/api/docs/models/gpt-6-sol",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst",
+      "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare"
     ],
-    "findings": "Root freshly read official Standard not Batch pricing at2026-11-15T11:45:41Z. Current and legacy OpenAI scenario/image models and Gemini3.8Flash/Nano2.1 prices match unchanged settings; Google legacy pricing URL redirects toAIStudio. No fee changes.",
-    "version": "7.6.1",
-    "sourceSha256": "0d6c56a471fdfacd45d604dc059c315431bb07ece6cb3f8b2bfa854ccd2bc0e1"
+    "sourceSha256": "82af412c65c7f7abab90d4cc8d401fd6481c64649313dd15e2ceb070a8c83cfe",
+    "findings": "Root freshly fetched official Standard notBatch prices2026-11-16JST for current andlegacyOpenAI scenario/image models andGoogleGemini/NanoBanana. All fees match currentconfig; onlyconfirmationdates changed. App4source snapshotdates, READMEprices andPDFdates synchronized to11/16. GooglelegacyURLredirected toAIStudio."
   }
 }
