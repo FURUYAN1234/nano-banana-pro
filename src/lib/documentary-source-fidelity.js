@@ -1,3 +1,4 @@
+import { isNativePageMode } from './page-production-contract.js';
 const normalizeDigits = (value) => String(value || '')
   .normalize('NFKC')
   .replace(/,(?=\d{3}(?:\D|$))/g, '');
@@ -39,7 +40,7 @@ export const attachDocumentarySourceFacts = (scenarioText = '', sourceText = '',
 
   const panelHeaders = scenario.match(/\[\s*[0-9０-９一二三四五六七八九十]+\s*コマ目[^\]]*\]/gu) || [];
   const panelCount = panelHeaders.length;
-  const factPanelCount = scenarioMode === 'experimental-manga' ? Math.max(1, panelCount - 1) : 3;
+  const factPanelCount = isNativePageMode(scenarioMode) ? Math.max(1, panelCount - 1) : 3;
   const factsByPanel = Array.from({ length: factPanelCount }, () => []);
   facts.forEach((fact, index) => {
     const panelIndex = Math.min(factPanelCount - 1, Math.floor(index * factPanelCount / facts.length));

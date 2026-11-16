@@ -1,4 +1,5 @@
 import { getEndingModePolicy } from './ending-mode-policy.js';
+import { readBookPageMode, isNativePageMode, bookPageStoryGuidance } from './page-production-contract.js';
 import { buildStoryStructureGuidance } from './story-structure.js';
 import { validateScenarioEnhancement } from './scenario-enhancement.js';
 import { buildCopyrightMosaicInstruction } from './render-options.js';
@@ -39,6 +40,12 @@ const materialPayoffReasons = (reasonCodes) => reasonCodes.filter(code =>
   MATERIAL_PAYOFF_REASONS.has(code) || /^(?:unrenderable|flat_ensemble|redundant|cast_identity)_panel_/.test(code));
 
 const payoffPanelCount = (scenario, scenarioMode = 'four-panel') => {
+  const book = readBookPageMode(scenarioMode);
+  if (book) {
+    const panels = getScenarioPanelBlocks(scenario);
+    if (panels.length !== book.panelCount || panels.some((p, i) => p.num !== i + 1)) throw new Error('invalid_book_panel_count');
+    return book.panelCount;
+  }
   if (scenarioMode === 'four-panel') return 4;
   if (scenarioMode !== 'experimental-manga') throw new Error('invalid_scenario_mode');
   const panels = getScenarioPanelBlocks(scenario).filter(panel => panel.found);
@@ -103,7 +110,7 @@ export const applyScenarioStagingPatch = (scenario, response, castList = '', { s
   }
   try {
     for (const panel of getScenarioPanelBlocks(candidate)) extractDialogueOnly(panel.text, castList, { forImagePrompt: true });
-    if (scenarioMode === 'experimental-manga') {
+    if (isNativePageMode(scenarioMode)) {
       const valid=validateMangaScenario(candidate, castList, { scenarioMode });
       // Layout-only recovery may preserve an already accepted warning, never create one or hide syntax/structure errors.
       const layoutOnly=edits.every(edit=>edit.field==='BalloonLayout');
@@ -162,17 +169,18 @@ const extractText = (value) => String(value?.text ?? value ?? '').trim();
 
 export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userTopic, recentScenarios = [], mosaicCopyrightedCharacters = true, scenarioMode = 'four-panel' } = {}) => {
   const panelCount = payoffPanelCount(scenario, scenarioMode);
-  const experimental = scenarioMode === 'experimental-manga';
+  const experimental = isNativePageMode(scenarioMode);
+  const bookPage = readBookPageMode(scenarioMode);
   const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
-  const toneRule = surrealMode
+  const toneRule = bookPage ? bookPageStoryGuidance(scenarioMode) : surrealMode
     ? '静寂型（シュール）では、通常の因果関係や辻褄を要求しない。物・設備・舞台の大破壊、因果の飛躍、支離滅裂、不条理、突然の無意味な変化を、真顔・沈黙・奇妙な間で視覚的な笑いにできていれば有効とする。後付け説明で合理化しない。'
     : policy.endingTone === 'serious'
     ? 'シリアスでは笑いの反転を強制せず、積み上げた選択の consequence / reframe / payoff を有効とする。'
-    : `ギャグでは、1〜2コマ目の種と${panelCount - 1}コマ目までの読者予測を、${panelCount}コマ目の reversal / payoff / reframe / consequence で一段ずらす。予測と同じ出来事でも、規模・意味・対象・行為者が意外に増幅され、画面で分かるなら有効な payoff / consequence とする。反転だけを要求しない。`;
-  const factRule = policy.documentary
+    : `ギャグでは、1〜2コマ目の種と${Math.max(1, panelCount - 1)}コマ目までの読者予測を、${panelCount}コマ目の reversal / payoff / reframe / consequence で一段ずらす。予測と同じ出来事でも、規模・意味・対象・行為者が意外に増幅され、画面で分かるなら有効な payoff / consequence とする。反転だけを要求しない。`;
+  const factRule = bookPage ? 'ページ外の既出の種・関係も文脈の根拠として扱う。途中ページに独立した反転・決着がないだけでは不合格にしない。新たな事実や台詞を捏造せず、現在の動作・受け手・話者・読順に実害がある場合だけ修正する。' : policy.documentary
     ? `ドキュメンタリーでは、元シナリオにない新しい事実・数値・時系列を${panelCount}コマ目へ追加してはならない。追加されていれば unseeded_fact=true。`
-    : `新しい事実だけで結末を成立させず、1〜${panelCount - 1}コマ目に種があるかを判定する。`;
+    : `新しい事実だけで結末を成立させず、1〜${Math.max(1, panelCount - 1)}コマ目に種があるかを判定する。`;
 
   return `あなたは${panelCount}コマ漫画の構成監査担当です。次のシナリオを、選択された結末モードに合わせて厳格に監査してください。
 
@@ -199,8 +207,8 @@ ${String(userTopic).trim()}
 判定条件:
 - 初回画像の構図を守る。既に別コマで読める印字の再掲、全員の細かな表情、補助的な手元を毎コマ拡大する義務はない。ユーザーが明示した再掲可読条件は守るが、AIが追加した反復可読要求だけで引き・アオリ・身体演技を寄りへ変えない。${experimental ? '変形ページのコマの高さ・幅は内容に応じて配分し、全幅の帯を前提にしない。' : '横長4コマの高さは内容に応じて可変であり、等高の帯を前提にしない。'}
 - visual_feasibilityにはmaterial_lossを併記する。feasible=falseでも、そのコマでユーザー必須情報・初めて読む重要文字・物語に必要な動作・台詞と話者の対応を失うときだけmaterial_loss=true。evidenceに失われる内容と必要な理由を書く。既出文字の小ささや補助細部だけならmaterial_loss=falseとし、修正案を出さない。修正は主動作と距離・上下角を保つ余白、コマ高、前後配置、情報配分から検討する。
-- setup_seed: 1〜2コマ目に置かれた、${panelCount}コマ目へ効く具体的な種。
-- panel3_prediction: ${panelCount - 1}コマ目までに読者が自然に予測する次の展開。
+- setup_seed: ${bookPage ? 'このページまたは前頁までに置かれた、現在の出来事へつながる具体的な根拠。' : `1〜2コマ目に置かれた、${panelCount}コマ目へ効く具体的な種。`}
+- panel3_prediction: ${Math.max(1, panelCount - 1)}コマ目までに読者が自然に予測する次の展開。
 - panel4_outcome: ${panelCount}コマ目で実際に起きる、目で確認できる帰結。
 - shift_kind: reversal / payoff / consequence / reframe / none のいずれか。
 - visual_payoff: セリフの説明や標語ではなく、人物の行動・表情・小道具・空間変化で帰結が見えるか。
@@ -213,7 +221,7 @@ ${String(userTopic).trim()}
 - cast_identity: 認識済み人物設定（system context）を基準に、全コマの状況・Camera・台詞の話者・BalloonLayoutのspeaker/anchor/routeが同じ人物を指すか照合する。名前ごとの髪・眼鏡・肌などの設定と台本記述を reference_evidence / scenario_evidence に別々に具体的に示す。複数人は各人を照合し、台本の誤記を基準設定として追認しない。別人の特徴を付ける、外見で示す口元と話者名が異なる等の明白な取り違えだけ status=mismatch とし、人物名・台詞を変えず状況/Camera/尾を直す correction を書く。一致は consistent。ユーザー指定や物語の動作で明示された変装・髪型変更・着替え・小物の着脱は intentional_change とし、その根拠を change_basis に示す。画風・表情・視点・照明の違いだけを不一致にせず、不要な外見描写も足さない。外見が未記載なら名前と話者/尾の対応を調べる。基準不足や曖昧さは uncertain とし、推測で不一致にしない。全状態で両evidenceを記し、照合不能ならその理由を書く。JSON例をそのまま写さず、実際の認識設定と台本からstatusと根拠を埋める。change_basis/correction は該当しなければ空文字列。
 - pass: 上記を総合し、最後まで読ませる${panelCount}コマとして成立するときだけ true。
 - 静寂型（シュール）では setup_seed と panel3_prediction は空でもよく、shift_kind=none と unseeded_fact=true だけで失格にしない。目で分かる不条理な出来事または大破壊と、その狂気を殺さない真顔・沈黙・間があれば pass=true にできる。
-- ${panelCount - 1}コマ目から因果的に続くこと自体を失格理由にしない。予測の単なる反復ではなく、規模・意味・対象・行為者のどれかが一段ずれていれば合格可能。
+- ${Math.max(1, panelCount - 1)}コマ目から因果的に続くこと自体を失格理由にしない。予測の単なる反復ではなく、規模・意味・対象・行為者のどれかが一段ずれていれば合格可能。
 - pass=true のとき reason_codes は必ず空配列にする。問題が1つでも残るときだけ pass=false として具体的なコードを入れる。
 
 以下のJSONのみを返してください。reason_codes は問題コードの配列です。
@@ -275,7 +283,8 @@ export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', p
     code:'SCENARIO_PAYOFF_REVIEW_INVALID',diagnosticContext:{stage:'scenario_payoff_review',
       validationResponse:extractText(text),validationError:message,punchlineType,scenarioMode},
   }); };
-  if (scenarioMode === 'four-panel' ? panelCount !== 4 : scenarioMode !== 'experimental-manga' || !Number.isInteger(panelCount) || panelCount < 4 || panelCount > 8) fail('invalid panel count');
+  const book = readBookPageMode(scenarioMode);
+  if (book ? panelCount !== book.panelCount : scenarioMode === 'four-panel' ? panelCount !== 4 : scenarioMode !== 'experimental-manga' || !Number.isInteger(panelCount) || panelCount < 4 || panelCount > 8) fail('invalid panel count');
   const source = extractText(text).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   const jsonText = source.match(/\{[\s\S]*\}/)?.[0];
   if (!jsonText) fail('JSON object not found');
@@ -346,7 +355,7 @@ export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', p
       || (item.material_break && !item.correction.trim())),
     cast_identity:!hasCastIdentityEvidence(parsed.cast_identity, panelCount),
     camera_rhythm:!hasCameraRhythmEvidence(parsed.camera_rhythm, panelCount),
-    panel_development:scenarioMode === 'experimental-manga' && (!Array.isArray(parsed.panel_development) || parsed.panel_development.length !== panelCount
+    panel_development:isNativePageMode(scenarioMode) && (!Array.isArray(parsed.panel_development) || parsed.panel_development.length !== panelCount
       || parsed.panel_development.some((item,index)=>item?.panel!==index+1 || typeof item.material_padding!=='boolean'
         || typeof item.evidence!=='string' || !item.evidence.trim() || typeof item.correction!=='string'
         || (item.material_padding && !item.correction.trim()))),
@@ -358,6 +367,7 @@ export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', p
 };
 
 export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScenarios = [], scenarioMode = 'four-panel', panelCount = 4 } = {}) => {
+  const book=readBookPageMode(scenarioMode),continuation=book&&!book.finalPage;
   const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
   const reasons = surrealMode
@@ -389,10 +399,10 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
     }
   }
 
-  if (!surrealMode && !String(review?.setup_seed || '').trim()) reasons.add('no_setup_seed');
-  if (!surrealMode && !String(review?.panel3_prediction || '').trim()) reasons.add('no_panel3_prediction');
+  if (!continuation && !surrealMode && !String(review?.setup_seed || '').trim()) reasons.add('no_setup_seed');
+  if (!continuation && !surrealMode && !String(review?.panel3_prediction || '').trim()) reasons.add('no_panel3_prediction');
   if (!String(review?.panel4_outcome || '').trim()) reasons.add('no_panel4_outcome');
-  if (!review?.visual_payoff) reasons.add('no_visual_payoff');
+  if (!continuation && !review?.visual_payoff) reasons.add('no_visual_payoff');
   if (review?.slogan_only) reasons.add('slogan_only');
   if (review?.payoff_clarity?.material_failure === true
     && review.payoff_clarity.evidence?.trim() && review.payoff_clarity.correction?.trim()) reasons.add('unclear_payoff');
@@ -404,9 +414,10 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
     if (!hasActionContinuityEvidence(review?.action_payoff)) reasons.add('action_payoff_unverified');
     else if (review.action_payoff.material_failure) reasons.add('action_payoff_missing');
   }
-  if (!surrealMode && !ALLOWED_SHIFTS.has(review?.shift_kind)) reasons.add('no_payoff_shift');
-  if (!surrealMode && review?.unseeded_fact) reasons.add('unseeded_fact');
+  if (!continuation && !surrealMode && !ALLOWED_SHIFTS.has(review?.shift_kind)) reasons.add('no_payoff_shift');
+  if (!continuation && !surrealMode && review?.unseeded_fact) reasons.add('unseeded_fact');
   if (policy.documentary && review?.unseeded_fact) reasons.add('documentary_fact_invention');
+  if(continuation) for(const code of ['no_setup_seed','no_panel3_prediction','no_visual_payoff','no_payoff_shift','unseeded_fact'])reasons.delete(code);
   for (const item of review?.visual_feasibility || []) {
     if (item?.feasible === false) reasons.add(item.material_loss === true
       ? `unrenderable_panel_${item.panel}` : `visual_detail_panel_${item.panel}`);
@@ -414,7 +425,7 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
   for (const item of review?.ensemble_continuity || []) {
     if (item?.material_break === true) reasons.add(`flat_ensemble_panel_${item.panel}`);
   }
-  if (scenarioMode === 'experimental-manga') for (const item of review?.panel_development || []) {
+  if (isNativePageMode(scenarioMode)) for (const item of review?.panel_development || []) {
     if (Number.isInteger(item.panel) && item.panel >= 1 && item.panel <= panelCount
       && item.material_padding === true && item.evidence?.trim() && item.correction?.trim()) reasons.add(`redundant_panel_${item.panel}`);
   }
@@ -427,7 +438,7 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
 
 export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review, userTopic, recentScenarios = [], mosaicCopyrightedCharacters = true, scenarioMode = 'four-panel' } = {}) => {
   const panelCount = payoffPanelCount(scenario, scenarioMode);
-  const experimental = scenarioMode === 'experimental-manga';
+  const experimental = isNativePageMode(scenarioMode);
   const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
   const reasonCodes = evaluateScenarioPayoffReview(review, { punchlineType, recentScenarios, scenarioMode, panelCount }).reasonCodes;
@@ -436,6 +447,8 @@ export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, revie
   const repairReview = { ...review, reason_codes: reasonCodes,
     visual_feasibility: review?.visual_feasibility?.map(item => item.material_loss === false
       ? { ...item, correction: '' } : item) };
+  const compositionLine = String(scenario || '').split(/\r?\n/)
+    .find(line => /^\s*PageComposition\s*:/i.test(line));
   if (usesStagingPatch(scenario, reasonCodes)) return `STAGING PATCH JSON
 ${reasonCodes.includes('action_ending_only') || reasonCodes.includes('flat_action_staging') || reasonCodes.includes('action_payoff_missing')
     ? '監査で指摘された演技・配置・カメラを必要なコマだけ修正する。結末より前に、元からある人物・物を使って動きの開始と状態の変化を別々のコマで描き、元の帰結へつなぐ。まず状況を直し、変更した動作や話者位置に必要な場合だけCameraやBalloonLayoutを調整する。'
@@ -467,12 +480,12 @@ ${mosaicReviewRule(mosaicCopyrightedCharacters)}
 必須条件:
 ${identityRepair ? '- cast_identityの基準設定と台本の根拠を照合し、指摘された外見・話者対応の取り違えだけを状況・Camera・BalloonLayoutで修正する。人物名と各台詞の話者・文言・順序は保持する。誤記に合う別人へ話者を変更しない。明示された変装・髪型変更・着脱、画風差は維持し、曖昧な特徴を創作しない。' : ''}
 - visual_feasibilityはmaterial_loss=trueの具体的な欠落だけを直す。既出印字の再掲可読性や補助細部だけのために、引き・アオリ・身体演技を顔中心へ変更しない。必要な情報を初めて読むコマと、身体演技を見せるコマを分け、内容に応じたコマ高と前後配置で解決する。ユーザーが明示した可読文字・カメラ・動作は保持する。
-${stagingOnly ? '- 成立しているフリ・予測・帰結はそのまま保持する。新しい種や別のオチを追加しない。' : surrealMode
+${readBookPageMode(scenarioMode) ? bookPageStoryGuidance(scenarioMode) : stagingOnly ? '- 成立しているフリ・予測・帰結はそのまま保持する。新しい種や別のオチを追加しない。' : surrealMode
     ? '- 静寂型（シュール）では論理的な種、自然な予測、因果の回収を追加しない。物・設備・舞台の大破壊、因果の飛躍、支離滅裂、不条理を、真顔・沈黙・奇妙な間で目に見える笑いへ強める。辻褄合わせや後付け説明で合理化しない。'
     : policy.documentary || policy.endingTone === 'serious'
       ? '- 前の出来事・選択・手掛かりと最後の応答を結び、選択された結末の帰結や意味を絵で読めるようにする。意外な増幅や反転を必須にせず、事実・指定された結末・静かな余韻を保持する。'
-      : `- 1〜2コマ目に具体的な種を置き、${panelCount - 1}コマ目までに読者の予測を形成し、${panelCount}コマ目ではその予測を一段ずらす帰結を人物の行動・表情・小道具・空間変化で見せる。
-- ${panelCount - 1}コマ目で宣言・準備した行動を${panelCount}コマ目でそのまま実行するだけにしない。1〜2コマ目に置いた別の種を再利用し、規模・意味・対象・行為者の少なくとも1つを意外に変える。`}
+      : `- 1〜2コマ目に具体的な種を置き、${Math.max(1, panelCount - 1)}コマ目までに読者の予測を形成し、${panelCount}コマ目ではその予測を一段ずらす帰結を人物の行動・表情・小道具・空間変化で見せる。
+- ${Math.max(1, panelCount - 1)}コマ目で宣言・準備した行動を${panelCount}コマ目でそのまま実行するだけにしない。1〜2コマ目に置いた別の種を再利用し、規模・意味・対象・行為者の少なくとも1つを意外に変える。`}
 - 選択された ENDING MODE を守る。シリアスでは安いギャグ反転を強制せず、選択の結果・再解釈・余韻を成立させる。
 - 元シナリオの題材、人物、場所、事実、数値、時系列、明示された衣装とセリフ書式を保存する。ドキュメンタリーでは事実を発明しない。
 - ${experimental ? '各コマを変形ページ内の一枚の静止画として描けるよう、' : '各コマを一枚の横長帯として描けるよう、'}Cameraから重要な顔・手元・対象物が見える位置へ人物と小道具を配置する。手は本人の肩・腕から自然につながり、対象に届くこと。監査で指摘された過密・遮蔽・距離矛盾を、カメラ・前後関係・小道具の見せ方や補助動作のコマ配分で解消する。題材の核、オチの迫力、人物の生きた演技、シュールな飛躍を弱めない。ユーザーが明示したカメラ・動作は保持する。
@@ -480,7 +493,9 @@ ${stagingOnly ? '- 成立しているフリ・予測・帰結はそのまま保�
 - カメラ反復の指摘は、各コマの役割に合わせて撮影位置・仰俯角・距離・レンズ・ロール・配置を組み直す。全${panelCount}コマの見える投影を比較し、名称だけの変更、固定の角度巡回、全コマのアオリ化を避ける。ユーザーの固定指定、意味のある反復、連続した人物関係と読みやすい吹き出しの順・尾を保持し、画質・演技・光・勢いを弱めない。
 - ${panelCount}コマ目を標語、教訓、解説だけで終わらせない。
 - ${panelCount}コマ目で誰に何が起き、何が変わったのかを、前の手掛かりと最後の行動・受け手の反応で見せる。唐突な別場面や設定の後出しで出来事を帳消しにする逃げを避ける。夢・ループ・メタなどの明示指定は保ち、その型に必要な種と見て分かる落差を補う。シュールは因果説明で弱めず、視覚的な食い違いを明瞭にする。成立している睡眠・沈黙・余韻は変更しない。
-- 出力は${stagingOnly ? '元のタイトル・メタデータ行を保持し、' : ''} [1コマ目: 起] から [${panelCount}コマ目: 結] までのシナリオ本文だけにする。
+- 出力は${compositionLine
+    ? `元のタイトル・メタデータ行を保持し、次のPageCompositionの1行を最初のコマより前に逐語保持する。JSONを説明文へ変換せず、コマ内へ移動しない。その後に[1コマ目: 起]から[${panelCount}コマ目: 結]までの修正本文を出力する。\n${compositionLine}`
+    : `${stagingOnly ? '元のタイトル・メタデータ行を保持し、' : ''} [1コマ目: 起] から [${panelCount}コマ目: 結] までのシナリオ本文だけにする。`}
 ${userTopic ? `- 次のユーザー原文にある人物・台詞・出来事・カメラ・オチなどの明示条件を最優先で保持する。画像化の調整で削除・反転しない。\nUSER REQUIREMENTS:\n${String(userTopic).trim()}` : ''}
 
 ORIGINAL SCENARIO:
@@ -519,8 +534,8 @@ export const runScenarioPayoffGate = async ({
 
   try {
     const panelCount = payoffPanelCount(original, scenarioMode);
-    if (scenarioMode === 'experimental-manga' && !validateMangaScenario(original, castList, { scenarioMode }).ok) throw new Error('invalid_native_scenario');
-    if (scenarioMode === 'experimental-manga') assertGeneratedScenarioCameraContract(original, userTopic, { scenarioMode });
+    if (isNativePageMode(scenarioMode) && !validateMangaScenario(original, castList, { scenarioMode }).ok) throw new Error('invalid_native_scenario');
+    if (isNativePageMode(scenarioMode)) assertGeneratedScenarioCameraContract(original, userTopic, { scenarioMode });
     onProgress(`${panelCount}コマのフリ・予測・帰結、配置・演技とカメラの反復を監査しています...`);
     firstReview = parseScenarioPayoffReview(await requestReview(buildScenarioPayoffReviewPrompt({
       scenario: original,
@@ -581,8 +596,8 @@ export const runScenarioPayoffGate = async ({
       if (validatedRepair === false) throw new Error('invalid repair');
       if (typeof validatedRepair === 'string' && validatedRepair.trim()) repaired = validatedRepair.trim();
       const panelCount = payoffPanelCount(repaired, scenarioMode);
-      if (scenarioMode === 'experimental-manga' && !validateMangaScenario(repaired, castList, { scenarioMode }).ok) throw new Error('invalid_native_repair');
-      if (scenarioMode === 'experimental-manga') assertGeneratedScenarioCameraContract(repaired, userTopic, { scenarioMode });
+      if (isNativePageMode(scenarioMode) && !validateMangaScenario(repaired, castList, { scenarioMode }).ok) throw new Error('invalid_native_repair');
+      if (isNativePageMode(scenarioMode)) assertGeneratedScenarioCameraContract(repaired, userTopic, { scenarioMode });
       if (repaired.trim() === current.scenario.trim()) {
         lastError = 'unchanged_repair';
         onProgress('修正案に変更がないため、追加の再監査・修正は行わず、既に監査した候補を保持します。');

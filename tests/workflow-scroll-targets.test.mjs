@@ -57,7 +57,7 @@ test('a queued scroll is cancelled on cleanup, blocking stale completion from st
 
 test('actual App reset callback and empty-view effect scroll after repeated same-empty resets without requiring input changes',()=>{
  const source=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8').replace(/\r\n/g,'\n');
- assert.match(source,/step1Reset=\{handleStep1Reset\}/);
+ assert.match(source,/step1Reset=\{\(\)=>mcpControlState\?\.claimed\?showStatus\([^\n]+\):handleStep1Reset\(\)\}/);
  const handler=source.match(/const handleStep1Reset = (\(\) => \{[\s\S]*?\n  \});/);assert.ok(handler,'App must carry explicit reset intent');
  const effect=source.match(/useEffect\(\(\) => \{(\n    const next = \{ step: currentStep,[\s\S]*?)\n  \}, \[currentStep, step1HasInput,[^\]]+\]\);/);assert.ok(effect);
  const queued=[],moves=[];let resetCalls=0;

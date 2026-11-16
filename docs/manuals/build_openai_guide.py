@@ -29,7 +29,7 @@ styles={
  'url':ParagraphStyle('url',fontName='JP',fontSize=9,leading=14,textColor=TEAL,wordWrap='CJK',splitLongWords=True),
 }
 c=canvas.Canvas(str(OUT),pagesize=A4,pageCompression=1)
-c.setTitle('はじめてのOpenAI API取得・設定ガイド | 2026-11-14')
+c.setTitle('はじめてのOpenAI API取得・設定ガイド | 2026-11-16')
 c.setAuthor('Super FURU AI 4-koma System')
 c.setSubject('APIアカウント、課金、認証、キー取得・管理とアプリへの接続確認')
 page=0; y=0; transcript=[]; checks=[]
@@ -49,7 +49,7 @@ def new(title,kicker='操作ガイド',sources=''):
  c.setFont('JPB',21); c.setFillColor(INK); c.drawString(M,H-73,title)
  c.setStrokeColor(HexColor('#cfdddf')); c.line(M,H-89,W-M,H-89)
  c.bookmarkPage(f'p{page}'); c.addOutlineEntry(title,f'p{page}',0,False)
- c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.6.2対応 | 2026年11月16日更新 | A4 日本語版')
+ c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v8.0.0対応 | 2026年11月16日更新 | A4 日本語版')
  c.drawRightString(W-M,31,f'{page:02d} / 19')
  if sources: c.setFont('JP',7.5); c.drawString(M,45,'根拠: '+sources+'（出典一覧は19ページ）')
  transcript.append('\n\n'+str(page)+'. '+title)
@@ -236,10 +236,10 @@ p('キーにはsk-で始まる形式があります。本資料には有効な�
 # 16
 new('⑫ 漫画アプリへキーを接続する','ここからアプリ内の操作です','公開アプリ・現行ソース')
 link('Super FURU AI 4-koma Systemを開く','https://furuyan1234.github.io/nano-banana-pro/')
-steps([('最初のAPIキー入力欄を押す','「Gemini AI Key または OpenAI Key (sk-...)」とある欄に、⑪でコピーした<b>OpenAIの秘密キー全文</b>を貼り付けます。WindowsはCtrl+Vです。'),('「接続」を押す','入力の先頭でOpenAI形式と判定されます。「形式（未検証）」だけでは接続完了ではありません。接続確認が終わるまで待ちます。'),('「ChatGPT Engine」などOpenAIの接続表示を確認','このアプリの表示名にChatGPTとあっても、ここではOpenAI APIを使用します。ChatGPTサブスク枠の消費ではありません。')])
+steps([('最初のAPIキー入力欄を押す','AI Engineの「APIキー」欄に、⑪でコピーした<b>OpenAIの秘密キー全文</b>を貼り付けます。WindowsはCtrl+Vです。'),('「接続」を押す','入力の先頭でOpenAI形式と判定されます。「形式（未検証）」だけでは接続完了ではありません。接続確認が終わるまで待ちます。'),('「ChatGPT Engine」などOpenAIの接続表示を確認','このアプリの表示名にChatGPTとあっても、ここではOpenAI APIを使用します。ChatGPTサブスク枠の消費ではありません。')])
 box('接続成功＝画像モデルの利用成功、ではありません','現行アプリの接続確認はモデル一覧へのアクセスを確認します。画像生成の利用可否は、モデル権限・要求された認証・残高などにも依存します。接続確認だけでは、有料の画像生成は行いません。')
 p('キーは現行アプリのブラウザーメモリーで保持されます。再読み込み・終了後は再入力が必要です。信頼できる配布先と自分の端末で使ってください。キーは認証のためOpenAIへ送信され、API処理では選んだ文章・画像も送信されます。','small')
-p('すでに作業中の場合、再読み込みや設定クリアの前に必要なデータを保存してください。接続後の作品制作と保存方法は、全機能マニュアルを参照してください。','small')
+p('MCP制作でも、ローカルのアプリの同じ欄へ本人が入力します。キーをAIとのチャットやMCP設定へ貼り付けません。すでに作業中の場合、再読み込みや設定クリアの前に必要なデータを保存してください。制作と保存方法は全機能マニュアルを参照してください。','small')
 link('全機能マニュアル（接続後の操作）','https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf')
 
 # 17

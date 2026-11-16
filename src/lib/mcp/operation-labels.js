@@ -1,0 +1,1 @@
+export const MCP_OPERATION_LABELS={read_state:'状態確認',apply_page:'ページの準備',plan_story:'物語計画',generate_assets:'共通素材の生成',recognition:'素材の認識',scenario:'台本の生成',enhance:'台本の演出強化',prompt:'描画指示の構築',image:'画像生成・検査',image_edit:'画像の修正',render_book:'順次制作'};

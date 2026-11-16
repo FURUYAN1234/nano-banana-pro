@@ -1,6 +1,6 @@
 export const MANUAL_TOPIC_FIELD_ID = 'manual-topic-input';
 export const SCENARIO_FIELD_ID = 'generated-scenario';
-const sources = Object.freeze({ typing: 'textarea', paste: 'textarea', voice: 'dictation', 'reference-remap': 'reference-remap', reset: 'reset' });
+const sources = Object.freeze({ typing: 'textarea', paste: 'textarea', voice: 'dictation', 'reference-remap': 'reference-remap', reset: 'reset', mcp: 'mcp' });
 const inputTypes = new Set(['insertText', 'insertFromPaste', 'insertFromDrop', 'insertLineBreak', 'insertCompositionText', 'deleteContentBackward', 'deleteContentForward', 'historyUndo', 'historyRedo']);
 const flushReasons = new Set(['blur', 'next-step', 'before-change', 'export', 'unmount']);
 

@@ -10,6 +10,8 @@ import ThinkingLog from './ThinkingLog';
  * STEP 03: プロンプト生成パネル
  */
 export default function Step3Panel({
+  bookPanelCount,
+  bookPageKind,
   showWatermarks = true,
   showTitle = true,
   setShowTitle,
@@ -107,7 +109,7 @@ export default function Step3Panel({
         </div>
       </div>
 
-      {!scenarioModeValid && <p role="status" style={{color:'#fde68a'}}>このモードには{experimentEnabled ? '4～8コマ' : '4コマ'}のシナリオが必要です。STEP2で作成してください。作成済みの画像は保持しています。</p>}
+      {!scenarioModeValid && <p role="status" style={{color:'#fde68a'}}>このページには{bookPanelCount ? `${bookPanelCount}コマ` : experimentEnabled ? '4～8コマ' : '4コマ'}のシナリオが必要です。STEP2で作成してください。作成済みの画像は保持しています。</p>}
       <button
         ref={promptActionRef}
         onClick={() => assemblePrompt()}
@@ -126,7 +128,7 @@ export default function Step3Panel({
         ) : (
           <>
             <Wand2 size={24} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''} `} />
-            <span>{experimentEnabled ? '4～8コマ用の指示文（プロンプト）を構築する (STEP 3)' : '4コマ用の指示文（プロンプト）を構築する (STEP 3)'}</span>
+            <span>{bookPageKind==='illustration'?'表紙1枚絵':bookPanelCount?`${bookPanelCount}コマ`:experimentEnabled?'4～8コマ':'4コマ'}用の指示文（プロンプト）を構築する (STEP 3)</span>
             <ArrowRight size={24} className="opacity-60" />
           </>
         )}

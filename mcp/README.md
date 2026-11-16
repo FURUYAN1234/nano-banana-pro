@@ -1,0 +1,238 @@
+# Super FURU AI 4-koma System — MCP
+
+An MCP-compatible AI client can use the application's production functions and carry references and story context across pages. The application remains the shared scenario and image-generation engine. The [architecture guide](ARCHITECTURE.md) explains how the application and production skill can be developed separately. / MCP対応のAIクライアントから、漫画アプリの制作機能を呼び出します。複数ページ作品では、人物や小道具の資料、物語の流れ、ページごとの設定を引き継ぎます。描画・シナリオ生成はアプリの共通処理を使います。 アプリと制作スキルを別々に開発する構成は[設計ガイド](ARCHITECTURE.md)を参照してください。
+
+> This guide accompanies work in development. Check live capabilities; a listed `planned` operation is not runnable. / 開発中の説明書です。導入コマンドと全操作の接続検証が済むまでは、公開版で利用可能という意味ではありません。実際に使える操作は `manga_capabilities` の結果を確認してください。
+
+## Requirements / 必要なもの
+
+- Windows for the bundled launcher; Linux is supported through the manual setup below. / 同梱ランチャーはWindows用です。Linuxは下記の手動導入を使います。
+- Internet access for first installation and API generation. The Windows launcher obtains the official portable Node.js LTS runtime when no compatible Node.js is installed. / 初回導入とAPI生成にはインターネット接続が必要です。Windowsランチャーは対応するNode.jsがなければ、公式のポータブルLTS版を取得します。
+- An AI client that can launch a local stdio MCP server. / ローカルのstdio MCPサーバーを起動できるAIクライアント。
+- An API account and connection for the selected provider; provider charges apply. / 利用するOpenAIまたはGemini APIのアカウントと接続。文章・画像の生成料金は各APIに従います。
+
+Opening the hosted web app does not start a local MCP server. The configuration below requires local stdio support. / 公開Webページを開くだけでは、手元のパソコンでMCPサーバーは起動しません。ローカルstdioを使えないクライアントへ、この設定例をそのまま登録することもできません。
+
+## Windows launcher / Windowsの導入と更新
+
+1. Download the [application ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-MCP.zip) or [skill ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip), and extract the whole archive. / アプリZIPまたはスキルZIPを、全体をまとめて展開します。
+2. Open `Launch-Manga.cmd` inside `mcp/skills/manga-book-production` in the app ZIP, or inside the extracted skill directory. / アプリZIPなら `mcp/skills/manga-book-production` 内、スキルZIPなら展開したスキル内の `Launch-Manga.cmd` を実行します。
+3. The launcher checks the official release and its checksum, installs a verified version, then starts the local app and MCP service. / 公式リリースとチェックサムを確認し、検証済みの版を導入してローカルのアプリとMCPサービスを起動します。
+4. Register the stdio adapter in your AI client using the example below. / 次の設定例を使って、AIクライアントへstdio接続を登録します。
+
+The default installation is `%LOCALAPPDATA%/SuperFURU-Manga`, with separate `versions`, `launcher` and private `workspace` folders. A managed Desktop shortcut starts the same launcher; an unrelated shortcut is preserved. / 標準の導入先は `%LOCALAPPDATA%/SuperFURU-Manga` です。版ごとのアプリ、共通ランチャー、非公開の作品保存先を分けます。デスクトップにも同じ起動処理へのショートカットを作り、無関係な同名ショートカットは置き換えません。
+
+| Command / 操作 | Behavior / 動作 |
+|---|---|
+| `Launch-Manga.cmd` | Check the latest release when starting a new service; reuse a running service. / 新規起動時に最新版を確認し、稼働中のサービスがあればそのまま使います。 |
+| `Launch-Manga.cmd -Update` | Update and restart only after MCP is disconnected and all jobs have settled. / MCP切断後、実行中の処理がない場合に更新して再起動します。 |
+| `Launch-Manga.cmd -StopOnly` | Stop the owned local service after disconnection and job completion. / 切断・処理完了後に、このアプリのローカルサービスを終了します。 |
+| `Launch-Manga.cmd -Stdio -NoOpen` | Connect an AI client through the same startup logic without opening another browser tab. / 共通の起動処理からAIクライアントへ接続し、ブラウザーの追加タブは開きません。 |
+
+Active production is never replaced by an update. If the latest release is unavailable, an existing installation is used only after its stored hashes are verified. Without one, startup reports the failure. / 制作中の接続や処理を更新で中断しません。最新版を取得できない場合は、保存済みのハッシュを検証できた導入版があるときだけ使用し、なければエラーを表示します。
+
+For Codex, install the complete `manga-book-production` skill folder in its configured skill directory. After the first launcher run, use Codex's MCP settings, or the following command when the Codex CLI is available. This adds the local server entry; it does not enter a provider key or overwrite other entries. / Codexでは、`manga-book-production`フォルダーを一式でスキル配置先へ導入します。バッチでの初回起動後、CodexのMCP設定から接続を登録します。Codex CLIが利用できる場合は次のコマンドも使えます。ローカルサーバーの登録だけを追加し、APIキーの入力や他の登録の上書きは行いません。
+
+```powershell
+codex mcp add super-furu-manga -- powershell.exe -NoProfile -File "$env:LOCALAPPDATA\SuperFURU-Manga\launcher\bootstrap.ps1" -Stdio -NoOpen
+```
+
+If an entry with this name already exists, inspect and reuse it instead of registering it again. Confirm that the tools are available after Codex reloads its MCP settings, then ask it to use `manga-book-production`. / 同名の登録がある場合は再登録せず、設定を確認して再利用します。CodexにMCP設定が反映され、ツールが利用可能になったことを確認してから、`manga-book-production`を使って漫画を作るよう依頼してください。
+
+For other clients that use `mcpServers` JSON, the following is an example entry after the first launch. Replace the example path with the actual installed `launcher/bootstrap.ps1`. Clients do not necessarily expand `%LOCALAPPDATA%` inside JSON. / 他のAIクライアントで`mcpServers`形式のJSONを使う場合は、初回起動後に次の設定例を使います。実際の`launcher/bootstrap.ps1`の絶対パスへ置き換えてください。JSON内で`%LOCALAPPDATA%`が展開されるとは限りません。
+
+```json
+{
+  "mcpServers": {
+    "super-furu-manga": {
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile", "-File",
+        "C:/Users/YOUR_NAME/AppData/Local/SuperFURU-Manga/launcher/bootstrap.ps1",
+        "-Stdio", "-NoOpen"
+      ]
+    }
+  }
+}
+```
+
+The launcher respects PowerShell execution policy. If local policy blocks it, follow your administrator's approved installation procedure rather than disabling the policy. / PowerShellの実行ポリシーを尊重します。組織の設定で起動できない場合は、管理者が認めた導入手順を使ってください。
+
+## Manual source setup / ソースからの手動導入
+
+Replace the example application directory with your extracted source directory. / 以下はWindowsの配置例です。`C:/Apps/SuperFuruManga`を、実際に展開したアプリの場所へ置き換えてください。
+
+```powershell
+Set-Location C:/Apps/SuperFuruManga
+npm ci
+npm run mcp:build
+```
+
+Normal `npm ci` also installs the MCP dependencies in their separate directory. If install scripts are disabled, run `npm --prefix mcp ci --ignore-scripts` separately. / 通常の `npm ci` は、MCP側の依存関係も専用のフォルダーへ導入します。インストール時のスクリプトを無効にした環境では、別途 `npm --prefix mcp ci --ignore-scripts` を実行してください。
+
+Reinstall changed dependencies and rebuild after application updates. The MCP bridge checks that its served application matches the current source. / アプリのソースを更新した後も、依存関係を更新して `npm run mcp:build` を実行します。MCP用の起動画面は、ソースと一致しない古いビルドを拒否します。
+
+For a source checkout, use this direct-server entry instead of the managed Windows launcher. Building requires Node.js 22.12 or later, or 20.19 or later within the 20.x line, with npm. / ソースから実行する場合は、Windowsランチャーの代わりに次の直接起動設定を使えます。ビルドにはnpmとNode.js 22.12以上、または20系の20.19以上が必要です。
+
+```json
+{
+  "mcpServers": {
+    "super-furu-manga": {
+      "command": "node",
+      "args": [
+        "C:/Apps/SuperFuruManga/mcp/src/server.mjs",
+        "--workspace",
+        "C:/Users/YOUR_NAME/MangaProjects",
+        "--bridge"
+      ]
+    }
+  }
+}
+```
+
+The workspace is required private project storage. It can also be set with `MANGA_MCP_WORKSPACE`. Only one server may own a workspace at a time. / `--workspace`は非公開の作品保存先です。公開サイトの配信フォルダーやGitへ含めない場所を使ってください。指定は必須で、環境変数 `MANGA_MCP_WORKSPACE`でも設定できます。同じ保存先を複数のサーバーから同時に操作できません。
+
+`--bridge` enables the local application connection. The default address is `127.0.0.1:45931`; use `--port` if needed. Do not put provider API keys in this configuration. / `--bridge`でローカルのアプリ接続を有効にします。既定の待受先は `127.0.0.1:45931`で、使用中なら `--port`で別の空きポートを指定します。APIキーはこのJSONや環境設定へ書きません。
+
+On Linux, pass an existing absolute output directory with `--downloads`. Windows can also use an explicit directory; otherwise it uses the OS Downloads folder. / Linuxでは、既存の出力フォルダーの絶対パスを `--downloads` で指定します。Windowsでも明示的な保存先が必要な場合に指定できます。省略時のWindowsは、OSに登録されたダウンロード先を使います。
+
+## Connect / 接続
+
+1. Ask the AI to inspect capabilities and obtain the application connection. / AIへ `manga_capabilities` と `manga_connection` の実行を依頼します。
+2. Open the temporary local pairing URL in the existing production tab. Keep the pairing URL private. / 返された期限付きのローカルURLを既存の制作タブで開きます。URLの接続情報は公開・転載しません。
+3. If the API is disconnected, the skill brings its input screen forward and asks you to enter the key now and press Connect. Never paste keys into chat; an existing connection needs no re-entry. / API未接続なら、スキルが入力画面を前面に出し「今、このAPIキー欄に入力して『接続』を押してください」と案内します。キーはチャットへ貼り付けず、接続済みなら再入力しません。
+4. Enable **Allow AI control** in the app, then confirm the connected state and supported operations. An AI with browser control can perform this step for the requested production; otherwise it explains the exact button to press. / 右上の**「AI操作を許可」**で、この画面をAIの操作対象にします。ブラウザー操作に対応するAIは依頼された制作のためにボタンを押し、接続済みと能力表を確認します。操作できない場合は、押すボタンを具体的に案内します。
+
+The connection runs from the AI through the local MCP server to the open app. The button grants control of that screen; it is not an outbound connection to an AI service. The skill explains progress while performing supported actions. / 接続は「AI → ローカルMCPサーバー → 漫画アプリ」の向きです。ボタンは画面操作の許可であり、アプリからAIサービスへ接続する操作ではありません。スキルは実行できる操作を進めながら、進行状況も短く説明します。
+
+After a restart, verify the application and API connection before resuming. Persisted projects do not imply persisted credentials. / アプリの再読み込みやサーバー再起動後は、接続を確認してから再開します。API接続が切れていれば、同じ入力欄で接続し直します。プロジェクトが保存されていることと、API接続が残っていることは別です。
+
+Keep the local app open and connected during production. The server alone cannot generate pages. The app shows connection and operation state. After closing it, inspect the existing job before resuming. Ordinary production remains available on the hosted demo without MCP. / 制作中は、このローカル画面を開いたまま接続を保ちます。MCPサーバーだけでは生成処理は動きません。画面にはMCPの接続状態と実行状態を表示します。画面を閉じた場合は実行状態を確認して再開し、未確認の有料処理を自動で繰り返しません。MCPを使わない通常の制作は、公開デモサイトでも引き続き利用できます。
+
+Scrolling and viewing results remain available while connected. Inputs, settings, generation, editing and history changes are locked. The single **Stop and return to manual** button stops local work, disconnects MCP and restores manual controls. The ordinary Emergency Stop button appears only outside MCP control. / MCP接続中もスクロールと結果の閲覧はできます。入力・設定変更・生成・編集・履歴の切り替えはロックします。操作ボタンは右上の**「停止して手動に戻る」**1つです。ローカルの処理を止め、MCPを切断してから手動操作へ戻ります。通常制作の「緊急停止」はMCP操作中には表示しません。
+
+Skill download, setup guide and manual share the top utility row. The four production steps have a separate row. / スキル取得・導入ガイド・マニュアルはMCP状態と同じ上段に置き、STEP1～4の進捗は独立した行に表示します。
+
+## First book / 最初の作品
+
+Example brief: / 例えば次のように依頼できます。
+
+> Create a short adventure comedy about two original characters chasing a windblown letter. Make four color pages including the cover and create character sheets. Hide body-page titles, include body-page numbers, and put both standard footer credits on the final page only. Show the synopsis and detailed plan before generation. / オリジナルの二人が、風で飛んだ手紙を追いかける短い冒険コメディを描いて。カラーで表紙を含めて4ページ。キャラクターシートも作って。本文のタイトルはなし、ページ番号は付けて。通常の2種類のウォーターマークは最終ページの下だけに。まずあらすじと詳細シナリオを見せて。
+
+Production sequence: / 制作の流れは次のとおりです。
+
+1. Choose supplied sheets or AI-created original characters and sheets. / キャラクターシートを用意するか、AIでキャラクターとシートを作るかを決めます。
+2. Discuss a short synopsis, then the detailed page plan. / 短いあらすじを相談し、ページごとの詳細シナリオへ進みます。
+3. Review the cast, action, dialogue, layout, cover and ending, then approve or reject the plan. / 人物、動作、台詞、コマ数、表紙、結末を確認し、その案で生成するか返答します。
+4. Prepare approved shared assets and generate pages in order. / 承認した仕様から共通資料をそろえ、ページ順に生成します。
+5. Save each completed page to Downloads as PNG and matching production JSON. / 完成したページから、PNGと同名の制作情報JSONをダウンロードフォルダーへ保存します。
+
+Before rendering with supplied or generated reference images, the AI applies a page with `manga_run: apply_page`, runs `recognition`, refreshes the project revision and applies the page again. This restores its approved scenario after recognition; STEP2 does not need to be regenerated. `render_book` does not implicitly recognize unparsed materials. / 提供・生成した資料画像を使う場合、AIは描画前に `manga_run` の `apply_page` → `recognition` → 最新revisionの取得 → 再度 `apply_page` を実行します。素材解析後に承認済み台本へ戻すための処理で、STEP2を作り直す必要はありません。`render_book` が未解析資料を自動で認識するわけではありません。
+
+Total pages include the cover. Cover numbering is separate. An approval request alone is not consent; a material plan change needs review, while resuming the same approved plan does not. / 総ページ数には表紙を含めます。表紙のページ番号を出すかどうかは別に指定します。確認を求めただけでは承認になりません。内容が変わる場合は変更後の案を確認し、同じ承認済み案の再開だけなら承認を繰り返し求めません。
+
+## Pages and references / ページと資料
+
+| Option / 項目 | Behavior / 扱い |
+|---|---|
+| Panels / コマ数 | OpenAI book pages support 1–8 panels; Gemini uses its existing four-panel route and rejects unsupported counts. / OpenAIの複数ページ制作は1～8コマ。A4縦の1コマ大コマ・縦2コマ・3コマを含みます。Geminiは既存の4コマ経路を使用し、未対応のコマ数を4へ丸めません。 |
+| Color / カラー／白黒 | Common settings with explicit per-page overrides. / 作品共通の設定とページごとの上書きを使います。 |
+| Cover / 表紙 | A full illustration, or a large opening panel with a pop title logo. / 1枚絵、または最初のページの上半分大コマとポップな題字。 |
+| Author credit / 作者名 | The skill asks for a name or no credit. Set `presentation.authorName` on the cover page; prefer clear space at bottom right. / スキルが作者名または表記なしを確認し、扉ページの`presentation.authorName`へ保存します。右下の余白を基本に、人物や題字を避けて配置します。 |
+| Presentation / 表示 | Title, watermark and page numbers are independent. / タイトル、ウォーターマーク、ページ番号は独立した指定です。 |
+| Ending / 最終コマ | Choose ending words such as “END”, “おしまい” or “おわり” to suit the story, preserving an explicitly selected string. Place them inside the final panel at lower-right; if occupied, use lower-center, then lower-left, with lettering matching the title’s mood. Keep faces, necessary actions, dialogue, page numbers and footer marks readable. Ending lettering may overlap the artwork. / 終幕語は漫画に合う「END」「おしまい」「おわり」等を選び、明示した文字列はそのまま保ちます。最終コマの右下を基本に、空きがなければ下中央、次に左下へ置き、タイトルの雰囲気に合う字体を使います。顔・必要な動作・台詞・ページ番号・下端の表示を隠しません。 絵への重なりも指定できます。 |
+| Composition / ページ演出 | Book pages retain full bleed, connected foreground figures and panel breakouts, including pages with 1–3 panels. / 複数ページでもタチキリ、コマをまたぐ前景人物、枠からのはみ出しを使えます。1～3コマでも、物語の見せ場に合わせて選びます。 |
+| Shared assets / 共通資料 | Reuse canonical character, prop and setting assets. / 人物シート、小道具、背景を同じ資料として引き継ぎます。 |
+| Previous page / 前ページ | An auxiliary continuity reference, not a replacement cast sheet. / 連続性の補助資料です。人物シートを置き換えず、新しい人物一覧として再解析しません。 |
+
+Describe costume or setting changes per page. Inspect actual cast continuity, dialogue and reading order. Harmless differences are distinct from defects that break the scene. / 衣装替えや場所の移動は、ページ固有の変更として伝えます。登場人物・小道具の対応、台詞、読順は実画像でも確認してください。無理のない重なりや勢いのある誇張は許容し、微小な指定差だけで有料生成を繰り返さない運用です。
+
+The production skill normally adds the application's two footer credits only to the final page: common `showWatermarks: false`, with `true` on that page. Page numbers remain independent. Explicit user overrides are preserved. / 制作スキルの標準では、最終ページの下端だけに通常の左右2種類のウォーターマークを付けます。共通の `showWatermarks: false` を最終ページだけ `true` で上書きし、ページ番号は独立して表示します。利用者が別の条件を指定した場合は、その指定を優先します。
+
+Unnumbered pages are excluded from the sequence. Body pages after an unnumbered cover start at 1 by default. `presentation.pageNumberStart` starts or restarts numbering at that page. / ページ番号を表示しないページは数えません。番号なしの表紙に続く本文は、初期値で1・2・3と進みます。`presentation.pageNumberStart`を指定すると、そのページから指定した番号で再開します。
+
+PNG and JSON share a basename such as `作品タイトル_001ページ_20261116_164025`; a cover uses `表紙`. The timestamp is the saving computer's local date and time, down to seconds. A pair is committed only when both files are saved. A suffix distinguishes separate attempts in the same second without overwriting earlier files. Author credits are independent of application watermarks and do not repeat on body pages. / PNGとJSONは`作品タイトル_001ページ_20261116_164025`のように同名で保存し、表紙は`表紙`とします。日時は保存したパソコンの年月日時分秒です。両ファイルを揃えて保存を確定し、同じ秒の別生成は連番で区別して以前のファイルを残します。作者名はアプリのウォーターマークと独立し、本文へ繰り返しません。
+
+## Discover operations / 操作の調べ方
+
+Use the capability contract and current tool schemas; tool registration alone does not establish a working generation connection. / `manga_capabilities`の `contractVersion`、対応状況、設定一覧と、クライアントの最新ツールスキーマを使います。ツールが存在することだけで生成が可能とは限りません。
+
+| Tool / 操作 | Purpose / 用途 |
+|---|---|
+| `manga_capabilities`, `manga_connection` | Capabilities and connection / 対応機能と接続 |
+| `manga_project_create`, `manga_project_list`, `manga_project_get`, `manga_project_update` | Projects and common settings / 作品と共通設定 |
+| `manga_page_update`, `manga_snapshot` | Page settings and snapshots / ページの設定と保存状態 |
+| `manga_asset_import`, `manga_asset_list`, `manga_asset_assign` | Import, inspect and assign shared reference assets / 共通の参照資料を取り込み、一覧確認・割り当て |
+| `manga_plan`, `manga_request_approval` | Plans and approval records / 構成と承認記録 |
+| `manga_create_manga` | Outline, detailed plan or approved rendering / あらすじ、詳細台本、承認済み作品の生成 |
+| `manga_run` | Production operations advertised by the app / 接続中のアプリが対応する制作操作 |
+| `manga_edit` | Typed edits to the applied page, including supported history and panel actions / 適用中のページに対する編集、対応する履歴・コマ操作 |
+| `manga_job_get`, `manga_job_list`, `manga_job_cancel`, `manga_job_resume` | Job state, cancellation, recovery and resumption / 実行状況、停止、結果の回収と再開 |
+
+Mutations use an expected revision and idempotency key. Refresh on conflicts and inspect the existing job when responses are delayed. / 変更操作では、最新の `revision` と同一要求を識別する `idempotencyKey` を使います。古い版へ上書きせず、競合時は作品を読み直します。処理の応答が遅い場合も、既存のjob IDを調べてから対応します。
+
+## Production skill / 制作スキル
+
+[**Download the production skill (ZIP) / 複数ページ漫画 制作スキルをダウンロード（ZIP）**](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip)
+
+The application ZIP also contains the complete skill in `mcp/skills/manga-book-production`. Use the separate ZIP when you only need the skill. Ordinary single-page production does not require it. / アプリZIPを展開したフォルダー内の `mcp/skills/manga-book-production` にも同じ一式を含めています。スキルだけが必要なら、上の単体ZIPを使えます。通常の1ページ制作には不要です。
+
+Codex is the primary skill client. With another MCP-capable AI, configure its connection and say: “Read the bundled SKILL.md and follow it to create a multipage manga.” Local execution and browser control depend on that client; the AI should explain any manual step rather than claim it has performed it. / 基本はCodex用スキルです。他のMCP対応AIでは接続を設定し、「同梱のSKILL.mdを読み、この手順で複数ページ漫画を制作して」と言葉で指示できます。ローカル実行やブラウザー操作の対応はAIクライアント次第です。自動操作できない箇所は手順を案内し、実行済みとは扱いません。
+
+The bundled skill describes the production workflow. Install the entire skill directory in your client's supported skill location; the MCP server configuration is separate. / [manga-book-production/SKILL.md](skills/manga-book-production/SKILL.md)が、資料の確認から承認・連続生成・保存までの進行を記述しています。スキル対応クライアントでは、このフォルダー一式をクライアント所定のスキル配置先へ登録してください。MCP設定は別途必要です。
+
+Clients without skill installation can use the MCP prompt and resource instead. / スキルをインストールできないクライアントにも、MCPプロンプト `manga_book_workflow` とリソース `manga://skills/book-production` で同じ進め方を渡せます。
+
+## Saving and resuming / 保存と再開
+
+`verification.status` is `not_generated`, `not_saved`, `verified`, `failed` or `unconfirmed`. Readback covers the latest recorded PNG/JSON pair, recorded material hashes and manifest project identity, not every historical pair or a historical whole-JSON checksum. Destination resolution alone does not prove writable access. / `verification.status` は `not_generated`・`not_saved`・`verified`・`failed`・`unconfirmed`。検査対象は最新の記録済みPNG/JSON対、資料の記録hash、全体JSONの作品対応です。過去の全ペアやJSON全体の過去hashを検査したとは扱いません。保存先が見つかっただけでは書込可能と断定しません。
+
+The current SDK discovery exposes 21 tools. Diagnostics appear at `manga_job_get.result.diagnostics` after the requested `read_state` job completes: at most 20 recent events and 64 KiB of event data, with each event context capped at 8 KiB. Failed-job `error.failureContext` is capped at 32 KiB and retains `originalLengths`/`truncatedFields`. Existing `manga_run` revision/idempotency fields still apply. / 現行SDKの取得結果は21ツールです。診断はread_state完了後の `manga_job_get.result.diagnostics` で取得し、直近最大20イベント・イベント合計64KiB、各文脈8KiBまでです。失敗jobの `error.failureContext` は32KiBまでとし、`originalLengths`・`truncatedFields` に省略を残します。`manga_run` の既存revision・idempotency指定も必要です。
+
+For troubleshooting, `manga_job_get` can return sanitized `error.failureContext`. Request `manga_run` with `operation:"read_state"` and `input:{includeDiagnostics:true}` for an opt-in, bounded diagnostic summary from the connected browser origin, including ordinary single-page troubleshooting. Keys and image bodies are excluded; omitted context is identified, and warnings are distinct from failed jobs. / 不具合調査では `manga_job_get` の安全化済み `error.failureContext` を確認できます。`manga_run` に `operation:"read_state"` と `input:{includeDiagnostics:true}` を指定すると、接続中ブラウザーの同じURLの診断要約を明示的に取得し、通常1ページの不具合調査にも使えます。キー・画像本体を除き、容量上限による省略と、警告・失敗を区別します。
+
+Book-detail authoring may add natural speech while preserving exact supplied lines and explicitly silent scenes; it does not require dialogue in every panel. It carries forward a bounded summary of the preceding page’s location, outfits and final object state, while explicit current-page scene, time or costume changes take priority. An unrequested entirely silent book draft is rejected; ordinary single-page and imported-source handling are unchanged. This describes the implementation, not verified acceptance of the usual-five sample. / 複数ページの詳細台本では、指定済みの台詞と明示された無言の場面を守りつつ、自然な会話を補えます。各コマへの台詞は強制しません。前ページの場所・衣装・最後の小道具の状態を長さ制限付きで引き継ぎ、当ページに明示した場面・時刻・着替えを優先します。依頼のない全編無言の案は拒否し、通常1ページや取り込み原文の扱いは変えません。実装の説明であり、いつもの5人の実生成合格を示すものではありません。
+
+The private workspace stores project state, assets and jobs; completed PNG/JSON files are user deliverables without credentials. / 作品保存先には構成、設定、資料、ページ、実行状態を保持します。完成ページのPNGとJSONは利用者向けの成果物です。JSONには台本・画像指示文・設定・資料の対応を残し、APIキーを含めません。
+
+Before production or resuming, the AI calls `manga_save_status(projectId)` to check automatic saving and the destination. MCP saves page PNG/JSON pairs, shared materials and the whole-book manifest directly; no browser download setting or folder picker is required. The tool distinguishes unsaved, missing, hash-mismatched and unreadable files using saved-file readback. It does not claim browser download permission is granted. Do not repeatedly ask the user to select the same destination. / AIは制作・再開の前に `manga_save_status(projectId)` で自動保存と保存先を確認します。MCPはPNG・JSON、共通資料、作品全体JSONを直接保存するため、ブラウザーのダウンロード設定やフォルダー選択は不要です。保存ファイルを読み戻し、未保存・欠落・ハッシュ不一致・読取不能を区別します。ブラウザーの保存許可を確認済みとは扱わず、同じ保存先の選択を繰り返し求めません。
+
+Windows uses the registered Downloads folder, including a relocated folder. Each book has this layout: / WindowsではOSに登録されたダウンロードフォルダーを使います。保存先を移動している場合も、固定の `C:/Users/.../Downloads` を決め打ちしません。各作品は次の構成で保存します。
+
+```text
+Downloads/
+└── 作品タイトル_20261116_160000/
+    ├── 作品タイトル_表紙_20261116_164025.png
+    ├── 作品タイトル_表紙_20261116_164025.json
+    ├── 作品タイトル_001ページ_20261116_165010.png
+    ├── 作品タイトル_001ページ_20261116_165010.json
+    ├── 資料/
+    │   ├── 人物名_キャラクターシート.png
+    │   ├── 小物名_小物.png
+    │   └── 背景名_背景.png
+    └── 作品全体.json
+```
+
+A page is committed after both files are written. The book folder uses the title and project start time; each pair uses its save time. Shared materials have readable names under `資料/`, with their original supported image formats preserved. Empty plans do not create delivery folders. Keep the entire book folder so relative asset links remain usable. / PNGとJSONの両方を書き終えてから、そのページの保存を確定します。作品フォルダーはタイトルと作品開始日時、各ファイルは保存日時で区別します。共通資料は元の対応画像形式を保ち、`資料/`へ内容の分かる名前でまとめます。空の構成案だけでは成果物フォルダーを作りません。JSON内の相対パスを保つため、受け渡しや保管は作品フォルダー全体で行ってください。
+
+`作品全体.json` ties the pages, materials and production records together. It retains available generation times, model/application versions, scripts, prompts, approvals and file hashes. Material sources or permissions that have not been established are marked unconfirmed; the application does not infer ownership. Private execution journals stay in the workspace. / `作品全体.json`には、ページと資料の対応に加え、確認できた生成日時・モデルとアプリの版・台本・指示文・承認記録・ファイルのハッシュをまとめます。素材の出典や利用許諾が確認できていない場合は未確認として扱い、所有権を推測で補いません。内部の実行記録は非公開のworkspaceへ保存します。
+
+These records help explain how a work was made; they do not guarantee a publisher's acceptance or establish rights by themselves. Check the publisher's AI policy and the rights to supplied materials for the intended use. / 制作記録は、作品をどう作ったか説明するための資料です。出版社の受理や権利を保証するものではありません。提出先のAI利用方針と、持ち込む資料の利用条件を別途確認してください。
+
+Inspect the project and original job after interruption. Keep completed pages and resolve uncertain outcomes before repeating a paid request. / 停止や通信切断の後は、作品と同じjob IDの状態を読みます。完了したページを再生成せず、結果が不明な有料処理を自動で繰り返しません。新しく作り直す場合は、既存結果を残したうえで明示的に操作します。
+
+Recovery distinguishes verified retained results, abandoning an unresolved attempt without a new request, and an explicit retry. Retained-result recovery requires matching successful `read_state` evidence. Retrying an unknown outcome may incur another provider charge. / `manga_job_resume`では、取得済みの結果を確認して回収する `use_retained_result`、再生成せずその実行を終了する `abandon`、明示的に再試行する `retry`を区別します。結果の回収には、同じ作品・ページ・元の実行を示す `read_state`の成功結果が必要です。結果不明の処理を再試行する `retryUnknown`は、追加のAPI料金が発生する可能性があります。
+
+A result generated from an older plan cannot overwrite a newer edit. The original job retains that result for inspection. / 生成を待っている間に案を変更した場合、古い案の結果で最新の編集内容を上書きしません。競合した結果は元のjobへ保持されるため、内容を確認してから扱いを決めます。
+
+The original-color sample was generated through the real MCP path: one illustrated cover and three body pages with 1, 2 and 3 panels. PNG/JSON pairs, shared materials, previous-page references and the whole-book manifest were read back with matching hashes, and the pages were visually accepted. The usual-five monochrome sample and ordinary native-browser folder saving remain unverified; private package tests do not replace those checks or an official release. / オリジナル人物のカラー作品は実MCP経路で、1枚絵表紙と1・2・3コマの本文3ページを生成しました。PNG/JSON、共通資料、前ページ参照、作品全体JSONを読み戻してhash整合を確認し、画像も目視で受け入れました。いつもの5人の白黒作品と、通常ブラウザーの直接フォルダー保存は未検証です。private配布候補の検査を、これらの実物確認や正式公開の代わりにはしません。
+
+Shared-material exports serialize readable-name assignment so concurrent saves cannot assign one filename to different assets. Page preparation and recognition use the target project context and isolate restored history, preventing references from an earlier project from entering its snapshot or portable manifest. If saving or recognition fails, inspect the original job and `manga_save_status` before retrying; a completed API response alone does not establish a saved result. / 共通資料の保存名は同時処理でも割当を直列化し、異なる資料へ同じ名前を割り当てません。ページ適用・認識では対象作品の文脈と復元履歴を分離し、前の作品の資料がスナップショットや持ち運び用の全体JSONへ混ざるのを防ぎます。保存・認識の失敗時は再試行前に元jobと `manga_save_status` を確認し、API応答の完了だけを保存成功とは扱いません。
+
+Book-page title, location and outfit metadata are carried into the shared STEP3 drawing instructions and review context even when the approved scenario contains only panel bodies. This preserves the approved script while preventing a missing page title or a return to cast-default clothing merely because the header metadata was absent. Actual image acceptance is still separate. / 承認済み台本がコマ本文だけの場合も、ページ別の題名・場所・衣装を共通STEP3の描画指示と検査へ引き継ぎます。承認台本を変えず、見出し情報の欠落だけで題名が無題になったり、人物設定の標準衣装へ戻ったりするのを防ぎます。実画像の受け入れ確認は別途行います。
+
+MCP scenario generation follows the selected manual/news input mode, including the configured news categories and date. Manual text is kept literal; empty manual input or missing news categories stops before a provider call. This routing is regression-tested, not a claim of new live news-API acceptance. / MCPの台本生成は自由入力／ニュースの選択に従い、ニュース分類と日付を引き継ぎます。自由入力は原文を保ち、空入力やニュース分類未選択はAPI送信前に止めます。経路の回帰検証済みという説明であり、新たなニュース実APIの合格を示すものではありません。
+
+Save-status checks distinguish assets required by the current manifest/latest page JSON from unreferenced historical index entries. Historical missing files remain visible under `materials.historicalIndex` and `verification.historicalIndexIssues`, without turning a valid current delivery into a failure. Missing or mismatched current references still fail. / 保存状態では、現行の作品全体JSON・最新ページJSONに必要な資料と、現在は参照しない過去indexを分けます。過去の欠損は `materials.historicalIndex` と `verification.historicalIndexIssues` に残し、正常な現行成果物を失敗扱いにしません。現行参照の欠落や不一致は引き続き不合格です。
+
+If the short-lived pairing URL expires while waiting for API entry, obtain a fresh URL with `manga_connection` and update only the existing tab’s URL fragment, then allow AI control. Keep the connected API session; no reload or key re-entry is needed. This recovery does not authorize automatic reconnection after the user presses Stop. / API入力待ちで接続URLの期限が切れた場合は、`manga_connection` でURLを更新し、既存タブのhashだけを変更してAI操作を許可します。API接続を保ったまま復旧でき、再読込やキー再入力は不要です。利用者が停止ボタンを押した後の自動再接続は行いません。

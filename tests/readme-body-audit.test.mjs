@@ -11,9 +11,11 @@ const evidence = collectReadmeBodyEvidence(appRoot);
 test('current README explains the default page mode and scoped technique guide', () => {
   const current = readFileSync(new URL('../README.md', import.meta.url), 'utf8').split(/^## .*ChangeLog/m)[0];
   for (const expected of [
-    /右・緑色の「4～8コマ生成」は自由配置で、初期選択です/,
-    /再読み込み後は右の「4～8コマ生成」です/,
-    /reload resets the switch to the right, 4–8-panel position/,
+    /通常のOpenAI制作は自由配置の4～8コマ/,
+    /Geminiの通常制作はカラー・白黒とも4コマ/,
+    /レガシー横長4段の選択肢とスライドスイッチは画面から外し/,
+    /OpenAI book pages can specify 1–8 panels/,
+    /OpenAIの複数ページ制作では.*1～8コマを指定/,
     /カラー・白黒とも、POP・水彩・劇画/,
     /カスタム画風、参照絵柄.*SeriousDocumentary.*添付しません/,
     /nano-panel-media\.png.*最後に添付/,

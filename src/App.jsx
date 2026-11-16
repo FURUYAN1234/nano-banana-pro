@@ -1,3 +1,6 @@
+import {readDiagnostics} from './lib/diagnostics.js';
+import {readMcpDiagnostics} from './lib/mcp/diagnostics.js';
+import {preserveMcpRecognitionScenario,assertMcpApplyCommitted,assertMcpRecognitionReady} from './lib/mcp/page-state.js';
 import { getBuiltinPanelMediumReference } from './lib/builtin-panel-medium-reference.js';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
@@ -31,13 +34,16 @@ import ControlBar from './components/ControlBar';
 import SystemHeader from './components/SystemHeader';
 import GenerationPreview from './components/GenerationPreview';
 import GenerationHistory from './components/GenerationHistory';
-import ExperimentalMangaPanel from './components/ExperimentalMangaPanel';
+import McpAssetGallery from './components/McpAssetGallery.jsx';
+import McpControlPanel from './components/McpControlPanel.jsx';
+import { assertAppliedMcpPage } from './lib/mcp/contract.js';
 
 function App() {
+  const [mcpControlState,setMcpControlState]=useState(null);
   const [experimentEnabled, setExperimentEnabled] = useState(true);
   // --- All 113 variables from useMangaWorkflow (auto-audited, zero omissions) ---
+  const workflow = useMangaWorkflow({experimentalEnabled:experimentEnabled,onAutoPageModeChange:setExperimentEnabled});
   const {
-    changePageMode,
     scenarioModeValid,
     analyzeThought,
     apiKey,
@@ -218,7 +224,84 @@ function App() {
     setStyleJson,
     targetDate,
     toggleCategory,
-  } = useMangaWorkflow({experimentalEnabled:experimentEnabled,onAutoPageModeChange:setExperimentEnabled});
+  } = workflow;
+  const executeMcpOperation = async (job, context) => {
+    const operationStartedAt=Date.now();
+    context.throwIfCancelled?.();
+    if(isApiProcessing&&job.operation!=='read_state')throw Object.assign(new Error('Wait for the current manual/application API operation to finish.'),{code:'APP_BUSY'});
+    context.reportProgress?.({operation:job.operation,pageIndex:job.project.pages.find(page=>page.id===job.pageId)?.index});
+    if(job.operation==='render_book') {
+      const completed=[];
+      for(const page of job.project.pages) {
+        context.throwIfCancelled();
+        const loaded=await context.loadPage(page.id);
+        if(loaded.snapshot?.accepted&&loaded.snapshot.generatedImage){completed.push({pageId:page.id,retained:true});continue;}
+        const subJob={...job,...loaded};
+        await context.invoke({...subJob,operation:'apply_page'});
+        const prompt=await context.invoke({...subJob,operation:'prompt'});
+        if(prompt.success===false)return {success:false,result:{completed},error:prompt.error};
+        context.throwIfCancelled();
+        const image=await context.invoke({...subJob,operation:'image'});
+        if(image.success===false)return {success:false,result:{completed},error:image.error};
+        completed.push({pageId:page.id,retained:false});
+      }
+      return {result:{completed,complete:true}};
+    }
+    if (job.operation === 'plan_story') return { result: await workflow.runMcpPlan(job.project, job.input) };
+    if (job.operation === 'read_state') return { result: { state: workflow.captureMcpState(), recovery: job.input?.recoverJobId?workflow.readMcpRecovery(job.input.recoverJobId):null, ...(job.input?.includeDiagnostics===true?{diagnostics:await readMcpDiagnostics(readDiagnostics)}:{}) } };
+    if (job.operation === 'generate_assets') return {result:await workflow.generateMcpAssets(job.project,{...job.input,onAsset:asset=>context.checkpointAssets([asset])})};
+    if (job.operation === 'apply_page') {
+      const result = workflow.applyMcpPage(job);
+      await workflow.waitForMcpCommit({throwIfCancelled:context.throwIfCancelled});
+      return { result, snapshot: assertMcpApplyCommitted(result,workflow.captureMcpState(),job.projectId,job.pageId) };
+    }
+    const finish = async result => {
+      await workflow.waitForMcpCommit({throwIfCancelled:context.throwIfCancelled});
+      const snapshot=workflow.captureMcpState();
+      if(result!==false&&result!=null)workflow.markMcpCompletion(job,{completed:true,value:result});
+      const failureDiagnostics=result===false||result==null?await readMcpDiagnostics(readDiagnostics,{since:operationStartedAt}):null;
+      const failure=failureDiagnostics?.events?.findLast(event=>event.severity==='error');
+      return {success:result!==false&&result!=null,result:{completed:result!==false&&result!=null,value:result},snapshot,
+        ...(result===false||result==null?{error:{code:'WORKFLOW_ACTION_FAILED',message:'The application operation did not complete. Retained state was checkpointed; no automatic retry was made.', ...(failure?.failureContext?{failureContext:failure.failureContext}:{}), ...(failure?{diagnosticEventId:failure.id,diagnosticRunId:failure.runId,diagnosticErrorCode:failure.errorCode}:{})}}:{})};
+    };
+    if(!['recognition'].includes(job.operation))assertAppliedMcpPage(job,workflow.captureMcpState());
+    if(['scenario','enhance','prompt','image','image_edit'].includes(job.operation))assertMcpRecognitionReady(workflow.captureMcpState());
+    if (job.operation === 'prompt') return finish(workflow.bookPageContext?.kind==='illustration'?workflow.assembleMcpCover():await assemblePrompt());
+    if (job.operation === 'scenario') return finish(await generateScenarioFromNews());
+    if (job.operation === 'enhance') return finish(await enhanceScenario());
+    if (job.operation === 'image') return finish(await workflow.runMcpImage(context.savePage));
+    if (job.operation === 'image_edit') return finish(await workflow.runMcpImage(context.savePage,{instruction:job.input.instruction}));
+    if(job.operation==='edit_state')return finish(await workflow.editMcpState(job.input,{savePage:context.savePage}));
+    if (job.operation === 'recognition') {
+      if(!job._recognitionApplied){
+        await context.invoke({...job,operation:'apply_page'});
+        return context.invoke({...job,_recognitionApplied:true});
+      }
+      if(!job._recognitionPrepared) {
+        const recognitionSource=workflow.captureMcpState();
+        workflow.prepareMcpRecognition(job.project);
+        await workflow.waitForMcpCommit({throwIfCancelled:context.throwIfCancelled});
+        return context.invoke({...job,_recognitionPrepared:true,_recognitionSource:recognitionSource});
+      }
+      const files=job.assets.map(asset=>{
+        const [header,base64]=asset.dataUrl.split(','),bytes=Uint8Array.from(atob(base64),char=>char.charCodeAt(0));
+        const type=header.match(/^data:([^;]+)/)[1];
+        return new File([bytes],`${asset.slotId}.${type==='image/png'?'png':type==='image/jpeg'?'jpg':'webp'}`,{type});
+      });
+      const completed=await processFiles(files);
+      const output=await finish(completed);
+      preserveMcpRecognitionScenario(output.snapshot,job._recognitionSource,job.project,job.pageId);
+      if(output.success) {
+        const state=output.snapshot;
+        if(job.recognitionReset)output.result.recognitionReset=job.recognitionReset;
+        output.result.recognition={images:state.images,referenceAssets:state.referenceAssets,castList:state.castList};
+        // Recognition invalidates derived page output. Restore the approved script explicitly,
+        // then let the next apply_page combine this common recognition with that script.
+      }
+      return output;
+    }
+    throw Object.assign(new Error('This operation is not yet available in the connected application.'), { code: 'OPERATION_UNAVAILABLE' });
+  };
   const nativePageModeEnabled = experimentEnabled && getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const isApiModalOpen = showModal || showOpenAIKeyModal;
   const isMainLocked = !apiKey || isApiModalOpen;
@@ -408,7 +491,8 @@ function App() {
         setIsEndlessMode={setIsEndlessMode}
         isEndlessModeRef={isEndlessModeRef}
         isAborting={isAborting}
-        isApiProcessing={isApiProcessing}
+        isApiProcessing={isApiProcessing||Boolean(mcpControlState?.claimed)}
+        operationLocked={Boolean(mcpControlState?.claimed)}
         emergencyStopActive={emergencyStopActive}
         onStopApiProcessing={stopApiProcessing}
         handleFullAutoToggle={handleFullAutoToggle}
@@ -422,9 +506,9 @@ function App() {
           apiKey={apiKeyForUnlockedUi}
           selectedEngine={selectedEngine}
           enableOpenAIApi={enableOpenAIApi}
-          partialReset={partialReset}
-          step1Reset={handleStep1Reset}
-          hardReset={hardReset}
+          partialReset={()=>mcpControlState?.claimed?showStatus('MCP接続を解除してからリセットしてください。'):partialReset()}
+          step1Reset={()=>mcpControlState?.claimed?showStatus('MCP接続を解除してからリセットしてください。'):handleStep1Reset()}
+          hardReset={()=>mcpControlState?.claimed?showStatus('MCP接続を解除してからリセットしてください。'):hardReset()}
         />
         <div ref={setDiagnosticHost} className="diagnostic-slot" />
         </div>
@@ -442,7 +526,10 @@ function App() {
         className="relative z-10 max-w-5xl mx-auto px-4 pb-4 space-y-8 md:px-10 md:pb-10"
       >
         <AutoSaveSettingsButton autoSaveVerified={autoSaveVerified} onVerified={() => setAutoSaveCheckStatus('passed')} />
-        <main className="space-y-8" style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
+        <McpControlPanel execute={executeMcpOperation} cancel={stopApiProcessing} capture={workflow.captureMcpUiBackup} restore={workflow.restoreMcpState} onConnectionChange={setMcpControlState} operations={['read_state', 'apply_page', 'plan_story','generate_assets','recognition','scenario','enhance','prompt','image','image_edit','render_book','edit_state']} />
+        {mcpControlState?.claimed&&<p className="mcp-manual-lock-notice" role="status">AI操作中・手動操作は停止中（スクロールと結果の確認はできます）</p>}
+        {mcpControlState?.claimed&&<McpAssetGallery assets={workflow.mcpGeneratedAssets} />}
+        <main inert={mcpControlState?.claimed||undefined} className={`space-y-8 ${mcpControlState?.claimed?'mcp-manual-locked':''}`} style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
           {getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai' && (
             <ModelSelectionPanel
               analysisModelId={analysisModelId} setAnalysisModelId={setAnalysisModelId}
@@ -451,7 +538,7 @@ function App() {
               disabled={isApiProcessing}
             />
           )}
-          <aside className="workflow-edit-notice"><strong>✎ 白い入力欄は、生成後も編集できます</strong><p>人物情報・台本・描画指示に手を入れてから次のSTEPへ進めます。自動処理を使う場合は「緊急停止」で止めてから編集してください。</p></aside>
+          {!mcpControlState?.claimed&&<aside className="workflow-edit-notice"><strong>✎ 白い入力欄は、生成後も編集できます</strong><p>人物情報・台本・描画指示に手を入れてから次のSTEPへ進めます。自動処理を使う場合は「緊急停止」で止めてから編集してください。</p></aside>}
           <div  className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             <SampleCharacterSheetsButton processFiles={processFiles} disabled={isAnalyzing || isApiProcessing} />
@@ -490,13 +577,11 @@ function App() {
               setStyleJson={setStyleJson}
             />
 
-          {getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai' && <ExperimentalMangaPanel enabled={experimentEnabled} onModeChange={enabled=>{if(changePageMode(enabled))setExperimentEnabled(enabled);}}
-            currentStep={currentStep} isAnalyzing={isAnalyzing} isSearching={isSearching}
-            normalBusy={isApiProcessing || isFullAutoMode || isEndlessMode || isEnhancing || is360CameraWorking}
-            />}
 
             {/* 02: シナリオ設定 (Static Layout) */}
             <div hidden={isAnalyzing}><Step2Panel
+              bookPanelCount={workflow.bookPageContext?.scenarioMode?.match(/book-page-(\d)/)?.[1]}
+              bookPageKind={workflow.bookPageContext?.kind}
               experimentEnabled={nativePageModeEnabled}
               mosaicCopyrightedCharacters={mosaicCopyrightedCharacters}
               setMosaicCopyrightedCharacters={setMosaicCopyrightedCharacters}
@@ -586,6 +671,8 @@ function App() {
 
                 {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
                 <Step3Panel
+                  bookPanelCount={workflow.bookPageContext?.scenarioMode?.match(/book-page-(\d)/)?.[1]}
+                  bookPageKind={workflow.bookPageContext?.kind}
                   showTitle={showTitle}
                   setShowTitle={setShowTitle}
                   showWatermarks={showWatermarks}
@@ -600,7 +687,7 @@ function App() {
                   is360CameraWorking={is360CameraWorking}
                   experimentEnabled={nativePageModeEnabled}
                   scenarioModeValid={scenarioModeValid}
-                  assemblePrompt={assemblePrompt}
+                  assemblePrompt={workflow.bookPageContext?.kind==='illustration'?workflow.assembleMcpCover:assemblePrompt}
                   assembleThought={assembleThought}
                   isAssembling={isAssembling}
                   promptActionRef={step3ActionRef}

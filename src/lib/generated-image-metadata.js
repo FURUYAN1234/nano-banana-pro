@@ -26,7 +26,7 @@ const sanitizeValue = (value) => {
   if (typeof value === 'string') return sanitizeText(value);
   if (Array.isArray(value)) return value.map(sanitizeValue);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, sanitizeValue(entry)]));
+    return Object.fromEntries(Object.entries(value).filter(([key])=>!/(?:api[_-]?key|credential|authorization|(?:access|refresh|private)[_-]?token|secret|apiSession)/i.test(key)).map(([key, entry]) => [key, sanitizeValue(entry)]));
   }
   return value;
 };
@@ -118,7 +118,7 @@ const providerName = (provider) => {
 
 const buildInputImageRecords = (inputImages) => Promise.all(inputImages
   .filter(({ dataUrl }) => Boolean(dataUrl))
-  .map(async ({ role, dataUrl }, index) => {
+  .map(async ({ role, dataUrl, sourcePageId, assetId }, index) => {
     const parsed = parseImageDataUrl(dataUrl);
     return {
       role: sanitizeText(role || 'reference'),
@@ -126,6 +126,8 @@ const buildInputImageRecords = (inputImages) => Promise.all(inputImages
       mime_type: parsed.mimeType,
       byte_length: parsed.bytes.byteLength,
       sha256: await sha256Hex(parsed.bytes),
+      ...(sourcePageId ? { source_page_id: sanitizeText(sourcePageId) } : {}),
+      ...(assetId ? { asset_id: sanitizeText(assetId) } : {}),
     };
   }));
 

@@ -2,7 +2,7 @@
 
 ## Authoritative workflow
 
-共通手順の正本は `C:\Users\sx717\Antigravity\docs\unified_release_completion.md`、機械可読契約は `C:\Users\sx717\Antigravity\scripts\release-apps.json` の `nano-banana-pro`、実行入口は `C:\Users\sx717\Antigravity\scripts\publish_app_release.ps1` である。手動の個別release sequenceや専用transactionを使用しない。
+共通手順の正本は 親リポジトリの `docs/unified_release_completion.md`、機械可読契約は 親リポジトリの `scripts/release-apps.json` の `nano-banana-pro`、実行入口は 親リポジトリの `scripts/publish_app_release.ps1` である。手動の個別release sequenceや専用transactionを使用しない。
 
 ## App-specific requirements
 

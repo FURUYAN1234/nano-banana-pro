@@ -35,6 +35,8 @@ import {
  * STEP 02: シナリオ構築設定パネル
  */
 export default function Step2Panel({
+  bookPanelCount,
+  bookPageKind,
   experimentEnabled = false,
   mosaicCopyrightedCharacters = true,
   setMosaicCopyrightedCharacters,
@@ -136,7 +138,7 @@ export default function Step2Panel({
     >
       <div className="flex items-center justify-between">
         <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'} `}>
-          <FileText size={18} /> STEP 02: シナリオ構築設定（{experimentEnabled ? '4～8コマ' : '4コマ'}のストーリー設定）
+          <FileText size={18} /> STEP 02: シナリオ構築設定（{bookPageKind==='illustration'?'表紙1枚絵':bookPanelCount?`${bookPanelCount}コマ`:experimentEnabled ? '4～8コマ' : '4コマ'}のストーリー設定）
         </div>
       </div>
 
@@ -255,7 +257,7 @@ export default function Step2Panel({
             <div className="text-xs font-bold text-purple-300 text-center">
               ▼ 自由入力：描きたいテーマや、ニュースのURLを自由に入力してください (<span className="text-blue-400">URLからの自動読み込みに対応</span>)
             </div>
-            <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかを指定できます。画風も「通常・POP・水彩・劇画・スケッチ・ちびギャグ」をコマごとに指定できます（例：2コマ目はPOP、4コマ目は劇画）。<br />「4コマ生成（横長コマ）レガシー」は横長4コマの縦一列固定で、入力したコマ数指定は無視します。「4～8コマ生成」では4～8コマで指定でき、指定がなければ内容に合わせて決めます。4コマでも大コマ・縦長・タチキリ・枠からのはみ出しを使った自由配置です。<br />AIが希望をできる範囲で反映し、指定のない部分は内容に合わせて調整します。</p>
+            <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかを指定できます。画風も「通常・POP・水彩・劇画・スケッチ・ちびギャグ」をコマごとに指定できます（例：2コマ目はPOP、4コマ目は劇画）。<br />通常のChatGPT制作は4～8コマで、未指定なら内容に合わせて決めます。複数ページ制作では承認したページごとの1～8コマ指定を引き継ぎます。Geminiは4コマです。大コマ・縦長・タチキリ・自然な枠越えも、指定されたページと物語に合わせて使えます。<br />AIが希望をできる範囲で反映し、指定のない部分は内容に合わせて調整します。</p>
             <div className="speech-dictation-field">
               <textarea
                 key={MANUAL_TOPIC_FIELD_ID}

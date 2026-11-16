@@ -172,7 +172,7 @@ export function orderPanelStyleEditFrames(regions, page, { plan } = {}) {
 }
 
 export async function readPanelStyleEditFrames(sourceDataUrl, count, options = {}) {
-  if (!Number.isInteger(count) || count < 4 || count > 8) throw new RangeError('コマ数は4〜8で指定してください。');
+  if (!Number.isInteger(count) || count < 1 || count > 8) throw new RangeError('コマ数は1〜8で指定してください。');
   const { pixels } = await readPixels(sourceDataUrl);
   let ordered;
   const lineage = options.editLineage;

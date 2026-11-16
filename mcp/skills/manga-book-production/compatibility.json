@@ -1,0 +1,7 @@
+{
+  "contractVersion": 1,
+  "minimumAppVersion": "8.0.0",
+  "repository": "FURUYAN1234/nano-banana-pro",
+  "automaticBootstrapPlatform": "win32",
+  "transports": ["stdio", "streamable-http"]
+}

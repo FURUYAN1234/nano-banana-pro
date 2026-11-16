@@ -2,10 +2,13 @@ import {readPageComposition} from './manga-page-composition.js';
 import { extractDialogueOnly, extractEmotionStyle, normalizePanelStyleTags } from './panel-utils.js';
 import { classifyCameraElevation, isFisheyeCamera } from './composition-variety.js';
 import { STYLE_DRAWING_CONTRACTS } from './constants.js';
+import { readBookPageMode } from './page-production-contract.js';
 
 const PANEL_NUMBER_MAP = new Map(['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'].map((value, index) => [value, index + 1]));
 
 export const getScenarioPanelCountRange = (scenarioMode = 'four-panel') => {
+  const page = readBookPageMode(scenarioMode);
+  if (page) return [page.panelCount, page.panelCount];
   if (scenarioMode === 'four-panel') return [4, 4];
   if (scenarioMode === 'experimental-manga') return [4, 8];
   throw new Error('Unknown scenario mode: ' + scenarioMode);
@@ -14,6 +17,8 @@ export const getScenarioPanelCountRange = (scenarioMode = 'four-panel') => {
 // Keep the raw topic intact: panel totals are mode settings, while story facts,
 // quoted comics and directions for individual panels remain source material.
 export const buildScenarioPanelCountInstruction = (scenarioMode = 'four-panel') => {
+  const page = readBookPageMode(scenarioMode);
+  if (page) return `【ページ固定のコマ数契約】この本のページは全${page.panelCount}コマ。1から${page.panelCount}まで欠番・重複なく記載し、監査・修正でもコマ数を保つ。原文の事実・全台詞・人物・画風・カメラ・演技とPageCompositionの指定を保持する。`;
   const [min, max] = getScenarioPanelCountRange(scenarioMode);
   return min === max
     ? '【モード固定のコマ数契約】四コマモードは常に全4コマ。自由入力による漫画全体の総コマ数の指定は無視し、モードを変更しない。コマ数指定に従わないことを要望不一致や修正理由にしない。1〜4コマの画風・カメラ・演技・台詞の個別指定は保持する。範囲外のコマ番号を理由にコマを追加しない。物語中の数値・引用・作中漫画のコマ数は削除・改変しない。'
@@ -122,14 +127,18 @@ const userRequestsEyeLevel = (userTopic, panelNumber) => {
 // contract; this guard belongs to the automatic scenario-generation boundary.
 export const assertGeneratedScenarioCameraContract = (scenarioText, userTopic = '', options = {}) => {
   assertScenarioPanelStructure(scenarioText, options);
-  const invalid = getScenarioPanelBlocks(scenarioText).filter(panel => {
+  const invalid = getScenarioPanelBlocks(scenarioText).flatMap(panel => {
     const camera = panel.text.match(/\[Camera\s*[:：]\s*([^\]]+)\]/i)?.[1] || '';
     const elevation = classifyCameraElevation(camera);
-    return !panel.found || isFisheyeCamera(camera) || (elevation !== 'high' && elevation !== 'low'
-      && !(elevation === 'eye' && userRequestsEyeLevel(userTopic, panel.num)));
+    const reasons = [];
+    if (!panel.found || !camera) reasons.push('Camera指定がありません');
+    else if (elevation === 'eye' && !userRequestsEyeLevel(userTopic, panel.num)) reasons.push('本人の明示指定がないアイレベルです');
+    else if (elevation !== 'high' && elevation !== 'low' && elevation !== 'eye') reasons.push('俯瞰またはアオリの撮影位置・投影を確認できません（肩越し・レンズ名だけでは高さになりません）');
+    if (isFisheyeCamera(camera)) reasons.push('肯定の魚眼指定があります（広角は通常の直線投影で指定してください）');
+    return reasons.length ? [{num:panel.num,reasons}] : [];
   });
   if (!invalid.length) return true;
-  const error = new Error(`${invalid.map(panel => panel.num).join('・')}コマ目: 自動構成のCameraには俯瞰またはアオリの撮影位置・投影を明記してください。肩越し・レンズ名だけでは高さになりません。ユーザーが明示したコマ以外のアイレベルは禁止です。魚眼は使わず、広角は通常の直線投影で指定してください。`);
+  const error = new Error(invalid.map(panel => `${panel.num}コマ目: ${panel.reasons.join('。')}`).join('。'));
   error.code = 'CAMERA_CONTRACT';
   error.scenario = String(scenarioText || '');
   error.qualityScore = getScenarioPanelBlocks(scenarioText).length - invalid.length;

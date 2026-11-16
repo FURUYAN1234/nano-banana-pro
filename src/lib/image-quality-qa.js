@@ -682,7 +682,7 @@ export const applyBubbleInventory = (review, response, finalPrompt) => {
 const buildExperimentalComparisonContract = (page) => {
   if (page == null) return '';
   const text = value => typeof value === 'string' && value.trim().length > 0;
-  if (!Number.isInteger(page.count) || page.count < 4 || page.count > 8
+  if (!Number.isInteger(page.count) || page.count < 1 || page.count > 8
     || !Array.isArray(page.panels) || page.panels.length !== page.count
     || page.panels.some((panel, index) => !panel || panel.panel !== index + 1
       || panel.sourcePanel !== index + 1

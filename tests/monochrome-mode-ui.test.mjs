@@ -23,7 +23,7 @@ test('real generation boundary preserves user edits instead of restoring selecte
   assert.ok(boundary);
   const run = values => vm.runInNewContext(
     `(()=>{const editablePrompt = overridePrompt ?? finalPrompt;${boundary[1]}\nreturn currentPrompt;})()`,
-    { scenario:'', experimentalEnabled:false, isExperimentalPage:()=>false, resolvePageWorkflow, showStatus:message=>{throw new Error(message);}, overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', isOpenAIEngine: true, generationOptions: {}, openAIImageQuality: 'sunburst_max', applyOpenAIImageEngineWatermark, promptAssemblyRunRef: { completedRun: 1 }, colorMode: 'monochrome', isMonochromePrompt, ensureMangaColorModeContract, inferImageQualityMode, ...values }
+    { scenario:'',bookPageContextRef:{current:null}, experimentalEnabled:false, isExperimentalPage:()=>false, resolvePageWorkflow, showStatus:message=>{throw new Error(message);}, overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', isOpenAIEngine: true, generationOptions: {}, openAIImageQuality: 'sunburst_max', applyOpenAIImageEngineWatermark, promptAssemblyRunRef: { completedRun: 1 }, colorMode: 'monochrome', isMonochromePrompt, ensureMangaColorModeContract, inferImageQualityMode, ...values }
   );
   const mono = run({});
   assert.equal(isMonochromePrompt(mono), false);

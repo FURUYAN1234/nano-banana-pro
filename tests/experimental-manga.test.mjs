@@ -1200,7 +1200,8 @@ try {
   test('experimental pages require five to eight panels at planning and rendering boundaries', async () => {
     const four=planFor(4);
     assert.throws(()=>m.validateExperimentalPlan(four,source),/コマ数/);
-    assert.throws(()=>m.experimentalLayoutOptions(3),/コマ数/);
+    assert.equal(m.experimentalLayoutOptions(3)[0].id,'vertical_page');
+    assert.throws(()=>m.readExperimentalSource({...input,scenario:scenarioFor(3)}),/コマ/);
     assert.throws(()=>m.buildExperimentalImagePrompt(four,source,input),/コマ数/);
     await assert.rejects(m.prepareExperimentalManga(input,async()=>JSON.stringify(four)),/コマ数/);
     for(let count=5;count<=8;count++) {

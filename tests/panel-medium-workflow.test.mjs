@@ -25,6 +25,8 @@ const nodes = source => {
 };
 const workflowNodes = nodes(workflow);
 const calls = name => workflowNodes.filter(node => node.type === 'CallExpression' && node.callee.name === name);
+const assetGenerator=workflowNodes.find(node=>node.type==='VariableDeclarator'&&node.id.name==='generateMcpAssets');
+const pagePlanners=()=>calls('buildOpenAIReferencePlan').filter(node=>node.start<assetGenerator.start||node.end>assetGenerator.end);
 const evaluate = (source, node, context) => vm.runInNewContext(`(${source.slice(node.start, node.end)})`, context);
 // Node cannot import Vite's ?inline PNG. Execute the actual exported function
 // with its actual asset bytes, applying only that import's data-URL conversion.
@@ -54,7 +56,7 @@ const mixed = scenario(['NORMAL', 'POP_ART', 'WATERCOLOR', 'GEKIGA', 'SKETCH', '
 function setup(overrides = {}) {
   const plans = [];
   const images = [image('first character'), image('second character')];
-  const context = {
+  const context = {bookPageContextRef:{current:null},project:{settings:{colorMode:'color'}},
     ...references, applyOpenAIImageEngineWatermark, resolveOpenAIImageOption, ensureWebPromptTrailingNewline, assertImagePromptBudget,
     isExperimentalPage:()=>false, inferImageQualityMode:()=> 'single-image',
     getCurrentPromptProviderFamily:()=> 'chatgpt', PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt'},
@@ -81,7 +83,7 @@ function setup(overrides = {}) {
 const guideInputs = plan => plan.imageInputs.filter((_, i) => plan.referenceRoles?.[i] === 'style_reference');
 
 test('all real planner expressions use the same builtin guide with complete attachment budget', () => {
-  const planners = calls('buildOpenAIReferencePlan');
+  const planners = pagePlanners();
   assert.equal(planners.length, 5, 'native budget, ordinary budget, Web copy, API, repair budget');
   const h = setup();
   const plans = planners.map(node => evaluate(workflow, node, h.context));
@@ -96,7 +98,7 @@ test('all real planner expressions use the same builtin guide with complete atta
 });
 
 test('each production planner uses its current scenario instead of a stale display scenario', () => {
-  const planners = calls('buildOpenAIReferencePlan');
+  const planners = pagePlanners();
   const scenarioNames = ['sourceScenario', 'currentScenario', 'sourceScenario', 'generationScenario', 'generationScenario'];
   for (const [index, name] of scenarioNames.entries()) {
     const h = setup({ scenario: normal, sourceScenario: normal, currentScenario: normal, generationScenario: normal, [name]: mixed });
@@ -110,7 +112,7 @@ test('all actual call sites retain custom style, source-style lock and ordinary-
     { punchlineType: 'SeriousDocumentary', activePunchlineType: 'SeriousDocumentary', resolvedPunchlineTypeRef: { current: 'SeriousDocumentary' } },
     { scenario: normal, sourceScenario: normal, currentScenario: normal, generationScenario: normal }]) {
     const h = setup(overrides);
-    for (const node of calls('buildOpenAIReferencePlan')) {
+    for (const node of pagePlanners()) {
       const plan = evaluate(workflow, node, h.context);
       assert.equal(guideInputs(plan).length, 0);
       assert.equal(plan.imageInputs.length, 2);
@@ -123,7 +125,7 @@ test('repair budget includes the actual source image and the same selected media
   for(const colorMode of ['color','monochrome']) {
     const originalCandidate={mimeType:'image/png',base64Img:'Yw=='};
     const h=setup({colorMode,originalCandidate,repairSource:originalCandidate});
-    const planners=calls('buildOpenAIReferencePlan');
+    const planners=pagePlanners();
     const sent=evaluate(workflow,planners[3],h.context),budget=evaluate(workflow,planners[4],h.context);
     assert.equal(sent.rolePrompt,budget.rolePrompt);
     assert.deepEqual(sent.imageInputs,budget.imageInputs);
@@ -168,7 +170,7 @@ test('actual API callback rejects capacity overflow before transport and retains
 test('actual initial-image callback finishes monochrome manga before layout while color and single-image outputs bypass it', async () => {
   for (const [colorMode,qualityMode,expected] of [['color','four-panel',0],['monochrome','four-panel',1],['monochrome','experimental-manga',1],['monochrome','single-image',0]]) {
     let finishes=0;
-    const h=setup({colorMode,generationColorMode:colorMode,qualityMode,workflowSource:{},metadataSettings:{},referenceContext:{},
+    const h=setup({colorMode,generationColorMode:colorMode,generationWorkTitle:null,qualityMode,workflowSource:{},metadataSettings:{},referenceContext:{},
       generateImageWithOpenAI:async()=>({base64Img:'YWJj',mimeType:'image/png'}),
       finalizeMonochromeCandidate:async(candidate,mode)=>{assert.equal(mode,'monochrome');finishes++;return {...candidate,base64Img:'ZGVm'};},
       normalizePageCandidate:async candidate=>candidate,formatPageLayoutStatus:()=>'',
@@ -216,7 +218,7 @@ test('App passes the selected guide to Web export without displaying an unsolici
 
 test('all actual planners and App pass the selected guide for native monochrome without changing material ownership',()=>{
  const h=setup({colorMode:'monochrome'});
- for(const node of calls('buildOpenAIReferencePlan')){
+ for(const node of pagePlanners()){
   const plan=evaluate(workflow,node,h.context);
   assert.equal(guideInputs(plan).length,1);
   assert.equal(plan.imageInputs.length,3);
@@ -229,4 +231,9 @@ test('all actual planners and App pass the selected guide for native monochrome 
  const selected=evaluate(app,prop.value.expression,h.context);
  assert.deepEqual(selected.styles,['POP_ART','WATERCOLOR','GEKIGA']);
  assert.ok(selected.imageUrl.startsWith('data:image/png;base64,'));
+});
+
+test('new original-asset planner is separate from page references and does not inherit page media or identity sheets',()=>{
+ const asset=calls('buildOpenAIReferencePlan').find(node=>node.start>=assetGenerator.start&&node.end<=assetGenerator.end);assert.ok(asset);
+ const plan=evaluate(workflow,asset,setup().context);assert.equal(plan.imageInputs.length,0);assert.equal(pagePlanners().length,5);assert.equal(calls('buildOpenAIReferencePlan').length,6);
 });

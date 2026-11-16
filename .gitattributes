@@ -1,4 +1,9 @@
 * text=auto eol=lf
+# Canonical UTF-8 text bytes for JSON, notices and dependency lists.
+*.json text eol=lf
+LICENSE* text eol=lf
+**/LICENSE* text eol=lf
+*requirements*.txt text eol=lf
 *.pdf binary
 /.agents/skills/pdf export-ignore
 /.agents/skills/pdf/** export-ignore

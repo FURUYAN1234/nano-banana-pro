@@ -1,5 +1,6 @@
 import { diagnosticFetch as fetch } from './diagnostics.js';
 import { getApiWorkSignal } from './api-work-cancellation.js';
+import {prepareVisionImageBatch} from './vision-image-input.js';
 /**
  * OpenAI Chat Completions API Client for Nano Banana Pro
  * v1.2.1 - Dual Engine テキスト生成モジュール
@@ -255,6 +256,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
     }
 
     const failures = [];
+    if(images?.length){const prepared=await prepareVisionImageBatch(images,{signal:options.signal,onProgress:onThinkingUpdate||(()=>{})});images=prepared.images;}
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {
         if (options.signal?.aborted) throw createApiError('処理を中断しました。', {provider:'openai', model:modelId, code:'CANCELLED'});

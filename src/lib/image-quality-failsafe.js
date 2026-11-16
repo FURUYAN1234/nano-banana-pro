@@ -475,7 +475,7 @@ export async function runPageImageQuality(contract, options) {
   if (expected) {
     if (contract.count !== expected || options?.mode !== contract.kind) invalid();
   } else if (contract.kind === 'experimental-manga') {
-    if (!Number.isInteger(contract.count) || contract.count < 4 || contract.count > 8
+    if (!Number.isInteger(contract.count) || contract.count < 1 || contract.count > 8
       || options?.mode !== contract.kind) invalid();
   } else invalid();
   const {originalCandidate,originalPrompt,repairPromptSource=originalPrompt,reviewCandidate,generateRepairCandidate,

@@ -13,6 +13,34 @@ import {
 } from '../src/lib/scenario-payoff-quality.js';
 const { applyScenarioStagingPatch } = payoffQuality;
 
+test('actual news repairs require exact composition metadata before repaired panels', async () => {
+  const fixture = JSON.parse(await readFile(new URL('./fixtures/news-payoff-composition-repairs.json', import.meta.url), 'utf8'));
+  const line = fixture.original.split(/\r?\n/).find(line => /^PageComposition:/.test(line));
+  const prompt = buildScenarioPayoffRepairPrompt({ scenario: fixture.original,
+    scenarioMode: 'book-page-4-final', punchlineType: 'GagAuto',
+    review: { pass: false, visual_payoff: false, reason_codes: ['no_visual_payoff'] } });
+  const instructions = prompt.split('ORIGINAL SCENARIO:')[0];
+  assert.ok(instructions.includes(line), 'output contract must supply exact original JSON line');
+  assert.match(instructions, /逐語保持/);
+  assert.doesNotMatch(instructions, /までのシナリオ本文だけ/);
+  const { readPageComposition } = await import('../src/lib/manga-page-composition.js');
+  const expected = readPageComposition(fixture.original, 4);
+  assert.equal(fixture.rejectedRepairs.length, 3);
+  for (const candidate of fixture.rejectedRepairs) {
+    assert.notDeepEqual(readPageComposition(candidate, 4), expected);
+  }
+  const valid = line + '\n' + fixture.rejectedRepairs[1];
+  assert.deepEqual(readPageComposition(valid, 4), expected);
+  assert.notDeepEqual(readPageComposition(valid.replace('"heroPanels":[1,4]', '"heroPanels":[1]'), 4), expected);
+});
+
+test('ordinary four-panel repair without metadata retains panel-only output', () => {
+  const prompt = buildScenarioPayoffRepairPrompt({ scenario: '[1コマ目: 起]\nA:「出発」',
+    scenarioMode: 'four-panel', review: { reason_codes: ['no_visual_payoff'] } });
+  assert.match(prompt, /までのシナリオ本文だけ/);
+  assert.doesNotMatch(prompt, /逐語保持/);
+});
+
 const CAMERA_RHYTHM = {
   shots: ['high / left-front / wide / room layout', 'eye-level / profile / close / doubt', 'rear / medium / telephoto / discovery', 'low / right-front / wide / payoff'].map((signature, index) => ({ panel: index + 1, signature, purpose: ['場所と関係を示す', '疑いの表情を読む', '発見を共有する', '行動の帰結を見せる'][index] })),
   repeated_panels: [], material_repeat: false, intentional_repeat: false,

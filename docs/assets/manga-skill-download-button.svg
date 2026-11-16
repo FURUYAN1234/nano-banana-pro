@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240" role="img" aria-labelledby="title desc">
+  <title id="title">複数ページ漫画 制作スキルをダウンロード / Download the manga production skill</title>
+  <desc id="desc">MCP対応AIクライアント用のスキル一式。アプリZIPにも同梱。 / Complete skill for an MCP-compatible AI client, also bundled with the app.</desc>
+  <rect x="4" y="4" width="1192" height="232" rx="26" fill="#142740" stroke="#67e8f9" stroke-width="8"/>
+  <rect x="45" y="44" width="126" height="159" rx="10" fill="#c7f9f1"/>
+  <rect x="62" y="29" width="126" height="159" rx="10" fill="#f8fafc" stroke="#0f766e" stroke-width="4"/>
+  <path d="M79 48h92v48H79zM79 108h40v62H79zM131 108h40v62h-40z" fill="none" stroke="#142740" stroke-width="5"/>
+  <text x="230" y="58" fill="#67e8f9" font-family="Segoe UI, Yu Gothic, Meiryo, sans-serif" font-size="23" font-weight="700">MANGA PRODUCTION SKILL · MCP</text>
+  <text x="230" y="123" fill="#ffffff" font-family="Segoe UI, Yu Gothic, Meiryo, sans-serif" font-size="43" font-weight="700">複数ページ漫画 制作スキル</text>
+  <text x="230" y="178" fill="#c7f9f1" font-family="Segoe UI, Yu Gothic, Meiryo, sans-serif" font-size="28">ダウンロード（ZIP） · アプリにも同梱</text>
+  <circle cx="1092" cy="120" r="53" fill="#5eead4"/>
+  <path d="M1092 90v45m-18-18 18 18 18-18M1069 143v11h46v-11" fill="none" stroke="#0b1e32" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,8 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { prepareGeneratedImageSave, saveImageToChosenLocation, createFinalImageSaver } from '../src/lib/generated-image-save.js';
+import { prepareGeneratedImageSave, saveImageToChosenLocation, createFinalImageSaver as createSaver, saveGeneratedImagePair } from '../src/lib/generated-image-save.js';
 import { extractGeneratedImageMetadata } from '../src/lib/generated-image-metadata.js';
 import { readFile } from 'node:fs/promises';
+import {directoryFixture} from './fixtures/generated-image-directory.mjs';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+const createFinalImageSaver=options=>createSaver({...options,write:(saved,config)=>saveGeneratedImagePair(saved,{...config,directoryHandle:null})});
+
 import { addGenerationHistoryItem } from '../src/lib/generation-history.js';
 
 const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nKsAAAAASUVORK5CYII=';
@@ -40,12 +45,12 @@ test('final save waits for preparation, rejects stale completion and deduplicate
   const pending = saver(item, 'test', () => current);
   const duplicate = saver(item, 'test', () => current);
   assert.equal(calls.length, 0);
-  current = false; finish({ dataUrl: png, filename: 'a.png' });
+  current = false; finish({ dataUrl: png, filename: 'a.png', jsonText: '{}', jsonFilename: 'a.json' });
   assert.equal(await pending, 'stale'); assert.equal(await duplicate, 'stale');
   assert.equal(calls.length, 0);
   current = true;
   const next = saver(item, 'test', () => current);
-  finish({ dataUrl: png, filename: 'a.png' });
+  finish({ dataUrl: png, filename: 'a.png', jsonText: '{}', jsonFilename: 'a.json' });
   assert.equal(await next, 'requested');
   assert.equal(await saver(item, 'test', () => current), 'duplicate');
   assert.equal(calls.length, 1);
@@ -53,10 +58,12 @@ test('final save waits for preparation, rejects stale completion and deduplicate
 
 test('save picker opens before asynchronous preparation; cancellation never downloads', async () => {
   const order = [];
-  const prepare = async () => { order.push('prepare'); return { dataUrl: png, filename: 'a.png' }; };
-  const picker = () => { order.push('picker'); return Promise.resolve({ createWritable: async () => ({ write: async blob => { assert.ok(blob instanceof Blob); order.push('write'); }, close: async () => order.push('close') }) }); };
-  assert.equal(await saveImageToChosenLocation({ prepare, picker, filename: 'a.png' }), 'saved');
-  assert.deepEqual(order, ['picker', 'prepare', 'write', 'close']);
+  const prepare = async () => { order.push('prepare'); return { dataUrl: png, filename: 'a.png', jsonText: '{}', jsonFilename: 'a.json' }; };
+  const {root,handle}=await directoryFixture();
+  const picker=async()=>{order.push('picker');return handle;};
+  assert.equal(await saveImageToChosenLocation({prepare,picker}),'saved');
+  assert.deepEqual(order,['picker','prepare']);
+  const folders=await fs.readdir(root);assert.equal(folders.length,1);assert.equal((await fs.readdir(path.join(root,folders[0]))).length,2);
   let downloaded = false;
   assert.equal(await saveImageToChosenLocation({ prepare, picker: () => Promise.reject(new DOMException('cancel', 'AbortError')), download: () => { downloaded = true; } }), 'cancelled');
   assert.equal(downloaded, false);
@@ -64,7 +71,7 @@ test('save picker opens before asynchronous preparation; cancellation never down
 
 test('unsupported picker uses download; preparation failure preserves error without download', async () => {
   const calls = [];
-  assert.equal(await saveImageToChosenLocation({ picker: null, prepare: async () => ({ dataUrl: png, filename: 'a.png' }), download: (...args) => calls.push(args) }), 'requested');
+  assert.equal(await saveImageToChosenLocation({ picker: null, prepare: async () => ({ dataUrl: png, filename: 'a.png', jsonText: '{}', jsonFilename: 'a.json' }), download: (...args) => calls.push(args) }), 'requested');
   const saver = createFinalImageSaver({ prepare: async () => { throw new Error('encode failed'); }, download: () => calls.push('bad') });
   await assert.rejects(saver(item, 'test', () => true), /encode failed/);
   assert.equal(calls.length, 1);
@@ -110,7 +117,7 @@ test('production final-selection block saves accepted snapshot before continuing
     if (release) {
       assert.equal(finished, false, mode);
       if (mode === 'stale') current.value = false;
-      release({ dataUrl: png, filename: 'test.png' });
+      release({ dataUrl: png, filename: 'test.png', jsonText: '{}', jsonFilename: 'test.json' });
     }
     const result = await pending;
     assert.equal(downloaded.length, ['manual', 'full-auto', 'endless', 'review-timeout', 'repaired', 'experimental-repaired'].includes(mode) ? 1 : 0, mode);

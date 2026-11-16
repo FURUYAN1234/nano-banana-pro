@@ -1,5 +1,6 @@
+import { isNativePageMode, readBookPageMode } from './page-production-contract.js';
 import { callAI } from './ai-provider';
-import {readPageComposition, assertGeneratedPageComposition, SCENARIO_PAGE_COMPOSITION, buildRecentPageCompositionContext} from './manga-page-composition.js';
+import {readPageComposition, assertGeneratedPageComposition, scenarioPageCompositionInstruction, SCENARIO_PAGE_COMPOSITION, buildRecentPageCompositionContext} from './manga-page-composition.js';
 import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 import {
   splitSnsExplanation,
@@ -178,7 +179,7 @@ const validateScenarioForRetry = ({
   const checks = [
     ['PANEL_STRUCTURE_CONTRACT', () => assertScenarioPanelStructure(scenario.scenario, { scenarioMode })],
     ['PAGE_COMPOSITION_CONTRACT', () => {
-      if(scenarioMode==='experimental-manga')assertGeneratedPageComposition(scenario.scenario,getScenarioPanelBlocks(scenario.scenario).length);
+      if(isNativePageMode(scenarioMode))assertGeneratedPageComposition(scenario.scenario,getScenarioPanelBlocks(scenario.scenario).length,{scenarioMode});
     }],
     ['CAMERA_CONTRACT', () => assertGeneratedScenarioCameraContract(scenario.scenario, manualTopic, { scenarioMode })],
     ['STYLE_CONTRACT', () => assertGeneratedScenarioStyleContract(scenario.scenario, { scenarioMode })],
@@ -324,6 +325,7 @@ export const parseScenarioResponse = (result, {
  * ニュースカテゴリまたは手動トピックから4コマ漫画のシナリオを生成する
  */
 export async function generateScenario({
+  bookOutlineExpansion = false,
   scenarioMode = 'four-panel',
   autoSelectPanelCount = false,
   recentScenarios = [],
@@ -470,6 +472,7 @@ export async function generateScenario({
     extractedArticleText
   });
   const scenarioPrompt = getScenarioPrompt({
+    bookOutlineExpansion,
     documentarySourceText,
     scenarioMode,
     autoSelectPanelCount,
@@ -548,8 +551,8 @@ export async function generateScenario({
       ].filter(Boolean).join('\n')
     }),
     retryInstruction: ({ code, message }) => [
-      code === 'PAGE_COMPOSITION_CONTRACT' ? SCENARIO_PAGE_COMPOSITION+'\n'+buildRecentPageCompositionContext(recentPageCompositions) : '',
-      code === 'AUTO_PANEL_CHOICE' ? 'Return PanelCountReason before Scenario, explaining why this specific story requires its chosen 4–8 panels. Preserve the topic.' : code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${autoSelectPanelCount ? '4–8 selected from story content' : scenarioMode === 'experimental-manga' ? '4–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
+      code === 'PAGE_COMPOSITION_CONTRACT' ? scenarioPageCompositionInstruction(scenarioMode)+'\n'+buildRecentPageCompositionContext(recentPageCompositions) : '',
+      code === 'AUTO_PANEL_CHOICE' ? 'Return PanelCountReason before Scenario, explaining why this specific story requires its chosen 4–8 panels. Preserve the topic.' : code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${readBookPageMode(scenarioMode) ? `exactly ${readBookPageMode(scenarioMode).panelCount}` : autoSelectPanelCount ? '4–8 selected from story content' : scenarioMode === 'experimental-manga' ? '4–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
       message ? `FAILED CHECK (correct every listed item): ${String(message).slice(0, 1400)}` : '',
       code === 'DOCUMENTARY_SOURCE_FIDELITY' && documentarySourceText
         ? `ORIGINAL SOURCE TO PRESERVE:\n${documentarySourceText}\n\nREPAIR METHOD: distribute the original source clauses across the Situation and dialogue lines of all panels before the final panel. Copy the listed missing factual terms exactly. Do not leave a source cause, action, measure, affected party, or outcome only in Topic, Logline, Location, VisualEvidence, Outfit, Punchline, or thought trace; it must occur inside Scenario.`

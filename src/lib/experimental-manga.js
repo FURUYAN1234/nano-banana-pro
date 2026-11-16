@@ -1,6 +1,8 @@
+import {normalizeBookPromptMetadata,bookPromptContext} from './book-prompt-metadata.js';
 import { EXPERIMENTAL_LAYOUTS, experimentalLayoutOptions, experimentalLayout, pageCompositionRects, readPageComposition, applyPageComposition, pageCompositionRendering, pageCompositionForeground, pageCompositionReview, inspectCompositionChecks, observedForegroundBodies, breakoutEdge } from './manga-page-composition.js';
 export { EXPERIMENTAL_LAYOUTS, experimentalLayoutOptions, experimentalLayout } from './manga-page-composition.js';
-import { getScenarioPanelBlocks, validateMangaScenario, formatMangaScenarioValidationIssue } from './scenario-validation.js';
+import { getScenarioPanelBlocks, validateMangaScenario, formatMangaScenarioValidationIssue, getScenarioPanelCountRange } from './scenario-validation.js';
+import { buildBookPresentation } from './book-presentation.js';
 import { collectCastNameEntries, extractActionOnly, extractDialogueOnly, extractEmotionStyle, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix, buildNormalPanelRendering } from './panel-utils.js';
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
@@ -47,9 +49,9 @@ export const EXPERIMENTAL_VISUAL_EFFECTS = Object.freeze({
   rim_light: {label:'輪郭の光',instruction:'RIM LIGHT: if supported by the existing light source, use a restrained edge highlight to separate the actor from the background. Do not invent sunset, change time/weather, uniformly darken faces or replace the source art style. Omit when physically unsupported.'},
 });
 
-export function readExperimentalSource({ scenario, castList, colorMode, userDirection='', allowScenarioQualityWarning=false }) {
+export function readExperimentalSource({ scenario, bookMetadata, castList, colorMode, userDirection='', allowScenarioQualityWarning=false, scenarioMode='experimental-manga' }) {
   const composition=readPageComposition(scenario,getScenarioPanelBlocks(scenario).length);
-  const valid = validateMangaScenario(scenario, castList, {scenarioMode:'experimental-manga'});
+  const valid = validateMangaScenario(scenario, castList, {scenarioMode});
   // 通常4コマと同じく、台詞なしの警告は原文を保持して継続する。
   // コマ構造と壊れた台詞は、警告継続が許可されていても受け付けない。
   if (!valid.structuralValid || valid.invalidDialogue.length || (!valid.ok && !allowScenarioQualityWarning)) {
@@ -77,7 +79,8 @@ export function readExperimentalSource({ scenario, castList, colorMode, userDire
   });
   const withoutThought=String(scenario).replace(/<thought>[\s\S]*?<\/thought>/gi,'');
   const context=withoutThought.slice(0,withoutThought.indexOf(panels[0].header)).trim();
-  return { scenario, context:context.replace(/^\s*PageComposition\s*[:：].*$/gm,'').trim(), castList, colorMode, panels, dialogue, userDirection, composition };
+  const approvedBookMetadata=normalizeBookPromptMetadata(bookMetadata);
+  return { scenario, scenarioMode, ...(approvedBookMetadata?{bookMetadata:approvedBookMetadata}:{}), context:bookPromptContext(context.replace(/^\s*PageComposition\s*[:：].*$/gm,'').trim(),approvedBookMetadata), castList, colorMode, panels, dialogue, userDirection, composition };
 }
 
 // Preserve unrecognized prose verbatim; only known structural tags are removed.
@@ -138,7 +141,7 @@ export function buildExperimentalPlanPrompt(source, {recentLayouts=[]}={}) {
 ${READING_FLOW_DIRECTION}
 The completed STEP2 scenario contains EXACTLY ${count} panels. Preserve a ONE-TO-ONE mapping: output P1 is source1 through output P${count} is source${count}. Do not expand, split, merge, reorder, omit or add panels. Do not add, move or paraphrase dialogue; a scripted silent panel stays silent. Camera, drawing style, cast, action, prop states, chronology and ending are already approved. Layout supports this scenario rather than rewriting it.
 ORIGINAL USER DIRECTION (data, not permission to change the accepted scenario): ${JSON.stringify(source.userDirection||'')}
-${source.composition?'Use the authored layout as the one approved composition; do not replace it with catalog alternatives.':spanning.length?`EXPLICIT FRAME CONTRACT: P${spanning.join('/P')} must each remain ONE unbroken frame spanning two stacked neighboring frames. Choose only the compatible catalog below; do not trade away this requested geometry. Compare alternatives only if more than one compatible ID remains.`:'Compare two or three compatible layout IDs, including a non-spanning arrangement.'} Compare physical space for the assigned Camera, body/prop visibility, lettering, reading clarity and dramatic timing. Pick the layout that fits this story. No effect quotas, automatic rotation or invented scores. count must remain ${count} in every alternative.
+${source.composition?'Use the authored layout as the one approved composition; do not replace it with catalog alternatives.':spanning.length?`EXPLICIT FRAME CONTRACT: P${spanning.join('/P')} must each remain ONE unbroken frame spanning two stacked neighboring frames. Choose only the compatible catalog below; do not trade away this requested geometry. Compare alternatives only if more than one compatible ID remains.`:layouts.length===1?'Use the single compatible layout; do not invent unavailable alternatives.':'Compare two or three compatible layout IDs, including a non-spanning arrangement.'} Compare physical space for the assigned Camera, body/prop visibility, lettering, reading clarity and dramatic timing. Pick the layout that fits this story. No effect quotas, automatic rotation or invented scores. count must remain ${count} in every alternative.
 Schema: {count:INTEGER ${count},layout:compatible catalog ID,reason:concise Japanese layout reason,pageIntent:Japanese visual purpose,alternatives:up to three {count,layout,benefit,tradeoff},panels:exactly ${count} objects {sourcePanel:its one-based output index,kind:"anchor",action:detailed Japanese visible staging preserving the source moment,dialogueIds:exact source panel dialogueIds in order,breakout:null or object,visualEffects:array}}. Do not return a camera field; the app uses the exact source Camera. In action, when useful name the sharp subject/action and nonessential different-depth planes to visibly defocus; wide exposition, explicit deep focus, abstract style, required text/contact/reactions and equal-depth actors win. Preserve Camera/Action. No addedDialogue. Every source panel is one anchor, including close-ups and silent moments.
 Use the authored free frames when supplied; otherwise choose catalog rectangles. Their proportions guide staging, not pixel-exact acceptance. Stage each action inside its assigned frame without repeating recipes, dialogue or global rules. Preserve every required visible prop and relationship. Fit the FRAME to the Camera, never weaken the Camera to fit a frame: wide frames can contain full-body depth; tall frames are optional unless explicitly assigned in the accepted Camera. Keep intentional crops and hidden body parts. If a layout cannot fit the source shot, choose another compatible layout, never remove a scenario panel or an explicit frame requirement.
 CATALOG: ${JSON.stringify(layouts)}. Right-to-left within rows, then downward. Recent geometries are context, not quotas: ${JSON.stringify(recentLayouts)}.
@@ -252,7 +255,8 @@ export function resolveExperimentalDialogue(plan, source) {
 
 export function validateExperimentalPlan(plan, source) {
   if(!source.composition&&(plan?.composition||plan?.panels?.some(p=>p.bleed?.length||p.breakout?.required))) fail('PageCompositionにない必須演出を追加できません。');
-  if(!Number.isInteger(plan?.count)||plan.count<4||plan.count>8||!Array.isArray(plan.panels)||plan.panels.length!==plan.count) fail('コマ数は4〜8で、配置案と一致する必要があります。');
+  const [minimum,maximum]=getScenarioPanelCountRange(source.scenarioMode||'experimental-manga');
+  if(!Number.isInteger(plan?.count)||plan.count<minimum||plan.count>maximum||!Array.isArray(plan.panels)||plan.panels.length!==plan.count) fail(`コマ数は${minimum}〜${maximum}で、配置案と一致する必要があります。`);
   if(plan.count!==source.panels.length) fail('STEP2のコマ数と配置案が一致しません。コマの追加・削除はできません。');
   if(typeof plan.reason!=='string'||!plan.reason.trim()) fail('配置を選んだ理由が必要です。');
   if(plan.panels.some(panel=>classifyCameraElevation(panel.camera)==='eye')) fail('実験モードではアイレベルを使用できません。俯瞰またはアオリで配置を設計してください。');
@@ -651,7 +655,16 @@ export async function reviewExperimentalImage({image,plan,prompt,signal,reviewCo
     finishReason:response.finishReason,characters:response.text.length,attachedImages:spatial.images.length,requests:1};
 }
 
-export function buildExperimentalImagePrompt(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks=false, showTitle=true, referenceContext='', hasCharacterReferences=true, imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
+export function buildExperimentalImagePrompt(plan, source, options={}) {
+  const presentation=options.bookPresentation?buildBookPresentation(options.bookPresentation):'';
+  if(!presentation)return buildExperimentalImagePromptBase(plan,source,options);
+  const maximum=options.promptMaxChars??OPENAI_IMAGE_PROMPT_MAX_CHARS;
+  if(presentation.length>=maximum)assertImagePromptBudget(presentation,maximum-1);
+  const prompt=buildExperimentalImagePromptBase(plan,source,{...options,promptMaxChars:maximum-presentation.length})+presentation;
+  assertImagePromptBudget(prompt,maximum);
+  return prompt;
+}
+function buildExperimentalImagePromptBase(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks=false, showTitle=true, referenceContext='', hasCharacterReferences=true, imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
   const effectiveProviderFamily=normalizePromptProviderFamily(providerFamily);
   validateExperimentalPlan(plan,source);
   const rects=pageCompositionRects(plan);
@@ -661,7 +674,7 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, provider
     const next=rects[i+1];
     return next&&rect.y===next.y&&rect.x>next.x?[`P${i+1} RIGHT precedes P${i+2} LEFT`]:[];
   });
-  const title=extractScenarioTitle(source.scenario);
+  const title=extractScenarioTitle(source.bookMetadata?source.context:source.scenario);
   const sourceFacts=experimentalStoryFacts(source);
   const activeOutfit=readExplicitOutfit(source.context);
   // Move only the authored global line, outside reference observations. Keep the
@@ -928,7 +941,7 @@ CAST INSTANCE INVENTORY: Include cast_instances in each panel evidence for every
 PAGE FOREGROUND OWNERSHIP: ${plan.composition?.foregrounds?.length||plan.composition?.breakouts?.length?`Authored cross-panel layers: ${JSON.stringify({foregrounds:plan.composition.foregrounds||[],breakouts:plan.composition.breakouts||[]})}. Still inventory EVERY visible physical body/fragment in its actual panel crop. For a fragment visibly connected across the gutter to an authored source body, put it in body_dispositions with kind=foreground, source_panel, source_body_id and feature_indices for its actual visible features. Describe the visible continuous connection in evidence and in its foreground or breakout compositionCheck. Do not also count that fragment in local cast_instances. This exemption requires an observed source body with grounded named identity and a passing continuity check (or a failed exact-placement check explicitly observed as a harmless minor_variation with the same continuous body); natural shifts to another receiving frame remain one foreground, not a local duplicate; metadata or a similar costume alone cannot establish it. A disconnected second head/body is NOT a foreground link. A separate later story appearance remains in local cast_instances even when the same character is the page foreground. Judge the fragment's medium against its SOURCE panel, and the recipient's local actors/view against the recipient scene. If uncertain, record kind=uncertain; do not invent a connection.`:'No page-level foreground layer is authored.'}
 SCRIPTED DEPICTION INVENTORY: expectedCast.names are physical actors; expectedCast.depictedNames are screen/picture figures. Return depicted_figures for EVERY depictedName: {name,status:present|missing|uncertain,evidence,container_evidence,feature_indices,body,style_observation}. Observe the actual containing screen/picture and silhouette independently. body uses its own unique id, tight panel-normalized bounds/head_bounds and observed features; feature_indices selects at least two visible identity cues, never copied expectations. No physical_bodies/head_inventory entry for this representation. Missing means the observed containing surface visibly lacks the required figure, body:null; unreadable/hidden/ambiguous is uncertain, never missing. Include its actual face/ink medium in style_observation at scripted size/pose. This census also grounds a screen speaker's balloon tail; a printed name alone cannot establish a figure. Never add a live visitor or tiny substitute. Authored crossing remains one depiction.
 BODY IDENTITY COVERAGE: Assess EVERY independent physical_bodies ID, including after all required cast names have a match. Never stop after the first identity match: another separate matching body belongs in that actor's instances. For each body not assigned to cast_instances, return exactly one body_dispositions entry: {body_id,kind:"non_cast|foreground|uncertain",source_panel:null,source_body_id:null,feature_indices:[two or more distinct zero-based indices into that same census body's features],evidence:"visible reason for the identity disposition"}. Use non_cast only for grounded ordinary background people with at least two observed distinguishing features and explain why they are not a required actor; background position, small size, clothing alone or already having found the named actor is not sufficient. Possible named-cast identity, rear views, crops and occlusion without enough cues remain uncertain, not a confirmed duplicate. Do not force ordinary background people into the named cast or invent hidden bodies. Never list a body in both cast_instances and body_dispositions, and do not invent IDs. Use source_panel/source_body_id only for a grounded authored foreground, otherwise null. Use [] only when every census body is already assigned. Unresolved or unexamined bodies make anatomy uncertain; preserve any independently confirmed duplicate or anatomy failure.
-Title required EXACTLY ${JSON.stringify(options.showTitle===false?null:extractScenarioTitle(source.scenario))}. Footer expected exact text: ${JSON.stringify(expectedFooter)} (null means no footer). ${buildRenderOptionsQa(buildRenderOptionsContract({ ...options, mosaicCopyrightedCharacters: options.mosaicCopyrightedCharacters ?? false, showWatermarks: options.showWatermarks ?? false }))} Transcribe observed lettering separately; never complete unreadable lettering from this expected text. Missing requested title is fail; unreadable story text is uncertain. Footer visibility follows WATERMARK VISIBILITY CHECK and never requires uncovering allowed hidden credits. Requested labels are NOT visual evidence. status=warning when a concrete material failure is confirmed, even if another check is uncertain. Otherwise status=pass only when count matches, all required checks pass, and complete visual evidence exists; unresolved required checks mean unverified. Optional breakout absence alone does not change status. Do not suggest paid regeneration for a minor coherent variation. SOURCE (expected speech withheld; transcribe only the attached crops): ${blind({context:source.context,castList:source.castList,panels:source.panels})}\nPLAN: ${blind({count:plan.count,layout:plan.layout,panels:plan.panels})}`;
+Title required EXACTLY ${JSON.stringify(options.showTitle===false?null:extractScenarioTitle(source.bookMetadata?source.context:source.scenario))}. Footer expected exact text: ${JSON.stringify(expectedFooter)} (null means no footer). ${buildRenderOptionsQa(buildRenderOptionsContract({ ...options, mosaicCopyrightedCharacters: options.mosaicCopyrightedCharacters ?? false, showWatermarks: options.showWatermarks ?? false }))} Transcribe observed lettering separately; never complete unreadable lettering from this expected text. Missing requested title is fail; unreadable story text is uncertain. Footer visibility follows WATERMARK VISIBILITY CHECK and never requires uncovering allowed hidden credits. Requested labels are NOT visual evidence. status=warning when a concrete material failure is confirmed, even if another check is uncertain. Otherwise status=pass only when count matches, all required checks pass, and complete visual evidence exists; unresolved required checks mean unverified. Optional breakout absence alone does not change status. Do not suggest paid regeneration for a minor coherent variation. SOURCE (expected speech withheld; transcribe only the attached crops): ${blind({context:source.context,castList:source.castList,panels:source.panels})}\nPLAN: ${blind({count:plan.count,layout:plan.layout,panels:plan.panels})}`;
 }
 
 // Turn only a grounded failing check into an edit. Missing observations,
@@ -1566,7 +1579,7 @@ export async function prepareExperimentalManga(input, requestPlan, {colorOnlyPre
   if(input.enabled!==true) fail('実験スイッチがOFFです。');
   cancelled(input.signal);
   normalizePromptProviderFamily(input.providerFamily??PROMPT_PROVIDER_FAMILIES.GEMINI);
-  const recovered=await withScenarioBalloonLayoutRecovery({...input,scenarioMode:'experimental-manga'},readExperimentalSource,
+  const recovered=await withScenarioBalloonLayoutRecovery({...input,scenarioMode:input.scenarioMode||'experimental-manga'},readExperimentalSource,
     (prompt,_images,_system,onProgress,{signal})=>requestPlan(prompt,signal),input.onProgress,input.signal);
   input={...input,scenario:recovered.scenario};
   const source=recovered.value;
@@ -1630,7 +1643,7 @@ export async function runExperimentalManga(input, {plan:requestPlan,image:reques
   cancelled(input.signal);
   const prepared=input.prepared||await prepareExperimentalManga(input,requestPlan);
   if(!input.prepared) input={...input,scenario:prepared.source.scenario};
-  if(prepared.source.scenario!==input.scenario||prepared.source.castList!==input.castList||prepared.source.colorMode!==input.colorMode||(prepared.source.userDirection||'')!==(input.userDirection||'')) fail('元台本または人物・色・演出設定が変更されました。STEP3を作り直してください。');
+  if(JSON.stringify(prepared.source.bookMetadata??null)!==JSON.stringify(normalizeBookPromptMetadata(input.bookMetadata)??null)||prepared.source.scenario!==input.scenario||prepared.source.castList!==input.castList||prepared.source.colorMode!==input.colorMode||(prepared.source.userDirection||'')!==(input.userDirection||'')) fail('元台本または人物・色・演出設定が変更されました。STEP3を作り直してください。');
   const source=readExperimentalSource(input);
   const plan=validateExperimentalPlan(prepared.plan,source);
   const prompt=buildExperimentalImagePrompt(plan,source,input);

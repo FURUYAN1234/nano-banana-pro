@@ -1,0 +1,6 @@
+interface:
+  display_name: "複数ページ漫画の制作"
+  short_description: "キャラクター準備から承認・連続生成・PNG／JSON保存まで"
+  default_prompt: "$manga-book-production を使って、キャラクターの用意方法を確認し、あらすじと詳細シナリオを相談してから複数ページの漫画を作ってください。"
+policy:
+  allow_implicit_invocation: true

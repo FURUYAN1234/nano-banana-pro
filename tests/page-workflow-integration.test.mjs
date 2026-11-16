@@ -39,7 +39,7 @@ for (const isOpenAIEngine of [false,true]) for (const status of ['pass','warning
         style:'人物の顔も透明な水彩で描かれている',story:'右側の人物が窓を開いている',anatomy:'人物の腕は両肩から連続している'}]};
     const candidate={},progress=[],log=[],requests=[];
     const reviewContext=status==='pass'?undefined:{candidateLabel:status==='warning'?'以前の画像':'今回の画像'};
-    const scope={candidate,experimentalRepairIssues,experimentalPrepared:{plan:{count:6},source:{}},generationScenario:'scenario',candidatePrompt:'edited final',
+    const scope={bookPageContextRef:{current:null},candidate,experimentalRepairIssues,experimentalPrepared:{plan:{count:6},source:{}},generationScenario:'scenario',candidatePrompt:'edited final',
       resolveFinalPromptReviewContract:(prepared,prompt)=>{assert.equal(prompt,'edited final');return prepared;},
       experimentalInput:()=>({}),buildExperimentalReviewPrompt:()=>'',reviewExperimentalImage:async(input,request)=>{
         assert.equal(input.reviewContext,reviewContext,'the caller forwards optional candidate context without inventing a review deadline');
@@ -80,7 +80,7 @@ for (const isOpenAIEngine of [false,true]) for (const status of ['pass','warning
 
 function modeHarness() {
   const body=source.match(/const changePageMode = ([\s\S]+?);\r?\n  \/\/ --- Step 3/)[1];
-  const state={isApiProcessing:false,experimentalEnabled:false,scenario:'normal scenario',inputMode:'manual',manualTopic:'original request',
+  const state={bookPageContextRef:{current:null},isApiProcessing:false,experimentalEnabled:false,scenario:'normal scenario',inputMode:'manual',manualTopic:'original request',
     originalScenario:'normal original',scenarioThought:'normal thought',explanation:'normal explanation',explanationNotice:'normal notice',mangaTitle:'normal title',
     enhanceLog:'normal enhancement',lockedLocation:'normal location',lockedOutfit:'normal outfit',bg360CameraWork:{panels:[]},bg360CroppedPanels:['normal crop'],usedModel:'normal model',
     punchlineType:'Auto',resolvedPunchlineTypeRef:{current:'Surreal'},scenarioRunEpochRef:{current:0},
@@ -173,7 +173,7 @@ test('mode cannot change during active API work and leaves current draft and com
 test('full-auto passes the newly generated scenario through shared STEP3 and STEP4',async()=>{
   const body=source.match(/if \(startStep <= 3\) \{([\s\S]*?const step4ok = await regenerateImage\([^;]+;)/)[0];
   const calls=[];
-  const scope={startStep:3,generatedPrompt:'',step3Ref:{current:null},generatedScenario:'new scenario',getCurrentPromptProviderFamily:()=> 'chatgpt',
+  const scope={bookPageContextRef:{current:null},startStep:3,generatedPrompt:'',step3Ref:{current:null},generatedScenario:'new scenario',getCurrentPromptProviderFamily:()=> 'chatgpt',
     promptAssemblyRunRef:{current:1},
     assemblePrompt:async(...args)=>{calls.push(['step3',...args]);return 'new prompt';},
     regenerateImage:async(...args)=>{calls.push(['step4',...args]);return true;},
@@ -193,7 +193,7 @@ test('full-auto passes the newly generated scenario through shared STEP3 and STE
 
 test('experimental preparation takes current cast and actual scenario model from shared workflow refs',()=>{
   const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
-  const scope={hasCharacterReferenceImages,getScenarioMode:()=> 'experimental-manga',scenario:'old scenario',castList:'old cast',castListRef:{current:'current cast'},inputMode:'manual',manualTopic:'完成ページは5〜8コマで、無言の間を残す',
+  const scope={bookPageContextRef:{current:null},hasCharacterReferenceImages,getScenarioMode:()=> 'experimental-manga',scenario:'old scenario',castList:'old cast',castListRef:{current:'current cast'},inputMode:'manual',manualTopic:'完成ページは5〜8コマで、無言の間を残す',
     colorMode:'color',mosaicCopyrightedCharacters:false,showWatermarks:true,showTitle:true,isOpenAIEngine:true,
     PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt',GEMINI:'gemini'},GEMINI_IMAGE_MODEL:'gemini-nano-banana-pro',
     getBuiltinPanelMediumReference:noGuideForScenario,styleJson:null,punchlineType:'Auto',
@@ -226,7 +226,7 @@ for (const colorMode of ['color','monochrome']) {
     const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
     const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
     const images=['data:image/png;base64,YQ==','data:image/png;base64,Yg=='];
-    const scope={hasCharacterReferenceImages,getScenarioMode:()=> 'experimental-manga',scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,showTitle:true,
+    const scope={bookPageContextRef:{current:null},hasCharacterReferenceImages,getScenarioMode:()=> 'experimental-manga',scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,showTitle:true,
       inputMode:'manual',manualTopic:'retain detailed source',isOpenAIEngine:true,formatOpenAIImageEngineName:()=> 'ChatGPT Images 2.5',openAIImageQuality:'high',
       PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt',GEMINI:'gemini'},
       getBuiltinPanelMediumReference:noGuideForScenario,styleJson:null,punchlineType:'Auto',

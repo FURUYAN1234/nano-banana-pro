@@ -30,7 +30,6 @@ import { SYSTEM_VERSION } from '../lib/constants';
 import { applyOpenAIImageEngineWatermark, formatOpenAIImageEngineName } from '../lib/openai-image-settings.js';
 import { getEndingModePolicy } from '../lib/ending-mode-policy';
 import { inferImageQualityMode } from '../lib/image-quality-failsafe';
-import { buildGeneratedImageFilename } from '../lib/generation-history';
 import {
   buildWebGenerationMetadata,
   buildReferenceRecognitionMetadata,
@@ -403,18 +402,6 @@ export default function Step4Panel({
       <span>{generationWaitLog?.replace(/^\[WAIT\]\s*(?:⏳\s*)?/, '') || '画像生成中… 合計0秒経過'}</span>
     </p>
   );
-  const getGeneratedImageFilename = () => {
-    let rawTitle = mangaTitle;
-    if (!rawTitle && scenario) {
-      const titleMatch = scenario.match(/##\s*タイトル[:：]\s*(.+?)(?:\s*!|\s*$)/m);
-      if (titleMatch) rawTitle = titleMatch[1].trim();
-    }
-    return buildGeneratedImageFilename({
-      apiName: isOpenAIImageMode ? 'ChatGPT' : 'Gemini',
-      title: rawTitle,
-      extension: 'png'
-    });
-  };
   const [isHandDrawnPromptCopied, setIsHandDrawnPromptCopied] = React.useState(false);
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
   const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
@@ -1531,16 +1518,18 @@ No explanations. No partial results.`;
                   onClick={async () => {
                     try {
                       setImageMetadataError('');
-                      const result = await saveImageToChosenLocation({ prepare: prepareCurrentImageSave, filename: getGeneratedImageFilename() });
-                      if (result === 'requested') setImageMetadataError('このブラウザーでは保存先選択に対応していないため、通常のダウンロードを開始しました。');
+                      const result = await saveImageToChosenLocation({ prepare: prepareCurrentImageSave,source:displayedHistory||generatedImage });
+                      if (result === 'requested') setImageMetadataError('作品フォルダー入りZIPを1件ダウンロード要求しました。展開してPNGと同名JSONをフォルダーごと保管してください。');
+                      if (result === 'saved') setImageMetadataError('選択した親フォルダー内に作品フォルダーを作成し、PNGと同名JSONの保存内容を照合しました。');
                     } catch (error) {
                       setImageMetadataError(error instanceof Error ? error.message : '制作情報を画像へ保存できませんでした。');
                     }
                   }}
                   className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
                 >
-                  <Download size={20} /> 保存先を選んで保存（制作情報入りPNG）
+                  <Download size={20} /> 保存先を選んで保存（作品フォルダー・PNG＋JSON）
                 </button>
+                <p className="mt-1 text-[10px] text-slate-400">対応ブラウザーでは親フォルダーを選び、その下の作品フォルダーへPNGとJSONを一緒に保存します。非対応環境は同じ構成のZIPを1件保存し、展開して保管してください。生成完了時に選択画面は開きません。</p>
                 {imageMetadataError && <p role="status" className="mt-1 text-[10px] text-red-400">{imageMetadataError}</p>}
 
                 {isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage && <button type="button" disabled={isGeneratingImage} className="w-full mt-2 text-slate-300 underline disabled:opacity-50" onClick={normalizeDisplayedPage}>ページ比率を揃える（追加課金なし）</button>}
@@ -1571,7 +1560,7 @@ No explanations. No partial results.`;
                 <BrainCircuit size={80} className="mx-auto" />
                 <div className="space-y-2 text-center">
                   <p className="text-sm font-black uppercase tracking-[0.5em] text-slate-500">Ready to Start</p>
-                  <p className="text-[10px] font-bold text-slate-600">{experimentalEnabled ? 'ここに生成された4～8コマ漫画が表示されます' : 'ここに生成された4コマ漫画が表示されます'}</p>
+                  <p className="text-[10px] font-bold text-slate-600">ここに生成された画像が表示されます</p>
                 </div>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { Check, RefreshCw, Zap, Square, Loader2 } from 'lucide-react';
 import { AutoSaveStartDialog } from './AutoSaveGuide';
 import DiagnosticLogPanel from './DiagnosticLogPanel';
 import FallbackChainViewer from './FallbackChainViewer';
+import MangaSkillDownloadLink from './MangaSkillDownloadLink.jsx';
 
 export function EmergencyStopButton({ isApiProcessing = false, workReady = false, onStopApiProcessing }) {
   if (!workReady && !isApiProcessing) return null;
@@ -30,6 +31,7 @@ export default function ControlBar({
   isEndlessModeRef,
   isAborting,
   isApiProcessing = false,
+  operationLocked = false,
   emergencyStopActive = isApiProcessing,
   onStopApiProcessing,
   handleFullAutoToggle,
@@ -42,11 +44,12 @@ export default function ControlBar({
   const navigationDisabled = !apiKey || activeStep > 0 || isApiProcessing || isAborting
     || isFullAutoMode || typeof onNavigateToStep !== 'function';
   const setEndless = next => {
+    if(operationLocked)return;
     setIsEndlessMode(next);
     if (isEndlessModeRef) isEndlessModeRef.current = next;
   };
   const requestMode = mode => {
-    if (!apiKey || isAborting) return;
+    if (!apiKey || isAborting || operationLocked) return;
     if (!autoSaveVerified) setPendingMode(mode);
     else if (mode === 'endless') setEndless(true);
     else handleFullAutoToggle();
@@ -54,13 +57,24 @@ export default function ControlBar({
 
   return (
     <>
-      {typeof document !== 'undefined' && createPortal(<EmergencyStopButton workReady={Boolean(apiKey)} isApiProcessing={emergencyStopActive} onStopApiProcessing={onStopApiProcessing} />, document.body)}
+      {typeof document !== 'undefined' && createPortal(<EmergencyStopButton workReady={Boolean(apiKey)&&!operationLocked} isApiProcessing={emergencyStopActive&&!operationLocked} onStopApiProcessing={onStopApiProcessing} />, document.body)}
+      {typeof document !== 'undefined' && createPortal(<nav className="workflow-document-tools" aria-label="制作ガイドとスキル">
+        <div className="workflow-document-links">
+        <MangaSkillDownloadLink />
+        <a href="https://github.com/FURUYAN1234/nano-banana-pro/blob/main/mcp/README.md" target="_blank" rel="noopener noreferrer" className="manga-skill-download-link">MCP導入ガイド</a>
+        <a href={`${import.meta.env.BASE_URL}downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf`}
+          target="_blank" rel="noreferrer" className="manual-link-button workflow-manual-link">使い方マニュアル</a>
+        </div>
+        <div className="workflow-utility-tools">
+        <DiagnosticLogPanel panelHost={diagnosticHost} />
+        <button type="button" className="diagnostic-button workflow-model-chain" onClick={() => setShowFallbackChain(true)}
+          title="AIモデルフォールバックチェーンの構成を確認">⚙ Model Chain</button>
+        </div>
+      </nav>,document.body)}
     <div ref={controlBarRef} className={`${embedded ? 'workflow-controls-embedded' : 'fixed top-0 left-0 right-0 z-[100]'} bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden`}>
       <div className="workflow-header-row flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
         
         <div className="workflow-progress-tools">
-        <a href={`${import.meta.env.BASE_URL}downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf`}
-          target="_blank" rel="noreferrer" className="manual-link-button workflow-manual-link">使い方マニュアル</a>
         <ol aria-label="制作の進捗" aria-live="polite" className="workflow-progress">
           {['解析', 'シナリオ', 'プロンプト', '画像生成'].map((label, index) => {
             const step = index + 1;
@@ -88,18 +102,15 @@ export default function ControlBar({
             </li>;
           })}
         </ol>
-        <div className="workflow-utility-tools">
-        <DiagnosticLogPanel panelHost={diagnosticHost} />
-        <button type="button" className="diagnostic-button workflow-model-chain" onClick={() => setShowFallbackChain(true)}
-          title="AIモデルフォールバックチェーンの構成を確認">⚙ Model Chain</button>
-        </div>
+
         </div>
 
         {/* Controls - フルオートボタン */}
         <div className="workflow-mode-controls flex flex-wrap items-center justify-center gap-4 shrink-0 max-w-full">
+
           {/* 連続生成(ループ)トグル */}
           <button
-            disabled={!apiKey || isAborting}
+            disabled={!apiKey || isAborting || operationLocked}
             aria-pressed={Boolean(isEndlessMode)}
             onClick={() => {
               if (isEndlessMode) setEndless(false);
@@ -119,9 +130,9 @@ export default function ControlBar({
 
           {/* フルオートボタン */}
           <button
-            disabled={!apiKey || isAborting}
+            disabled={!apiKey || isAborting || operationLocked}
             aria-pressed={Boolean(isFullAutoMode)}
-            onClick={() => isFullAutoMode ? handleFullAutoToggle() : requestMode('fullAuto')}
+            onClick={() => {if(!operationLocked)isFullAutoMode ? handleFullAutoToggle() : requestMode('fullAuto');}}
             title="途中までの内容があれば未完了のSTEPから再開。生成中に押すと通信と自動進行を中断。1作品の完了後は自動OFFになり、もう一度ONにすると新しい作品を開始します。"
             style={{ color: isFullAutoMode ? (isAborting ? '#ffffff' : '#dc2626') : '#ffffff' }}
             className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
@@ -155,7 +166,7 @@ export default function ControlBar({
       {pendingMode && <AutoSaveStartDialog mode={pendingMode} onCancel={() => setPendingMode(null)} onConfirm={() => {
         const mode = pendingMode;
         setPendingMode(null);
-        if (!apiKey || isAborting) return;
+        if (!apiKey || isAborting || operationLocked) return;
         onAutoSaveVerified?.();
         if (mode === 'endless') setEndless(true);
         else if (!isFullAutoMode) handleFullAutoToggle();

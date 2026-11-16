@@ -39,7 +39,7 @@ test('the sole final prompt field directly edits the full text, including refere
 
 test('copy, every split, TXT and JSON preserve edited text without appending or trimming it', async () => {
   const body = source.split('const prepareWebCopyPrompt = ')[1].split('let webCopyPartLengths')[0].trim().replace(/;$/, '');
-  const scope = { referenceEditorError: '', isExperimentalPage: () => false,
+  const scope = {bookPageContextRef:{current:null}, referenceEditorError: '', isExperimentalPage: () => false,
     inferImageQualityMode: () => 'single-image', assertRenderOptions: () => {},
     getCurrentPromptProviderFamily: () => 'chatgpt', PROMPT_PROVIDER_FAMILIES: {CHATGPT:'chatgpt'},
     ...openaiReferences, applyOpenAIImageEngineWatermark, ensureWebPromptTrailingNewline,
@@ -66,7 +66,7 @@ for (const isOpenAIEngine of [true, false]) {
     let sent, sentReferences;
     const finalText = setMangaBackgroundSimplification(edited, simplified);
     const characterSheet = 'data:image/png;base64,YQ==';
-    const scope = {
+    const scope = {bookPageContextRef:{current:null},
       prompt:finalText, repair:false, repairSource:null, progressPhase:'', isOpenAIEngine,
       ...openaiReferences, ...geminiReferences, applyOpenAIImageEngineWatermark, assertImagePromptBudget,
       images:[characterSheet], referenceAssetsRef:{current:[]}, bg360Image:null, bg360Enabled:false, colorMode:'monochrome',

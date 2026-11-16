@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
 import RelatedAppLink from './RelatedAppLink';
+import MangaSkillDownloadLink from './MangaSkillDownloadLink.jsx';
 
 // --- API Key Modal (Dual Engine Support) ---
 // [v3.59] 起動時モーダル（provider="google"）は Dual Engine 対応:
@@ -183,7 +184,8 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
             </div>
           )}
           <div className="api-operation-manual">
-            <nav className={`api-pdf-guides ${isDualMode ? 'api-pdf-guides--three' : ''}`} aria-label="PDFマニュアル">
+            <nav className={`api-pdf-guides ${isDualMode ? 'api-pdf-guides--three' : ''}`} aria-label="使い方・導入ガイド">
+              <MangaSkillDownloadLink />
               <a href={`${import.meta.env.BASE_URL}downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf`} target="_blank" rel="noopener noreferrer" className="manual-link-button">使い方マニュアル（PDF）</a>
               {(isDualMode || isOpenAIProvider) && <a href={openaiManualUrl} target="_blank" rel="noopener noreferrer" className="manual-link-button">OpenAI APIマニュアル（PDF）</a>}
               {(isDualMode || !isOpenAIProvider) && <a href={geminiManualUrl} target="_blank" rel="noopener noreferrer" className="manual-link-button">Gemini APIマニュアル（PDF）</a>}

@@ -67,15 +67,10 @@ test('mode buttons display their current state rather than the action they would
   }
 });
 
-test('shared guide includes all three origins, manual settings, free test and truthful download status', () => {
+test('shared guide explains prior folder permission, paired writes and one-archive fallback truthfully', () => {
   const html = renderToStaticMarkup(React.createElement(AutoSaveGuide));
-  for (const text of ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://furuyan1234.github.io', 'OFF', 'API不使用', '保存先を選んで保存', '保存完了はダウンロード一覧', 'ブラウザーの自動保存設定が済んでいれば', '保存先の「変更」', '設定 → ダウンロード']) assert.ok(html.includes(text), text);
-  assert.match(html, /<ol class="save-setup-steps">/);
-  assert.ok(html.includes('「その他の権限」の右端の「∨」を押して展開'));
-  assert.ok(html.includes('chrome://settings/content/automaticDownloads'));
-  assert.ok(html.includes('メニューが見つからない、または展開できない場合'));
-  assert.ok(html.includes('Chromeのアドレス欄（Ctrl＋L）に貼り付けてEnterを押す'));
-  assert.ok(!html.includes('その他のコンテンツの設定'));
+  for(const text of ['親フォルダーを一度選択','再読み込み後は再選択','生成完了時に選択画面を突然開くことはありません','保存先を選んで保存','ZIPを1件','展開して保管','API不使用'])assert.ok(html.includes(text),text);
+  assert.doesNotMatch(html,/2枚|6秒|JSONは通常ダウンロード先/);
 });
 
 test('required save settings stand out while the free test is white', () => {
@@ -84,15 +79,15 @@ test('required save settings stand out while the free test is white', () => {
   assert.match(settings, /class="save-guide-button save-guide-required"/);
   assert.ok(settings.includes('自動保存の設定・動作確認'));
   assert.ok(!settings.includes('自動保存の設定・無料テスト'));
-  assert.match(guide, /class="save-guide-button"[^>]*>2枚の自動保存をテスト/);
-  assert.ok(guide.includes('アプリ内ブラウザーでは保存できない場合があります'));
+  assert.match(guide, /class="save-guide-button"[^>]*>作品フォルダーのPNG＋JSON保存をテスト/);
+  assert.ok(guide.includes('アプリ内ブラウザーなどフォルダー保存が使えない場合'));
 });
 
 test('save setup reminder is noninteractive text above the free test with spacing and reduced motion', () => {
   const html = renderToStaticMarkup(React.createElement(AutoSaveGuide));
   const reminder = html.match(/<p class="save-setup-reminder">([^<]+)<\/p>/);
-  assert.equal(reminder?.[1], 'Chromeの自動保存設定を完了したら、下記テストボタンをクリックしてください。');
-  assert.ok(html.indexOf(reminder[0]) < html.indexOf('>2枚の自動保存をテスト'));
+  assert.equal(reminder?.[1], '下の無料テストで、作品フォルダーのPNGとJSONを確認してください。');
+  assert.ok(html.indexOf(reminder[0]) < html.indexOf('>作品フォルダーのPNG＋JSON保存をテスト'));
   assert.doesNotMatch(reminder[0], /button|tabindex|onclick|role=/i);
   const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
   assert.match(css, /\.auto-save-guide \.save-setup-reminder\s*\{[^}]*margin:\s*12px 0 8px;[^}]*color:\s*#fbbf24;[^}]*animation:\s*save-reminder-pulse 1\.6s/);
@@ -182,41 +177,15 @@ test('completed test then close confirms without an extra checkbox; incomplete t
   assert.equal(startButton(AutoSaveStartDialog(props)).props.disabled, true);
 });
 
-test('free test uses ordinary downloads without a folder picker; failure and early close stay unverified', async t => {
-  t.mock.method(React, 'useState', () => [false, () => {}]);
-  let cleanup;
-  t.mock.method(React, 'useEffect', effect => { cleanup = effect(); });
-  t.mock.method(React, 'useRef', () => ({ current: 0 }));
-  const waits = [];
-  t.mock.method(globalThis, 'setTimeout', (callback, ms) => { if (ms === 6000) waits.push(callback); else callback(); });
-  const previousDocument = globalThis.document;
-  const previousWindow = globalThis.window;
-  t.after(() => {
-    if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;
-    if (previousWindow === undefined) delete globalThis.window; else globalThis.window = previousWindow;
-  });
-  let fail = false;
-  const downloads = [];
-  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nKsAAAAASUVORK5CYII=';
-  globalThis.window = { showDirectoryPicker() { assert.fail('must not open a folder picker'); }, showOpenFilePicker() { assert.fail('must not ask for saved files'); } };
-  const ctx = { fillRect() {}, fillText() {} };
-  globalThis.document = { createElement: tag => tag === 'canvas'
-    ? { getContext: () => fail ? null : ctx, toDataURL: () => png }
-    : { click() { downloads.push(this.download); } }, body: { appendChild() {} } };
-  const outcomes = [];
-  const start = () => descendants(AutoSaveGuide({ onTestComplete: value => outcomes.push(value) })).find(n => n.type === 'button').props.onClick();
-  const pending = start();
-  assert.deepEqual(outcomes, [false]);
-  waits.shift()(); await Promise.resolve();
-  assert.equal(downloads.length, 1); assert.deepEqual(outcomes, [false]);
-  waits.shift()(); await pending;
-  assert.equal(downloads.length, 2); assert.deepEqual(outcomes, [false, true]);
-  fail = true;
-  const broken = start(); waits.shift()(); await broken;
-  assert.deepEqual(outcomes, [false, true, false]);
-  fail = false;
-  const cancelled = start(); cleanup(); waits.shift()(); await cancelled;
-  assert.equal(downloads.length, 2); assert.deepEqual(outcomes, [false, true, false, false]);
+test('free test uses the same pair archive, never opens a picker, and failure/early close stay unverified',async t=>{
+ const timeout=globalThis.setTimeout;t.mock.method(globalThis,'setTimeout',(fn,ms,...args)=>{const timer=timeout(fn,ms,...args);if(ms===60000)timer.unref?.();return timer;});
+ t.mock.method(React,'useState',()=>[false,()=>{}]);let cleanup;t.mock.method(React,'useEffect',effect=>{cleanup=effect();});t.mock.method(React,'useRef',()=>({current:0}));
+ const oldDocument=globalThis.document,oldWindow=globalThis.window;t.after(()=>{if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;if(oldWindow===undefined)delete globalThis.window;else globalThis.window=oldWindow;});
+ let fail=false;const downloads=[],outcomes=[],png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nKsAAAAASUVORK5CYII=';
+ globalThis.window={showDirectoryPicker(){assert.fail('free test must not open a picker');}};globalThis.document={createElement:tag=>tag==='canvas'?{getContext:()=>fail?null:{fillRect(){},fillText(){}},toDataURL:()=>png}:{click(){downloads.push(this.download);},remove(){}},body:{appendChild(){}}};
+ const start=()=>descendants(AutoSaveGuide({onTestComplete:v=>outcomes.push(v)})).find(n=>n.type==='button').props.onClick();
+ await start();assert.equal(downloads.length,1);assert.match(downloads[0],/保存テスト.*\.zip$/);assert.deepEqual(outcomes,[false,true]);
+ fail=true;await start();assert.deepEqual(outcomes,[false,true,false]);fail=false;const cancelled=start();cleanup();await cancelled;assert.equal(downloads.length,1);assert.deepEqual(outcomes,[false,true,false,false]);
 });
 
 test('required-save pulse uses distinct colors and has a reduced-motion opt-out', () => {

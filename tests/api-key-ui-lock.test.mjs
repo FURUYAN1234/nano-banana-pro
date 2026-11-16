@@ -21,14 +21,15 @@ test('both API dialogs group the operation and provider PDFs under a deployment 
     for (const provider of ['google', 'openai']) {
       const html = renderToStaticMarkup(React.createElement(ApiKeyModal, {isOpen: true, provider}));
       assert.match(html, /href="https:\/\/platform.openai.com\/api-keys"/);
-      const group = html.match(/<nav[^>]*aria-label="PDFマニュアル"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
+      const group = html.match(/<nav[^>]*aria-label="使い方・導入ガイド"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
       assert.ok(group, 'PDF guides stay together in their own navigation group');
       const guides = ['super-furu-ai-4koma-full-manual-2026-10-01.pdf', 'openai-api-beginner-guide-2026-09-30.pdf'];
       if (provider === 'google') guides.push('gemini-api-beginner-guide-2026-10-01.pdf');
       for (const file of guides) {
         assert.ok(group.includes(`href="/nano-banana-pro/downloads/${file}" target="_blank" rel="noopener noreferrer" class="manual-link-button"`));
       }
-      assert.equal((group.match(/<a /g) || []).length, guides.length);
+      assert.equal((group.match(/SuperFURU-Manga-Skill\.zip/g)||[]).length,1);
+      assert.equal((group.match(/<a /g) || []).length, guides.length+1);
     }
     const pdf = await readFile(new URL('../public/downloads/openai-api-beginner-guide-2026-09-30.pdf', import.meta.url));
     assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');

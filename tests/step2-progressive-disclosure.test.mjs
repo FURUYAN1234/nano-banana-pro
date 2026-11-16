@@ -138,8 +138,10 @@ test('STEP2 help uses the selected panel-count names without old experimental ON
   for (const experimentEnabled of [false, true]) {
     const html = renderStep2({ experimentEnabled });
     assert.match(html, experimentEnabled ? /4～8コマ<!-- -->のストーリー設定|4～8コマのストーリー設定/ : /4コマ<!-- -->のストーリー設定|4コマのストーリー設定/);
-    assert.match(html, /「4コマ生成（横長コマ）レガシー」は横長4コマの縦一列固定/);
-    assert.match(html, /「4～8コマ生成」では4～8コマで指定でき/);
+    assert.doesNotMatch(html, /レガシー|コマ数切り替え/);
+    assert.match(html, /通常のChatGPT制作は4～8コマ/);
+    assert.match(html, /ページごとの1～8コマ指定/);
+    assert.match(html, /Geminiは4コマ/);
     assert.doesNotMatch(html, /実験的コマ割り|通常モードは4コマ固定/);
   }
 });
@@ -219,10 +221,10 @@ test('STEP2 completion log and final time remain beside the generated scenario',
   assert.doesNotMatch(html, /STEP2を実行すると/);
 });
 
-test('preview waits for a scenario and the page-mode switch precedes STEP2', async () => {
+test('preview waits for a scenario and the legacy page-mode menu remains hidden', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
   assert.match(app, /\{!isAnalyzing && !isSearching && !enhancementFocusActive && currentStep >= 3 && \(\s*<>\s*<GenerationPreview[\s\S]*?<\/?>\s*\)\}/);
-  assert.match(app, /<ExperimentalMangaPanel[\s\S]*?currentStep=\{currentStep\} isAnalyzing=\{isAnalyzing\} isSearching=\{isSearching\}[\s\S]*?\/>[\s\S]*?<Step2Panel/);
+  assert.doesNotMatch(app, /<ExperimentalMangaPanel/);
   assert.doesNotMatch(app, /<\/ExperimentalMangaPanel>/);
 });
 

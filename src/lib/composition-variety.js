@@ -110,7 +110,7 @@ const RELATIVE_CAMERA_ORIGIN_RE = new RegExp(RELATIVE_CAMERA_ORIGIN);
 
 // Strip only named camera terms under a prohibition, including Japanese lists;
 // keep affirmative directions in the same sentence for every camera consumer.
-const CAMERA_TERM = '(?:魚眼|フィッシュアイ|超広角|広角|望遠|長焦点|長い焦点距離|アイレベル|目線の高さ|目の高さ|俯瞰|バード(?:ズ)?アイ|アオリ|煽り|ローアングル|ハイアングル|ダッチ(?:アングル)?|ズームイン|ズームアウト|アップ|接写|全身|全景|遠景|ワイドショット)(?:レンズ)?(?:の歪み)?';
+const CAMERA_TERM = '(?:魚眼|フィッシュアイ|樽型(?:の)?(?:歪み|ひずみ)|バレル(?:ディストーション|歪み)|超広角|広角|望遠|長焦点|長い焦点距離|アイレベル|目線の高さ|目の高さ|俯瞰|バード(?:ズ)?アイ|アオリ|煽り|ローアングル|ハイアングル|ダッチ(?:アングル)?|ズームイン|ズームアウト|アップ|接写|全身|全景|遠景|ワイドショット)(?:レンズ)?(?:の歪み)?';
 const CAMERA_PROHIBITION = '(?:なし|無し|使わない|使わず|使用しない|使用せず|用いない|用いず|追加しない|追加せず|描かない|描かず|描写しない|描写せず|禁止|避ける|避け|不可)';
 const CAMERA_NEGATION = `(?:(?:は|を|も)?${CAMERA_PROHIBITION}|にしない|ではなく|ではない|でなく|でない)`;
 const NEGATED_RELATIVE_CAMERA_ORIGIN_RE = new RegExp(`${RELATIVE_CAMERA_ORIGIN}(?:の(?:広角|望遠|中景|全景|引き|視点|位置))?\\s*(?:(?:は|を)?(?:撮らない|撮らず|撮影しない|撮影せず)|${CAMERA_NEGATION})`, 'g');
@@ -122,16 +122,29 @@ const NEGATED_CAMERA_TERMS_RE = new RegExp([
   `(?<![\\p{L}\\p{N}])${CAMERA_TERM}(?:\\s*(?:[・、,／/]|と|や|および|及び)\\s*${CAMERA_TERM})+\\s*(?:は|を|も)${CAMERA_PROHIBITION}`,
   `${CAMERA_TERM}\\s*${CAMERA_NEGATION}`,
 ].join('|'), 'gu');
-const ENGLISH_CAMERA_TERM = '(?:fish[ -]?eye|eye[ -]?level|high[ -]angle|low[ -]angle|overhead|top[ -]down|bird[\'’]?s?[ -]eye|worm[\'’]?s?[ -]eye|telephoto|long[ -](?:lens|focal length)|wide[ -]angle|dutch(?:[ -](?:angle|tilt))?|camera[ -]tilt|tilt|cinematic slant|zoom[ -]in|zoom[ -]out|close[ -]?up|full[ -]body|wide[ -]shot|long[ -]shot)(?: lens)?';
+const ENGLISH_CAMERA_TERM = '(?:fish[ -]?eye|barrel[ -]distortion|eye[ -]?level|high[ -]angle|low[ -]angle|overhead|top[ -]down|bird[\'’]?s?[ -]eye|worm[\'’]?s?[ -]eye|telephoto|long[ -](?:lens|focal length)|wide[ -]angle|dutch(?:[ -](?:angle|tilt))?|camera[ -]tilt|tilt|cinematic slant|zoom[ -]in|zoom[ -]out|close[ -]?up|full[ -]body|wide[ -]shot|long[ -]shot)(?: lens)?';
 const NEGATED_ENGLISH_CAMERA_TERMS_RE = new RegExp([
-  `\\b(?:no|not|without|avoid)\\s+(?:(?:using|use|any|a|an)\\s+)*${ENGLISH_CAMERA_TERM}(?:\\s*,\\s*${ENGLISH_CAMERA_TERM})*\\s*,?\\s+(?:or|and)\\s+${ENGLISH_CAMERA_TERM}`,
-  `\\b(?:no|not|without|avoid)\\s+(?:(?:using|use|any|a|an)\\s+)*${ENGLISH_CAMERA_TERM}(?:\\s*(?:/|\\bor\\b|\\band\\b)\\s*${ENGLISH_CAMERA_TERM})*`,
+  `\\b(?:no|not|without|avoid|instead\\s+of|rather\\s+than)\\s+(?:(?:using|use|any|a|an)\\s+)*${ENGLISH_CAMERA_TERM}(?:\\s*,\\s*${ENGLISH_CAMERA_TERM})*\\s*,?\\s+(?:or|and)\\s+${ENGLISH_CAMERA_TERM}`,
+  `\\b(?:no|not|without|avoid|instead\\s+of|rather\\s+than)\\s+(?:(?:using|use|any|a|an)\\s+)*${ENGLISH_CAMERA_TERM}(?:\\s*(?:/|\\bor\\b|\\band\\b)\\s*${ENGLISH_CAMERA_TERM})*`,
   `\\bnon[ -]?${ENGLISH_CAMERA_TERM}`,
 ].join('|'), 'gi');
 const CONTRASTED_CAMERA_CLAUSE_RE = /(^|[。;；\n、,])([^。;；\n、,]+?)(?:ではなく|でなく)(?=\s*[、,])/g;
 const CAMERA_CLAUSE_END_RE = /(?:俯瞰(?:する)?|アオリ|見下ろす|見上げる|撮る|撮影する)(?:\s*(?:Dominant Low|Innocent High|Epic Wide|Over The Shoulder|Hyper Perspective|Aesthetic Thirds|Cinematic Slant))?(?:\s*の)?\s*$/i;
 const CAMERA_ORIGIN_SUFFIX_RE = new RegExp(`^(?:の(?:${CAMERA_TERM}|${ENGLISH_CAMERA_TERM}|撮影|カメラ|視点|位置|構図|画角|ショット|映像|画面)|撮|捉|カメラ|視点)`, 'i');
-const affirmativeCameraText = (camera) => String(camera)
+const REFERENCED_JA_SHOT='(?:前|直前|先ほど|先行|次|後続|別|他)(?:の)?(?:コマ|カット|ショット|場面|ページ|頁)';
+const REFERENCED_EN_SHOT='(?:(?:the\\s+)?(?:previous|preceding|prior|earlier|next|following|other)\\s+(?:[a-z-]+\\s+){0,3}?(?:panel|frame|shot|cut|view|camera)\\b)';
+const currentShotText=camera=>String(camera)
+  // Explicit inheritance is a current instruction, whereas the camera of a
+  // contrasted prior/next shot is not. Retain any current relative height.
+  .replace(new RegExp(`${REFERENCED_JA_SHOT}(?:の)?([^。;；\\n、,]*?)(?:と同じ|を(?:維持|踏襲|継続|保つ))`,'g'),'$1')
+  .replace(new RegExp(`${REFERENCED_JA_SHOT}[^。;；\\n、,]*?(?=と(?:は)?(?:対比|異な|対照|視点を切り替)|に対して|より(?:も)?(?:高|低)|から(?:切り替|転じ)|を避け|ではなく|[。;；\\n、,]|$)`,'g'),'')
+  .replace(new RegExp(`${REFERENCED_EN_SHOT}(?:'s)?\\s+([^.;,\\n]+?)\\s+(?:is\\s+)?(?:repeated|retained|maintained|continued)(?:\\s+here)?`,'gi'),'$1')
+  .replace(new RegExp(`${REFERENCED_EN_SHOT}[^.;,\\n]*?(?=\\b(?:whereas|while|but|now|this\\s+(?:shot|panel))\\b|[.;,\\n]|$)`,'gi'),'');
+const affirmativeCameraText = (camera) => currentShotText(camera)
+  .replace(new RegExp(`${CAMERA_TERM}(?:と(?:は)?(?:違い|違って|異なり|対照的な)|に(?:対して|対比して))`,'g'),'')
+  .replace(new RegExp(`\\b(?:unlike|in\\s+contrast\\s+to|as\\s+opposed\\s+to|compared\\s+(?:with|to))\\s+(?:(?:a|an|the)\\s+)?${ENGLISH_CAMERA_TERM}(?:\\s+(?:view|shot|camera))?`,'gi'),'')
+  .replace(/見上げ(?:ない|ず)|見下ろさ(?:ない|ず)/g,'')
+  .replace(/(?:俯角|仰角)\s*[:：]?\s*(?:約)?\s*[\d０-９.]+\s*(?:度|°)\s*(?:ではなく|ではない|にしない|を使わない)/g,'')
   .replace(NEGATED_RELATIVE_CAMERA_ORIGIN_RE, '')
   // A contrast can reject a whole placement, even when it ends in a shot name.
   // Only strip a camera clause, leaving contrasts about actors and props intact.
@@ -166,14 +179,24 @@ export const classifyCameraElevation = (camera = '') => {
   const eyeLevelText = text.replace(/(?:above|below)\s+(?:the\s+)?eye[ -]?level/gi, '');
   if (/(?:アイレベル|eye[ -]?level|(?:目(?:線)?|視線)(?:の高さ|と同じ高さ))(?!より(?:も)?(?:高|低|上|下))/i.test(eyeLevelText)) return 'eye';
   const placement = text.match(/\bcamera\s+(?:(?:is\s+)?(?:positioned|placed|set)\s+)?(?:is\s+)?(?:slightly\s+)?(above|below)\b/i)?.[1]?.toLowerCase();
-  const pitch = text.match(/(俯角|仰角)\s*[:：]?\s*(?:約|およそ|おおよそ)?\s*\+?(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)\s*(?:度|°)/)?.[1];
+  const pitches = new Set([...text.matchAll(/(俯角|仰角)\s*[:：]?\s*(?:約|およそ|おおよそ)?\s*\+?(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)\s*(?:度|°)/g)].map(match=>match[1]));
   const lateralHeight = text.match(RELATIVE_CAMERA_ORIGIN_RE)?.[1];
   // Camera descriptions can end the placement clause as a noun, then name the
   // azimuth/lens after a comma. Do not infer elevation from an actor/prop's
   // height (が/は/を), an isolated height noun or a negated placement.
   const nounPlacement = text.match(/(?:^|[。;；\n])[^。;；\n、,がはを]*?(高(?:い|めの?))(?:撮影)?位置(?=[、,]\s*(?:正面|左|右|前方|後方|斜め|広角|超広角|望遠|引き|中景|接写|全景|全身))/)?.[1];
-  if (placement === 'above' || pitch === '俯角' || lateralHeight === '高' || nounPlacement || HIGH_CAMERA_RE.test(text)) return 'high';
-  if (placement === 'below' || pitch === '仰角' || lateralHeight === '低' || FLOOR_CAMERA_RE.test(text) || LOW_CAMERA_RE.test(text)) return 'low';
+  const high=placement === 'above' || pitches.has('俯角') || lateralHeight === '高' || nounPlacement || HIGH_CAMERA_RE.test(text);
+  const low=placement === 'below' || pitches.has('仰角') || lateralHeight === '低' || FLOOR_CAMERA_RE.test(text) || LOW_CAMERA_RE.test(text);
+  if(high&&low){
+    // Origin height is not optical pitch: a floor camera can look down at a
+    // small object. Only conflicting affirmative pitch directions are ambiguous.
+    const down=pitches.has('俯角')||/overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|バード(?:ズ)?アイ|俯瞰|見下ろ[すし]/i.test(text);
+    const up=pitches.has('仰角')||/low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|見上げ/i.test(text);
+    if(down!==up)return down?'high':'low';
+    return 'unspecified';
+  }
+  if(high)return 'high';
+  if(low)return 'low';
   return 'unspecified';
 };
 

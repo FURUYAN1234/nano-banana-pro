@@ -21,17 +21,18 @@ test('new sessions start in native free-page mode and preserve an explicit four-
   assert.equal(initial.enabled,true);
   initial.setEnabled(false);
   assert.equal(initialize(useState).enabled,false,'ordinary rerenders retain a manual four-panel selection');
-  assert.match(app,/<ExperimentalMangaPanel enabled=\{experimentEnabled\}/);
+  assert.doesNotMatch(app,/<ExperimentalMangaPanel/);
   assert.match(app,/useMangaWorkflow\(\{experimentalEnabled:experimentEnabled,onAutoPageModeChange:setExperimentEnabled\}\)/);
 
   const gate=hook.match(/const isExperimentalPage = [^\r\n]+;/)?.[0];
   assert.ok(gate);
-  const mode=new Function('requestedExperimentalEnabled','effectiveEngine',`const pageModeRef={current:requestedExperimentalEnabled}; ${gate} return isExperimentalPage();`);
+  const mode=new Function('requestedExperimentalEnabled','effectiveEngine','bookContext',`const pageModeRef={current:requestedExperimentalEnabled},bookPageContextRef={current:bookContext}; ${gate} return isExperimentalPage();`);
   assert.equal(mode(true,'openai'),true);
   assert.equal(mode(false,'openai'),false);
   assert.equal(mode(true,'gemini'),false);
   assert.equal(mode(false,'gemini'),false);
-  assert.match(app,/getEffectiveEngine\(selectedEngine, enableOpenAIApi\) === 'openai' && <ExperimentalMangaPanel/);
+  assert.equal(mode(true,'openai',{kind:'illustration'}),false,'an illustration cover is not a comic page');
+  assert.doesNotMatch(app,/import ExperimentalMangaPanel/);
   assert.match(app,/experimentEnabled=\{nativePageModeEnabled\}/);
 
 });

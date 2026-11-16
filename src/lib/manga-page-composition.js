@@ -1,4 +1,5 @@
 // Shared by scenario authoring, validation and page compilation.
+import { readBookPageMode } from './page-production-contract.js';
 const fail = message => { throw new Error(`実験的コマ割り: ${message}`); };
 const compositionError = message => { throw Object.assign(new Error(`PageComposition: ${message}`), {code:'PAGE_COMPOSITION_CONTRACT'}); };
 
@@ -32,7 +33,7 @@ export function readPageComposition(scenario, count) {
   let c;
   try { c=JSON.parse(lines[0].replace(/^\s*PageComposition\s*[:：]\s*/,'')); }
   catch { compositionError('1行のJSONとして読み取れません。'); }
-  if(!c||!Number.isInteger(count)||count<4||count>8||(c.layout!=='free'&&!experimentalLayoutOptions(count).some(o=>o.id===c.layout)))compositionError('コマ数に対応する配置が必要です。');
+  if(!c||!Number.isInteger(count)||count<1||count>8||(c.layout!=='free'&&!experimentalLayoutOptions(count).some(o=>o.id===c.layout)))compositionError('コマ数に対応する配置が必要です。');
   if(typeof c.reason!=='string'||!c.reason.trim())compositionError('見せ場と読順に基づく理由が必要です。');
   const rects=pageCompositionRects({count,layout:c.layout,composition:c}),validPanel=n=>Number.isInteger(n)&&n>=1&&n<=count;
   for(const key of ['heroPanels','breakouts','bleed'])if(!Array.isArray(c[key]))compositionError(`${key}は配列で指定してください。`);
@@ -66,10 +67,10 @@ export function readPageComposition(scenario, count) {
   return {layout:c.layout,...(c.layout==='free'?{frames:rects}:{}),reason:c.reason,heroPanels:c.heroPanels,breakouts:c.breakouts,...(c.foregrounds?{foregrounds:c.foregrounds}:{}),bleed:c.bleed,...(c.restraintReason?{restraintReason:c.restraintReason.trim()}:{})};
 }
 
-export function assertGeneratedPageComposition(scenario,count) {
+export function assertGeneratedPageComposition(scenario,count,{scenarioMode}={}) {
   const c=readPageComposition(scenario,count);
   if(!c)compositionError('PageCompositionがありません。Scenario:直後にページ設計の1行JSONが必要です。');
-  if((!c.heroPanels.length||(!c.breakouts.length&&!c.foregrounds?.length))&&!c.restraintReason)compositionError('通常入力でも人物の主動作や表情を見せる大コマと、ページ大の前景または大胆な枠越えを設計してください。控える場合だけ、原入力・原文忠実性に基づくrestraintReasonを記載してください。静かな表情も大きく見せられます。背景だけの大コマや未指定という理由は代用になりません。');
+  if(!readBookPageMode(scenarioMode)&&(!c.heroPanels.length||(count>1&&!c.breakouts.length&&!c.foregrounds?.length))&&!c.restraintReason)compositionError('通常入力でも人物の主動作や表情を見せる大コマと、ページ大の前景または大胆な枠越えを設計してください。控える場合だけ、原入力・原文忠実性に基づくrestraintReasonを記載してください。静かな表情も大きく見せられます。背景だけの大コマや未指定という理由は代用になりません。');
   return c;
 }
 
@@ -231,7 +232,8 @@ export const EXPERIMENTAL_LAYOUTS = Object.freeze({
 });
 
 export function experimentalLayoutOptions(count) {
-  if(!Number.isInteger(count)||count<4||count>8) fail('実験モードのコマ数は4〜8です。');
+  if(!Number.isInteger(count)||count<1||count>8) fail('ページのコマ数は1〜8です。');
+  if(count<=3) return [{id:'vertical_page',label:count===1?'A4縦の大コマ':`縦${count}コマ`,description:`${count} full-width panels in top-to-bottom reading order, within one A4 portrait page.`}];
   return Object.entries(EXPERIMENTAL_LAYOUTS).filter(([id])=>
     id!=='strips'
     &&(id!=='tall_right_middle'||[5,6,7].includes(count))).map(([id,option])=>({id,...option}));
@@ -241,6 +243,7 @@ export function experimentalLayoutOptions(count) {
 export function experimentalLayout(count, layout=[4,8].includes(count)?'two_columns':'tall_right_middle') {
   if(!experimentalLayoutOptions(count).some(option=>option.id===layout)) fail('コマ数に対応する配置を選んでください。');
   const r = (x,y,w,h) => ({x,y,w,h});
+  if(layout==='vertical_page') return Array.from({length:count},(_,i)=>r(0,i/count,1,1/count));
   const pairRows=(n,y,height)=>{
     const rows=Math.ceil(n/2),h=height/rows;
     return Array.from({length:rows},(_,row)=>n-row*2===1?[r(0,y+row*h,1,h)]:[r(.5,y+row*h,.5,h),r(0,y+row*h,.5,h)]).flat();
@@ -270,3 +273,13 @@ export const SCENARIO_PAGE_COMPOSITION = `【ページ全体から設計する4�
 framesは漫画領域内の0〜1座標（x左、y上、w幅、h高さ）をコマ数だけ右→左、上→下の読順で指定する。矩形同士は重ねない。大きな人物の重なりはforegroundsで表す。縦長の大コマに小コマを沿わせる場合も、上下の広い大コマに小コマの段を組み合わせる場合も、場面の先後が自然に読める配置にする。細い溝・軽い斜辺・境界の自然な調整は描画時に許容し、数値一致は目的にしない。foregroundsは主焦点の一人だけ、panelはその人物が演技する元コマ、characterは人物設定の正式名、overは重なる別コマ番号、placementは全身または大きな半身と受入余白を具体的に書く。元コマ内にも同じ身体を重ねて描く別の立ち絵ではない。元コマのCamera・描法・姿勢を一続きに保つ。受入コマの状況にはその場面自身の人物・行動だけを書く。前景の重なりを理由に同じ人物を新たな登場人物として列挙しない。別時点としてその人物が再登場する小コマは、その独立した動作を明記してよい。
 【別の構図】ページ大の前景より一つの動作の枠越えが物語に適する場合はforegroundsを[]にして、breakouts:[{"panel":番号,"part":"人物名と頭・肩・腕など","into":辺を共有する隣接コマ番号}]を用いる。framesは溝を除いた設計座標なので、隣接する辺は同じ座標にする（上コマのy+h=下コマのy、または左コマのx+w=右コマのx）。実際の白い溝は描画時に加える。角だけで接するコマや離れたコマへbreakoutsを指定しない。複数の小コマに一続きの人物を重ねる演出はforegroundsのover配列で表す。胸→首→頭、肩→腕→手が接続するポーズと受入空間を状況にも書く。直立した全身の肩を下辺から出すなど、身体と共有辺が逆の配置は不可。受入側に同じ人物の肩越しや別ポーズを足して越境に見せかけない。頭・肩の指定を髪先や手だけで代用しない。ただし絵として自然な接続・強い見せ場・読みやすさが成立すれば位置や越境量の微差は許容する。
 既存配置も使える: ${JSON.stringify(Object.fromEntries(Object.entries(EXPERIMENTAL_LAYOUTS).filter(([id])=>id!=='strips')))}。既存IDならframesは不要。候補へ収めるために見せ場を縮めず、合わなければfreeを使う。heroPanelsは見せ場の番号。bleedは必要なコマと実際に接する外周のleft/right/top/bottomを指定し、不要なら[]。通常は大コマとforegroundsまたはbreakoutsを設計する。明示された均等配置・越境禁止・原文への忠実性と衝突するときだけ、具体的なrestraintReasonを記して抑える。未指定や静かな題材という理由だけで弱めない。制作メタデータや構図の説明を作中の台詞にしない。`;
+
+export function scenarioPageCompositionInstruction(mode) {
+  const book = readBookPageMode(mode);
+  if (!book) return SCENARIO_PAGE_COMPOSITION;
+  if (book.panelCount >= 4) return SCENARIO_PAGE_COMPOSITION.replaceAll('4〜8コマ', `${book.panelCount}コマ`)
+    .replace('heroPanelsには山場のコマ番号を必ず入れ、foregroundsかbreakoutsの少なくとも一方を具体的な要素で満たす。状況・reasonに「はみ出す」と書くだけで両配列を[]にしてはいけない。','heroPanelsにはこのページの見せ場を記す。foregrounds・breakouts・bleedは内容に合う時に使用し、毎ページのノルマにしない。使用する時は具体的な接続先・人物・部位を記す。')
+    .replace('通常は大コマとforegroundsまたはbreakoutsを設計する。','大コマ・前景・枠越え・タチキリを場面に合わせて使える。')
+    .replace('明示された均等配置・越境禁止・原文への忠実性と衝突するときだけ、具体的なrestraintReasonを記して抑える。','明示された均等配置・越境禁止・原文への忠実性を守る。');
+  return `【本のページ設計】全${book.panelCount}コマをA4縦の完成ページに配置する。最初のコマ見出しより前にPageComposition:の1行JSONを置く。layout:"vertical_page"、reason:今回の動作と読順を支える理由、heroPanels:見せ場の番号配列、foregrounds:[]、breakouts:[]、bleed:必要な外周の{panel,edges:[left/right/top/bottom]}配列（不要なら[]）。${book.panelCount===1?'1コマはA4縦を大きく使い、人物・背景を外周タチキリへつなげてよい。存在しない別コマへの越境は足さない。':'縦に並ぶ指定数のコマで大きな人物・演技と前後の流れを描く。適する場合は既存形式のforegrounds:[{panel,character,over,placement}]またはbreakouts:[{panel,part,into}]で隣接コマへ重ねる。人物・台詞・必要動作・読順を守り、一続きの身体と元コマのCamera/描法を保つ。枠越え・タチキリは可能だが毎ページのノルマにしない。'} Camera、画風、人物、全台詞、演技、必要な道具・場面を保持し、メタデータを作中文字にしない。`;
+}

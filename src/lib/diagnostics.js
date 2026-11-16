@@ -1,7 +1,7 @@
 import { sanitizeFailureContext } from './diagnostic-failure-context.js';
 // Metadata stays structured. Explicit invocation inputs and repair evidence are saved only on failure.
 export const DIAGNOSTIC_LIMITS = Object.freeze({maxAgeMs: 7 * 86400000, maxBytes: 2 * 1024 * 1024, maxEvents: 2000});
-const EVENTS = new Set(['session.start', 'workflow.start', 'workflow.end', 'workflow.error', 'workflow.warning', 'workflow.review', 'workflow.cancel', 'workflow.settings', 'workflow.input', 'ui.action', 'api.request', 'api.response', 'api.payload', 'api.error', 'runtime.error', 'react.error', 'image.lettering', 'image.review']);
+const EVENTS = new Set(['session.start', 'workflow.start', 'workflow.end', 'workflow.error', 'workflow.warning', 'workflow.review', 'workflow.cancel', 'workflow.settings', 'workflow.input', 'ui.action', 'api.request', 'api.response', 'api.payload', 'api.error', 'runtime.error', 'react.error', 'image.lettering', 'image.review', 'mcp.image_references']);
 const sessionId = globalThis.crypto?.randomUUID?.() || `session-${Date.now()}`;
 const responseRequests = new WeakMap();
 const observedRuns = new Map();
@@ -118,7 +118,7 @@ export function makeDiagnosticEvent(event, details = {}, {now = Date.now(), sess
   }
   for (const key of ['fullAuto', 'experimental', 'fallback', 'ok']) if (typeof details[key] === 'boolean') row[key] = details[key];
   if (event === 'workflow.input') {
-    const choices = { inputReason: ['typing', 'paste', 'voice', 'reference-remap', 'reset'], inputSource: ['textarea', 'dictation', 'reference-remap', 'reset', 'other'],
+    const choices = { inputReason: ['typing', 'paste', 'voice', 'reference-remap', 'reset', 'mcp'], inputSource: ['textarea', 'dictation', 'reference-remap', 'reset', 'mcp', 'other'],
       inputField: ['manual-topic-input', 'generated-scenario', 'other'], inputTarget: ['manual-topic-input', 'generated-scenario', 'other'], flushReason: ['blur', 'next-step', 'before-change', 'export', 'unmount'],
       rejectionReason: ['invalid-reason', 'wrong-field', 'wrong-source'],
       inputType: ['insertText', 'insertFromPaste', 'insertFromDrop', 'insertLineBreak', 'insertCompositionText', 'deleteContentBackward', 'deleteContentForward', 'historyUndo', 'historyRedo', 'other'] };
@@ -127,6 +127,15 @@ export function makeDiagnosticEvent(event, details = {}, {now = Date.now(), sess
       if (Number.isFinite(details[key]) && details[key] >= 0) row[key] = Math.round(details[key]);
     }
     for (const key of ['scenarioEqualsBefore', 'scenarioEqualsAfter', 'inputTrusted', 'inputRejected']) if (typeof details[key] === 'boolean') row[key] = details[key];
+  }
+  if(event==='mcp.image_references') {
+    for(const key of ['projectId','pageId']) if(typeof details[key]==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(details[key])) row[key]=details[key];
+    row.references=(Array.isArray(details.references)?details.references:[]).slice(0,16).map(item=>({
+      imageNumber:item.imageNumber, role:safeToken(item.role),
+      ...(/^[a-f0-9]{64}$/.test(item.sha256)?{sha256:item.sha256}:{}),
+      ...(/^[a-f0-9]{64}$/.test(item.assetId)?{assetId:item.assetId}:{}),
+      ...(/^[A-Za-z0-9_-]{1,128}$/.test(item.sourcePageId)?{sourcePageId:item.sourcePageId}:{})
+    }));
   }
   if(event==='image.lettering') {
     for(const key of ['applied','outsideBalloonInteriorsUnchanged'])if(typeof details[key]==='boolean')row[key]=details[key];

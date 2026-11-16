@@ -260,7 +260,7 @@ test('an existing image remains visible and downloadable during QA while image e
   assert.doesNotMatch(result, /backdrop-filter|z-index:200/);
   assert.match(result, /role="status"[^>]*>[\s\S]*カメラ検査中… 合計441秒経過/);
   assert.match(result, /<textarea[^>]*disabled=""/);
-  const download = result.match(/<button[^>]*>[\s\S]*?保存先を選んで保存（制作情報入りPNG）<\/button>/)?.[0];
+  const download = result.match(/<button[^>]*>[\s\S]*?保存先を選んで保存（作品フォルダー・PNG＋JSON）<\/button>/)?.[0];
   assert.ok(download);
   assert.doesNotMatch(download.slice(download.lastIndexOf('<button')), /disabled=""/);
 });
@@ -356,7 +356,8 @@ test('completed images have no processing mask or status and allow editing again
   const result = renderStep4({ generatedImage: 'data:image/png;base64,YQ==', isGeneratingImage: false }).split('<section').at(-1);
   assert.doesNotMatch(result, /backdrop-filter|role="status"/);
   assert.doesNotMatch(result.match(/<textarea[^>]*>/)[0], /disabled=""/);
-  assert.match(result, /保存先を選んで保存（制作情報入りPNG）/);
+  assert.match(result, /保存先を選んで保存（作品フォルダー・PNG＋JSON）/);
+  assert.match(result, /その下の作品フォルダーへPNGとJSONを一緒に保存します/);
 });
 
 test('image info survives edits without borrowing unverified layout measurements', () => {

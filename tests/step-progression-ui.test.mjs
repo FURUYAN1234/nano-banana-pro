@@ -44,9 +44,14 @@ test('the progress header stacks progress, controls and help at every width', as
     const {default:ControlBar}=await server.ssrLoadModule('/src/components/ControlBar.jsx');
     const html=renderToStaticMarkup(React.createElement(ControlBar));
     assert.match(html, /class="workflow-header-row flex flex-col [^"]*"[^>]*>\s*<div class="workflow-progress-tools">[\s\S]*?<ol aria-label="制作の進捗"/);
-    assert.match(html, /<\/ol>\s*<div class="workflow-utility-tools">[\s\S]*?<\/div>\s*<\/div>\s*<div class="workflow-mode-controls/);
-    assert.ok(html.indexOf('使い方マニュアル') < html.indexOf('aria-label="制作の進捗"'), 'manual remains left of the progress steps');
-    assert.ok(html.indexOf('</ol>') < html.indexOf('不具合調査ログ') && html.indexOf('不具合調査ログ') < html.indexOf('⚙ Model Chain'), 'log and model-chain controls follow the progress steps');
+    assert.match(html, /<\/ol>\s*<\/div>\s*<div class="workflow-mode-controls[^"]*">/);
+    const steps=html.match(/<ol aria-label="制作の進捗"[\s\S]*?<\/ol>/)?.[0];assert.ok(steps);
+    assert.doesNotMatch(steps,/使い方マニュアル|MCP導入ガイド|複数ページ用スキル|不具合調査ログ|Model Chain/);
+    const controls=await readFile(new URL('../src/components/ControlBar.jsx',import.meta.url),'utf8');
+    assert.match(controls, /createPortal\(<nav className="workflow-document-tools"/);
+    assert.ok(controls.includes('<MangaSkillDownloadLink />')&&controls.includes('MCP導入ガイド')&&controls.includes('使い方マニュアル'));
+    assert.doesNotMatch(html,/不具合調査ログ|Model Chain/,'utility actions are in the upper portal, not the mode-only row');
+    const upper=controls.slice(controls.indexOf('createPortal(<nav'),controls.indexOf('</nav>,document.body)'));assert.ok(upper.includes('DiagnosticLogPanel')&&upper.includes('Model Chain'));
     assert.match(html, /<\/div>\s*<div class="workflow-mode-help/);
     assert.doesNotMatch(html, /hidden xl:block w-12/, 'the gap must not rely on an extra-large-only spacer');
     const css=await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
@@ -91,20 +96,21 @@ test('STEP4 opens for a prepared prompt or saved image and stays hidden during p
   }
 });
 
-test('STEP4 reveals its empty image area only after generation starts, with the selected panel mode', async () => {
+test('STEP4 reveals its mode-neutral empty image area only after generation starts', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
   try {
     const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
     for (const experimentalEnabled of [false, true]) {
-      const html = renderToStaticMarkup(React.createElement(Step4Panel, {
+      const props = {
         currentStep: 4, finalPrompt: 'OUTPUT: Single image.', generatedImage: null, isGeneratingImage: true,
         genLog: [], policyErrorMsg: '', castList: '', scenario: '', webCopyPartLengths: [],
         selectedEngine: 'openai', experimentalEnabled,
-      }));
-      const message = html.match(/<p[^>]*>(ここに生成された[\s\S]*?漫画が表示されます)<\/p>/)?.[1];
-      assert.equal(message, experimentalEnabled
-        ? 'ここに生成された4～8コマ漫画が表示されます'
-        : 'ここに生成された4コマ漫画が表示されます');
+      };
+      const idle = renderToStaticMarkup(React.createElement(Step4Panel, {...props,isGeneratingImage:false}));
+      assert.doesNotMatch(idle,/ここに生成された画像が表示されます|step4-image-display/);
+      const html = renderToStaticMarkup(React.createElement(Step4Panel,props));
+      const message = html.match(/<p[^>]*>(ここに生成された[\s\S]*?が表示されます)<\/p>/)?.[1];
+      assert.equal(message,'ここに生成された画像が表示されます');
     }
   } finally {
     await server.close();

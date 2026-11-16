@@ -1,3 +1,4 @@
+import { isNativePageMode } from './page-production-contract.js';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging.js';
 import {
   SCENARIO_CAMERA_SEQUENCE_RULES,
@@ -257,7 +258,7 @@ export const buildScenarioEnhancementPrompt = ({
   punchlineType = null
 }) => {
   const panelCount = getScenarioPanelBlocks(scenario).length;
-  const panelRule = (rule) => scenarioMode === 'experimental-manga' ? String(rule)
+  const panelRule = (rule) => isNativePageMode(scenarioMode) ? String(rule)
     .replaceAll('1〜3コマ目', '最終コマより前の各コマ').replaceAll('2〜3コマ目', '中盤の各コマ')
     .replaceAll('4コマ目', '最終コマ').replaceAll('4コマ', panelCount + 'コマ') : rule;
   const selected = normalizeEnhancementCategories(selectedCategories);

@@ -1,7 +1,9 @@
 import { getEndingModePolicy } from './ending-mode-policy.js';
+import { readBookPageMode, bookPageStoryGuidance } from './page-production-contract.js';
 
 /** Shared by generation, review and repair; beats are choices, not a quota. */
 export const buildStoryStructureGuidance = ({ punchlineType, scenarioMode = 'four-panel', phase = 'generate' } = {}) => {
+  if (readBookPageMode(scenarioMode)) return `${bookPageStoryGuidance(scenarioMode)}\n三幕は本全体の因果を設計する参考で、各ページへ全項目を強制しない。${phase === 'review' ? '監査では前後の文脈と現在の出来事の理解を比較し、人物・動作・話者・因果が明確に破綻する実害だけを修正理由にする。' : '必要な行動・受け手の反応・発見・余韻を具体的に描写する。'}指定されたシリアス・不条理・静寂や結末を保ち、画風・カメラ・演技の勢いを削らない。`;
   const policy = getEndingModePolicy(punchlineType);
   const surreal = punchlineType === 'Surreal' || punchlineType === 'PsychoHorror';
   const form = scenarioMode === 'experimental-manga'

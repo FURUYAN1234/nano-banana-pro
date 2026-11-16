@@ -36,7 +36,7 @@ test('missing Gemini image retains response evidence without inventing a paramet
 });
 
 test('Gemini generation combines loaded character sheets with its existing background references', () => {
-  assert.match(workflow, /buildGeminiReferencePlan\(\{ compact: true,\s*characterImages: images,/);
+  assert.match(workflow, /buildGeminiReferencePlan\(\{ continuityReferences:bookPageContextRef\.current\?\.continuityReferences\|\|\[\], compact: true,\s*characterImages: images,/);
   assert.match(workflow, /generateImageWithImagen\(apiPrompt, statCallback, referencePlan\.referenceImages, geminiImageOptions\)/);
 });
 
