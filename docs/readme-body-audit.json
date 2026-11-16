@@ -64,5 +64,5 @@
     ],
     "findings": "Freshly retrieved all eight official pricing/model sources on 2026-11-17 01:32 JST. Every source hash matches the same-day v8.0.1 full readback and configured Standard input/cache/output rates. No numeric rate changed. Batch discounts remain separate. Private pricing-v802-review.json retains retrieval times and source hashes."
   },
-  "reviewStage": "Unpublished v8.0.2 working-tree candidate based on 1c923ded20b6c37f3c10ad9b28a5654daf8ef26c; sourceTree/publicTree identify this base HEAD only. Actual browser editing verification passed. Refresh source commit and tree evidence after authorized commit; formal release audit remains pending."
+  "reviewStage": "Approved v8.0.2 formal post-source-commit audit for dc62221bd554adc8eb2b4815fd3ab93e1de961f8. Current source/public trees, README, manuals, pricing review and configured release asset match the inspected evidence. Actual browser editing verification passed. Official release transaction and public readback follow this audit."
 }
