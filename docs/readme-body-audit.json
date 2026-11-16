@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "82af412c65c7f7abab90d4cc8d401fd6481c64649313dd15e2ceb070a8c83cfe",
-  "manualVersion": "8.0.0",
-  "manualSourceSha256": "b61de3ff62c0b4c2effab693c04fa7ef3c2eb83e4492a845984cc7199a638f96",
+  "pricingSourceSha256": "6f781f1a54b50a66f6d63671401167924f51699b5ca29a4b42f54e117450caf8",
+  "manualVersion": "8.0.1",
+  "manualSourceSha256": "4827d0997d37eb12bd05f952e19d724cf0b0643bd7c854223907cad976ec7836",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "086abefbb0ac6e6e878cc759fe16fcb4b624fac413baaf6b3f0311804e68b495"
+      "sha256": "3ca2956a5d8bd4e2e5cb4695f28dbf824e57edf7c1acda8738380a83553e183b"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "d27627e9d3372684e21c0fd72a239e61bee51a8d55bbc0aa12b002bad8e57e85"
+      "sha256": "4bad800ede89d133642aff0972f932620aea6152d1b33ea2f07461b36e37b164"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "1c41f02d3350d972208e0cb75b137dbbaa7f471586b734e9d21b4d3644b2e5fe"
+      "sha256": "bfc6b7f86a0f0ee42689a37853a594d82203273918f2c151cfe50b5b914dad15"
     }
   ],
-  "readmeSha256": "a242635dc31c89cc601cc498c4cd354190bf4af2b1b5bdea0fc5776e62f3e8bc",
+  "readmeSha256": "3d28ae145f094c586791d55492af78d3ff937f50043711e8c06d2830380e12df",
   "readmeLanguageGaps": [],
-  "sourceTree": "6526a60089c1512c528ed96fec863e4e1d07faa4",
-  "publicTree": "0090fc3743169680bcf5fb4bc7886c5b0f0b168e",
-  "packageSha256": "2a8a0d6b8ffe62b84b2f2aeab10227db148d9e3a5d170b89d69b0bb8cc4cdae4",
+  "sourceTree": "d71934a633b6abdf3b5ffe8587f5f48d61d1b5f7",
+  "publicTree": "c14d83901ceabfa9a6f22dfef732256369d6e538",
+  "packageSha256": "eacc3f5914348b1593582f2a13d869418c018a88bae22cd0b9dce78cc38bafdd",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -44,24 +44,24 @@
   ],
   "sourceCommit": "3f6c989a4027fb8aa211e1b2afd81e6d227567c0",
   "reviewedAt": "2026-11-16T15:11:05.895Z",
-  "findings": "Reviewed the README changes against the previous accepted body and current MCP contracts/UI source: shared engine boundary; Windows launcher and skill; local app/API requirements; input locking and one stop action; separate utility/STEP rows; ordinary OpenAI 4-8, Gemini 4, explicit book 1-8; persistent references and previous-page auxiliary images; per-page PNG/JSON in one readable book directory, shared materials and factual whole-book provenance; ordinary API PNG and matching JSON in one title-and-time work folder, session-only explicit directory permission, ZIP-folder fallback and paired readback; immutable generation-time metadata and owner-verified title fallback for older MCP history; author-name choice; final-page-only two footer credits and independent page number. Removed obsolete legacy selector instructions, corrected reference-details and diagnostics locations, synchronized current release links and 15-entry changelog. Both languages and linked files checked. This is documentation review, not evidence of completed live generation or publication; the tracked source/public trees are now renewed against approved source commit 3f6c989a4027fb8aa211e1b2afd81e6d227567c0. Re-read the new version-adjacent bilingual intro: MCP-compatible production AI uses the same engine for multipage color/monochrome works with character/prop/background continuity and PNG/JSON; public demo is ordinary single-page and MCP requires the local app. README body/section order, manual sources and three reviewed PDF bytes, package, configured release asset and official-pricing review match the current evidence. This audit commit changes no src/public content and is not publication proof.",
-  "manualFindings": "Three Japanese A4 PDFs rebuilt for v8.0.0 on 2026-11-16: full manual 46 pages, Gemini 12 and OpenAI 19. Automated version, privacy, link and text-bound checks passed. Full-manual new MCP section pages 42-46 and revised pages 1/26/27/40/41/43/45/46 were visually reviewed; all 46 pages had been reviewed in the preceding candidate. OpenAI revised page 16 visually checked; other OpenAI changes are metadata/version/date/footer only. Unchanged content inherits the accepted manual review. Public PDFs match the reviewed private PDF bytes by SHA256. No claim of live API or external publication is made by this manual review.",
+  "findings": "Reviewed changed bilingual startup/skill and pricingdate sections against existing audited body;8.0.1 candidate routes appZIProotbatch to sharedlauncher, no MCPproduction behavior expansion. Ordinary1P manual use does not require skill or AIcontrol permission. Price numbers unchanged; root supplied fresh official evidence. Final setup prose prioritizes one Desktop startup path; supplemental skillZIP path follows actual strippedZIP layout.",
+  "manualFindings": "v8.0.1 manuals generated12/19/46pages with allpage bounds/text/links checks. Changed fullmanual38/42/43 and APIguide covers rendered and visually reviewed, no clipping/overlap. AppZIP rootstart_app and skillZIP Launch entry clarified, separate fullskill install and MCP registration/reload/tools recognition retained. Final38/43 rerender reviewed: normal appZIP rootstart_app once then singleDesktop entry; skillZIP supplemental Launch besideSKILL.md, no fixedfolder assumption. MCPservice idle does not lock manual controls.",
   "pricingReview": {
-    "version": "8.0.0",
-    "sourceSha256": "82af412c65c7f7abab90d4cc8d401fd6481c64649313dd15e2ceb070a8c83cfe",
-    "checkedAt": "2026-11-16T10:42:14.5920034+09:00",
+    "version": "8.0.1",
+    "sourceSha256": "6f781f1a54b50a66f6d63671401167924f51699b5ca29a4b42f54e117450caf8",
+    "checkedAt": "2026-11-17T00:52:00+09:00",
     "sources": [
-      "https://ai.google.dev/gemini-api/docs/pricing",
       "https://developers.openai.com/api/docs/pricing",
-      "https://aistudio.google.com/docs/pricing",
       "https://developers.openai.com/api/docs/models/gpt-6-sol",
       "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
       "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst",
-      "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare"
+      "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare",
+      "https://ai.google.dev/gemini-api/docs/pricing",
+      "https://aistudio.google.com/docs/pricing"
     ],
-    "findings": "Live official Standard short-context prices read and current source configuration compared. Values match. Existing confirmation date already2026-11-16; no price value or date edit needed for this same-day task. New source snapshots captured for this update. GPT5.6Sol promotional price through2026-11-30; Gemini3.8Flash promotion through2026-12-31. Standard input/cache/output rates were distinguished from Batch discounts; configured values remained unchanged."
+    "findings": "Root read official pricing2026-11-17 00:49–00:52JST and retained8 source markdown files privately. Current Standard short-context input/cache/output prices match configured values, including Terra1/.05/5, Luna.1/.01/.5, Sunburst image8/2/30 text5/1.25, Gemini3.8Flash.75/.075/3.75 promotion through yearend and NanoBanana2.1 image1K.0336. Batch discounts are separate; no price values changed, only confirmed dates."
   },
-  "reviewStage": "tracked-source-and-public-tree documentation audit; approved v8.0.0 source commit; external publication remains separate"
+  "reviewStage": "approved v8.0.1 source HEAD 9df8c52fad0b6e393e0486f7da7fff44a1026a73; same src/public trees and official release assets reviewed before publication"
 }
