@@ -42,9 +42,9 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "8988ff36efcb4b026708237be246c678c29ab0c4",
-  "reviewedAt": "2026-11-17T09:50:16.012Z",
-  "reviewedWorkingTree": true,
+  "sourceCommit": "6281c648e9f8d44c02c4118526da6821e0afede5",
+  "reviewedAt": "2026-11-17T09:53:54.645Z",
+  "reviewedWorkingTree": false,
   "findings": "Reviewed the complete current README heading/feature inventory against the candidate and compared changed sections to source and the preceding reviewed v8.0.2 text. Updated the API manual layout in both introduction and quick start, scenario-skill scope, page overrides, cover metadata/monochrome mode, stale-plan archival, silent/qualified cast aliases and scenario-model provenance. Corrected stale ordinary-save guidance to the actual PNG/JSON work-folder or ZIP path in generated-image-save.js. Existing model values, provider boundaries, ComfyUI package, licences, links and historical ChangeLog remain unchanged. Bilingual body checks pass. This is a local candidate review, not publication evidence. Documentation-only supplement: inspected the supplied five-character raster workflow, copied exact PNG bytes ca91d811315aaf33f36b17346d6da710f2c31f59a884f51cf3b9ac694d11c587 to docs/assets/furu-manga-workflow.png, and inserted it after the scenario-skill introduction. The adjacent bilingual caption clarifies scenario/material iteration, detailed-plan approval before rendering, automatic saving/file verification and the no-MCP script-only/manual single-page alternatives. The seven-step source-arrow plan passed the clear-spec audit; this does not replace visual inspection. App behavior, skill rules, model prices, PDFs, public assets and release ZIPs were not changed.",
   "manualFindings": "Generated and inspected all 78 pages: 47-page full manual plus 12-page Gemini and 19-page OpenAI guides. Full-manual contact sheets cover every page; the added page 47 was also inspected at full rendering size. A separate reviewer inspected all 31 API-guide individual PNGs and recorded their hashes in the private api-manuals-visual-review files. No clipping, overlap, missing glyphs or table failures were observed. A4 dimensions, text bounds, links, privacy patterns and v8.0.3 footers passed automated checks. Full-manual page 42 now describes scenario specialization; page 47 documents effective page settings, cover flags, monochrome mode, source model, plan archival, dependent preparation expiry and cast aliases. Existing screenshots are illustrative previous-screen captures; they do not assert that the protected production tab loaded v8.0.3.",
   "pricingReview": {
@@ -64,5 +64,5 @@
     ],
     "findings": "Fresh official Standard paid-tier review of all 16 configured OpenAI/Gemini model IDs at 2026-11-17 17:07:32 JST. Stored input/output/image rates match; no numeric change was needed. Cache rates absent from the estimator are recorded as not stored rather than invented. Batch/Flex/Fast/Priority discounts are excluded. Official main pricing pages and model-specific pages are linked in the private pricing-review.json, including legacy models omitted from the main table."
   },
-  "reviewStage": "Documentation-only working-tree update after completed v8.0.3 publication and full backup. README image/caption inspected, no commit/push performed by this worker. Existing v8.0.3 tag/Release/ZIP/Pages/C-copy remain untouched; sourceCommit identifies the base and reviewedWorkingTree is true until root commits this supplement."
+  "reviewStage": "Documentation-only supplement reviewed at sourceCommit after completed v8.0.3 publication and full backup. README image and caption inspected; this audit-only commit binds the preceding documentation commit. Existing v8.0.3 tag/Release/ZIP/Pages/C-copy remain untouched."
 }
