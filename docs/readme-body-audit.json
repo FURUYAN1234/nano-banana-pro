@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "6f781f1a54b50a66f6d63671401167924f51699b5ca29a4b42f54e117450caf8",
-  "manualVersion": "8.0.3",
-  "manualSourceSha256": "65a7f68ad39d9465d25822ef3977097ff01aadf8440db0692de449a2273b08c9",
+  "manualVersion": "8.0.4",
+  "manualSourceSha256": "ad77592630e2123cbe47a6cb15e137a64cd2fc65eb233aced9d3f0908cee626f",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "a24bbed3c03147bce36f06e619fcbc50a307998f206e91436498e3f505d35b4a"
+      "sha256": "b5d3863164a3404bd412f0958b011b9ad043b1a6afc831585401e49bf2b17515"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "b6791ae8616dbf7505b67c9a8633fb6e88be4db9562a49dd0e996d9f694dd85f"
+      "sha256": "5ed0d41bb46c72f69661c690f83ee4032b988babcf0e63186ec5afdc62b26a5e"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "33478b99d13193dcb421d9ac17c8dfedbc5621d44d5f74719fbd54147acb29cb"
+      "sha256": "3bc6b63c8947ce60c8de030add15eedf5c048b3b9f579596aabcc622b1876fc4"
     }
   ],
-  "readmeSha256": "31e68605a4a2b1af660d917c017ba5d2a1fdf95db5f5084e3888ffc7ea8310a7",
+  "readmeSha256": "5175695209fce26417b5f0ef5038402ffd95183aed8e35cb7411eb88961abbff",
   "readmeLanguageGaps": [],
-  "sourceTree": "dd61d2fd9312728e35fb127dd4d5bd4b43144a1d",
-  "publicTree": "35ba604c55315a6469c6977500f597528b2f2a63",
-  "packageSha256": "3ad53bffa5a3bef5224dd0d3650eb73c02d23376b9a601017827b19245902182",
+  "sourceTree": "14092d50d2b39e17fe2777165cc37635baf1cf1b",
+  "publicTree": "94756fd05c91d38b85de6aa6938e06595695ef99",
+  "packageSha256": "8a766a2b1e828e5d2f75279086a9755a2b02d01b77c304259bed8fdeaeca7db8",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -42,15 +42,15 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "6281c648e9f8d44c02c4118526da6821e0afede5",
-  "reviewedAt": "2026-11-17T09:53:54.645Z",
+  "sourceCommit": "fbf985a7d062a2803bda4c13f7a72acdc54a8cb1",
+  "reviewedAt": "2026-11-17T16:07:00.443Z",
   "reviewedWorkingTree": false,
-  "findings": "Reviewed the complete current README heading/feature inventory against the candidate and compared changed sections to source and the preceding reviewed v8.0.2 text. Updated the API manual layout in both introduction and quick start, scenario-skill scope, page overrides, cover metadata/monochrome mode, stale-plan archival, silent/qualified cast aliases and scenario-model provenance. Corrected stale ordinary-save guidance to the actual PNG/JSON work-folder or ZIP path in generated-image-save.js. Existing model values, provider boundaries, ComfyUI package, licences, links and historical ChangeLog remain unchanged. Bilingual body checks pass. This is a local candidate review, not publication evidence. Documentation-only supplement: inspected the supplied five-character raster workflow, copied exact PNG bytes ca91d811315aaf33f36b17346d6da710f2c31f59a884f51cf3b9ac694d11c587 to docs/assets/furu-manga-workflow.png, and inserted it after the scenario-skill introduction. The adjacent bilingual caption clarifies scenario/material iteration, detailed-plan approval before rendering, automatic saving/file verification and the no-MCP script-only/manual single-page alternatives. The seven-step source-arrow plan passed the clear-spec audit; this does not replace visual inspection. App behavior, skill rules, model prices, PDFs, public assets and release ZIPs were not changed.",
-  "manualFindings": "Generated and inspected all 78 pages: 47-page full manual plus 12-page Gemini and 19-page OpenAI guides. Full-manual contact sheets cover every page; the added page 47 was also inspected at full rendering size. A separate reviewer inspected all 31 API-guide individual PNGs and recorded their hashes in the private api-manuals-visual-review files. No clipping, overlap, missing glyphs or table failures were observed. A4 dimensions, text bounds, links, privacy patterns and v8.0.3 footers passed automated checks. Full-manual page 42 now describes scenario specialization; page 47 documents effective page settings, cover flags, monochrome mode, source model, plan archival, dependent preparation expiry and cast aliases. Existing screenshots are illustrative previous-screen captures; they do not assert that the protected production tab loaded v8.0.3.",
+  "findings": "Reviewed the complete current README heading/feature inventory against the candidate and compared changed sections to source and the preceding reviewed v8.0.2 text. Updated the API manual layout in both introduction and quick start, scenario-skill scope, page overrides, cover metadata/monochrome mode, stale-plan archival, silent/qualified cast aliases and scenario-model provenance. Corrected stale ordinary-save guidance to the actual PNG/JSON work-folder or ZIP path in generated-image-save.js. Existing model values, provider boundaries, ComfyUI package, licences, links and historical ChangeLog remain unchanged. Bilingual body checks pass. This is a local candidate review, not publication evidence. Documentation-only supplement: inspected the supplied five-character raster workflow, copied exact PNG bytes ca91d811315aaf33f36b17346d6da710f2c31f59a884f51cf3b9ac694d11c587 to docs/assets/furu-manga-workflow.png, and inserted it after the scenario-skill introduction. The adjacent bilingual caption clarifies scenario/material iteration, detailed-plan approval before rendering, automatic saving/file verification and the no-MCP script-only/manual single-page alternatives. The seven-step source-arrow plan passed the clear-spec audit; this does not replace visual inspection. App behavior, skill rules, model prices, PDFs, public assets and release ZIPs were not changed. v8.0.4 working-tree review: compared the existing body and all headings against the scoped book/cast/save-owner implementation. Updated current-version links, free two/three-panel design, anonymous previous-six-page composition, visible body/declared-party handling and nested costume/material PNG+JSON ownership. Retained published workflow graphic and its bilingual caption, ordinary manual/single-page/Gemini behavior, models, rights, privacy and all unrelated links. No improved image frequency or candidate sample success is asserted. Actual final-runtime API validation remains root-owned and pending. v8.0.4 working-tree review: compared the existing body and all headings against the scoped book/cast/save-owner implementation. Updated current-version links, free two/three-panel design, anonymous previous-six-page composition, visible body/declared-party handling and nested costume/material PNG+JSON ownership. Retained published workflow graphic and its bilingual caption, ordinary manual/single-page/Gemini behavior, models, rights, privacy and all unrelated links. The reported STEP3 source quotation, silent foreground and reference-role naming behavior is now explained without adding confirmation UI; local exact-failure regressions pass, while actual candidate sample acceptance remains pending. No improved image frequency or candidate sample success is asserted. Actual final-runtime API validation remains root-owned and pending. Follow-up delta review on 2026-11-17T13:27:34.689Z: reviewed the actual MCP multipage paragraphs against scenarioPageCompositionInstruction book-only full/half-body selection, the conditional pageTitleSuppression bleed exception, qualified-body punctuation resolver, and buildGenerationSaveSnapshot/checkpoint/post-ACK behavior. Compared ordinary1P/no-bleed parity, quiet-book restraint, document quotation versus explicit speech, silent role presence, and retained-image selection/save-failure semantics with their positive/negative tests. Added exact user-facing differences without changing drawing/G-pen policy, pricing, the reviewed PDFs, existing workflow raster/caption or unrelated links. The current sample remains a small boot crossing; gaze improved through an output image edit rather than a demonstrated source-level gaze fix. Final publication remains held for the user decision; prior pending API statements above describe earlier review times and are superseded only for the scoped evidence below. Final-sample and name-boundary delta review on 2026-11-17T14:18:17.854Z: updated the same multipage paragraphs/release draft after reviewing the root-recorded actual initial and final image receipts. The initial tall-right/left-inset monochrome sample already showed a large connected torso/hips/legs crossing; later ordinary image edits corrected real cast and boot defects. The earlier small-boot description remains historical evidence only and is superseded for the final sample. Checked same-source normal validator/compiler6/6/5->6/5/5, preserved final Akari speech/reappearance and cameras, plus longest-known-name token matching and explicit-canonical-name priority over a derived alias. Actual source tests keep distinct local reappearance and wrong/missing actors; no QA pass was forced. Current API browser remained on its earlier bundle, so the newest foreign-count/name fix is documented as deterministic verification, not latest-build API image proof. Color-image comparison was not performed. Existing headings, workflow raster/caption, PDF bytes/prices, unrelated links and all prior findings retained. Documentation-only skill follow-up on 2026-11-17T14:26:43.368Z: checked the new single bilingual paragraph against the root-reviewed canonical/installed skill hash 33f787000650ffb9cf3a3fa4f32008f8dee76e6dc7d9634f6407b670c87a5816. The paragraph is explicitly conditional on image production being requested and covers principal body action before surrounding scenes, foreign versus later local bodies, leg/shoe/contact continuity and local repair preserving the strong composition. No fixed coordinates, cast, art/G-pen rules or every-page crossing quota was added. Preserved workflow diagram/caption and existing sections. Corrected the private note image2 placeholder so it does not claim latest-build API rendering, and replaced intermediate2678/45 test wording with the completed final-source2685/2685 result; documentation after that run is checked by targeted audit. App source/dist unchanged. Publication delta review: read the final color-comparison/final-review.json and root visual findings; replaced current color-untested statements with exact final-runtime/one-generation/one-automatic-repair/one-image-edit scope and retained limitations. Removed local-candidate notices from the publication README and release notes. No runtime, PDF, prices, skill or accepted images changed.",
+  "manualFindings": "Regenerated current v8.0.4 PDF set,78pages total:47full+12Gemini+19OpenAI. Full47reviewed through8actual rendered contact sheets, page45 and47 individually. Final cast/save-owner additions changed page47 only; current sheet1–7 hash equality reuses the earlier42page visual review, and final sheet8/page47 were re-inspected. Independent reviewer opened each of31API-guide PNGs; their exact PDF bytes are retained. No clipping/overlap/missing glyphs/footer collisions/table failures observed. A4, version, links, privacy, bounds and API/full-manual role separation pass. Page45 initial text overflow was corrected by concise wording, without smaller font or looser layout checks. Existing old-screen screenshots remain qualified.",
   "pricingReview": {
-    "version": "8.0.3",
+    "version": "8.0.4",
     "sourceSha256": "6f781f1a54b50a66f6d63671401167924f51699b5ca29a4b42f54e117450caf8",
-    "checkedAt": "2026-11-17T08:07:32.912Z",
+    "checkedAt": "2026-11-17T10:16:46.914Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://aistudio.google.com/docs/pricing",
@@ -62,7 +62,139 @@
       "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst",
       "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare"
     ],
-    "findings": "Fresh official Standard paid-tier review of all 16 configured OpenAI/Gemini model IDs at 2026-11-17 17:07:32 JST. Stored input/output/image rates match; no numeric change was needed. Cache rates absent from the estimator are recorded as not stored rather than invented. Batch/Flex/Fast/Priority discounts are excluded. Official main pricing pages and model-specific pages are linked in the private pricing-review.json, including legacy models omitted from the main table."
+    "findings": "Fresh independent official Standard paid-tier review of16configured model IDs at2026-11-17T10:16:46.914Z; stored rates unchanged. Canonical Gemini ai.google.dev URL was additionally actually opened at2026-11-17T10:32:07.903Z and its official redirect to AIStudio and relevant Standard rows read back. Full source/time/value evidence is retained in private pricing-review.json and gemini-canonical-standard-readback.json; no unvisited source was inserted. Batch/Flex/Fast/Priority excluded."
   },
-  "reviewStage": "Documentation-only supplement reviewed at sourceCommit after completed v8.0.3 publication and full backup. README image and caption inspected; this audit-only commit binds the preceding documentation commit. Existing v8.0.3 tag/Release/ZIP/Pages/C-copy remain untouched."
+  "reviewStage": "Exact committed v8.0.4 source/public/PDF/package review bound after the source commit. Final-runtime color evidence and prior scoped monochrome/STEP3/history evidence retained. Strict new extracted MCP and skill packages pass; shared security audit0, targeted publication checks14/14. Formal release transaction and tagged-source reproduction follow this audit-only commit.",
+  "apiValidation": {
+    "status": "scoped_evidence_recorded_publication_pending",
+    "scope": "Different actual runtimes are explicitly distinguished. Two-page image flow and original STEP3 exercised the preceding aa84/index-be-EPVtQ bundle; final9c293/index-C8h9T1zr exercised keyless history/export. No assertion of every final-bundle API branch or political-image generation. Final index-BnqpIKt0.js additionally completed normal color image generation, one automatic repair and one explicit image edit; accepted output visually reviewed by the root agent.",
+    "reportedStep3": {
+      "jobId": "3d826ede-a9fc-418d-bc07-452d1ad82f42",
+      "bundle": "index-be-EPVtQ.js",
+      "model": "gpt-6-luna",
+      "scenarioExact": true,
+      "castExact": true,
+      "recognizedMaterials": true,
+      "dialogueCount": 7,
+      "noFalsePaperSpeaker": true,
+      "p5Cast": [
+        "サエコ",
+        "小泉防衛相"
+      ],
+      "documentQuoteKept": true,
+      "reportedSpeechKept": true,
+      "noImageRequested": true
+    },
+    "historySelection": {
+      "jobId": "07f93393-5887-4821-be46-094db909098b",
+      "bundle": "index-C8h9T1zr.js",
+      "selectedOnlyTarget": true,
+      "previousHistoryRetained": true,
+      "metadataScenarioExact": true,
+      "metadataPromptExact": true,
+      "metadataSettingsExact": true,
+      "truthfulOriginalProvider": true,
+      "exportedVisualPngChunksEqual": true,
+      "displayedVisualPngChunksEqual": true,
+      "newPaidGeneration": false
+    },
+    "sampleLimitations": {
+      "layout": "Monochrome and final-runtime color samples showed large connected body crossings. Neither demonstrates all layouts or no-repair success.",
+      "anatomyAndIdentity": "Original stronger image had real cast defects and a later finger-like boot. Ordinary image edits corrected these; no claim of a root fix to anatomy/gaze generation.",
+      "automaticQa": "Visual inspection of actual output; this image_edit has no automatic QA rerun. Does not claim new source build ran API generation.",
+      "publication": "Specific v8.0.4 deployment authorized; formal receipt will provide public verification."
+    },
+    "finalMonochromeSample": {
+      "initialJobId": "3b42363f-d453-4fa6-b1f6-3611fae02249",
+      "initialBreakoutVisible": true,
+      "finalJobId": "6b29040b-8aaf-43fd-9aa2-fd03d679dd84",
+      "verified": [
+        "B&W, exactly3scenes, original3dialogues",
+        "large connected torso/hips/legs cross left inset frames",
+        "sword contacts guardian core; attack face toward target",
+        "shield-contact toe is closed leather boot with continuous sole, no fingers",
+        "P1 usual5 plus guardian, P2 duplicate Miku removed, P3 all5 distinguishable",
+        "ending完 and footer/page2 intact"
+      ],
+      "savedVisualMatchesDisplayed": true,
+      "nativeSha256": "080268aeebf811971bfe4b4a6704a81734308abcf6675778094e32923040b15d",
+      "userFeedback": "足治ったね",
+      "automaticQa": "not_run on explicit final image_edit",
+      "actualLoadedApiBundle": "index-be-EPVtQ.js",
+      "latestForeignFixLoadedForImageApi": false,
+      "colorImageTested": false
+    },
+    "deterministicForeignCast": {
+      "kind": "Final known-name-boundary source: real snapshot through normal pure validator/compiler; no LLM/API/new runtime image generation",
+      "sourceHashes": [
+        "be207eec0e136f56fa14075841d9b42d0a9fba34363f34a4086d10cb64eb8124",
+        "80ec23e0c5e4e65be32b75e43da961888e6ad8d8674c91785ef9130a4db84745"
+      ],
+      "counts": [
+        [
+          6,
+          6,
+          5
+        ],
+        [
+          6,
+          5,
+          5
+        ]
+      ],
+      "p1AndP3Unchanged": true,
+      "p3LocalAkariRetained": true,
+      "dialogueAndCamerasUnchanged": true,
+      "originalSourceUnchanged": true,
+      "newImageApi": false
+    },
+    "finalColorSample": {
+      "observedAt": "2026-11-17T15:24:22.5312316+00:00",
+      "bundle": "index-BnqpIKt0.js",
+      "generationJob": "20473c23-effb-4321-afec-83a9c0300e26",
+      "localEditJob": "fdf98d45-05c1-4761-9fc1-a6fadcd498e3",
+      "state": "completed",
+      "mode": "color",
+      "page": 2,
+      "normalGeneration": 1,
+      "automaticRepairs": 1,
+      "subsequentLocalEdits": 1,
+      "output": "C:\\Users\\furu\\Documents\\Codex\\2026-11-17\\ai\\outputs\\帰還門まで、あと一撃。_枠はみ出し検証2P_v8.0.4\\04_本文2P_カラー比較_人物調整.png",
+      "json": "C:\\Users\\furu\\Documents\\Codex\\2026-11-17\\ai\\outputs\\帰還門まで、あと一撃。_枠はみ出し検証2P_v8.0.4\\04_本文2P_カラー比較_人物調整.json",
+      "sha256": "8ddfb7157c68ff9bcfdeedee700d3556b389443dd0683f153ab1b80e63ccac7b",
+      "nativeCopyMatches": true,
+      "originalMonochromePreserved": true,
+      "visualReview": {
+        "largeContinuousTorsoAndLegBreakout": "observed",
+        "closedBootsAndShieldContact": "observed",
+        "smallUpperSceneDuplicates": "removed",
+        "finalSceneFiveDistinctCharacters": "observed",
+        "dialogueAndEndingAndFooter": "retained",
+        "note": "Manual visual review of final local export; no automatic recheck after image_edit. Minor layout overlap accepted under user art-first criteria."
+      },
+      "publication": "User explicitly approved deployment after reviewing the color result; public verification is recorded separately by the formal transaction."
+    }
+  },
+  "localValidation": {
+    "appSourceFull": {
+      "session": 22314,
+      "tests": 2685,
+      "passed": 2685,
+      "failed": 0,
+      "durationMs": 299404.5331,
+      "log": "final-name-full-test.log"
+    },
+    "scopedBeforeFull": {
+      "tests": 43,
+      "passed": 43,
+      "log": "two-page-sample/foreground-local-cast/long-name-boundary-focused.log"
+    },
+    "lintAndBuild": {
+      "session": 36731,
+      "exitCode": 0,
+      "runtimeFingerprint": "f70ed19024554e4ef1931cbe08fa0473d30a91bd66fbcceaf802683af7f983d2",
+      "js": "index-BnqpIKt0.js"
+    },
+    "afterFullScope": "Only this skill paragraph, publication drafts and README audit rebinding. Root separately normalized3backend/docs CRLF files without semantic changes; no additional appsource behavior change or latest-build API image assertion."
+  }
 }
