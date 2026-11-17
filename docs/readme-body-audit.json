@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "6f781f1a54b50a66f6d63671401167924f51699b5ca29a4b42f54e117450caf8",
-  "manualVersion": "8.0.2",
-  "manualSourceSha256": "39c33680bbd4a37780760d25c5b1ebbbffaa967a9b3624a22e2acce5c717939a",
+  "manualVersion": "8.0.3",
+  "manualSourceSha256": "65a7f68ad39d9465d25822ef3977097ff01aadf8440db0692de449a2273b08c9",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "9e1fa25ddcd28dc0e4d436268c6f4b49f1396585b7f6412e03b75420055f8d45"
+      "sha256": "a24bbed3c03147bce36f06e619fcbc50a307998f206e91436498e3f505d35b4a"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "0c40bb6674eb29bac594856fc51968b117799d2b3a19e883c67b10da53db090f"
+      "sha256": "b6791ae8616dbf7505b67c9a8633fb6e88be4db9562a49dd0e996d9f694dd85f"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "2a9e34716a8ffad9a6720fb485042774b75335d81e80e448b05c45171ec62a3c"
+      "sha256": "33478b99d13193dcb421d9ac17c8dfedbc5621d44d5f74719fbd54147acb29cb"
     }
   ],
-  "readmeSha256": "4ce2920e237c718ad6d48d06c04a8a5c75a9c9733ef6e3f1efb6d62b0013d1dd",
+  "readmeSha256": "fe95930dd1a8717521c7f1aa0aec08ed8275f10d9c6eecefc81bedae44c628e2",
   "readmeLanguageGaps": [],
-  "sourceTree": "3f44bb1c6bdb845a91e7df51ed3672cbbbb5334e",
-  "publicTree": "496b38ec4911a061b657162df615c6cffa9096d7",
-  "packageSha256": "c1b10c87433b223c0eb2b8c7af61cc7bcc8ee8dc79ea2c91971b6b583a06b9c4",
+  "sourceTree": "dd61d2fd9312728e35fb127dd4d5bd4b43144a1d",
+  "publicTree": "35ba604c55315a6469c6977500f597528b2f2a63",
+  "packageSha256": "3ad53bffa5a3bef5224dd0d3650eb73c02d23376b9a601017827b19245902182",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -42,27 +42,27 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "dc62221bd554adc8eb2b4815fd3ab93e1de961f8",
-  "reviewedAt": "2026-11-16T21:36:00.736Z",
+  "sourceCommit": "b6102e7f0bf1d86ee41012bc52266d4570a23e10",
+  "reviewedAt": "2026-11-17T09:07:08.350Z",
   "reviewedWorkingTree": false,
-  "findings": "Formal post-source-commit review of all current bilingual README sections against commit dc62221bd554adc8eb2b4815fd3ab93e1de961f8. Current v8.0.2 version/download guidance, OneDrive Desktop shortcut behavior and incomplete composition-JSON editing explanations match the inspected implementation. README, package, tracked source/public trees, configured release asset and all three inspected PDF hashes are bound by this record. Existing generation behavior and prior release history remain preserved; this record does not assert publication or installation completion.",
-  "manualFindings": "PDF reviewer checked all 77 pages across 46-page full manual and 12/19-page API guides for text, bounds, links and current-version footers. Changed full-manual pages 13 (draft JSON editing) and 43 (OneDrive shortcut behavior) were rendered and visually reviewed; unchanged body pages match v8.0.1 after version normalization. Current file hashes match those inspected outputs. Actual App/hook/form UI verification subsequently passed all seven valid/incomplete/restored scenarios, with free-input retention and zero external provider attempts; this is isolated UI evidence, not an additional real API generation.",
+  "findings": "Reviewed the complete current README heading/feature inventory against the candidate and compared changed sections to source and the preceding reviewed v8.0.2 text. Updated the API manual layout in both introduction and quick start, scenario-skill scope, page overrides, cover metadata/monochrome mode, stale-plan archival, silent/qualified cast aliases and scenario-model provenance. Corrected stale ordinary-save guidance to the actual PNG/JSON work-folder or ZIP path in generated-image-save.js. Existing model values, provider boundaries, ComfyUI package, licences, links and historical ChangeLog remain unchanged. Bilingual body checks pass. This is a local candidate review, not publication evidence.",
+  "manualFindings": "Generated and inspected all 78 pages: 47-page full manual plus 12-page Gemini and 19-page OpenAI guides. Full-manual contact sheets cover every page; the added page 47 was also inspected at full rendering size. A separate reviewer inspected all 31 API-guide individual PNGs and recorded their hashes in the private api-manuals-visual-review files. No clipping, overlap, missing glyphs or table failures were observed. A4 dimensions, text bounds, links, privacy patterns and v8.0.3 footers passed automated checks. Full-manual page 42 now describes scenario specialization; page 47 documents effective page settings, cover flags, monochrome mode, source model, plan archival, dependent preparation expiry and cast aliases. Existing screenshots are illustrative previous-screen captures; they do not assert that the protected production tab loaded v8.0.3.",
   "pricingReview": {
-    "version": "8.0.2",
+    "version": "8.0.3",
     "sourceSha256": "6f781f1a54b50a66f6d63671401167924f51699b5ca29a4b42f54e117450caf8",
-    "checkedAt": "2026-11-17T01:32:49.3131795+09:00",
+    "checkedAt": "2026-11-17T08:07:32.912Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
+      "https://aistudio.google.com/docs/pricing",
+      "https://ai.google.dev/gemini-api/docs/pricing",
       "https://developers.openai.com/api/docs/models/gpt-6-sol",
       "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
       "https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst",
-      "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare",
-      "https://ai.google.dev/gemini-api/docs/pricing",
-      "https://aistudio.google.com/docs/pricing"
+      "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare"
     ],
-    "findings": "Freshly retrieved all eight official pricing/model sources on 2026-11-17 01:32 JST. Every source hash matches the same-day v8.0.1 full readback and configured Standard input/cache/output rates. No numeric rate changed. Batch discounts remain separate. Private pricing-v802-review.json retains retrieval times and source hashes."
+    "findings": "Fresh official Standard paid-tier review of all 16 configured OpenAI/Gemini model IDs at 2026-11-17 17:07:32 JST. Stored input/output/image rates match; no numeric change was needed. Cache rates absent from the estimator are recorded as not stored rather than invented. Batch/Flex/Fast/Priority discounts are excluded. Official main pricing pages and model-specific pages are linked in the private pricing-review.json, including legacy models omitted from the main table."
   },
-  "reviewStage": "Approved v8.0.2 formal post-source-commit audit for dc62221bd554adc8eb2b4815fd3ab93e1de961f8. Current source/public trees, README, manuals, pricing review and configured release asset match the inspected evidence. Actual browser editing verification passed. Official release transaction and public readback follow this audit."
+  "reviewStage": "Post-source-commit rebind of the actually reviewed v8.0.3 README/manual candidate. Publication and readback remain separate."
 }
