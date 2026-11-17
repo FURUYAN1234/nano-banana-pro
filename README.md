@@ -76,6 +76,12 @@ The production skill also supports a single manga page. When a manga request lea
 
 The skill includes storytelling and revision guidance derived from Story Maker: reader expectations, motivation, setup and payoff, visible acting, and preserving successful drafts. It presents panel-by-panel proposals and uses the manga application's planning pipeline; Story Maker installation or extra provider calls are not required. / Story Makerの実装から抽出した、読者の期待、人物の動機、仕込みと回収、絵で伝わる演技、成立した案を保つ推敲の手順を同梱しています。コマごとのシナリオを提示し、漫画アプリの構成処理へつなぎます。Story Makerの導入や追加API呼び出しは不要です。
 
+### Manga workflow with AI / AIと進める漫画制作の流れ
+
+![AI manga workflow from consultation to saved pages and optional SNS publication / 相談から保存・希望時のSNS投稿までを示すAI漫画制作の流れ](docs/assets/furu-manga-workflow.png)
+
+Scenario and reference preparation may be revisited; rendering follows approval of the detailed plan. Saving is automatic: step 6 checks the saved PNG/JSON and displays all pages. Script-only consultation needs no MCP, and an ordinary single page can be made manually. / シナリオと資料は必要に応じて往復し、詳細案を確認してから画像化します。保存はアプリが自動で行い、⑥でPNG／JSONの保存結果を確認して全ページを再掲します。脚本相談だけならMCPは不要で、通常の1ページはアプリを手動でも制作できます。
+
 [![Download the manga scenario-writing skill ZIP / 漫画シナリオ制作スキルをダウンロード](docs/assets/manga-skill-download-button.png)](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip)
 
 **Normal Windows startup / 普段のWindows起動:** Extract the whole app ZIP, run its root `start_app.bat` once, then use the single Desktop shortcut. It handles update checks, MCP service startup and opening the app together; you do not need to launch them separately. A running MCP service does not lock manual controls: **Allow AI control** enables AI operation separately. / アプリZIPを全体展開し、直下の `start_app.bat` を一度実行します。以後はデスクトップのショートカット1つで、更新確認・MCPサービス起動・アプリ表示まで進みます。別々に起動する必要はありません。MCPサービスが動いているだけでは手動操作はロックされず、「AI操作を許可」は別の操作です。
