@@ -171,11 +171,32 @@ export class ProjectStore {
   }
   setPlan({ projectId, expectedRevision, idempotencyKey, outline, detail, castBible, assetSpecs }) {
     return this.mutate(projectId, expectedRevision, idempotencyKey, { operation: 'plan', outline, detail, castBible, assetSpecs }, p => {
+      const previous = { plan: clone(p.plan), castBible: p.castBible, assetSpecs: clone(p.assetSpecs) };
       const changedOutline = outline !== undefined && JSON.stringify(canonical(outline)) !== JSON.stringify(canonical(p.plan?.outline));
       p.plan = { revision: (p.plan?.revision ?? 0), outline: outline ?? p.plan?.outline ?? '',
         detail: detail !== undefined ? detail : changedOutline ? null : p.plan?.detail ?? null };
       if (castBible !== undefined) p.castBible = castBible;
       if (assetSpecs !== undefined) p.assetSpecs = clone(assetSpecs);
+      const changed = JSON.stringify(canonical({ outline: previous.plan?.outline, detail: previous.plan?.detail, castBible: previous.castBible, assetSpecs: previous.assetSpecs }))
+        !== JSON.stringify(canonical({ outline: p.plan.outline, detail: p.plan.detail, castBible: p.castBible, assetSpecs: p.assetSpecs }));
+      if (changed && p.pages.some(page => page.snapshot || page.export)) {
+        // Keep prior drafts and immutable image references recoverable, outside
+        // active page state and without copying the archive into itself.
+        (p.planHistory ??= []).push({ ...previous, projectRevision: p.revision, archivedAt: new Date().toISOString(),
+          pages: p.pages.map(page => ({ pageId: page.id, revision: page.revision, snapshot: clone(page.snapshot), ...(page.export ? { export: clone(page.export) } : {}) })) });
+        for (const page of p.pages) {
+          if (page.snapshot) {
+            const retained = {};
+            for (const key of ['images', 'referenceAssets', 'castList', 'styleJson', 'bg360Enabled', 'bg360Image', 'bg360Analysis', 'bg360ImageParts'])
+              if (page.snapshot[key] !== undefined) retained[key] = page.snapshot[key];
+            if (previous.castBible !== p.castBible || previous.plan?.detail?.castBible !== p.plan.detail?.castBible)
+              retained.castList = p.castBible || p.plan.detail?.castBible || '';
+            page.snapshot = retained;
+          }
+          delete page.export;
+          page.revision += 1;
+        }
+      }
     });
   }
   requestApproval({ projectId, expectedRevision, idempotencyKey, action, planHash, planRevision, userResponse, decision }) {

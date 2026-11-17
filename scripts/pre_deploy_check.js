@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { collectReadmeBodyEvidence, validateReadmeBodyAudit, validatePricingReview } from './readme_body_audit.mjs';
 import { assertPublicSkillDistribution } from './public_skill_distribution.mjs';
+import { collectMangaSkillEvidence, validateMangaSkillReview } from './manga_skill_review.mjs';
 
 console.log("🛡️ [Security Check] Validating Git Environment...");
 
@@ -81,6 +82,11 @@ try {
         process.exit(1);
     }
     console.log(`✅ [Version Sync] All files consistent: ${pkgNormalized} (package.json: ${pkgVersion})`);
+
+    const skillReview = JSON.parse(fs.readFileSync('docs/manga-skill-review.json', 'utf8'));
+    const skillReviewErrors = validateMangaSkillReview(skillReview, collectMangaSkillEvidence(process.cwd()));
+    if (skillReviewErrors.length) throw new Error(`Manga skill review missing or stale: ${skillReviewErrors.join('; ')}`);
+    console.log('✅ [Manga Skill] Production feedback review matches this version and bundled skill');
 
     // ============================================================
     // 5. README CHANGELOG CHECK (§3 + §6)

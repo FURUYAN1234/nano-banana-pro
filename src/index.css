@@ -1,6 +1,8 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities source(none);
+@source "./";
+@source "../index.html";
 
 .related-app-link { display:flex; flex-direction:column; gap:5px; min-width:0; min-height:44px; padding:12px 14px; border:1px solid #475569; border-radius:8px; background:#0f1723; color:#e2e8f0; text-decoration:none; overflow-wrap:anywhere; }
 .related-app-link-name { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; font-size:13px; font-weight:700; line-height:1.5; }

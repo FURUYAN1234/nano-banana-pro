@@ -1,6 +1,14 @@
 import {buildRecognitionEditorText} from '../reference-assets.js';
 import {MangaControlError} from './contract.js';
 
+export function resolveMcpScenarioUsedModel(snapshot,planned,{restoreNormal=false}={}){
+ if(snapshot?.scenarioUsedModel)return snapshot.scenarioUsedModel;
+ // Only the actual detailed-script result supplies missing provenance. A
+ // manually replaced script and a normal-session restore cannot borrow it.
+ if(restoreNormal||(snapshot?.scenario!=null&&snapshot.scenario!==planned?.scenario))return null;
+ return planned?.model||null;
+}
+
 export function preserveMcpRecognitionScenario(snapshot,source,project,pageId){
  const owner=source?.bookPageContext;
  const samePage=owner?.projectId===project.id&&owner?.pageId===pageId;
@@ -9,6 +17,7 @@ export function preserveMcpRecognitionScenario(snapshot,source,project,pageId){
  // empty edit. Use the pre-recognition state only when its ownership matches.
  snapshot.scenario=(samePage?source.scenario:undefined)??planned?.scenario??planned?.direction??'';
  snapshot.originalScenario=(samePage?source.originalScenario:undefined)??snapshot.scenario;
+ snapshot.scenarioUsedModel=resolveMcpScenarioUsedModel(samePage?source:undefined,planned);
  return snapshot;
 }
 

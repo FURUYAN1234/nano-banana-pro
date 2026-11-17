@@ -1,0 +1,551 @@
+{
+  "format": 1,
+  "version": "8.0.3",
+  "skillSha256": "37c8b507083df1b218e888221d1021fc88c369bfa8c7096004d2680595243a4c",
+  "reviewedAt": "2026-11-17T08:32:41.730Z",
+  "reviewedSince": "Previous bundled skill through the 2026-11-17 local launcher and manga planning session; no public deployment performed.",
+  "sources": [
+    "2026-11-17 user feedback: explain launch progress, avoid full installed-file hashing at every startup, offer the manga skill implicitly, support one-page manga, and review reusable lessons at each deployment.",
+    "2026-11-17 local launch evidence: the former full dependency check took about 6m58s; the patched managed batch reached the running MCP service and app HTTP responses in 4.22s.",
+    "2026-11-17 MCP production planning: a text brief alone left default comic pages; setting page kinds, panel counts and presentation before plan_story produced the intended cover plus body-page structure.",
+    "2026-11-17 independent five-scenario routing review: corrected an unconditional method question and missing deployment applicability in skill metadata.",
+    "2026-11-17 follow-up: the user requested a more embarrassing romance and a more detailed scenario proposal; a temporary browser tab had closed after the prior approval-wait turn.",
+    "Read-only Story Maker v5.5.2 source research at commit 6f756362fe0d3d80d1a03dddfea50404a4abae8f. Exact source paths and line pointers are included in the portable story-design reference. No Story Maker files, builds or APIs were changed.",
+    "2026-11-17 user requested character sheets and each completed manga page to be embedded in this chat immediately, and requested this behavior to be part of the skill.",
+    "2026-11-17 user stopped the public-confession story, requested mandatory script checks and then prioritized a scenario-only skill. Withdrawn added drawing instructions; no rendering-setting changes.",
+    "2026-11-17 user required portable storytelling knowledge without Story Maker installation, across short/medium/long forms, with primary-source research and no copying source expression. See references/story-sources.md.",
+    "2026-11-17 user required page-count selection: explicit/prior counts first, length-label defaults, and a question before planning when both are absent.",
+    "2026-11-17 effective-input failure: private manga-launch-check-20261117/status.md and v2-cancel-title-investigation.json, actual saved cover metadata, and production-page-0-check-inspect.json. The exported scenario retained the old title and finalPrompt mixed old and new titles; later apply_page readback reports scenarioExact:true. No story-specific title or author became a general skill default.",
+    "2026-11-17 follow-up clarified pen-name routing: ask once at the start of a new manga that includes image production, including one-page and coverless works; preserve an existing answer or no-credit choice, and do not add questions for script-only work or an unchanged resume.",
+    "2026-11-17 root production inspection: a shortened character name was not resolved to the full registered name; CAST COUNT omitted a silent/background character and ABSENT excluded that character, which directed QA toward deleting the intended figure. Application alias resolution is being fixed separately; the skill review had checked scene/dialogue/camera but missed the contradictory cast directives.",
+    "2026-11-17 user: completed manga pages became hard to find in collapsed activity; requested all pages inline at final completion and asked about a non-collapsing history setting.",
+    "2026-11-17 user explicitly prefers the same existing per-page PNG inline method; do not add Adobe.",
+    "2026-11-17 user requested reusable finished-manga SNS flow: ask permission and destination, request browser connection if missing, propose introduction text, publish after concrete OK. This turn requests skill updating only.",
+    "2026-11-17 user requires every manga SNS post to end with the exact AI-production disclosure; the typographical error was corrected in the proposed wording.",
+    "2026-11-17 user feedback: retitled manga retained the old MCP auto-save folder; add future folder alignment and prohibit uncontrolled unsolicited Explorer/native dialog opening. Existing folder move and app repair are outside this skill-only change.",
+    "2026-11-17 user feedback: final-page bottom-right watermark differed from one-page manga; future skill must preserve the current application canonical wording. Read-only source: prompt-assembler.js buildMangaWatermark, prompts.js watermarkEng, openai-image-settings.js applyOpenAIImageEngineWatermark.",
+    "2026-11-17 user clarification: the existing five sheets are PC-specific. Generic skill must ask whether to obtain/provide sheets or generate them with AI, while retaining the current explicit usual-five choice.",
+    "2026-11-17 explicit user request: unless sheet-exact clothing is specified, use clothing appropriate to story and setting. Current draft had retained uniforms plus weapons, then was corrected toward fantasy outfits before image generation; root confirmed old detail job cancelled.",
+    "2026-11-17 explicit user request: character speech/actions follow sheet descriptions; where descriptions are absent, AI should invent appropriate fictional traits considering appearance and story development.",
+    "2026-11-17 user requests: exact final SNS disclosure followed by plain URL https://note.com/happy_duck780/n/ndf063558c1f5; outfit-setting images shown/confirmed before story images and reused as actual references. Display label mismatch resolved to actual href by root.",
+    "2026-11-17 user feedback: a speaker correction extended only the speech-balloon tail, producing an excessively long tail. User explicitly requested a general skill rule about tail length.",
+    "2026-11-17 follow-up user feedback: moving the last-panel balloon left shortened its tail but left an unintended empty right edge. Root owns image re-layout.",
+    "2026-11-17 root diagnosis: previous-page editing correctly invalidates downstream finalPrompt/assembly; handoff restored prompt alone without checking prepared state. This is a production-procedure issue, not an application bug.",
+    "2026-11-17 user feedback: a final-panel defender looked away from the monster; user requested attention toward the action target. Actual local image correction is pending and owned by root.",
+    "2026-11-17 correction to preceding gaze feedback: user meant BODY3 final panel, not BODY1. Sword/body attack toward the core while face/gaze diverts toward reader. Image correction incomplete. Root cancelled the mistakenly submitted BODY1 edit; prior adopted BODY1 is retained. Earlier record is preserved as history, not current target.",
+    "2026-11-17 user feedback on BODY4 (fifth artwork) panel1: apparent third leg plus scale/depth mismatch making sword reach doubtful. Root observed the image; application automatic QA repair is in progress, not completed.",
+    "2026-11-17 user follow-up: an implausibly long sword would be required to reach the monster. Root reports prior automatic repair did not resolve reach; panel1 re-layout edit is submitted and incomplete.",
+    "2026-11-17 user feedback: BODY4 final-panel ending 完 disappeared/clipped after upper action-panel enlargement. Root observed unreadable lower-edge lettering. User accepted combat; only ending-letter repair is requested and remains pending.",
+    "2026-11-17 explicit user rule: after panel-size adjustments, reconsider the entire one-page balance. Current image correction remains incomplete and root-owned.",
+    "2026-11-17 user clarification: 完/END checks apply only to the final page, not intermediate pages.",
+    "2026-11-17 user clarification: endings include many forms such as おしまい; monologues and other panel lettering may be lost after edits too.",
+    "2026-11-17 user requests: never close a working screen without reason, and locate the relevant tab yourself. Root found surviving tabs, restored visibility, then selected the latest content tab and observed restored ending image plus MCP connection. No reload or key re-entry; cause of earlier disappearance remains unknown.",
+    "2026-11-17 explicit user instruction: skill-only changes also require deployment, and SNS release announcements must include reference images showing the update. Current root task separately authorizes this release; this general rule grants no future publication permission.",
+    "2026-11-17 candidate version rebind: package.json now reads 8.0.3. Existing reviewed skill instructions retained. This review does not assert release deployment, public ZIP synchronization or API PDF visual completion.",
+    "2026-11-17 user correction: Explorer/download selection window remained open despite successful attachment. Root observed and closed native window593106; creation cause unknown.",
+    "2026-11-17 release packaging: API/manual owner normalized SKILL.md and four supporting references to LF without content change. Source and installed/bundled copies resynchronized afterward; content evidence normalizes CRLF by design."
+  ],
+  "findings": [
+    {
+      "observation": "Users could not distinguish startup work from a hang, and full dependency hashing delayed ordinary launches.",
+      "disposition": "updated",
+      "rule": "Report actual launcher stages; validate downloaded archives when installing; reuse an installed version after checking its receipt, version and required startup entries.",
+      "reason": "Applies to all launches, independent of story or artwork."
+    },
+    {
+      "observation": "Manga requests should find the installed workflow without naming the skill; existing method choices must not be asked again.",
+      "disposition": "updated",
+      "rule": "Offer MCP first only when the method is unspecified, respect explicit alternatives and reuse an accepted choice.",
+      "reason": "Covers first use, explicit invocation and resumed production."
+    },
+    {
+      "observation": "A one-page request needs the same production and save flow without an extra cover.",
+      "disposition": "updated",
+      "rule": "Use totalPages 1, keep a requested title on that page, and retain concrete-plan review, materials and PNG/JSON checks.",
+      "reason": "Page count is distinct from panel count."
+    },
+    {
+      "observation": "A cover described only in the brief was initially planned as a normal comic page.",
+      "disposition": "updated",
+      "rule": "Set page kind, panel count and presentation before the first story-planning operation.",
+      "reason": "Verified against the corrected live MCP outline; does not hardcode a particular title, author or page count."
+    },
+    {
+      "observation": "Production lessons can be lost between releases.",
+      "disposition": "updated",
+      "rule": "Review actual production and feedback at each deployment, generalize useful steps, separate application bugs from skill instructions and bind the review to the candidate skill.",
+      "reason": "The release check verifies record presence and consistency, not the truth of its content or future generation quality."
+    },
+    {
+      "observation": "A specific romance title, cast, dialogue and camera details belong to this work.",
+      "disposition": "not_generalized",
+      "rule": "Do not turn story-specific names, dialogue or incidental geometry into universal skill rules.",
+      "reason": "Preserves creative flexibility and the user acceptance standard for minor visual differences."
+    },
+    {
+      "observation": "A page-level plot summary did not give the user enough detail to review the story.",
+      "disposition": "updated",
+      "rule": "Display the saved detailed plan as panel-by-panel scenes, actions, expressions, named dialogue and ending; retain exact story content while hiding unnecessary internal JSON and coordinates.",
+      "reason": "Applies to both one-page and multipage proposals and revisions."
+    },
+    {
+      "observation": "A temporary production tab was not retained before a turn ended, losing its in-memory API connection.",
+      "disposition": "updated",
+      "rule": "Use the client documented tab retention or handoff operation before ending a production or approval-wait turn, and reapply turn-scoped marks when necessary.",
+      "reason": "The project on disk and the browser-only connection have different lifetimes."
+    },
+    {
+      "observation": "An outline could contradict the last-page watermark override because the authoring request omitted effective per-page settings.",
+      "disposition": "updated",
+      "rule": "Keep page display overrides in the actual planning input and compare narrative directions to those settings before presenting the plan.",
+      "reason": "Application prompt construction was corrected with a regression test; this is not solved solely by longer skill text. The currently connected released app remains on its existing build; this project outline was aligned through its normal MCP plan-edit operation."
+    },
+    {
+      "observation": "The user asked the skill to apply the locally installed Story Maker storytelling knowledge, beyond operating the manga MCP.",
+      "disposition": "updated",
+      "rule": "Design reader expectations, scale structure to page count, track motivation and information, plan setup/payoff, express feelings through drawable acting, and preserve the current draft when a revision causes regression.",
+      "reason": "Extracted actual prompt/review/candidate-adoption mechanisms; excluded mandatory novel lengths, fixed beat counts, numeric score loops and extra provider calls. Approved drafts are not revised retroactively."
+    },
+    {
+      "observation": "An image visible inside a tool result or application was insufficient for the user to see each finished artifact in the conversation.",
+      "disposition": "updated",
+      "rule": "Inspect and display each completed character sheet and page inline in conversation as it becomes available, with a clear label and verified file; track per-page checkpoints during batch rendering and keep a record of shown images.",
+      "reason": "The actual two character sheets and first saved cover were embedded while the book job was still running; no all-pages wait is required."
+    },
+    {
+      "observation": "Earlier static skill reviews did not prevent an unearned opening confession or contradictory public/private information.",
+      "disposition": "updated",
+      "rule": "Construct from reader expectations and character choices, then separately inspect causal validity and reader experience using actual panel evidence.",
+      "reason": "Changed construction workflow and added concrete negative-case review; merely delaying a confession or adding check labels is insufficient."
+    },
+    {
+      "observation": "Drawing directions duplicated application responsibilities, while users wanted the skill to specialize in scripts.",
+      "disposition": "updated",
+      "rule": "Keep style and rendering-prompt construction in the app; use a separate conditional MCP handoff reference for authorized production.",
+      "reason": "Preserves existing display/save/stop behavior without imposing an additional drawing policy."
+    },
+    {
+      "observation": "Other PCs may not have Story Maker, and future works may be medium or long rather than only one-page or short romance.",
+      "disposition": "updated",
+      "rule": "Bundle independently worded methods, scale/series guidance, original exercises and attributed source notes; no Story Maker or live web requirement for normal scripting.",
+      "reason": "Knowledge is in the installed resource files; source research and practical testing are separate from weight training or human reader evaluation."
+    },
+    {
+      "observation": "Length must be chosen from user instructions or asked, not silently guessed when unspecified.",
+      "disposition": "updated",
+      "rule": "Honor exact/prior counts; use stated working defaults32/64/192 for short/medium/long labels; ask and wait when both page count and label are absent.",
+      "reason": "Defaults are explicit skill choices, not universal publishing definitions, and do not override app operation limits or authorize image spending."
+    },
+    {
+      "observation": "A substantive rewrite changed the central joke but initially retained the former title; the user explicitly pointed this out.",
+      "disposition": "updated",
+      "rule": "Reconsider title suitability whenever the story changes; retain it when it still fits. For a title change, align the proposal, cover lettering, project name and synopsis without automatically regenerating preserved old art.",
+      "reason": "Applied to the current v2 draft through normal MCP edits; project name, outline title, cover direction and brief were read back with the same new title. Images remain stopped."
+    },
+    {
+      "observation": "Production preflight found that project/outline/cover prose had the new title but the actual cover presentation.logoText still held the former title.",
+      "disposition": "updated",
+      "rule": "On retitling, update and read back the actual cover logoText with the other title representations, then check detail/prompt before images.",
+      "reason": "Corrected through normal manga_page_update before the resumed production; earlier broad title-alignment report omitted this field and was corrected to the user."
+    },
+    {
+      "observation": "User requires ongoing skill-derived bug learning, explicit separation from app bug repairs and special care around conflicting skill/app instructions.",
+      "disposition": "updated",
+      "rule": "Update generalizable skill causes when fixed, classify app versus skill versus shared-boundary causes, and compare approved story/effective settings/generated instructions without duplicating drawing policy.",
+      "reason": "The missed cover logo field is a skill handoff check; incorrect cover render-options metadata is an app code fix with a failing-before regression. These are recorded separately."
+    },
+    {
+      "observation": "User requires portable pen-name handling for other users rather than a fixed example author.",
+      "disposition": "updated",
+      "rule": "For a new manga with image production, including one-page and coverless works, ask once for this work's pen name or no-credit choice if unspecified. Do not add questions for script-only work, same-work resume or an existing answer; never infer another user's name or add a cover/all-page credit automatically.",
+      "reason": "The current work keeps its explicitly supplied author. Pen-name collection is distinct from deciding which page carries the credit, and there is no fixed global author."
+    },
+    {
+      "observation": "A saved revised plan and approval did not establish effective image inputs: the application could retain an older page snapshot, and the production check failed to inspect scenario and finalPrompt before rendering.",
+      "disposition": "updated",
+      "rule": "After apply_page, inspect actual snapshot.scenario; after prompt, inspect actual snapshot.finalPrompt and render-options against the currently approved story, title, author, dialogue and settings before image submission. Inspect the resulting image separately.",
+      "reason": "The app state-precedence bug needs an application repair and normal-path verification. This skill change addresses the separate handoff-check omission; it neither rewrites drawing policy nor requires reapproval of unchanged approved content. Plan hashes, filenames and snapshot stubs are insufficient evidence."
+    },
+    {
+      "observation": "Prompt review missed a conflict between a scenario-present silent/background character and the generated cast-count/exclusion directives.",
+      "disposition": "updated",
+      "rule": "Before image submission, compare scenario presence, including silent and background characters, with generated character counts and exclusions.",
+      "reason": "This strengthens the separate review procedure. Alias resolution remains an application responsibility; the skill does not replace it, rewrite every name to a full name, impose drawing constraints or prove generation quality."
+    },
+    {
+      "observation": "Per-page progress images became difficult to find after activity was collapsed.",
+      "disposition": "updated",
+      "rule": "Show each completed page during production and re-embed every accepted page in reading order in the final answer; avoid details blocks and link-only delivery. Keep a complete reading index. Do not claim a skill changed the host app history-collapse setting. Reuse the saved original PNGs and proven inline method; no Adobe/other transformation service or new image generation for presentation.",
+      "reason": "Separate interim and final presentation records; apply to1P and multipage image delivery, not script-only work or unfinished pages. Respect explicit alternative display requests and real client limits."
+    },
+    {
+      "observation": "Completed manga needs an optional SNS-sharing handoff with explicit destination and concrete post approval.",
+      "disposition": "updated",
+      "rule": "After final delivery ask sharing intent once; resolve SNS/account/audience, reuse or establish supported connection, propose complete intro/text and accepted page order, publish only the approved concrete plan, verify live post and URL, inspect uncertain results before retry.",
+      "reason": "Portable across users and platforms; no fixed account, author, image limit or promotional links. Skill-only/script-only/draft-only/declined requests do not publish. Existing valid concrete approval is retained; app release announcement policy is separate."
+    },
+    {
+      "observation": "The sharing workflow lacked the required final AI-production disclosure.",
+      "disposition": "updated",
+      "rule": "Append the specified sentence after hashtags and links on each platform and each post; include it in length checks and pre/post-publish readback. If supplied work was made differently, propose truthful wording for approval.",
+      "reason": "Portable posting convention; not a fixed author or story setting. No claim of publication or technical enforcement."
+    },
+    {
+      "observation": "Retitled work もう一回、好きって言って。 remained in その告白、全館放送中です！_20261117_090308; uncontrolled Explorer opening interrupted file operations.",
+      "disposition": "updated",
+      "rule": "Include actual work-folder name in retitle alignment; prefer supported save migration and read back paths/files/references without disrupting running jobs. Never silently claim alignment when capability is missing. Do not unsolicitedly open Explorer or uncontrolled native dialogs; directly inspect files/API and guide necessary user operations. Controlled filechooser/setFiles uploads remain allowed.",
+      "reason": "User requested future skill behavior only. No existing output folder or application code was changed; the instructions retain app rendering ownership, current approvals and accepted-page presentation."
+    },
+    {
+      "observation": "Multi-page final-page right watermark differed from normal one-page wording.",
+      "disposition": "updated",
+      "rule": "Use current one-page application canonical wording for matching engine/model/quality/version; compare actual finalPrompt and visible output, never invent text from title or author or freeze a duplicate in the skill. Respect showWatermarks:false; keep ending, page number and author logo separate.",
+      "reason": "Future instruction change only. No old-work regeneration or application repair. Existing artwork-overlap tolerance remains authoritative."
+    },
+    {
+      "observation": "Existing five character sheets are a local condition and must not become a portable default.",
+      "disposition": "updated",
+      "rule": "For new image production with no chosen source, ask supplied/obtained/user-designated sheets versus AI generation; reuse existing choices on resume, never silently choose local sheets or universalize counts/names/paths.",
+      "reason": "Current explicit usual-five request needs no new question. Script-only work is excluded; external source, permission and authentication uncertainty remain unverified."
+    },
+    {
+      "observation": "Sheet uniforms were inherited without a sheet-exact request, despite a different story setting.",
+      "disposition": "updated",
+      "rule": "Separate identity from clothing. Prioritize explicit sheet-exact clothing; otherwise design/propose story-, setting- and role-appropriate shared clothing, preserve it across pages and make explicit changes page-specific. Pass approved outfit through supported customOutfit and scenario; inspect effective scenario/prompt for stale sheet-clothing conflicts.",
+      "reason": "Portable story/setting decision, without fixing current characters or costumes as defaults or adding drawing-style policy. Same approved outfit repair does not need reapproval."
+    },
+    {
+      "observation": "The skill needed an explicit distinction between sheet-specified behavior and creative completion of missing traits.",
+      "disposition": "updated",
+      "rule": "Reflect sheet personality, speech, values, relationships, habits and action tendencies in choices/dialogue. Keep personality across costume changes. Creatively supplement unspecified fictional traits from appearance, role and story, label supplements separately and retain consistency. Explicit user changes prevail.",
+      "reason": "No exhaustive missing-field questionnaire, fixed cast or real-person trait inference. Shared character settings and effective scenario/prompt carry the approved characterization."
+    },
+    {
+      "observation": "Prior SNS rule placed disclosure last and prohibited fixed links generally; outfit text did not establish a shown/confirmed costume reference image.",
+      "disposition": "updated",
+      "rule": "Final two SNS lines are exact disclosure then designated plain URL, with nothing appended. For costume changes show and confirm identity-preserving outfit image before story production, reuse a matching existing image and assign that same image as actual story reference.",
+      "reason": "Reconciles conflicting prior last-line/link wording. Preserve valid concrete approvals, original sheet identity/personality and artwork tolerance; exclude script-only, unnecessary sheet-exact changes, old-post modifications and unsupported unreferenced replacement generation."
+    },
+    {
+      "observation": "Extending only the tail to reach the correct speaker created an excessive cross-panel connection.",
+      "disposition": "updated",
+      "rule": "Review actual balloon-to-speaker connection; move the balloon body into suitable space near the head/mouth and use a short natural tail, with local shape/line-break adjustment when necessary. Preserve dialogue content, reading order, faces, hands and required actions.",
+      "reason": "No numeric limit, fixed cast, coordinates or drawing-style policy. Respect explicit distant-speech staging and coherent minor variation. This is production review/handoff, not an app code repair."
+    },
+    {
+      "observation": "A local tail correction left unbalanced empty space in the full panel.",
+      "disposition": "updated",
+      "rule": "After balloon relocation inspect full-panel character placement, whitespace distribution, gaze flow and density. Balance balloon body, characters and space jointly while preserving speaker, natural tail, reading order and necessary actions.",
+      "reason": "Avoid local-only acceptance without treating all whitespace as a defect; retain deliberate pauses, quiet and compositional negative space. Instruction/handoff improvement only."
+    },
+    {
+      "observation": "Restoring only a downstream prompt after continuity invalidation left the page unprepared.",
+      "disposition": "updated",
+      "rule": "Read downstream prepared state and current continuity references after earlier-page/material edits; use normal instruction assembly if invalidated. Do not restore only old prompts or fabricate confirmation flags. Valid official restoration may be reused only with actual input/reference/normal-guard agreement.",
+      "reason": "Retain reusable unchanged content without requiring completed-page regeneration after an isolated failure. Application invalidation is functioning as intended."
+    },
+    {
+      "observation": "A character appeared to look away from the important action target.",
+      "disposition": "updated",
+      "rule": "Inspect actual gaze, face and necessary body orientation against attack/watch/conversation/view targets; locally repair concrete mismatches. Permit movement away while watching a threat, natural twists and intentional surprise or backward looks.",
+      "reason": "Do not mechanically face every character toward enemies or force rear views. Preserve personality, intended staging and coherent minor variation; no new drawing policy or application checker change."
+    },
+    {
+      "observation": "The production operator misidentified the user-referenced page as BODY1; the actual target was BODY3 final panel.",
+      "disposition": "updated",
+      "rule": "Before local edits match target page, panel and latest adopted image to user feedback. Resolve ambiguity from recent displayed images and utterances instead of assuming an older page.",
+      "reason": "Correct individual evidence without deleting history or changing the valid generic gaze rule. Actual BODY3 correction remains incomplete; no correction success asserted."
+    },
+    {
+      "observation": "Local limb correction alone may miss a simultaneous reach/depth problem in the same attack.",
+      "disposition": "updated",
+      "rule": "Inspect actual body connections and necessary limbs jointly with relative scale/depth, weapon reach/contact and action result. Recheck the whole action after local repair.",
+      "reason": "Permit readable perspective exaggeration, natural occlusion and foot bleed; do not enforce fixed scale or infer a defect solely from obscured connections. This is review/handoff guidance, not application checker redefinition."
+    },
+    {
+      "observation": "Distance inconsistency remained after automatic repair and could be disguised by implausible weapon elongation.",
+      "disposition": "updated",
+      "rule": "Keep approved props and body proportions while correcting position/depth/contact; do not hide reach mismatch through abnormal weapon extension or unnatural actor/target scaling. Explicit magical extension is an exception.",
+      "reason": "Integrated into existing body/action-distance guidance without adding fixed geometry or rejecting readable stylization. Current image repair is not complete."
+    },
+    {
+      "observation": "A local upper-panel layout repair clipped required ending lettering in a different panel.",
+      "disposition": "updated",
+      "rule": "After local image editing inspect the full page, including non-target dialogue, specified ending lettering, page number and standard footer, for lost/clipped requested content. Verify explicitly requested readable text while respecting existing footer-art-priority and intentional-occlusion permissions.",
+      "reason": "Do not accept from target crop alone or impose universal text visibility. Existing ending-placement order and accepted artwork remain authoritative; current ending repair is pending."
+    },
+    {
+      "observation": "Panel resizing changes whole-page composition beyond the edited panel and preserved lettering.",
+      "disposition": "updated",
+      "rule": "After panel size/boundary/area changes inspect full-page panel allocation, size contrast, character/negative-space/black-white balance, reading order and gaze flow along with requested lettering. Never accept solely from edited panel.",
+      "reason": "Integrated into existing whole-page post-edit check; preserves intentional asymmetry, whitespace, bleed and user acceptance. No duplicate universal layout or visibility mandate."
+    },
+    {
+      "observation": "Ending-letter checks must not implicitly require endings on intermediate pages.",
+      "disposition": "updated",
+      "rule": "Check ending presence/placement/loss only on final page; common page checks cover composition, reading flow, dialogue and that page’s explicitly requested display elements.",
+      "reason": "Never demand or add 完/END on intermediate pages. Full-page balance review remains common to all pages."
+    },
+    {
+      "observation": "A fixed ending-word list and dialogue-only review would miss other adopted endings and informative lettering.",
+      "disposition": "updated",
+      "rule": "Compare role-bearing page lettering against approved script and pre-edit accepted image for loss/clipping/occlusion/read-order changes. On final page inspect the adopted/specified ending literally; named examples are not an exhaustive list.",
+      "reason": "Integrated with full-page composition review. Preserve intentional effect-text crop and footer hiding when important information survives; add neither new words nor universal glyph safe-area rules."
+    },
+    {
+      "observation": "A hidden working screen was treated as a user navigation problem despite surviving connected tabs.",
+      "disposition": "updated",
+      "rule": "Do not close/hide working screens or connected tabs without explicit instruction or justified need. Locate and display the target through tab inventory, URL and actual project/page/job screen state; distinguish hidden panel from removed tab or API disconnect.",
+      "reason": "Preserve unsaved/authenticated state and resolve duplicate URLs by content. Explain only genuine required user operations; no document-level technical enforcement or automatic-recovery guarantee."
+    },
+    {
+      "observation": "Skill-only updates could remain local and release notices could omit evidence images.",
+      "disposition": "updated",
+      "rule": "Include skill-only updates in deployment and synchronize app bundle, separate skill ZIP, installed copies and distribution descriptions. Authorized release announcements attach relevant current reference images showing changes; no unnecessary image generation.",
+      "reason": "Valid release-specific permission remains required. Distinguish release announcements from completed-work posting. No publication, commit, packaging or deployment performed by this document subtask."
+    },
+    {
+      "observation": "Successful upload did not establish that a native file selection window had disappeared.",
+      "disposition": "updated",
+      "rule": "Do not probe upload entry without starting the supported filechooser waiter. Do not infer dialog disappearance from attachment success or window inventory; inspect native actual state when residue is suspected. Keep existing prohibition on uncontrolled filepicker opening.",
+      "reason": "Minimal integration into existing file-selection section, without assuming window creation cause or diagnosing uninvestigated artwork bleed."
+    }
+  ],
+  "checks": [
+    {
+      "name": "Launcher normal and error paths",
+      "evidence": "8 passing tests across bootstrap-progress, bootstrap and start-app-launcher, plus actual managed-batch restart in 4.22s with app and MCP HTTP 200.",
+      "result": "passed"
+    },
+    {
+      "name": "Skill schema and installation",
+      "evidence": "skill-creator quick_validate passed for source and installed folders; source and installed files compared exactly.",
+      "result": "passed"
+    },
+    {
+      "name": "Routing review",
+      "evidence": "Independent read-only review covered one-page unspecified method, explicit MCP multi-page, explicit alternative, approved resume, and deployment feedback; two P2 findings corrected.",
+      "result": "passed"
+    },
+    {
+      "name": "Release review gate",
+      "evidence": "node --test tests/manga-skill-review.test.mjs: valid record passes; absent, wrong-version, changed-content, empty evidence, unverified, malformed-item, expired and future records reject; CRLF normalization passes.",
+      "result": "passed"
+    },
+    {
+      "name": "Related distribution contracts",
+      "evidence": "node --test tests/public-skill-distribution.test.mjs tests/deploy-entrypoint-contract.test.mjs: 6 passed. ESLint passed for changed JavaScript.",
+      "result": "passed"
+    },
+    {
+      "result": "passed",
+      "name": "Independent release-gate review",
+      "evidence": "Read-only review and non-mutating validation found no P1/P2; normal records passed and missing, wrong-version, hash-mismatched, unverified, expired and incomplete records rejected; preflight catches failures with exit code 1."
+    },
+    {
+      "name": "Detailed proposal and tab-preservation rules",
+      "evidence": "Static review covers title/author/page counts, cover layout, all panels, named dialogue and silence, concise revision explanation, unchanged plan content, and client-specific turn retention. skill-creator validation passed; installed SKILL matches the source.",
+      "result": "passed"
+    },
+    {
+      "name": "Per-page outline settings regression",
+      "evidence": "Regression failed before correction because every page.settings was absent. After merging shared and page overrides, 16 related tests passed, including true and explicit false overrides; this is local prompt/contract testing, not a live API test of the changed source build.",
+      "result": "passed"
+    },
+    {
+      "name": "Story Maker transfer review",
+      "evidence": "Independent read-only research traced active generation/review/revision calls. Four static scenarios passed: one-page silent daily life, multi-page romance revision, approved rendering resume and a PC without Story Maker. One provenance wording issue was corrected. This is instruction/source review, not an empirical quality benchmark. This earlier static review did not establish narrative quality; later user feedback exposed story flaws and prompted scenario specialization.",
+      "result": "passed"
+    },
+    {
+      "name": "Supporting resource distribution and review binding",
+      "evidence": "Historical six-file check passed before specialization. Current eleven-file source/installed parity and reference inclusion are checked separately below.",
+      "result": "passed"
+    },
+    {
+      "name": "Incremental image presentation",
+      "evidence": "Two saved character-sheet PNGs and the saved cover PNG were copied unchanged to the deliverable location and embedded in commentary; cover PNG SHA256 matched its MCP checkpoint and same-name JSON existed. The user subsequently stopped the book job; it is cancelled, and no remaining page completion is asserted. Installed/source skill entrypoints match and quick_validate passed.",
+      "result": "passed"
+    },
+    {
+      "name": "Scenario specialization schema and portability",
+      "result": "passed",
+      "evidence": "Source and installed quick_validate passed in Python UTF8 mode; all11files match; local Markdown references resolve; withdrawn line-strength instructions are absent. No app rendering code or settings changed."
+    },
+    {
+      "name": "Rejected story negative cases",
+      "result": "passed",
+      "evidence": "Direct reading of actual old body1 panels1/3/5 rejects inconsistent public/privacy premises; panels1/2 lack an emotional foothold. Current replacement outline body1panel4 confuses spoken/internal information and remains unapproved. Recorded in private scenario-baseline-review.md. This is an instruction application check, not human readership testing."
+    },
+    {
+      "name": "Specialized resource packaging and current review binding",
+      "result": "passed",
+      "evidence": "Actual releasePackageSets includes all six current supporting Markdown resources. Current version/hash review passes; altered hash rejects. No public package or deployment produced."
+    },
+    {
+      "name": "Fresh-context scenario writing trial",
+      "result": "passed",
+      "evidence": "A fresh-context reviewer actually wrote a complete silent 1P/4panel story, a 24P outline plus6panel key scene, and a180P six-chapter outline plus5panel opening. Root read the full trial: causal evidence, character knowledge, concrete changes and four page-routing responses were present. This verifies the exercise workflow, not readership quality or all24/180pages; remaining pages, long-form travel timing and emotional engagement remain outside the tested sample. No image generation or provider API calls."
+    },
+    {
+      "name": "Rewritten scenario and title readback",
+      "result": "passed",
+      "evidence": "Root wrote and checked all14body panels plus cover for the v2 proposal; normalMCP plan/project edits read back with matching new title, no old approval and invalidated previous detail. This is a checked proposal, not a user-approved production detail or image result."
+    },
+    {
+      "name": "Title reconsideration scope",
+      "result": "passed",
+      "evidence": "Direct instruction review: moving from public-broadcast embarrassment to a private repeated confession requires reconsideration; minor dialogue edits may retain a fitting title. The rule requires reconsideration, not compulsory renaming or image regeneration. Source and installed text match."
+    },
+    {
+      "name": "Skill/app ownership and conflict review",
+      "result": "passed",
+      "evidence": "Direct instruction review distinguishes title handoff omission from app cover metadata parsing. Explicit user settings and false values remain authoritative; story/dialogue retained; no extra G-pen or independent drawing policy added."
+    },
+    {
+      "name": "Pen-name routing",
+      "result": "passed",
+      "evidence": "Static review of entrypoint, MCP handoff and guide: new one-page/coverless image production asks once when unspecified; a known answer or no-credit choice is reused; script-only work and unchanged resume do not gain a question. No extra cover or all-page author printing is implied. This is instruction review, not technical enforcement."
+    },
+    {
+      "name": "Effective-input instruction review (static)",
+      "result": "passed",
+      "evidence": "Read the actual wrong export: scenario contains the old title, finalPrompt contains both old and new titles. Reviewed normal matching inputs, stale scenario, stale prompt/render-options, omitted snapshot content, approved resume and script-only requests. The instructions require effective-input checks before images, preserve valid approval and app drawing ownership, and retain real-image inspection. This is a static instruction review, not proof of app repair or technical enforcement."
+    },
+    {
+      "name": "Current effective-input skill synchronization and schema",
+      "result": "passed",
+      "evidence": "After the pen-name scope clarification, source and installed skill-creator quick_validate both passed and all 11 files match byte-for-byte. Local Markdown references resolve. Entry point, MCP handoff and user guide agree on pen-name routing and effective-input checks; no new story-specific default was added."
+    },
+    {
+      "name": "Effective-input review binding regression",
+      "result": "passed",
+      "evidence": "node --test tests/manga-skill-review.test.mjs passed (1 test with normal/error cases). Current review is bound to all current skill content. This subtask did not call generation APIs or inspect newly generated images; the root task owns application and image regression verification."
+    },
+    {
+      "name": "Silent/background cast consistency instruction review (static)",
+      "result": "passed",
+      "evidence": "Direct static review: a character present in the scenario but omitted/excluded by generated directives is a contradiction; matching cast directives need no correction; a name merely mentioned in speech does not by itself require that person to appear. Existing ownership and minor-artwork-tolerance rules remain. Both quick_validate checks passed and all 11 source/external-installed files match exactly. This did not test or repair application alias resolution, run image generation or establish technical enforcement."
+    },
+    {
+      "name": "Final full-page presentation rule static review",
+      "evidence": "Reviewed normal4page completion,1P completion,partial3of4case,script-onlycase,oldrejectedcovercase,previouslyshownpagescase,andclientlimitcase. All accepted pages must remain in the final reading sequence; no fabricated host setting. Entry validation passed;11files byte-identical in source,Codex,andbundledapp. Actual4page final presentation still pending generation.",
+      "result": "passed"
+    },
+    {
+      "name": "SNS workflow static authoring verification",
+      "evidence": "quick_validate passed;12files byte-identical across source/Codex/bundledapp;9local reference links resolve. Direct static review covered completion, existing approval, missing browser connection, login versus approval, multiple accounts/platforms, limits, changed scope, unknown result, decline/draft, and skill-only requests. No live SNS post or authentication performed.",
+      "result": "passed"
+    },
+    {
+      "name": "SNS final disclosure instruction review",
+      "evidence": "Direct static review covers exact final-line placement, multiple platforms, sequential posts, character limits, unchanged concrete approval and externally supplied works with different provenance. Current X/Facebook drafts contain the final sentence. Public submission remains pending concrete approval.",
+      "result": "passed"
+    },
+    {
+      "name": "Retitle save-folder and Explorer instruction static review",
+      "result": "passed",
+      "evidence": "Direct static review covers a supported idle retitle and save-path readback, active-job/reference risk, absent migration capability, script-only and unchanged-title work, future-rules-only request, direct file inspection, unsupported native dialog handoff and controlled filechooser/setFiles upload. Old review hash rejected before refresh. This is instruction review, not a runtime folder migration, app repair, or guarantee of future behavior."
+    },
+    {
+      "name": "Canonical watermark instruction static review",
+      "result": "passed",
+      "evidence": "Read source buildMangaWatermark and actual prompt/engine normalization callers. Static cases: matching final-page wording; wrong independent credit; changed model/version; showWatermarks:false; distinct author/ending/page number; obscured footer and existing finished work. No image regeneration or live acceptance asserted. Stale review hash rejected before refresh."
+    },
+    {
+      "name": "Portable character-sheet source static review",
+      "result": "passed",
+      "evidence": "Reviewed entrypoint and MCP preflight for unspecified new work (ask), current explicitly chosen usual-five and same-work resume (reuse), other PC without sheets (no fixed default), script-only (no question), and uncertain external source/permission/authentication (do not claim verified). Static review only; no acquisition, AI generation or app mutation. Old review hash rejected."
+    },
+    {
+      "name": "Story-appropriate clothing instruction static review",
+      "result": "passed",
+      "evidence": "Reviewed explicit sheet-exact clothing (honor), unspecified clothing in changed setting (propose fitting outfit), face/hair/body/unique glasses identity (retain), approved common outfit (all pages), explicit change (page delta), stale sheet outfit in scenario/prompt (resolve before images), and script-only work (no app operation). Static instruction review only; no generation or app code changes."
+    },
+    {
+      "name": "Sheet characterization instruction static review",
+      "result": "passed",
+      "evidence": "Static normal/exception cases: explicit speech/personality guides dialogue/actions; empty description permits labeled AI creative supplementation; partial description preserves specified traits; costume change retains personality; explicit user reinterpretation prevails; same shared supplement persists across pages; fictional design does not authorize real-person personality inference. No app mutation or image generation."
+    },
+    {
+      "name": "SNS final two lines and outfit-image handoff static review",
+      "result": "passed",
+      "evidence": "Direct static cases: exact disclosure/actual href/order, tags before final lines, multi-platform/thread posts, character limit and truthful provenance, no old-post edit; new outfit image shown/confirmed before story, valid prior approval reused, matching image reused/assigned, sheet-exact and script-only exclusions, missing original-reference capability disclosed, minor coherent variation allowed. 12 files byte-identical in two installed targets; entry schema and links checked separately. This is static instruction review, not actual posting/image acceptance."
+    },
+    {
+      "name": "Balloon-tail placement instruction static review",
+      "result": "passed",
+      "evidence": "Static normal: nearby clear speaker with natural tail needs no change. Abnormal: tail-only speaker repair creates long cross-panel tail or crosses another person/important action; adjust body position locally and retain lettering/read order. Exceptions: explicit distant speech, minor coherent length differences, and script-only work without image generation. No image correction or app code mutation performed by this subtask."
+    },
+    {
+      "name": "Post-balloon-move panel balance static review",
+      "result": "passed",
+      "evidence": "Static normal: clear short tail and balanced full panel pass. Abnormal: moved balloon leaves unintended right-edge void or poor gaze/density balance, requiring joint layout adjustment. Exception: intentional quiet/pause or authored negative space remains. Existing speech/action/artwork tolerance retained. No image edit, app mutation or generation by this subtask."
+    },
+    {
+      "name": "Downstream preparation after continuity change static review",
+      "result": "passed",
+      "evidence": "Static cases: edited earlier page invalidates downstream assembly (normal reassembly); old-prompt-only restore does not establish readiness; fabricated flags prohibited; valid unchanged-content official restoration requires current input/reference/guard agreement; isolated failure does not force completed-image regeneration. Balance rules retained. No application code or image changes."
+    },
+    {
+      "name": "Action-target gaze instruction static review",
+      "result": "passed",
+      "evidence": "Static normal: attention matches action target. Abnormal: defender visibly looks away from the active threat without intended staging, requiring a local target/orientation correction. Exceptions: retreat/rescue/escape with gaze tracking threat, surprise/backward look and coherent minor variation. Actual current image correction remains pending; no repair success asserted."
+    },
+    {
+      "name": "Local-edit target instruction and evidence correction static review",
+      "result": "passed",
+      "evidence": "Reviewed precise page/panel match, ambiguous reference resolved from latest display, old-page mismatch rejected, and preservation of prior accepted candidate/history. Corrected concrete target to BODY3 final panel with sword/body toward core and face/gaze toward reader. No image edit or repair verification performed."
+    },
+    {
+      "name": "Body-and-action-distance static review",
+      "result": "passed",
+      "evidence": "Static normal: connected body and readable weapon reach/contact pass. Abnormal: extra/branched limb plus incompatible depth/reach needs joint review rather than limb-only acceptance. Exceptions: meaningful perspective exaggeration, natural occlusion and foot crossing panel border. Current BODY4 repair is in progress; no actual repair success asserted."
+    },
+    {
+      "name": "Reach correction without prop distortion static review",
+      "result": "passed",
+      "evidence": "Static normal: approved weapon reaches through coherent position/depth/contact. Abnormal: stretching weapon or arbitrarily scaling actor/target to conceal mismatch is rejected. Exception: explicitly authored extending/magical weapon. Existing perspective/occlusion tolerance remains. No actual image edit or completed-repair claim."
+    },
+    {
+      "name": "Whole-page lettering after local edit static review",
+      "result": "passed",
+      "evidence": "Static normal: local edit preserves requested non-target lettering. Abnormal: action panel improves but explicitly readable ending is clipped; repair ending locally without reopening accepted combat. Exception: permitted footer hiding/art priority is not a new defect. Existing ending right/lower-center/lower-left preference retained. No actual image edit or repair success claimed."
+    },
+    {
+      "name": "Full-page balance after panel resizing static review",
+      "result": "passed",
+      "evidence": "Static normal: panel allocation and visual/reading balance remain coherent and requested text preserved. Abnormal: locally improved resized panel disrupts whole-page weighting, reading flow or ending text; full-page review required. Exceptions: intentional asymmetry, pause whitespace, bleed and permitted footer hiding remain. Current image correction not complete; no app/image changes."
+    },
+    {
+      "name": "Final-page-only ending static review",
+      "result": "passed",
+      "evidence": "Static cases: final-page requested ending inspected; intermediate page without ending correctly passes; common balance/dialogue and explicitly configured elements checked on each page. No new ending inserted or image repair success asserted."
+    },
+    {
+      "name": "Role-bearing lettering and variable endings static review",
+      "result": "passed",
+      "evidence": "Static cases: final-page adopted ending outside example list checked literally; intermediate page has no ending requirement; missing monologue/narration/scene text or altered reading flow checked against script/prior image; intentional sound-effect crop and footer art priority remain allowed if important information survives. No new lettering or image edit."
+    },
+    {
+      "name": "Screen preservation and self-located tab static review",
+      "result": "passed",
+      "evidence": "Static cases: hidden panel with surviving tabs (find and show), same-name/URL tabs (compare live content), connected unsaved tab (preserve), genuinely missing permission (specific user operation), explicit close request (honor scope). No blind reload/new tab/key re-entry. Root’s observed restoration is reported as root evidence, not a tool action of this subtask; disappearance cause unknown."
+    },
+    {
+      "name": "Skill-only deployment and reference-image notice static review",
+      "result": "passed",
+      "evidence": "Static cases: skill-only update enters deployment; local copies do not prove public delivery; unapproved future release is not auto-published; authorized announcement uses current accepted work/outfit/settings images showing change without secrets or rejected candidates. Reviewed retained rules for retitle actual folders, Explorer/dialog controls, canonical footer, portable character-sheet acquisition, clothing and characterization, outfit-image confirmation/references, balloon/body/page balance, literal final-page endings and role lettering, downstream preparation, tab preservation/discovery, SNS exact disclosure plus URL. No app/code/publication mutations."
+    },
+    {
+      "name": "Upload-entry and residual-picker static review",
+      "result": "passed",
+      "evidence": "Static cases: controlled waiter/setFiles flow remains allowed; unprepared exploratory upload click prohibited; successful attachment with suspected residual window requires native observation rather than inferred closure. Existing no-uncontrolled-picker rule retained. No browser/native operation or application code change by this subtask."
+    },
+    {
+      "name": "EOF whitespace-only correction",
+      "result": "passed",
+      "evidence": "Removed exactly one extra final newline from references/story-sources.md; original and corrected content are identical after trailing-whitespace normalization. Source, installed skill and portable candidate are byte-identical; the existing semantic review remains applicable."
+    }
+  ]
+}

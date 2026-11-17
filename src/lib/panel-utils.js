@@ -1900,6 +1900,45 @@ const screenOnlyCast = (panelText, castList, candidates) => {
   });
 };
 
+// Resolve a short Japanese subject only in a concrete actor clause. Registering
+// every name suffix globally would turn ordinary words such as 花/光 into cast.
+const resolveLocalCastSubjects = (text, castList) => {
+  const entries = collectCastNameEntries(castList);
+  return text.split(/(「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”)/gu).map((part, index) => index % 2 ? part : part.replace(
+    /((?:^|[。！？\n:：、])\s*(?:(?:奥|背景|後方|手前|画面[左右])(?:では|で|には|に))?)([\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー]{1,12})(は|が)([^。！？\n]*)/gu,
+    (clause, prefix, subject, particle, action) => {
+      const exact = entries.filter(entry => entry.aliases.includes(subject));
+      if (exact.length) return clause;
+      const candidates = entries.filter(entry => entry.nameOnly.length > subject.length && entry.nameOnly.endsWith(subject));
+      // Require active actor predicates, not noun fragments (話/顔を) or
+      // passive object descriptions such as 花が用意されている.
+      if (candidates.length !== 1 || !/(?:用意(?:して|する|しながら)|持(?:って|つ|ち)|握(?:って|る|り)|運(?:んで|ぶ|び)|座(?:って|る|り)|立(?:って|つ|ち)|歩(?:いて|く|き)|走(?:って|る|り)|見(?:る|て|つめ)|笑(?:って|う|い)|頷(?:いて|く|き)|うなず(?:いて|く|き)|話(?:して|す|しながら)|聞(?:いて|く|き)|画面外|画角外|フレーム外)/u.test(action)) return clause;
+      return `${prefix}${candidates[0].nameOnly}${particle}${action}`;
+    },
+  )).join('');
+};
+
+const resolveLocalCastBodyReferences = (text, castList) => {
+  const entries = collectCastNameEntries(castList);
+  const shortened = entries.map(entry => ({ entry, alias: entry.nameOnly.includes('の') ? entry.nameOnly.split('の').at(-1) : '' }))
+    .filter(({ alias }) => alias.length >= 2 && !entries.some(entry => entry.aliases.includes(alias)));
+  return text.split(/(「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”)/gu).map((part, index) => {
+    if (index % 2) return part;
+    return part.replace(/[^。！？\n]+/gu, clause => {
+      if (/(?:写真|図鑑|回想|思い出|話題|について|名前だけ|文字だけ|画面外|画角外|描かない)/u.test(clause)
+        || !/(?:見[るえ]|追[いうっ]|凝視|映[るす]|捉|打ち込|当た|触|つか|掴|切|斬|砕|振り|突|押|引|伸|傷|掛け|閉じ|固定|拘束)/u.test(clause)) return clause;
+      let resolved = clause;
+      for (const { entry, alias } of shortened) {
+        if (shortened.filter(candidate => candidate.alias === alias).length !== 1) continue;
+        const prefix = entry.nameOnly.slice(0, -alias.length);
+        resolved = resolved.replace(new RegExp(`(?<![\\p{Script=Han}\\p{Script=Katakana}A-Za-z])${escapeRegex(alias)}(?=の(?:(?:大きな|太い|右|左|前|後|閉じた|露出した|開いた){0,3})(?:腕|胸|胴|頭|顔|首|肩|背|腹|腰|脚|足|手|爪|牙|角|翼|尾|体|身体)|を(?:固定|拘束|攻撃|押|引|殴|斬|切|掴|つか))`, 'gu'),
+          (name, offset) => resolved.slice(0, offset).endsWith(prefix) ? name : entry.nameOnly);
+      }
+      return resolved;
+    });
+  }).join('');
+};
+
 export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   fullPanelText = stripSourceMetadata(fullPanelText);
   const compact = Boolean(options.compact);
@@ -1997,7 +2036,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // local action/dialogue remains authoritative, just as for page foregrounds.
   const incomingAliases=Object.keys(flatCharLookup).filter(alias=>incomingCast.has(flatCharLookup[alias])).sort((a,b)=>b.length-a.length);
   const incomingMention=incomingAliases.length?new RegExp(`(${incomingAliases.map(escapeRegex).join('|')})`,'gu'):null;
-  const localActionText=actionAndMetaLines.join('\n').replace(/[^。！？\n]+/gu,clause=>{
+  const localActionText=resolveLocalCastBodyReferences(resolveLocalCastSubjects(actionAndMetaLines.join('\n'), castList), castList).replace(/[^。！？\n]+/gu,clause=>{
     if(!incomingMention||!/(?:コマ|枠|panel|frame|gutter)/iu.test(clause))return clause;
     const mentions=[...clause.matchAll(incomingMention)];
     let local=clause;

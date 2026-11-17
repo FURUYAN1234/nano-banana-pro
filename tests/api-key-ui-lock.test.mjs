@@ -23,13 +23,18 @@ test('both API dialogs group the operation and provider PDFs under a deployment 
       assert.match(html, /href="https:\/\/platform.openai.com\/api-keys"/);
       const group = html.match(/<nav[^>]*aria-label="使い方・導入ガイド"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
       assert.ok(group, 'PDF guides stay together in their own navigation group');
-      const guides = ['super-furu-ai-4koma-full-manual-2026-10-01.pdf', 'openai-api-beginner-guide-2026-09-30.pdf'];
-      if (provider === 'google') guides.push('gemini-api-beginner-guide-2026-10-01.pdf');
+      const guides = ['super-furu-ai-4koma-full-manual-2026-10-01.pdf', 'openai-api-beginner-guide-2026-09-30.pdf', 'gemini-api-beginner-guide-2026-10-01.pdf'];
       for (const file of guides) {
         assert.ok(group.includes(`href="/nano-banana-pro/downloads/${file}" target="_blank" rel="noopener noreferrer" class="manual-link-button"`));
       }
       assert.equal((group.match(/SuperFURU-Manga-Skill\.zip/g)||[]).length,1);
+      assert.match(group,/漫画シナリオ制作スキルを取得/);
+      assert.match(group,/1ページ〜長編のシナリオをAIと相談するためのスキルです。通常の手動制作には必須ではありません。/);
+      assert.doesNotMatch(group,/単ページ制作には不要/);
       assert.equal((group.match(/<a /g) || []).length, guides.length+1);
+      assert.ok(group.indexOf(guides[0]) < group.indexOf(guides[1]));
+      assert.ok(group.indexOf(guides[1]) < group.indexOf(guides[2]));
+      assert.ok(group.indexOf(guides[2]) < group.indexOf('SuperFURU-Manga-Skill.zip'));
     }
     const pdf = await readFile(new URL('../public/downloads/openai-api-beginner-guide-2026-09-30.pdf', import.meta.url));
     assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');

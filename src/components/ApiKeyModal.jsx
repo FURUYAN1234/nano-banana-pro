@@ -184,11 +184,13 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
             </div>
           )}
           <div className="api-operation-manual">
-            <nav className={`api-pdf-guides ${isDualMode ? 'api-pdf-guides--three' : ''}`} aria-label="使い方・導入ガイド">
-              <MangaSkillDownloadLink />
+            <nav className="api-pdf-guides api-pdf-guides--three" aria-label="使い方・導入ガイド">
               <a href={`${import.meta.env.BASE_URL}downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf`} target="_blank" rel="noopener noreferrer" className="manual-link-button">使い方マニュアル（PDF）</a>
-              {(isDualMode || isOpenAIProvider) && <a href={openaiManualUrl} target="_blank" rel="noopener noreferrer" className="manual-link-button">OpenAI APIマニュアル（PDF）</a>}
-              {(isDualMode || !isOpenAIProvider) && <a href={geminiManualUrl} target="_blank" rel="noopener noreferrer" className="manual-link-button">Gemini APIマニュアル（PDF）</a>}
+              <a href={openaiManualUrl} target="_blank" rel="noopener noreferrer" className="manual-link-button">OpenAI APIマニュアル（PDF）</a>
+              <a href={geminiManualUrl} target="_blank" rel="noopener noreferrer" className="manual-link-button">Gemini APIマニュアル（PDF）</a>
+              <div className="min-w-0 flex justify-center min-[561px]:col-start-2">
+                <MangaSkillDownloadLink />
+              </div>
             </nav>
             <p>画像の読み込みから編集・漫画生成まで、接続前でも確認できます。別タブで開きます。</p>
           </div>

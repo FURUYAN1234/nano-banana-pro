@@ -9,6 +9,41 @@ const historical = '丙が組んだ模型は机の上に置かれている。';
 const scene = (description = historical, extra = '') => `${camera}\n状況: ${description}画面内は二人。甲は右、乙は左で向かい合って会話する。${extra}\n甲「きれいだね。」`;
 const names = rule => [...(rule.match(/(?:CAST COUNT:|ANTI-CLONE REMINDER:)[^\n]*/)?.[0] || '').matchAll(/\[([^\]]+)\]/g)].map(match => match[1]).sort();
 
+test('unique Japanese short subjects keep silent background actors without treating ordinary words as people', () => {
+ const cast='## 七瀬こはる\n## 朝倉蓮';
+ const source='[Camera: 店入口の高い位置からカウンターを見下ろす。]\n状況: こはるが入口の札を裏返して「CLOSED」にする。奥では蓮が片付いたカウンターに二つのカップを用意している。\n七瀬こはる:「今日で、この店も終わりかぁ。」';
+ for(const compact of [false,true]) {
+  const rule=extractCastLimitRule(source,cast,{compact});
+  assert.deepEqual(names(rule),['七瀬こはる','朝倉蓮']);assert.doesNotMatch(rule,/ABSENT:.*朝倉蓮/);
+  assert.deepEqual(names(extractCastLimitRule(source.replaceAll('蓮','朝倉蓮'),cast,{compact})),['七瀬こはる','朝倉蓮']);
+ }
+ const local=description=>`[Camera: カウンターを見下ろす。]\n状況: ${description}\n七瀬こはる「待ってる。」`;
+ assert.deepEqual(names(extractCastLimitRule('[Camera: カウンターを俯瞰。]\n状況: 奥ではこはるがカップを持っている。\n朝倉蓮「できた。」',cast,{compact:true})),['七瀬こはる','朝倉蓮']);
+ assert.deepEqual(extractDialogueOnly(source,cast,{asEntries:true}).map(entry=>entry.text),['今日で、この店も終わりかぁ。']);
+ assert.ok(extractActionOnly(source,cast).includes('奥では蓮が片付いたカウンターに二つのカップを用意している。'));
+ for(const description of ['蓮は画面外にいる。','「蓮がカップを用意する」と書いた紙だけがある。','蓮の写真が机にある。'])assert.deepEqual(names(extractCastLimitRule(local(description),cast,{compact:true})),['七瀬こはる'],description);
+ assert.deepEqual(names(extractCastLimitRule(local('奥では蓮がカップを用意している。'),`${cast}\n## 佐藤蓮`,{compact:true})),['七瀬こはる']);
+ const generic=`${cast}\n## 佐藤花\n## 田中光\n## 山田明`;
+ for(const description of ['花が咲く。窓では光が差す。明の文字がある。','花が用意されている。','花が話の中心にある。','光が顔を照らしている。'])assert.deepEqual(names(extractCastLimitRule(local(description),generic,{compact:true})),['七瀬こはる'],description);
+ assert.deepEqual(names(extractCastLimitRule(local('蓮は口を挟まず、彼女の話を聞く。'),cast,{compact:true})),['七瀬こはる','朝倉蓮']);
+ assert.deepEqual(names(extractCastLimitRule(local('奥では蓮がカップを用意している。'),'## 七瀬こはる\n## 朝倉蓮（蓮）',{compact:true})),['七瀬こはる','朝倉蓮']);
+});
+
+test('qualified nonhuman cast names resolve unique short body references but not mentions or collisions', () => {
+ const cast='## アカリ\n## ヒカリ\n## 石の守護獣';
+ const panel=action=>`[Camera: 戦場の低い位置。]\n状況: ${action}\nアカリ「硬っ……！」`;
+ for(const action of ['ヒカリは丸眼鏡越しに守護獣の腕の動きを追い、眉を寄せる。','アカリが長剣を守護獣の胸の石殻へ打ち込む。','アカリが長剣を石の守護獣の胸へ打ち込む。','守護獣の大きな腕が地面へ振り下ろされる。','アカリが鉤を守護獣の右前腕に掛ける。','ヒカリが結界とともに守護獣を固定する。']) {
+  const rule=extractCastLimitRule(panel(action),cast,{compact:true});
+  assert.ok(names(rule).includes('石の守護獣'),action);assert.doesNotMatch(rule,/ABSENT:.*石の守護獣/);
+ }
+ for(const action of ['アカリが「守護獣の胸を斬る」と話す。','守護獣の腕について話す。','守護獣の胸の写真を見ている。','守護獣の腕は画面外にあり、描かない。'])assert.ok(!names(extractCastLimitRule(panel(action),cast,{compact:true})).includes('石の守護獣'),action);
+ const action='アカリが剣を守護獣の胸へ打ち込む。';
+ assert.ok(!names(extractCastLimitRule(panel(action),`${cast}\n## 炎の守護獣`,{compact:true})).includes('石の守護獣'));
+ const collision=names(extractCastLimitRule(panel(action),`${cast}\n## 守護獣`,{compact:true}));
+ assert.ok(collision.includes('守護獣'));assert.ok(!collision.includes('石の守護獣'));
+ assert.ok(names(extractCastLimitRule(panel(action),'## アカリ\n## 石の守護獣（守護獣）',{compact:true})).includes('石の守護獣'));
+});
+
 test('a past object modifier cannot add a body beyond the explicit current shot', () => {
   for (const description of [historical, '丙が運んだ荷物が床にある。', '丙が掲げた一個は塔の上に置かれ、']) {
     const source = scene(description);

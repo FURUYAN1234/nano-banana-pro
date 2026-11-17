@@ -1,6 +1,6 @@
 interface:
-  display_name: "複数ページ漫画の制作"
-  short_description: "キャラクター準備から承認・連続生成・PNG／JSON保存まで"
-  default_prompt: "$manga-book-production を使って、キャラクターの用意方法を確認し、あらすじと詳細シナリオを相談してから複数ページの漫画を作ってください。"
+  display_name: "漫画シナリオ構築・推敲"
+  short_description: "1Pから短編・中編・長編まで、導入・人物・因果・台詞を構築して検査"
+  default_prompt: "$manga-book-production を使い、指定の尺に合わせた漫画シナリオを作り、人物の動機・導入・因果・見せ場をチェックしてコマ別に提案してください。"
 policy:
   allow_implicit_invocation: true

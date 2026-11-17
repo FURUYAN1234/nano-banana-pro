@@ -2,6 +2,7 @@
 
 An MCP-compatible AI client can use the application's production functions and carry references and story context across pages. The application remains the shared scenario and image-generation engine. The [architecture guide](ARCHITECTURE.md) explains how the application and production skill can be developed separately. / MCP対応のAIクライアントから、漫画アプリの制作機能を呼び出します。複数ページ作品では、人物や小道具の資料、物語の流れ、ページごとの設定を引き継ぎます。描画・シナリオ生成はアプリの共通処理を使います。 アプリと制作スキルを別々に開発する構成は[設計ガイド](ARCHITECTURE.md)を参照してください。
 
+The bundled [scenario skill](skills/manga-book-production/SKILL.md) contains portable story-design, length, review and original-exercise references. It can draft and revise scenarios without Story Maker or a live MCP connection. For approved image production, it follows the separate [MCP handoff guide](skills/manga-book-production/references/mcp-production.md); drawing style is not redefined by the skill. Explicit page counts take priority; length-only requests use 32/64/192-page working defaults, and unspecified length is asked before planning. / 同梱の[シナリオ専門スキル](skills/manga-book-production/SKILL.md)は、構築・尺・検査・オリジナル演習を内蔵し、Story Makerや稼働中のMCPなしでも脚本を作成・改稿できます。画像制作が了承された場合は別の[MCP受け渡し手順](skills/manga-book-production/references/mcp-production.md)を使い、スキルから画風を再定義しません。具体的なページ数を優先し、区分だけなら32/64/192Pの作業用初期値、尺がなければ構成前に確認します。
 > This guide covers the released local MCP functions. Check `manga_capabilities` for the connected version; `planned` means unavailable. / 正式公開済みのローカルMCP機能の導入ガイドです。接続した版の対応機能は `manga_capabilities` で確認し、`planned` は未対応として扱います。
 
 ## Requirements / 必要なもの
@@ -39,7 +40,9 @@ OneDrive-managed Desktop folders are supported for the managed shortcut. If shor
 | `Launch-Manga.cmd -StopOnly` | Stop the owned local service after disconnection and job completion. / 切断・処理完了後に、このアプリのローカルサービスを終了します。 |
 | `Launch-Manga.cmd -Stdio -NoOpen` | Connect an AI client through the same startup logic without opening another browser tab. / 共通の起動処理からAIクライアントへ接続し、ブラウザーの追加タブは開きません。 |
 
-Active production is never replaced by an update. If the latest release is unavailable, an existing installation is used only after its stored hashes are verified. Without one, startup reports the failure. / 制作中の接続や処理を更新で中断しません。最新版を取得できない場合は、保存済みのハッシュを検証できた導入版があるときだけ使用し、なければエラーを表示します。
+The launcher shows update checks, downloads, extraction and startup as they happen. A current installed release starts after checking its version and required entry files, without hashing all dependencies again. ZIP checksums and safe extraction are checked when downloading a release. Messages use stderr so MCP's stdout remains available for its protocol. / 更新確認・ダウンロード・展開・起動の段階をその都度表示します。同じ版が導入済みなら、版と必要な起動ファイルを確認して起動し、依存部品を含む全ファイルの再検証は行いません。ZIPのチェックサムと安全な展開は取得時に確認します。メッセージはstderrに出し、MCPの通信に混ぜません。
+
+Active production is never replaced by an update. If the latest release is unavailable, a previously installed release is used when its installation record and required entry files are present. Without one, startup reports the failure. An interactive failure keeps its message visible until Enter; noninteractive and MCP launches return a failure without waiting for input. / 制作中の接続や処理を更新で中断しません。最新版を取得できない場合は、導入記録と必要な起動ファイルがある既存版を使い、なければエラーを表示します。通常起動の失敗はEnterキーを押すまで理由を表示し、非対話実行・MCP接続では入力待ちにせず失敗を返します。
 
 For Codex, install the complete `manga-book-production` skill folder in its configured skill directory. After the first launcher run, use Codex's MCP settings, or the following command when the Codex CLI is available. This adds the local server entry; it does not enter a provider key or overwrite other entries. / Codexでは、`manga-book-production`フォルダーを一式でスキル配置先へ導入します。バッチでの初回起動後、CodexのMCP設定から接続を登録します。Codex CLIが利用できる場合は次のコマンドも使えます。ローカルサーバーの登録だけを追加し、APIキーの入力や他の登録の上書きは行いません。
 
@@ -183,13 +186,17 @@ Mutations use an expected revision and idempotency key. Refresh on conflicts and
 
 ## Production skill / 制作スキル
 
-[**Download the production skill (ZIP) / 複数ページ漫画 制作スキルをダウンロード（ZIP）**](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip)
+[**Download the production skill (ZIP) / 漫画シナリオ制作スキルをダウンロード（ZIP）**](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip)
 
-The application ZIP also contains the complete skill in `mcp/skills/manga-book-production`. Use the separate ZIP when you only need the skill. Ordinary single-page production does not require it. / アプリZIPを展開したフォルダー内の `mcp/skills/manga-book-production` にも同じ一式を含めています。スキルだけが必要なら、上の単体ZIPを使えます。通常の1ページ制作には不要です。
+The application ZIP also contains the complete skill in `mcp/skills/manga-book-production`. Use the separate ZIP when you only need the skill. Manual single-page production does not require it. / アプリZIPを展開したフォルダー内の `mcp/skills/manga-book-production` にも同じ一式を含めています。スキルだけが必要なら、上の単体ZIPを使えます。手動で1ページを制作する場合は不要です。
+
+The skill can also produce a single page through MCP. It offers this workflow first for manga requests with no chosen method, asks once, and reuses an explicit or previously accepted choice. For one page, set `totalPages: 1` and keep any requested title on that page instead of adding a cover. / スキルからMCPを使う1P漫画制作にも対応します。方法が未指定の漫画依頼ではこの方式を優先して一度確認し、明示済み・了承済みなら聞き直しません。1Pは `totalPages: 1` とし、必要なタイトルも同じページに置いて別表紙を追加しません。
 
 Codex is the primary skill client. With another MCP-capable AI, configure its connection and say: “Read the bundled SKILL.md and follow it to create a multipage manga.” Local execution and browser control depend on that client; the AI should explain any manual step rather than claim it has performed it. / 基本はCodex用スキルです。他のMCP対応AIでは接続を設定し、「同梱のSKILL.mdを読み、この手順で複数ページ漫画を制作して」と言葉で指示できます。ローカル実行やブラウザー操作の対応はAIクライアント次第です。自動操作できない箇所は手順を案内し、実行済みとは扱いません。
 
 The bundled skill describes the production workflow. Install the entire skill directory in your client's supported skill location; the MCP server configuration is separate. / [manga-book-production/SKILL.md](skills/manga-book-production/SKILL.md)が、資料の確認から承認・連続生成・保存までの進行を記述しています。スキル対応クライアントでは、このフォルダー一式をクライアント所定のスキル配置先へ登録してください。MCP設定は別途必要です。
+
+Skill-only updates also enter the deployment workflow. The app bundle and separate skill ZIP use the same reviewed source; release announcements include relevant reference images showing the change. Publication still requires valid authorization for that release. / スキルだけの更新もデプロイ対象です。アプリ同梱版と単体スキルZIPは見直し済みの同じ正本から作り、公開更新の告知には変更内容が分かる参考画像を添えます。公開は、その版への有効な許可に従います。
 
 Clients without skill installation can use the MCP prompt and resource instead. / スキルをインストールできないクライアントにも、MCPプロンプト `manga_book_workflow` とリソース `manga://skills/book-production` で同じ進め方を渡せます。
 

@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.0.2** / 現在のソース版: **v8.0.2**
+> Current source version: **v8.0.3** / 現在のソース版: **v8.0.3**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -21,6 +21,8 @@ OpenAI uses free page composition with four to eight panels; Gemini supports fou
 **Local app ZIP / ローカルアプリZIP:** Extract the whole ZIP and double-click `start_app.bat` in the extracted app folder on Windows. After the first setup, use its Desktop shortcut. The launcher obtains a compatible official Node.js runtime if needed. Ordinary single-page creation needs neither the skill nor MCP control permission. API generation requires internet access and a provider key; fees are separate. Developers can use `npm ci` and `npm run dev` from the source folder. / ZIP全体を展開し、Windowsでは展開したアプリフォルダー直下の `start_app.bat` をダブルクリックします。初回導入後はデスクトップのショートカットから起動できます。必要なNode.jsはランチャーが公式配布から取得します。通常の1ページ制作にはスキル導入もMCPの操作許可も不要です。API生成にはネット接続とAPIキーが必要で、料金は別途かかります。開発時はソースフォルダーで `npm ci` と `npm run dev` を使えます。
 
 OneDrive-managed Desktop folders are supported for the managed shortcut. If shortcut creation fails, the launcher warns and continues app startup; installer path and link protections are unchanged. / OneDrive管理のデスクトップでも共通ショートカットを扱います。作成できない場合は警告して本体起動を続け、インストール先のパス・リンク保護は維持します。
+
+The launcher displays its current stage: checking for updates, downloading, extracting, or starting the app. An installed current version starts without rehashing every dependency; downloaded ZIPs are checked before extraction. A failed interactive launch keeps its explanation visible until Enter is pressed. / 起動中は「最新版を確認中」「ダウンロード中」「展開中」「起動中」と表示します。同じ版が導入済みなら全ファイルを再検証せず起動し、取得したZIPは展開前に破損を確認します。通常のバッチ起動に失敗した場合は、理由を表示してEnterキーを押すまで窓を残します。
 
 
 Demo URL / デモサイト: [https://furuyan1234.github.io/nano-banana-pro/](https://furuyan1234.github.io/nano-banana-pro/)
@@ -56,6 +58,8 @@ Click an image button to open its PDF. The full manual covers application featur
 
 Application terms are in [LICENSE](LICENSE). / 利用条件は [LICENSE](LICENSE) をご確認ください。
 
+The API connection dialog shows the usage, OpenAI API and Gemini API manuals in that order below the key-acquisition buttons, with the skill download centered on the next row. Narrow screens use one column. / API接続画面は、キー取得ボタンの下に「使い方・OpenAI API・Gemini API」の3マニュアルを並べ、スキル取得ボタンをその次の段の中央へ配置します。狭い画面ではマニュアルを縦一列にします。
+
 ## Application screen and output / 操作画面と生成例
 
 | Application / 操作画面 | Generated manga / 生成例 |
@@ -68,7 +72,11 @@ https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
 ## Multipage production through MCP / MCPで複数ページを制作
 
-[![Download the multipage manga production skill ZIP / 複数ページ漫画 制作スキルをダウンロード](docs/assets/manga-skill-download-button.png)](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip)
+The production skill also supports a single manga page. When a manga request leaves the method unspecified, Codex offers this MCP workflow first and asks once. An explicitly selected or already accepted method is reused. A one-page request stays one page, without adding a separate cover. / 制作スキルは1P漫画にも対応します。漫画の制作方法が未指定なら、このMCP方式を第一候補として一度確認します。指定済み・了承済みの方法は聞き直しません。1Pの依頼では、別の表紙を勝手に追加せず1ページで制作します。
+
+The skill includes storytelling and revision guidance derived from Story Maker: reader expectations, motivation, setup and payoff, visible acting, and preserving successful drafts. It presents panel-by-panel proposals and uses the manga application's planning pipeline; Story Maker installation or extra provider calls are not required. / Story Makerの実装から抽出した、読者の期待、人物の動機、仕込みと回収、絵で伝わる演技、成立した案を保つ推敲の手順を同梱しています。コマごとのシナリオを提示し、漫画アプリの構成処理へつなぎます。Story Makerの導入や追加API呼び出しは不要です。
+
+[![Download the manga scenario-writing skill ZIP / 漫画シナリオ制作スキルをダウンロード](docs/assets/manga-skill-download-button.png)](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/SuperFURU-Manga-Skill.zip)
 
 **Normal Windows startup / 普段のWindows起動:** Extract the whole app ZIP, run its root `start_app.bat` once, then use the single Desktop shortcut. It handles update checks, MCP service startup and opening the app together; you do not need to launch them separately. A running MCP service does not lock manual controls: **Allow AI control** enables AI operation separately. / アプリZIPを全体展開し、直下の `start_app.bat` を一度実行します。以後はデスクトップのショートカット1つで、更新確認・MCPサービス起動・アプリ表示まで進みます。別々に起動する必要はありません。MCPサービスが動いているだけでは手動操作はロックされず、「AI操作を許可」は別の操作です。
 
@@ -78,19 +86,27 @@ If you downloaded only the skill ZIP, its supplementary entry is `Launch-Manga.c
 
 Downloading the ZIP does not activate the skill. Install the whole folder containing `SKILL.md`; MCP registration is a separate step. After settings reload, have Codex confirm the manga tools, connect the API in the app, and enable **Allow AI control**. Review the outline and detailed plan before approving generation; PNG/JSON are then saved through MCP. / ZIPの取得だけではスキルは有効になりません。`SKILL.md`を含むフォルダー一式の導入と、別途MCP登録が必要です。設定の再読込後に漫画ツールの認識を確認し、アプリでAPIに接続して「AI操作を許可」を有効にします。あらすじ・詳細案を確認して承認してから生成し、PNG／JSONを保存します。
 
-The complete skill is also included in `mcp/skills/manga-book-production` inside the application ZIP. Codex is the primary skill client. Install the whole folder in its skill location; see the [setup guide](mcp/README.md) for the MCP connection. Other MCP-capable AIs can be instructed to read and follow the bundled SKILL.md. / アプリZIP内の `mcp/skills/manga-book-production` にも一式を同梱しています。基本はCodex用スキルとしてフォルダーごと導入し、MCP接続は[導入ガイド](mcp/README.md)に従ってください。他のMCP対応AIには、同梱のSKILL.mdを読んで制作するよう言葉で指示できます。通常の1ページ制作には不要です。
+The complete skill is also included in `mcp/skills/manga-book-production` inside the application ZIP. Codex is the primary skill client. Install the whole folder in its skill location; see the [setup guide](mcp/README.md) for the MCP connection. Other MCP-capable AIs can be instructed to read and follow the bundled SKILL.md. Manual use of the app does not require this skill. / アプリZIP内の `mcp/skills/manga-book-production` にも一式を同梱しています。基本はCodex用スキルとしてフォルダーごと導入し、MCP接続は[導入ガイド](mcp/README.md)に従ってください。他のMCP対応AIには、同梱のSKILL.mdを読んで制作するよう言葉で指示できます。アプリを手動で使う場合は、このスキルの導入は不要です。
 
 On Windows, the bundled `Launch-Manga.cmd` checks and installs the official release, starts the local service and creates a Desktop shortcut. The skill uses the same launcher. Active MCP production is preserved; `-Update` updates only after disconnection and job completion. / Windowsでは同梱の `Launch-Manga.cmd` が公式版の確認・導入・サービス起動を行い、デスクトップにショートカットを作ります。スキルも同じ起動処理を使います。MCP制作中は現在の接続を保ち、`-Update`による更新は切断・処理完了後に行います。
 
-The skill handles installation when absent and checks for updates before a new service starts. If the API is disconnected, it asks you to enter the key in the visible app now. It then enables **Allow AI control** when browser control is available, or explains the button to press, and verifies the connection before producing pages. / スキルは未導入なら取得し、停止中なら最新版を確認・更新してから起動します。API未接続なら画面を提示して、その場でキー入力を案内します。ブラウザーを操作できる場合は「AI操作を許可」を押し、できない場合はボタンを説明して、接続を確認してから制作します。
+When app production is requested, the skill handoff handles installation when absent and checks for updates before a new service starts. If the API is disconnected, it asks you to enter the key in the visible app now. It then enables **Allow AI control** when browser control is available, or explains the button to press, and verifies the connection before producing pages. / アプリでの制作も依頼された場合、未導入なら取得し、停止中なら最新版を確認・更新してから起動します。API未接続なら画面を提示して、その場でキー入力を案内します。ブラウザーを操作できる場合は「AI操作を許可」を押し、できない場合はボタンを説明して、接続を確認してから制作します。
 
-The local MCP server lets an AI client operate the application's shared production engine. A separate production skill handles the book plan, user review, shared references and generation order. / ローカルのMCPサーバーから、AIクライアントがアプリの共通制作処理を呼び出します。複数ページ制作スキルは、全体構成、本人への確認、共通資料、生成順序を担当します。
+The local MCP server operates the application's shared production engine. The bundled skill specializes in scenario construction and revision: reader orientation, character choices, causality, dialogue, pacing and pre-image story checks. Its self-contained references cover one-page, short, medium and long works without requiring Story Maker. Rendering style stays with the application; the optional MCP handoff guide retains approval, saving and per-image presentation. / ローカルMCPはアプリの共通制作処理を呼び出します。同梱スキルの専門はシナリオ構築・改稿で、読者への導入、人物の選択、因果、台詞、尺の配分、画像生成前の脚本チェックを扱います。1P・短編・中編・長編に対応する資料を内蔵し、Story Makerの導入は不要です。画風や描線はアプリに任せ、画像制作も依頼された場合の操作資料で承認・保存・画像ごとの会話表示を維持します。
+
+For planning, explicit page counts win. Length-only requests use skill defaults of 32 pages for short works, 64 for medium works and 192 for long works; these are working assumptions, not universal publishing definitions. If neither length nor page count is specified or already agreed, the skill asks before outlining. App job limits are checked separately and do not silently shorten the story. / 具体的なページ数を優先し、区分のみの指定では短編32P・中編64P・長編192Pを構成上の初期値にします。出版共通の定義ではありません。区分もページ数も未指定・未合意なら、構成前に確認します。アプリの一回の処理上限は別に確認し、作品を無断で縮めません。
 
 During MCP control, use the single **Stop and return to manual** button at the top right. It stops local work and returns control to you; scrolling and viewing results remain available. Manual inputs and settings are greyed out. Skill download, setup guide and manual share the MCP utility row. Diagnostics and Model Chain sit beside them with spacing; STEP1–4 and the loop/full-auto controls each have their own row. / MCP操作中のボタンは右上の**「停止して手動に戻る」**1つです。処理を止めて手動操作へ戻します。入力・設定欄は灰色でロック状態を示し、スクロールと結果の確認はできます。スキル取得・導入ガイド・使い方マニュアルはMCP状態と同じ上段に並べ、少し間を空けて不具合調査ログ・Model Chainを置きます。STEP1～4の進捗とループ／全自動の切り替えは、それぞれ独立した行に表示します。
 
 Choose supplied character sheets or AI-created originals, review the synopsis and detailed scenario, then approve the plan before rendering. Carry character, prop and setting assets across pages; use the previous completed page as an auxiliary reference. / キャラクターシートを用意するかAIで作るかを選び、あらすじと詳細シナリオを確認してから生成します。人物・小道具・背景の資料を引き継ぎ、前ページの完成画像は連続性の補助資料にします。
 
 OpenAI book pages can specify 1–8 panels, including an A4 one-panel page, two stacked panels or three panels. Choose color or monochrome, an illustrated cover or a large opening panel with a title logo, independent title/watermark/page-number options, and ending lettering over the final panel. Each completed page is saved as PNG plus matching JSON. / OpenAIの複数ページ制作ではA4縦1コマ・縦2コマ・3コマを含む1～8コマを指定できます。カラー／白黒、1枚絵表紙か冒頭大コマと題字、タイトル・ウォーターマーク・ページ番号、最終コマに重ねる終幕文字を選び、完成ページからPNGと同名JSONを保存します。
+
+Per-page settings override shared settings during outline planning as well as rendering. A color cover and monochrome body can coexist. Cover prompts and saved metadata carry the same title, watermark and mosaic switches; an explicitly requested author credit remains independent. / ページ別設定は、描画時だけでなくあらすじ作成時にも共通設定より優先します。表紙だけカラー、本文は白黒という組合せも使えます。表紙の題字・ウォーターマーク・モザイクは生成指示と保存情報で一致させ、明示した作者名は別の指定として扱います。
+
+Changing the outline, detailed plan, cast bible or asset specifications retires active derived scripts, prompts and images and archives the previous page snapshots. Reference sheets and recognition data remain available; identical plan submissions retain manual work and accepted pages. After editing an earlier image, check later pages and rebuild STEP3 when their preparation has expired. / 構成案・詳細台本・人物設定・素材仕様を変更すると、現行の派生台本・指示文・画像を失効させ、以前のページ状態を履歴へ退避します。資料と認識結果は保持し、同じ計画の再送信では手編集や採用済みページを消しません。先行画像の編集後は後続ページを確認し、準備が失効していればSTEP3で再構築してください。
+
+Silent actors and nonhuman opponents remain in the panel cast when their visible action or body is specified. Short names resolve only in bounded, unambiguous action/body contexts; quoted mentions, shared names and offscreen characters do not establish a visible body. Explicit aliases can be written as `正式名（別名）` in cast headings. / 無言の人物や非人間の敵も、その動作や身体を描く指定があればコマの登場人物へ含めます。省略名は一意な動作・身体参照の文脈で照合し、引用だけの言及、共有名、画面外の人物を実体の根拠にしません。別名は人物見出しで `正式名（別名）` と明示できます。
 
 Before production or resuming, the AI calls `manga_save_status(projectId)` to check automatic saving and the destination. MCP saves page PNG/JSON pairs, shared materials and the whole-book manifest directly; no browser download setting or folder picker is required. The tool distinguishes unsaved, missing, hash-mismatched and unreadable files using saved-file readback. It does not claim browser download permission is granted. Do not repeatedly ask the user to select the same destination. / AIは制作・再開の前に `manga_save_status(projectId)` で自動保存と保存先を確認します。MCPはPNG・JSON、共通資料、作品全体JSONを直接保存するため、ブラウザーのダウンロード設定やフォルダー選択は不要です。保存ファイルを読み戻し、未保存・欠落・ハッシュ不一致・読取不能を区別します。ブラウザーの保存許可を確認済みとは扱わず、同じ保存先の選択を繰り返し求めません。
 
@@ -104,7 +120,7 @@ The skill asks which author name to print on the cover, with an option to omit i
 
 One folder named for the book and its start time contains the page pairs, a `資料/` folder of shared materials, and `作品全体.json`. The whole-book JSON links pages, references and available production records; unverified material sources or permissions remain unconfirmed. Keep the folder together for transfer. These records help explain production and do not guarantee a publisher's acceptance or rights. / 作品タイトルと開始日時のフォルダーに、各ページの画像とJSON、共通資料をまとめた`資料/`、`作品全体.json`を保存します。全体JSONはページ・資料・確認できた制作記録を結び付け、素材の出典や許諾が不明な場合は未確認として残します。受け渡しはフォルダー全体で行ってください。制作経緯を説明する資料であり、出版社の受理や権利を保証するものではありません。
 
-The production skill normally puts the two standard footer credits on the final page only. Optional page numbers appear separately at the bottom center. Explicit user settings take precedence. / 制作スキルの標準では、通常の左右2種類のウォーターマークを最終ページの下端だけに付けます。ページ番号は必要に応じて下中央へ分けて表示し、利用者から別の指定があればそちらを優先します。
+The production skill normally puts the two standard footer credits on the final page only. The actual scenario model is retained when applying a book page or restoring its script after recognition, so the right footer uses the same formatter as ordinary single-page production. Unknown model provenance is not replaced with the selected setting. Optional page numbers appear separately at the bottom center. Explicit user settings take precedence. / 制作スキルの標準では、通常の左右2種類のウォーターマークを最終ページの下端だけに付けます。複数ページの適用と認識後の台本復元でも実際のシナリオ生成モデルを保持し、右下には通常1ページと同じ組立て処理を使います。生成元が不明な場合、選択中の設定値で代用しません。ページ番号は必要に応じて下中央へ分けて表示し、利用者から別の指定があればそちらを優先します。
 
 See the [MCP setup and operation guide](mcp/README.md), [portable production skill](mcp/skills/manga-book-production/SKILL.md) and [independent development boundary](mcp/ARCHITECTURE.md). The guide identifies current implementation status and provider limits; the ordinary hosted page alone does not launch a local MCP server. / 導入方法・現在の実装状況・プロバイダー別の制限はMCPガイドを参照してください。公開Webページを開くだけではローカルMCPは起動しません。
 
@@ -435,7 +451,7 @@ Image-generation text avoids repeating automatic appearance descriptions already
 
 ### Image history and downloads / 生成履歴と保存
 
-The ordinary application retains its latest ten images in session memory, including original and automatically corrected images. After each completed API generation or adopted manual edit, the final PNG is automatically downloaded with its generation-time production metadata. Manual, full-auto and endless operation share this save path. History selection and unadopted manual candidates do not trigger another download; retained images can be saved manually from history. A download request is issued before the next loop iteration. History disappears on reload. Use “Save to a chosen location” for an extra copy; canceling the picker does not download. Browsers without a save picker use the normal download destination. Automatic filenames append a unique suffix to `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}`. MCP projects have separate persistent page records and PNG/JSON exports described in the [MCP guide](mcp/README.md). / 通常画面では、元画像と自動修正画像を含む直近10件をブラウザーのメモリ内で保持します。API生成や手動修正の採用後、最終画像を生成時点の制作情報入りPNGで自動ダウンロードします。手動・全自動・連続モード共通です。履歴の選び直しや未採用の手動修正候補では保存せず、保持した画像は履歴から選んで手動保存できます。次の周回へ進む前にダウンロードを要求します。履歴は再読み込みで消えます。別の場所にも保存する場合は「保存先を選んで保存」を使います。選択をキャンセルしてもダウンロードしません。保存先選択に対応しないブラウザーでは通常のダウンロード先を使います。自動保存名にはAPI名・題名・日時と識別用の文字列を付けます。MCP作品のページ記録とPNG／JSONの保存は[MCP説明書](mcp/README.md)を参照してください。
+The ordinary application retains its latest ten images in session memory, including original and corrected candidates. Completed API generations and adopted edits use the same automatic save path: a metadata-bearing PNG and matching JSON in a work folder. A selected parent directory is reused during the current session; when direct folder saving is unavailable or unconfigured, the app downloads one ZIP containing that folder. Filenames include the title, `001ページ`, local date/time and a unique suffix. Selecting history or discarding a candidate does not create another automatic save. History disappears on reload; retained images can still be saved manually. MCP projects use their separate persistent page records and direct PNG/JSON exports described in the [MCP guide](mcp/README.md). / 通常画面は、元画像と修正候補を含む直近10件をセッション中のメモリに保持します。API生成と修正の採用後は、共通の自動保存処理で制作情報入りPNGと同名JSONを作品フォルダーに保存します。選択した親フォルダーは同じセッション中に再利用し、直接保存が使えない場合や未設定の場合は作品フォルダー入りZIPを1件ダウンロードします。保存名は作品名・`001ページ`・保存先PCの年月日時分秒・識別子を含みます。履歴選択や候補破棄では再保存しません。履歴は再読み込みで消えますが、保持画像は手動保存できます。MCP作品は別の永続ページ記録と直接PNG／JSON保存を使います。詳細は[MCPガイド](mcp/README.md)を参照してください。
 
 **Chrome setup / Chromeの事前設定**
 
@@ -536,7 +552,7 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 
 1. Open the [published application](https://furuyan1234.github.io/nano-banana-pro/). / [公開アプリ](https://furuyan1234.github.io/nano-banana-pro/)を開きます。
 2. Choose Gemini API or OpenAI API and enter that provider's API key in the application. / Gemini APIまたはOpenAI APIを選び、対応するAPIキーをアプリへ入力します。
-   The connection dialog is centered within the viewport and includes Gemini and OpenAI API manual PDFs beside their key acquisition links. The user manual to the left of STEP1 in the top progress bar opens the full application guide. All PDFs open in a separate tab. / 画面中央の接続窓にあるGemini・OpenAIキー取得リンクの右側から、それぞれのAPIマニュアルを開けます。上部の解析ボタン左側の「使い方マニュアル」はアプリ全体の操作ガイドです。同梱PDFは別タブで開き、表示方法はブラウザーの設定に依存します。
+   The connection dialog is centered within the viewport and places all three manual PDFs below the key-acquisition links. The user manual to the left of STEP1 in the top progress bar opens the full application guide. All PDFs open in a separate tab. / 画面中央の接続窓では、Gemini・OpenAIキー取得リンクの下から使い方・OpenAI API・Gemini APIの3マニュアルを開けます。上部の解析ボタン左側の「使い方マニュアル」はアプリ全体の操作ガイドです。同梱PDFは別タブで開き、表示方法はブラウザーの設定に依存します。
 3. Select character-sheet images with the STEP1 button or drop them into its drop zone; multiple images can be added together or later, within the limits below. If you do not have your own sheets, the sample button above STEP1 loads two example sheets through the same analysis flow. Optional 360-degree background images and style-setting JSON files can be loaded there too. / STEP1ボタンでキャラクター設定画像（キャラシート）を選ぶか、ドロップ領域へ読み込みます。自分のシートがない場合は、STEP1の上のサンプルボタンで2枚の見本を同じ解析経路に読み込めます。以下の上限内で複数枚を同時または後から追加でき、任意で360°背景画像や作風設定JSONも読み込めます。
    Alternatively, paste sufficient names, appearance and clothing into STEP1 “人物情報” without character images. For Story Maker output, paste its separate scenario into STEP2 “生成されたシナリオ”, then build STEP3. / 人物画像を使わない場合は、十分な名前・外見・服装の説明をSTEP1「人物情報」へ貼り付けます。Story Makerの出力は、別途コピーした台本をSTEP2「生成されたシナリオ」へ貼ってからSTEP3を実行します。
 4. Run STEP2. Without an explicit count, normal OpenAI creation chooses four to eight panels to suit the story. While the request is active, the app shows its actual progress/error log and hides stale results and later controls. Completion reveals the scenario and next controls and brings the available STEP3 button into view. / STEP2を実行します。通常のOpenAI制作でコマ数を指定しない場合、AIが話に合う4～8コマを選びます。処理中は実際の進捗・エラーログを表示し、古い結果と後続欄を隠します。台本完成後は各欄を表示し、押せるSTEP3ボタンへ移動します。
@@ -755,7 +771,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v8.0.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v8.0.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v8.0.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v8.0.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -789,6 +805,8 @@ API calls send selected text or image data to the chosen provider and may incur 
 
 ## Development / 開発
 
+Production Tailwind detection is explicitly limited to `src/` and `index.html`. Complete class strings in conditional branches, responsive variants and disabled states remain included; test fixtures and local documentation do not contribute unused utilities to release CSS. / 配布用Tailwindの検出対象は `src/` と `index.html` に限定します。条件分岐内の完全なクラス名、レスポンシブ指定、無効状態の指定は含め、テスト資料やローカル文書にある未使用クラスを配布CSSへ混ぜません。
+
 ```bash
 npm install
 npm run dev
@@ -817,7 +835,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -887,6 +905,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.0.3 (2026-11-17)
+- **[Fix & UX]** Improved startup progress and manual links. Updated scenario-writing guidance, cover and per-page settings, stale-plan invalidation, abbreviated cast names and silent-actor counts, and retained model provenance. Added a required pre-release skill review. / 起動進捗とマニュアル配置を改善。シナリオ制作スキル、表紙とページ設定、計画変更時の旧状態失効、日本語の省略名と背景人物の人数判定、使用モデルの保存を修正。スキル見直しを公開前の必須検査に追加。
 
 ### v8.0.2 (2026-11-17)
 - **[Fix]** While editing page-composition JSON, incomplete syntax no longer stops the whole screen: the input is retained so editing can continue. Invalid composition still blocks generation until corrected; the app does not rewrite the input. / 構図JSONを編集中でも画面全体を停止せず、入力を保持して修正を続けられます。不正な構図は修正まで生成不可のままとし、入力を自動で書き換えません。

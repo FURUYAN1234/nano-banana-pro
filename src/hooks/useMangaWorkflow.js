@@ -1,4 +1,4 @@
-import {selectMcpPageSnapshot,prepareMcpReferenceState} from '../lib/mcp/page-state.js';
+import {selectMcpPageSnapshot,prepareMcpReferenceState,resolveMcpScenarioUsedModel} from '../lib/mcp/page-state.js';
 import { hasCharacterReferenceImages, getReferenceCharacterRequirement, assertReferenceCharacterRequirement } from '../lib/reference-assets.js';
 import { useWorkflowDiagnostics } from './useWorkflowDiagnostics.js';
 import { diagnosticConsole as console, recordImageQualityReview, recordDiagnostic, subscribeDiagnosticInputFlush } from '../lib/diagnostics.js';
@@ -3579,7 +3579,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setEnhanceEffects(settings.enhanceEffects ?? false); setEnhanceBackgrounds(settings.enhanceBackgrounds ?? false);
     setEnhanceCameraWork(settings.enhanceCameraWork ?? false); setEnhanceDialogue(settings.enhanceDialogue ?? false); setEnhanceGag(settings.enhanceGag ?? false);
     setExplanation(snapshot?.explanation ?? ''); setExplanationNotice(snapshot?.explanationNotice ?? '');
-    setMangaTitle(snapshot?.mangaTitle??'');setUsedModel(snapshot?.usedModel??'');scenarioUsedModelRef.current=snapshot?.scenarioUsedModel??null;
+    setMangaTitle(snapshot?.mangaTitle??'');setUsedModel(snapshot?.usedModel??'');scenarioUsedModelRef.current=resolveMcpScenarioUsedModel(snapshot,planned,{restoreNormal});
     updateResolvedPunchlineType(snapshot?.resolvedPunchlineType??'');setAnalyzeThought(snapshot?.analyzeThought??'');setIsGenerationError(false);
     setEnhanceLog(snapshot?.enhanceLog ?? ''); setIsEnhancePanelOpen(false);
     setGenLog(snapshot?.genLog ?? []); setScenarioThought(snapshot?.scenarioThought ?? ''); setAssembleThought(snapshot?.assembleThought ?? '');
@@ -3667,7 +3667,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const assembleMcpCover = () => {
     if (bookPageContextRef.current?.kind !== 'illustration') throw new Error('This page is not an illustration cover.');
     invalidatePromptAssembly();
-    const source = buildBookIllustrationPrompt({direction:scenario,castList,colorMode,showTitle,showWatermarks,
+    const source = buildBookIllustrationPrompt({direction:scenario,castList,colorMode,showTitle,showWatermarks,mosaicCopyrightedCharacters,
       ...bookPageContextRef.current});
     const prompt = assertImagePromptBudget(prepareFinalPrompt(source,{sourceScenario:scenario}));
     setFinalPrompt(prompt); setAssembleThought('承認済み表紙の1枚絵描画指示を準備しました。');
