@@ -551,7 +551,7 @@ export async function generateScenario({
       ].filter(Boolean).join('\n')
     }),
     retryInstruction: ({ code, message }) => [
-      code === 'PAGE_COMPOSITION_CONTRACT' ? scenarioPageCompositionInstruction(scenarioMode)+'\n'+buildRecentPageCompositionContext(recentPageCompositions) : '',
+      code === 'PAGE_COMPOSITION_CONTRACT' ? scenarioPageCompositionInstruction(scenarioMode)+'\n'+buildRecentPageCompositionContext(recentPageCompositions,{book:Boolean(readBookPageMode(scenarioMode))}) : '',
       code === 'AUTO_PANEL_CHOICE' ? 'Return PanelCountReason before Scenario, explaining why this specific story requires its chosen 4–8 panels. Preserve the topic.' : code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${readBookPageMode(scenarioMode) ? `exactly ${readBookPageMode(scenarioMode).panelCount}` : autoSelectPanelCount ? '4–8 selected from story content' : scenarioMode === 'experimental-manga' ? '4–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
       message ? `FAILED CHECK (correct every listed item): ${String(message).slice(0, 1400)}` : '',
       code === 'DOCUMENTARY_SOURCE_FIDELITY' && documentarySourceText

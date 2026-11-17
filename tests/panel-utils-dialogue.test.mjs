@@ -170,7 +170,7 @@ test('enumerated chorus speakers retain every owner across STEP3 dialogue, actio
     for (const name of names) assert.ok(prompt.includes(name));
     assert.doesNotMatch(extractActionOnly(source, cast), /作者の声/);
     const count = extractCastLimitRule(source, cast, {compact:true});
-    assert.match(count, /TOTAL 5 people|exactly 5 people/i);
+    assert.match(count, /TOTAL 5 bodies|exactly 5 bodies/i);
     assert.doesNotMatch(count, /GUEST CONTINUITY/);
   }
 });
@@ -216,11 +216,11 @@ test('collective speakers are not extra bodies while actual guest speakers remai
     const source = `状況: 甲と乙が机を囲む。\n${group}「確認します。」\n甲「準備できた。」`;
     const rule = extractCastLimitRule(source, cast, { compact: true });
     assert.doesNotMatch(rule, new RegExp(`\\[${group}\\]`), group);
-    assert.match(rule, /TOTAL 2 people|exactly 2 people/i, group);
+    assert.match(rule, /TOTAL 2 bodies|exactly 2 bodies/i, group);
   }
   const guestRule = extractCastLimitRule('状況: 甲と乙が机を囲む。\n店員「確認します。」', cast, { compact: true });
   assert.match(guestRule, /GUEST CONTINUITY: \[店員\]/);
-  assert.match(guestRule, /TOTAL 3 people|exactly 3 people/i);
+  assert.match(guestRule, /TOTAL 3 bodies|exactly 3 bodies/i);
 });
 
 test('layout and dialogue share exact name typography and explicit acting-label normalization', () => {
@@ -454,11 +454,11 @@ test('camera tags quoted in dialogue do not override the panel camera', () => {
 test('background remaining cast and shortened names cannot be forbidden by generated counts', () => {
   const cast = '## エムバ・ババトゥンデ\n## 氷堂レイジ\n## ガルナ\n## ユウ\n## ミライ';
   const first = extractCastLimitRule('状況: ミライとエムバが話す。奥では他の三人が清掃袋を準備している。\nミライ「ここで食べたい。」\nエムバ・ババトゥンデ「きれいにしよう。」', cast, { compact: true });
-  assert.match(first, /exactly 5 people/);
+  assert.match(first, /exactly 5 bodies/);
   assert.doesNotMatch(first, /ABSENT:/);
   const second = extractCastLimitRule('状況: ガルナが包みを拾い、後方のレイジがカップを拾う。\nガルナ「止めて！」', cast, { compact: true });
   assert.match(second, /CAST COUNT:.*\[氷堂レイジ\]/);
-  assert.match(second, /exactly 2 people/);
+  assert.match(second, /exactly 2 bodies/);
   assert.doesNotMatch(second, /SOLO:/);
 });
 
@@ -511,7 +511,7 @@ test('a fully silent panel keeps named Action actors instead of marking the whol
 
   assert.match(rule, /CAST COUNT:.*\[ミク\].*\[リン\]/);
   assert.match(rule, /CAST INSTANCE LOCK:.*one physical body silhouette.*scripted depth/is);
-  assert.match(rule, /NO OTHER HUMANS: exactly 2 people/);
+  assert.match(rule, /NO OTHER ACTORS: exactly 2 bodies/);
   assert.doesNotMatch(rule, /ABSENT unless explicitly required/);
   assert.doesNotMatch(rule, /ABSENT:[^\n]*ミク|ABSENT:[^\n]*リン/);
 });
@@ -524,7 +524,7 @@ Person4「動いた！」`;
   const reactionRule = extractCastLimitRule(reactionPanel, cast, { compact: true });
 
   assert.match(reactionRule, /CAST INSTANCE LOCK:.*Camera\/Action\/dialogue\/reaction.*same physical body/is);
-  assert.match(reactionRule, /NO OTHER HUMANS: exactly 5 people/);
+  assert.match(reactionRule, /NO OTHER ACTORS: exactly 5 bodies/);
   assert.doesNotMatch(reactionRule, /DIEGETIC REPLICA LAYER/);
 
   const replicaPanel = `状況: 五人が展示ケースをのぞく。箱の中には今の場面を再現した極小の展示室があり、ミニチュアの五人は全員、紙を見上げる。現実のPerson1、Person2、Person3、Person4、Person5は箱の外で立ち止まる。
@@ -533,13 +533,13 @@ Person4「動いた！」`;
 
   assert.match(replicaRule, /DIEGETIC REPLICA LAYER:.*\[Person1\].*\[Person2\].*\[Person3\].*\[Person4\].*\[Person5\]/is);
   assert.match(replicaRule, /one tiny replica each.*inside the explicitly scripted container\/surface/is);
-  assert.match(replicaRule, /PHYSICAL TOTAL 5 full-size people; no other full-size humans/i);
-  assert.doesNotMatch(replicaRule, /NO OTHER HUMANS: exactly 5 people/);
+  assert.match(replicaRule, /PHYSICAL TOTAL 5 full-size bodies; no other full-size actors/i);
+  assert.doesNotMatch(replicaRule, /NO OTHER ACTORS: exactly 5 bodies/);
 
   const ordinaryModelPanel = '状況: 五人が鉄道模型を囲み、Person1が模型の列車を指し、Person2、Person3、Person4、Person5が実物の展示台を見る。';
   const ordinaryModelRule = extractCastLimitRule(ordinaryModelPanel, cast, { compact: true });
   assert.doesNotMatch(ordinaryModelRule, /DIEGETIC REPLICA LAYER/);
-  assert.match(ordinaryModelRule, /NO OTHER HUMANS: exactly 5 people/);
+  assert.match(ordinaryModelRule, /NO OTHER ACTORS: exactly 5 bodies/);
 });
 
 test('acting identity headings remain behavior rules and never become cast members', () => {
@@ -562,8 +562,8 @@ test('a scripted non-cast role counts as a visible person instead of contradicti
   const rule = extractCastLimitRule(panel, cast, { compact: true });
 
   assert.match(rule, /CAST COUNT:.*\[商店主\].*\[ミク\].*\[リン\]/);
-  assert.match(rule, /exactly 3 people/);
-  assert.doesNotMatch(rule, /exactly 2 people/);
+  assert.match(rule, /exactly 3 bodies/);
+  assert.doesNotMatch(rule, /exactly 2 bodies/);
   assert.match(rule, /GUEST CONTINUITY:.*\[商店主\].*preserve identity, age, clothing, props and action\/spatial continuity/i);
 });
 
@@ -1372,7 +1372,7 @@ test('invalid BalloonLayout exposes the precise reason without weakening validat
  for(const subject of [guest,short]) {
  const rule=extractCastLimitRule('状況: 甲と乙が机の前に立つ。甲の置いた紙を'+subject+'が受け取る。\n甲「ありがとう。」',cast,{compact:true,storyText});
  assert.match(rule,new RegExp('CAST COUNT:.*\\['+guest+'\\]'));
- assert.match(rule,/3 people/);
+ assert.match(rule,/3 bodies/);
  }
  const absent=extractCastLimitRule('状況: 甲と乙が机の前に立つ。'+guest+'は画角外にいる。\n甲「'+guest+'が戻ったら聞こう。」',cast,{compact:true,storyText});
  assert.doesNotMatch(absent,new RegExp('CAST COUNT:.*\\['+guest+'\\]'));

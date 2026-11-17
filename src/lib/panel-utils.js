@@ -97,11 +97,14 @@ export const extractActingIdentityNotes = (castListText = '') => {
 
 const buildCastLookup = (castListText = '') => {
   const lookup = {};
-  collectCastNameEntries(castListText).forEach(entry => {
+  const entries = collectCastNameEntries(castListText);
+  entries.forEach(entry => {
     entry.aliases.forEach(alias => {
       lookup[alias] = entry.nameOnly;
     });
   });
+  // An explicitly registered name wins over a longer actor's derived alias.
+  entries.forEach(entry => { lookup[entry.nameOnly] = entry.nameOnly; });
   return lookup;
 };
 
@@ -409,7 +412,7 @@ const hasSpokenQuotePostContext = (postText = '') => {
 // A quotation introduced as part of a document or display belongs to that
 // source, even when a nearby cast member is looking at it. Explicitly spoken
 // quotes still use the normal speaker inference below.
-const REPORTED_SOURCE_QUOTE_PRE_RE = /(?:記事|新聞|ニュース|発表文|声明|資料|手紙|メール|投稿|報告書|議事録|記録|文面|見出し|画面)(?:の中|中|内|の文面|の一節|の引用|に書かれた|に記された|に載った|に表示された)?の?\s*$/u;
+const REPORTED_SOURCE_QUOTE_PRE_RE = /(?:記事|新聞|ニュース|発表文|声明|資料|手紙|メール|投稿|(?:報告|回答|答弁|通知|決定|依頼|申請|請求)書|文書|議事録|記録|文面|見出し|画面)(?:の中|中|内|の文面|の一節|の引用|に書かれた|に記された|に載った|に表示された)?の?\s*$/u;
 
 const INSTRUCTION_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${META_SPEAKER_LABEL_PATTERN}\\s*[:：]`, 'i');
 
@@ -1871,15 +1874,35 @@ const scriptedFigurePresence = (panelText, castList, candidates) => {
   return [...new Set(candidates)].flatMap(name => {
     if (!name || absent.has(name)) return [];
     const escaped = escapeRegex(name);
-    const subject = new RegExp(`${escaped}(?:の${figure})?(?:だけ|のみ)?(?:は|が|も|を)`, 'u');
-    const depiction = new RegExp(`(?:${escaped}の${figure}|(?:再現像|肖像|人物像)の${escaped}|(?:画面(?:の中|内)|映像(?:の中|内)|写真(?:の中|内)|絵(?:の中|内))の${escaped})`, 'u');
-    const visible = clauses.filter(clause => subject.test(clause)
-      && /立[つちっ]|座[るりっ]|歩[くきい]|走[るりっ]|踊|笑|振|見上|見下|頷|うなず|掲|持|傾|下ろ|伸|ひね|見守|待[つっ]|ポーズ|構え|手を|腕を|膝を|腰を|身を|顔を|体を|身体を|見える|映[るしっ]|写[るしっ]|描[くきい]|見せ|保持/u.test(clause)
+    const namedSubject=`(?<![\\p{Script=Han}\\p{Script=Katakana}A-Za-z0-9])${escaped}`;
+    const bodySubject = new RegExp(`${namedSubject}の(?:大きな|小さな|巨大な|手前の|前景の)*(?:上半身|全身|半身|頭部|胴体|顔|頭|肩|腕|足|手)(?:だけ|のみ)?(?:は|が|も|を)`, 'u');
+    const subject = new RegExp(`${namedSubject}(?:の${figure})?(?:だけ|のみ)?(?:は|が|も|を)`, 'u');
+    const depiction = new RegExp(`(?:${escaped}の${figure}|(?:再現像|肖像|人物像)の${escaped}|(?:画面(?:の中|内)|映像(?:の中|内)|写真(?:の中|内)|絵(?:の中|内))の${escaped}|(?:写真|ポスター|絵|映像)(?:の中で|内で)${escaped}|${escaped}の(?:大きな|小さな)*(?:上半身|全身|半身|顔|頭部)(?:が|を)(?:写真|ポスター|絵|映像)に[^。！？\\n]{0,8}(?:描|写|映))`, 'u');
+    const visible = clauses.filter(clause => (subject.test(clause)||bodySubject.test(clause))
+      && /立[つちっ]|座[るりっ]|歩[くきい]|走[るりっ]|踊|笑|振|見上|見下|頷|うなず|掲|持|傾|下ろ|伸|ひね|見守|待[つっ]|ポーズ|構え|手を|腕を|膝を|腰を|身を|顔を|体を|身体を|見える|映[るしっ]|写[るしっ]|描[くきいか]|見せ|保持|占める/u.test(clause)
       && !/(?:描かない|描かず|描くな|表示しない|映さない|写さない|姿を見せない|姿を見せず|不在|登場しない|消えている)/u.test(clause));
     if (!visible.length) return [];
     return [{name, kind: visible.some(clause => !depiction.test(clause)) ? 'physical' : 'depicted'}];
   });
 };
+
+// Casting a supplied generic reference as a scripted role is not recognition of
+// a real person's face. Bind only the unique unused-reference/role pair; leave
+// multiple choices to the existing planner/rendering path without extra bodies.
+export function resolveScriptedReferenceRoles(castList, storyText='', scriptedNames=[]) {
+  const entries=collectCastNameEntries(castList),known=entries.flatMap(entry=>entry.aliases);
+  const references=entries.filter(entry=>isGenericRoleSpeaker(entry.nameOnly)&&!entry.aliases.some(alias=>String(storyText).includes(alias)));
+  if(!references.length)return {bindings:[],guests:[],unresolvedReferences:[]};
+  const guests=[...new Set([...scriptedNames,...extractDialogueOnly(storyText,castList,{asEntries:true}).map(entry=>entry.speaker)])]
+    .filter(name=>name&&!known.includes(name)&&!parseCollectiveSpeaker(name,collectCastNames(castList)));
+  const bindings=guests.length===1&&references.length===1?[{referenceName:references[0].nameOnly,scriptedName:guests[0]}]:[];
+  return {bindings,guests,unresolvedReferences:bindings.length||!guests.length?[]:references.map(entry=>entry.nameOnly)};
+}
+export function buildScriptedReferenceRoleInstruction({bindings,guests,unresolvedReferences}) {
+  if(bindings.length)return bindings.map(({referenceName,scriptedName})=>`REFERENCE ROLE BINDING: [${referenceName}] reference appearance is assigned to scripted role [${scriptedName}]: ONE same physical actor, not an extra person. Preserve supplied appearance and scripted acting; this casting inference is not face identification. Labels are metadata, never printed.`).join('\n')+'\n';
+  if(unresolvedReferences.length)return `REFERENCE ROLE ALLOCATION: generic appearance references ${JSON.stringify(unresolvedReferences)} are casting material for scripted guests ${JSON.stringify(guests)}. Infer fitting assignments from scene/traits in the existing plan; labels do not establish real identity. Do not add bodies for reference labels or remove a scripted visible guest. Metadata, never printed.\n`;
+  return '';
+}
 
 // An explicitly recorded screen scene keeps its speakers inside that recording.
 // A bare 「画面」 (the manga frame) or a name in dialogue is not such authority.
@@ -1918,25 +1941,52 @@ const resolveLocalCastSubjects = (text, castList) => {
   )).join('');
 };
 
-const resolveLocalCastBodyReferences = (text, castList) => {
+const qualifiedCastAliases = castList => {
   const entries = collectCastNameEntries(castList);
-  const shortened = entries.map(entry => ({ entry, alias: entry.nameOnly.includes('の') ? entry.nameOnly.split('の').at(-1) : '' }))
+  return entries.map(entry => ({ entry, alias: entry.nameOnly.includes('の') ? entry.nameOnly.split('の').at(-1) : '' }))
     .filter(({ alias }) => alias.length >= 2 && !entries.some(entry => entry.aliases.includes(alias)));
+};
+const resolveLocalCastBodyReferences = (text, castList) => {
+  const shortened = qualifiedCastAliases(castList);
   return text.split(/(「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”)/gu).map((part, index) => {
     if (index % 2) return part;
     return part.replace(/[^。！？\n]+/gu, clause => {
-      if (/(?:写真|図鑑|回想|思い出|話題|について|名前だけ|文字だけ|画面外|画角外|描かない)/u.test(clause)
-        || !/(?:見[るえ]|追[いうっ]|凝視|映[るす]|捉|打ち込|当た|触|つか|掴|切|斬|砕|振り|突|押|引|伸|傷|掛け|閉じ|固定|拘束)/u.test(clause)) return clause;
+      if (/(?:写真|図鑑|の模型|のレプリカ|回想|思い出|話題|について|名前だけ|文字だけ|画面外|画角外|描かない)/u.test(clause)) return clause;
       let resolved = clause;
       for (const { entry, alias } of shortened) {
         if (shortened.filter(candidate => candidate.alias === alias).length !== 1) continue;
         const prefix = entry.nameOnly.slice(0, -alias.length);
-        resolved = resolved.replace(new RegExp(`(?<![\\p{Script=Han}\\p{Script=Katakana}A-Za-z])${escapeRegex(alias)}(?=の(?:(?:大きな|太い|右|左|前|後|閉じた|露出した|開いた){0,3})(?:腕|胸|胴|頭|顔|首|肩|背|腹|腰|脚|足|手|爪|牙|角|翼|尾|体|身体)|を(?:固定|拘束|攻撃|押|引|殴|斬|切|掴|つか))`, 'gu'),
+        // A concrete body/camera target establishes visibility independently of
+        // a small verb whitelist (掛かる/見通す are as physical as 掛ける/見る).
+        resolved = resolved.replace(new RegExp(`(?<![\\p{Script=Han}\\p{Script=Katakana}A-Za-z])${escapeRegex(alias)}(?=(?:自身|自分)?の[、,，\\s]*(?:(?:大きな|太い|右|左|前|後|閉じた|露出した|開いた){0,3})(?:腕|胸|胴|頭|顔|首|肩|背|腹|腰|脚|足|手|爪|牙|角|翼|尾|体|身体|側面|正面)(?:部|先端|先|上面|下面|頂|元)?(?=の|は|が|を|に|へ|で|と|も|から|より|[、。！？・/\\s\\]]|$)|を(?:固定|拘束|攻撃|押|引|殴|斬|切|掴|つか|見据))`, 'gu'),
           (name, offset) => resolved.slice(0, offset).endsWith(prefix) ? name : entry.nameOnly);
       }
       return resolved;
     });
   }).join('');
+};
+
+// Resolve a collective only from an explicit counted list in user staging.
+// Do not infer allies, species or a party from names in a mixed cast bible.
+const namedCastSubgroups = (context, castList) => {
+  const entries=collectCastNameEntries(castList);
+  const aliases=entries.flatMap(entry=>entry.aliases.map(alias=>({alias,name:entry.nameOnly}))).sort((a,b)=>b.alias.length-a.alias.length);
+  const groups=[];
+  const declarations=String(context||'').normalize('NFKC').replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu,'')
+    .split(/[。！？\n]/u).filter(clause=>!/(?:写真|回想|思い出|について|名前だけ|文字だけ)/u.test(clause)).join('\n');
+  for(const match of declarations.matchAll(/(?<![0-9])([1-9][0-9]?|[一二三四五六七八九])人[、:：]\s*([^。！？\n]+)/gu)) {
+    const count=Number(match[1])||'一二三四五六七八九'.indexOf(match[1])+1;
+    let rest=match[2];const members=[];
+    for(let i=0;i<count;i++) {
+      const choices=aliases.filter(({alias})=>rest.startsWith(alias)&&/^(?:[・、,と]|を|が|は|の|$)/u.test(rest.slice(alias.length)));
+      if(!choices.length||new Set(choices.filter(c=>c.alias===choices[0].alias).map(c=>c.name)).size!==1)break;
+      const found=choices[0];members.push(found.name);rest=rest.slice(found.alias.length);
+      if(i<count-1){if(!/^[・、,と]/u.test(rest))break;rest=rest.slice(1).trimStart();}
+    }
+    const extraMember=/^[・、,と]/u.test(rest)&&aliases.some(({alias})=>rest.slice(1).trimStart().startsWith(alias));
+    if(members.length===count&&new Set(members).size===count&&!extraMember)groups.push(members);
+  }
+  return [...new Map(groups.map(group=>[[...group].sort().join('\0'),group])).values()];
 };
 
 export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
@@ -1948,6 +1998,11 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // 日本語名とローマ字名両方に対応できるようにする
   const validCharacters = collectCastNames(castList);
   const flatCharLookup = buildCastLookup(castList);
+  const referenceRoles=resolveScriptedReferenceRoles(castList,options.storyText||fullPanelText,options.scriptedNames||[]);
+  for(const {referenceName,scriptedName} of referenceRoles.bindings) {
+    for(const alias of collectCastNameEntries(castList).find(entry=>entry.nameOnly===referenceName).aliases)flatCharLookup[alias]=scriptedName;
+    flatCharLookup[scriptedName]=scriptedName;
+  }
   const charLookup = Object.fromEntries(
     Object.entries(flatCharLookup).map(([alias, name]) => [alias, { name, full: name }])
   );
@@ -1964,7 +2019,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const incomingCast=new Set((options.incomingCast||[]).map(resolvePageName).filter(Boolean));
   const overlayCast=new Set((options.overlayCast||[]).map(resolvePageName).filter(Boolean));
   const pageCast=new Set([...incomingCast,...overlayCast]);
-  const castScope=(pageCast.size?`LOCAL CAST SCOPE: 以下はこの場面の独立人物のみ。${[...pageCast].map(name=>`[${name}]`).join(', ')}の越境身体は元コマで一度だけ数え、この人数・不在・描法の規則から除外。別身体を追加せず一続きの前景を保持。この小コマ自身の別時点の登場は下記人数に含み、前景と混同して消さない。\n`:'')
+  const castScope=buildScriptedReferenceRoleInstruction(referenceRoles)+(pageCast.size?`LOCAL CAST SCOPE: 以下はこの場面の独立人物のみ。${[...pageCast].map(name=>`[${name}]`).join(', ')}の越境身体は元コマで一度だけ数え、この人数・不在・描法の規則から除外。別身体を追加せず一続きの前景を保持。この小コマ自身の別時点の登場は下記人数に含み、前景と混同して消さない。\n`:'')
     +(scriptedDepictions.length?`SCRIPTED DEPICTED FIGURES: ${scriptedDepictions.map(name=>`[${name}]`).join(', ')}. 画面/絵の中の描像。指定の大きさ/ポーズ/連続性を保持。現場の身体数・ABSENT対象外で、来館者化/消去/小さな複製化は禁止。PAGE DOMINANT FIGUREは指定境界だけを一体で越え、別の身体を増やさない。\n`:'');
 
   // The bubble parser is the source of truth for speakers, including multiple
@@ -2032,18 +2087,23 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       actionAndMetaLines.push(line);
     }
   });
-  // Mask only an explicit incoming fragment mention. The same name's separate
-  // local action/dialogue remains authoritative, just as for page foregrounds.
-  const incomingAliases=Object.keys(flatCharLookup).filter(alias=>incomingCast.has(flatCharLookup[alias])).sort((a,b)=>b.length-a.length);
-  const incomingMention=incomingAliases.length?new RegExp(`(${incomingAliases.map(escapeRegex).join('|')})`,'gu'):null;
+  // Mask only an explicit incoming fragment/foreground mention. The same name's
+  // separate local action/dialogue remains authoritative.
+  // Tokenize all known names longest-first so a foreign short name cannot mask a different registered actor.
+  const incomingAliases=[...new Set([...Object.keys(flatCharLookup),...scriptedNames,...pageCast])].sort((a,b)=>b.length-a.length);
+  const incomingMention=pageCast.size&&incomingAliases.length?new RegExp(`(${incomingAliases.map(escapeRegex).join('|')})`,'gu'):null;
   const localActionText=resolveLocalCastBodyReferences(resolveLocalCastSubjects(actionAndMetaLines.join('\n'), castList), castList).replace(/[^。！？\n]+/gu,clause=>{
-    if(!incomingMention||!/(?:コマ|枠|panel|frame|gutter)/iu.test(clause))return clause;
+    if(!incomingMention||!/(?:コマ|パネル|枠|panel|frame|gutter)/iu.test(clause))return clause;
     const mentions=[...clause.matchAll(incomingMention)];
     let local=clause;
     for(let i=mentions.length-1;i>=0;i--) {
       const mention=mentions[i],end=mention.index+mention[0].length;
+      if(!pageCast.has(resolvePageName(mention[0])))continue;
       const ownAction=clause.slice(end,mentions[i+1]?.index??clause.length).split(/(?:が、|一方|しかし|けれど|whereas|while)/iu)[0];
-      if(/(?:越え|はみ出|越境|extends? into|cross(?:es|ing)?)/iu.test(ownAction))
+      const fromSource=/(?:コマ|パネル|枠|panel|frame|gutter)[^。！？\n、]{0,40}(?:越える|越えた|はみ出す|はみ出した|越境する|越境した)\s*$/iu.test(clause.slice(0,mention.index));
+      const ownedPart=/^(?:自身|自分)?の(?:同じ|一続きの|大きな|小さな|右|左)*(?:身体|体|全身|半身|頭|顔|肩|腕|手|胴|腰|胸|脚|足|輪郭|シルエット)/u.test(ownAction);
+      const crossing=(ownedPart||/(?:コマ|パネル|枠|panel|frame|gutter)/iu.test(ownAction))&&/(?:越え|はみ出|越境|extends? into|cross(?:es|ing)?)/iu.test(ownAction);
+      if(fromSource||crossing)
         local=local.slice(0,mention.index)+' '.repeat(mention[0].length)+local.slice(end);
     }
     return local;
@@ -2055,7 +2115,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // Visual Action テキストからも登場キャラ名を検出
   const allPanelCharacters = speakers.filter(speaker => !offscreenCast.has(speaker));
   const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
-  const explicitRearSubject = extractExplicitRearSubject(incomingCast.size?localActionText:fullPanelText, collectCastNameEntries(castList)).subject;
+  const explicitRearSubject = extractExplicitRearSubject(pageCast.size?localActionText:fullPanelText, collectCastNameEntries(castList)).subject;
   // An unqualified group subject refers to the registered cast, not unnamed mobs.
   // Keep qualified groups such as 社員全員 separate from the main cast.
   const hasUnqualifiedCastGroup = /(?:^|[。！？\n:：／、])\s*(?:全員|一同|みんな|他のメンバー)(?:が|は|も|で|、)/u.test(actionAndMetaText);
@@ -2076,14 +2136,32 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       }
     });
   }
+  const namedGroups=namedCastSubgroups(options.groupContext,castList);
+  const visibleGroupText=actionAndMetaText.replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu,'');
+  const visibleGroupClauses=visibleGroupText.split(/[。！？\n]/u).filter(clause=>
+    !/(?:画面外|画角外|フレーム外|描かない|映さない|写さない|について|回想|思い出|写真|肖像|映像|モニター|テレビ|スクリーン|(?:写る|映る|写った|映った)画面|絵の中)/u.test(clause));
+  const presentCompanions=visibleGroupClauses.some(clause=>
+    /(?:^|[:：、])\s*(?:周囲の|周りの|近くの|残る|他の)?仲間(?:たち|達)?(?:は|が|も)[^。！？\n]*(?:(?:目|視線)を向け|見[るて]|構え|立[つちっ]|座[るりっ]|走[るりっ]|退[くきい]|身を|手を)/u.test(clause));
+  const countedNamedGroup=namedGroups.filter(group=>{
+    const labels=[String(group.length),'一二三四五六七八九'[group.length-1]].filter(Boolean);
+    return visibleGroupClauses.some(clause=>new RegExp(`(?:^|[：:、（(]|で|に|から)\\s*(?:この|その)?(?:${labels.join('|')})人(?=と|が|は|も|を|で|、)`,'u').test(clause));
+  });
+  const subsetGroups=namedGroups.length===1&&(presentCompanions||countedNamedGroup.length===1)?namedGroups:[];
+  for(const group of subsetGroups)for(const name of group) {
+    if(!offscreenCast.has(name)&&!allPanelCharacters.includes(name))allPanelCharacters.push(name);
+  }
   const visibleActionMentions = actionAndMetaText.replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, '');
+  const foreignPhysicalMentions=new Set(incomingMention?[...visibleActionMentions.matchAll(incomingMention)].map(match=>resolvePageName(match[0])).filter(name=>pageCast.has(name)):[]);
   validCharacters.forEach(charName => {
     const canonicalName = charLookup[charName].name;
-    if (!offscreenCast.has(canonicalName) && !allPanelCharacters.includes(canonicalName) && visibleActionMentions.includes(charName)) {
+    if (!offscreenCast.has(canonicalName) && !allPanelCharacters.includes(canonicalName) && (pageCast.has(canonicalName)?foreignPhysicalMentions.has(canonicalName):visibleActionMentions.includes(charName))) {
       allPanelCharacters.push(canonicalName);
     }
   });
-  for (const figure of scriptedFigures) {
+  const localScriptedFigures=pageCast.size?scriptedFigurePresence(localActionText,castList,scriptedNames)
+    .map(figure=>({...figure,name:flatCharLookup[figure.name]||figure.name}))
+    .filter(figure=>!pageCast.has(figure.name)||foreignPhysicalMentions.has(figure.name)):scriptedFigures;
+  for (const figure of localScriptedFigures) {
     if (figure.kind === 'physical' && !allPanelCharacters.includes(figure.name)) allPanelCharacters.push(figure.name);
   }
   // 画中だけの登場を、参照があるという理由で現場の身体として追加しない。
@@ -2135,7 +2213,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
   // このコマに一切登場しないキャラ（No-Show）を特定
-  const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c)&&!pageCast.has(c)&&!scriptedDepictions.includes(c));
+  const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c)&&!pageCast.has(c)&&!scriptedDepictions.includes(c)&&!referenceRoles.unresolvedReferences.includes(c));
 
   const storyGuests = allPanelCharacters.filter(c => !canonicalValidCharacters.includes(c));
 
@@ -2203,15 +2281,15 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       const depthRule = compact
         ? "CAST DEPTH: Action contact wins if Camera depth conflicts; move that actor's sole body within reach of the prop, never borrow another actor's hand. Keep the shot and other layers; no speaker-based FG slots or duplicates."
         : "CAST DEPTH: preserve Camera/Action foreground, midground and background assignments unless Action requires physical contact with a prop outside an actor's reach. Action contact wins if Camera depth conflicts: move that actor's sole body within reach of the prop while keeping the camera angle and other actors' layers. Never borrow another actor's hand, draw a detached arm, or duplicate the actor. Speaking alone does not change depth.";
-      spatialConstraint = `\n${depthRule}${negativeConstraint}\n${hasMob ? 'Allow only the background people required by Action.' : (replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size people; no other full-size humans.` : `NO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`)}`;
+      spatialConstraint = `\n${depthRule}${negativeConstraint}\n${hasMob ? 'Allow only the background people required by Action.' : (replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size bodies; no other full-size actors.` : `NO OTHER ACTORS: exactly ${allPanelCharacters.length} bodies.`)}`;
     } else if (hasMob) {
       spatialConstraint = compact
         ? `\nFG only: ${foreground}. BG only: ${background} plus required adult mobs.${negativeConstraint}${otsInstanceConstraint}\nNo repeated FG characters in BG.`
         : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background} and background characters (mob).\n${negativeConstraint}${otsInstanceConstraint}\nAllow additional background characters (mobs) as required by the action. Do not draw any main character in the background if they are already in the foreground.`;
     } else {
       spatialConstraint = compact
-        ? `\nFG only: ${foreground}. BG only: ${background}.${negativeConstraint}${otsInstanceConstraint}\n${replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size people; no other full-size humans.` : `NO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`}`
-        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}${otsInstanceConstraint}\n${replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size people; no other full-size humans.` : `ABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`}`;
+        ? `\nFG only: ${foreground}. BG only: ${background}.${negativeConstraint}${otsInstanceConstraint}\n${replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size bodies; no other full-size actors.` : `NO OTHER ACTORS: exactly ${allPanelCharacters.length} bodies.`}`
+        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}${otsInstanceConstraint}\n${replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size bodies; no other full-size actors.` : `ABSOLUTELY NO OTHER ACTORS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct cast bodies.`}`;
     }
 
     return castScope+(compact

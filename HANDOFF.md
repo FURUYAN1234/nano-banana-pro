@@ -1,3 +1,11 @@
+# CURRENT - v8.0.4 authorized release transaction (2026-11-18)
+
+Specific deployment authorization followed the final color review. The repository release worker owns commit/tag/Release/Pages/C-copy; root owns note/X/Facebook and then the separate full backup. Do not pass -RunFullBackup. Keep all connected Manga browser tabs and their API memory intact.
+
+Canonical private evidence: /home/furu/Codex/work/manga-book-dynamic-layout-20261117/publish-v804-20261118/. Runtime fingerprint f70ed19024554e4ef1931cbe08fa0473d30a91bd66fbcceaf802683af7f983d2, bundle index-BnqpIKt0.js. Prior full source2685/2685 and lint/build remain valid; new publication text passed14targeted tests and current shared security check (npm production+development vulnerabilities0). Final-runtime normal color generation used one automatic repair and one explicit image edit; root visually accepted the final sample and retained the monochrome pages. No one-shot, all-layout or anatomy-root-fix claim.
+
+Publication README/release text now reflects those exact scopes. Strict newly expanded MCP/skill packages pass all paths and hashes,287/13manifested files. Final formal receipt, URLs and tagged-source package reproduction are required before release completion. Earlier candidate statuses below are historical.
+
 # CURRENT - v8.0.3 release candidate ready (2026-11-17)
 
 All accepted unpublished changes are prepared as v8.0.3. The root agent owns source/audit commits, the single concrete pre-deploy confirmation, the formal publish_app_release.ps1 transaction, note/X/Facebook updates and a separate full backup afterwards. No public command or commit was performed by the preparation worker. Do not pass -RunFullBackup to the release runner; backup follows announcements. Investigating why multipage work rarely uses frame breakouts is an explicitly deferred task after backup, not a change in this candidate.

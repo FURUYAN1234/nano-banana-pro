@@ -25,7 +25,7 @@ test('an explicit no-extra-customers instruction cannot authorize background mob
   for (const compact of [true, false]) {
     const rule = extractCastLimitRule('状況: アカリとヒカリが話す。追加の客はいない。\nアカリ「どうぞ。」', cast, { compact });
     assert.doesNotMatch(rule, /plus required adult mobs|Allow additional background characters/);
-    assert.match(rule, /NO OTHER HUMANS/);
+    assert.match(rule, /NO OTHER ACTORS/);
   }
 });
 

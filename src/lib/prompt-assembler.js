@@ -444,7 +444,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replaceAll('low camera below faces including crouched/chibi; look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background; preserve scripted height/pitch/proportions', 'below all faces (crouched/chibi too); look up: chin/jaw/prop undersides, forehead recedes, low horizon, upward convergence. Face/body/setting share projection, no frontal face on tilted BG; keep scripted height/pitch/proportions')
     .replace(/^DIEGETIC REPLICA LAYER:\s*([^\n]*?)(?: may appear as one tiny replica each, fully inside the explicitly scripted container\/surface\.[^\n]*)$/gm, 'DIEGETIC REPLICA LAYER: $1 one tiny copy each inside scripted container only; never full-size/outside.')
     .replace(/^CAST DEPTH:[^\n]*/gm, "CAST DEPTH: Action contact wins over depth; place that actor's sole body within prop reach; never borrow another actor's hand; keep shot/other layers.")
-    .replace(/NO OTHER HUMANS: exactly (\d+) people\./g, 'TOTAL $1 people; no others.')
+    .replace(/NO OTHER (?:HUMANS|ACTORS): exactly (\d+) (people|bodies)\./g, 'TOTAL $1 $2; no others.')
     .replace(/^NON-VISIBLE CASTING CONSTRAINT:[^\n]*/gm, 'NON-VISIBLE CASTING: adults 20+; no print.')
     .replace(/^TYPE: title[^\n]*/gm, `TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: white; no box/border. BUBBLES: vertical tategaki, regular manga Mincho; never bold Gothic/sans. ${VERTICAL_DIALOGUE_GEOMETRY}`)
     .replace(/^FG only:/gm, 'FG:')

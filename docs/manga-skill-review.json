@@ -1,9 +1,9 @@
 {
   "format": 1,
-  "version": "8.0.3",
-  "skillSha256": "37c8b507083df1b218e888221d1021fc88c369bfa8c7096004d2680595243a4c",
-  "reviewedAt": "2026-11-17T08:32:41.730Z",
-  "reviewedSince": "Previous bundled skill through the 2026-11-17 local launcher and manga planning session; no public deployment performed.",
+  "version": "8.0.4",
+  "skillSha256": "33f787000650ffb9cf3a3fa4f32008f8dee76e6dc7d9634f6407b670c87a5816",
+  "reviewedAt": "2026-11-17T16:06:44.824Z",
+  "reviewedSince": "Published v8.0.3 review through v8.0.4 B&W two-page strong-breakout sample, user-confirmed toe repair, and reusable scenario/handoff rules. Release publication remains pending. Final color result reviewed before publication; existing conditional rules cover its cast/contact repair without changing the12file skill.",
   "sources": [
     "2026-11-17 user feedback: explain launch progress, avoid full installed-file hashing at every startup, offer the manga skill implicitly, support one-page manga, and review reusable lessons at each deployment.",
     "2026-11-17 local launch evidence: the former full dependency check took about 6m58s; the patched managed batch reached the running MCP service and app HTTP responses in 4.22s.",
@@ -43,7 +43,12 @@
     "2026-11-17 explicit user instruction: skill-only changes also require deployment, and SNS release announcements must include reference images showing the update. Current root task separately authorizes this release; this general rule grants no future publication permission.",
     "2026-11-17 candidate version rebind: package.json now reads 8.0.3. Existing reviewed skill instructions retained. This review does not assert release deployment, public ZIP synchronization or API PDF visual completion.",
     "2026-11-17 user correction: Explorer/download selection window remained open despite successful attachment. Root observed and closed native window593106; creation cause unknown.",
-    "2026-11-17 release packaging: API/manual owner normalized SKILL.md and four supporting references to LF without content change. Source and installed/bundled copies resynchronized afterward; content evidence normalizes CRLF by design."
+    "2026-11-17 release packaging: API/manual owner normalized SKILL.md and four supporting references to LF without content change. Source and installed/bundled copies resynchronized afterward; content evidence normalizes CRLF by design.",
+    "2026-11-17 user requested fixing researched multipage layout differences and producing samples before deciding another deployment, note/Facebook announcement and full backup.",
+    "Private manga-overflow-investigation-20261117/report.md and manga-book-dynamic-layout-20261117/review.md; active shipped skill SKILL.md lines8,91-94 and references/mcp-production.md lines61,74,87,109-122.",
+    "2026-11-17 user requested costume-setting saves inside the current manga folder; actual parent held only reference PNGs while two derived costume projects held four original PNG/JSON pairs outside. See private costume-save-ownership-investigation.md/evidence.json.",
+    "2026-11-17 user acknowledged strong frame crossing and corrected boot toe, then requested reusable skill rules and application fixes only if needed. Normal app scenario/prompt/image job 3b42363f-d453-4fa6-b1f6-3611fae02249 established large B&W crossing; final explicit image_edit job 6b29040b-8aaf-43fd-9aa2-fd03d679dd84 repaired boot/cast details. Private evidence: two-page-sample/page2-stronger-final-visual-review.json and page2-stronger-final-save-status.json.",
+    "2026-11-17 final-runtime color comparison: one normal generation, one automatic repair, one ordinary image edit; root visually accepted connected-body breakout, boots/shield contact, distinct returning actors and ending. Existing conditional cast/contact/strong-composition preservation rules already cover these observations; no new sample-specific rules are needed."
   ],
   "findings": [
     {
@@ -309,6 +314,30 @@
       "disposition": "updated",
       "rule": "Do not probe upload entry without starting the supported filechooser waiter. Do not infer dialog disappearance from attachment success or window inventory; inspect native actual state when residue is suspected. Keep existing prohibition on uncontrolled filepicker opening.",
       "reason": "Minimal integration into existing file-selection section, without assuming window creation cause or diagnosing uninvestigated artwork bleed."
+    },
+    {
+      "observation": "Multipage authoring had a fixed two/three-panel example and omitted prior-page composition context; the skill already permits story-appropriate overflow and separates drawing from scenario.",
+      "disposition": "already_covered",
+      "rule": "Keep plot, dialogue and important action in the scenario; let the application build page composition and drawing instructions. Confirm effective scenario, prompt and actual image. Do not impose an every-page overflow quota or duplicate drawing defaults in the skill.",
+      "reason": "This issue is in application prompt authoring and is corrected there. Existing portable skill rules already cover the handoff and acceptance boundary; adding a second composition prescription would create conflicting instructions."
+    },
+    {
+      "observation": "Separate costume illustration projects created separate download folders; assigning the adopted PNG to the manga did not include the costume generation JSON/history.",
+      "disposition": "updated",
+      "rule": "Before generating a work-specific costume/material in a derived project, explicitly associate its save owner with the current main work using the supported operation. Keep original PNG/JSON/history under the parent materials folder and verify manifests; never inherit an unrelated previous owner or claim a one-off manual copy fixes future saves.",
+      "reason": "The application provides the saving capability; the scenario-production handoff must choose the correct work before derived material generation. No drawing style or fixed personal folder becomes a generic default."
+    },
+    {
+      "observation": "Multipage scene-first boxed allocation produced only a small toe crossing; giving the main continuous action body dominant space produced a clear large crossing while preserving the three story scenes.",
+      "disposition": "updated",
+      "rule": "For requested strong breakouts, specify dominant actor/action, continuous crossing body and protected supporting beats; allocate surrounding scenes around the action. Use normal application composition, not a second style/final-prompt generator. Do not impose fixed panel coordinates, cast names, page-wide quotas or a color/mono drawing preset.",
+      "reason": "The reusable lesson is scene hierarchy and handoff, not copying one tested page. Color and other arrangements remain unverified by this sample."
+    },
+    {
+      "observation": "A crossing body was miscounted as a separate local character; an explicit image edit also turned a boot toe into finger-like anatomy.",
+      "disposition": "updated",
+      "rule": "Distinguish incoming continuous foreground from a real local appearance at another story moment. Inspect local cast, action contact, leg/ankle/shoe/sole continuity and whole-page lettering after edits; repair clear defects locally while retaining accepted dynamics. Correct parser/count conflicts in the application rather than masking them with skill instructions.",
+      "reason": "Documents a review procedure and application/skill division. Existing art-coherence tolerance remains; no guarantee of automatic correction or deterministic reproduction."
     }
   ],
   "checks": [
@@ -546,6 +575,21 @@
       "name": "EOF whitespace-only correction",
       "result": "passed",
       "evidence": "Removed exactly one extra final newline from references/story-sources.md; original and corrected content are identical after trailing-whitespace normalization. Source, installed skill and portable candidate are byte-identical; the existing semantic review remains applicable."
+    },
+    {
+      "name": "v8.0.4 skill/application responsibility and acceptance review",
+      "evidence": "Read shipped SKILL.md8/91-94 and mcp-production61/74/87/109-122 against the reviewed application diff and user requirements. No rule requires vertical stacking or overrides app composition; natural crossings/minor differences remain allowed. Skill content hash unchanged from v8.0.3:37c8b507083df1b218e888221d1021fc88c369bfa8c7096004d2680595243a4c.",
+      "result": "passed"
+    },
+    {
+      "name": "Costume-save ownership skill static routing review",
+      "evidence": "Normal: derived costume for known work -> associate before generation and read back PNG/JSON/manifests. Existing separate outputs -> regular non-overwrite copy/association with originals retained. Unsupported version -> report capability gap, not a false completion. Unrelated work -> no inherited owner. Script-only or same-sheet wardrobe -> existing no-generation boundary retained. Bundled and installed reference files synchronized; quick_validate passed with Python UTF-8 mode. Real current-work migration additionally verified through the regular v8.0.4 tool: both original child projects resolve to the parent materials directory; all 8 PNG/JSON files are byte-identical and parent manifest links both child manifests. Original outside copies retained. Evidence is private wardrobe-save/real-pair-byte-verification.json and real-save-status.json.",
+      "result": "passed"
+    },
+    {
+      "name": "Strong-breakout scenario/handoff and boot-contact static review",
+      "result": "passed",
+      "evidence": "Direct static review of six representative cases: requested B&W action, color 1P without style overrides, quiet dialogue, incoming foreground plus later local actor, boot-to-fingers defect, and coherent natural occlusion. Source and installed changes are byte-identical. This review does not claim a new behavioral skill trial, color generation, automatic QA pass, or future guaranteed reproduction. Existing real B&W sample and user feedback motivate the rule."
     }
   ]
 }

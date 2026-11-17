@@ -29,14 +29,61 @@ export async function resolveDownloadsDirectory(){
 }
 async function withBook(store,project,options,action){
  assertSafeIdentifier(project.id);const requested=options.downloadsDirectory||await resolveDownloadsDirectory();await store.rejectLinkedFile(requested);const downloads=await fs.realpath(requested),key=`${store.root}:${project.id}:${downloads}`;
+ let destination=downloads;
+ if(project.saveOwnerProjectId){
+  await store.validateSaveOwner(project.id,project.saveOwnerProjectId);
+  const owner=await store.get(project.saveOwnerProjectId);
+  destination=await withBook(store,owner,{...options,downloadsDirectory:downloads},async ctx=>directory(store,ctx.book,'資料'));
+ }
  const operation=(queues.get(key)||Promise.resolve()).catch(()=>{}).then(async()=>{
   const privateDir=await store.safeDirectory(path.join(store.root,'exports',project.id)),stateFile=path.join(privateDir,`${sha(downloads).slice(0,24)}.json`);await store.rejectLinkedFile(stateFile);
   let state;try{state=JSON.parse(await fs.readFile(stateFile,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;state={format:2,projectId:project.id,assets:{},pages:{}};}
   if(state.projectId!==project.id)throw fail('EXPORT_STATE_INVALID','Export state belongs to another project.');
-  if(!state.bookDirectory){const base=`${title(project)}_${timestamp(project.createdAt||options.now||new Date())}`;for(let i=1;;i++){const name=base+(i===1?'':`_${String(i).padStart(2,'0')}`),candidate=path.join(downloads,name);await store.rejectLinkedFile(candidate);try{await fs.mkdir(candidate);state.bookDirectory=name;break;}catch(e){if(e.code!=='EEXIST')throw e;try{const m=JSON.parse(await fs.readFile(path.join(candidate,'作品全体.json'),'utf8'));if(m.project?.id===project.id){assertNoSecrets(m);state.bookDirectory=name;restoreExportState(state,m);break;}}catch{}}}}
+  if(state.saveOwnerProjectId&&state.saveOwnerProjectId!==project.saveOwnerProjectId)throw fail('SAVE_OWNER_CONFLICT','Export journal belongs to another save owner.');
+  if(!state.bookDirectory){const base=`${title(project)}_${timestamp(project.createdAt||options.now||new Date())}`;for(let i=1;;i++){const name=base+(i===1?'':`_${String(i).padStart(2,'0')}`),candidate=path.join(destination,name);await store.rejectLinkedFile(candidate);try{await fs.mkdir(candidate);state.bookDirectory=name;break;}catch(e){if(e.code!=='EEXIST')throw e;try{const m=JSON.parse(await fs.readFile(path.join(candidate,'作品全体.json'),'utf8'));if(m.project?.id===project.id){assertNoSecrets(m);state.bookDirectory=name;restoreExportState(state,m);break;}}catch{}}}}
   if(path.basename(state.bookDirectory)!==state.bookDirectory||state.bookDirectory==='..')throw fail('EXPORT_STATE_INVALID','Unsafe book directory.');
-  const book=await directory(store,downloads,state.bookDirectory),save=()=>atomicJson(store,stateFile,state);await save();const ctx={store,project,book,state,save,privateDir};try{return await action(ctx);}finally{await ctx.assetCopyTail;}
+  const book=await directory(store,destination,state.bookDirectory),save=()=>atomicJson(store,stateFile,state);
+  if(project.saveOwnerProjectId&&!state.saveOwnerProjectId){
+   const original=path.join(downloads,state.bookDirectory);
+   if(original!==book&&await exists(original))await copyExportTree(store,original,book,project.id);
+   state.saveOwnerProjectId=project.saveOwnerProjectId;
+  }
+  state.bookRelativeDirectory=path.relative(downloads,book);await save();const ctx={store,project,book,state,save,privateDir,downloads};try{return await action(ctx);}finally{await ctx.assetCopyTail;}
  });queues.set(key,operation);try{return await operation;}finally{if(queues.get(key)===operation)queues.delete(key);}
+}
+// Copy a complete portable material project, including all historical pairs.
+// Originals remain in place and an existing different destination is rejected.
+async function copyExportTree(store,source,target,projectId){
+ await store.rejectLinkedFile(source);
+ const manifestFile=path.join(source,'作品全体.json');await store.rejectLinkedFile(manifestFile);
+ const manifest=JSON.parse(await fs.readFile(manifestFile,'utf8'));assertNoSecrets(manifest);
+ if(manifest.project?.id!==projectId)throw fail('SAVE_OWNER_INVALID','Source material export belongs to another project.');
+ for(const entry of manifest.productionHistory?.pages||[])await verifyPair({store,book:source,project:{id:projectId}},entry);
+ await readPortableProject(store,manifestFile);
+ async function copy(from,to){
+  await store.rejectLinkedFile(from);await store.rejectLinkedFile(to);
+  for(const item of await fs.readdir(from,{withFileTypes:true})){
+   if(item.isSymbolicLink())throw fail('PATH_REJECTED','Material exports must not contain links.');
+   const input=path.join(from,item.name),output=path.join(to,item.name);await store.rejectLinkedFile(output);
+   if(item.isDirectory()){await directory(store,to,item.name);await copy(input,output);}
+   else if(item.isFile()){
+    const bytes=await fs.readFile(input);
+    try{await fs.copyFile(input,output,fsConstants.COPYFILE_EXCL);}catch(error){if(error.code!=='EEXIST')throw error;}
+    if(sha(await fs.readFile(output))!==sha(bytes))throw fail('EXPORTED_PAGE_CHANGED','Material export destination has different bytes.');
+   }else throw fail('PATH_REJECTED','Material export contains a non-regular file.');
+  }
+ }
+ await copy(source,target);
+}
+export async function relocateProjectExports(store,project,options={}){
+ const result=await withBook(store,project,options,async ctx=>({...await writeManifest(ctx),originalsPreserved:true,saveOwnerProjectId:project.saveOwnerProjectId??null}));
+ if(project.saveOwnerProjectId)await withBook(store,await store.get(project.saveOwnerProjectId),options,async ctx=>{
+  const relative=path.relative(ctx.book,result.directory);
+  if(relative.startsWith('..')||path.isAbsolute(relative))throw fail('EXPORT_STATE_INVALID','Material project escapes its owning work.');
+  ctx.state.materialProjects??={};ctx.state.materialProjects[project.id]={projectId:project.id,name:project.name,relativeDirectory:relative.split(path.sep).join('/'),manifestRelativePath:path.join(relative,'作品全体.json').split(path.sep).join('/')};
+  await ctx.save();return writeManifest(ctx);
+ });
+ return result;
 }
 function assetLabel(project,binding={},slotId){const spec=project.assetSpecs?.find(s=>s.id===slotId),cast=project.plan?.outline?.cast?.find(c=>c.id===slotId||String(slotId).startsWith(c.id+'-'));const name=binding.displayName||cast?.name||spec?.name||spec?.description?.split(/[。\n]/)[0]||slotId||'参照資料';return `${safeName(name,28)}_${{character_sheet:'キャラクターシート',prop:'小物',background:'背景',previous_page_continuity:'前ページ参照',style_reference:'描法見本',medium_reference:'描法見本'}[binding.role]||'参照'}`;}
 function referenceBinding(ctx,asset,context={}){
@@ -90,6 +137,7 @@ async function writeManifest(ctx){
  async function portable(v,context={}){if(v?.__mangaAsset===true)return refs.get(v.id)||pageImages.get(v.id)||portableAsset(ctx,v,referenceBinding(ctx,v,context));if(v&&['repair_source','original'].includes(v.role)&&v.storage!=='private_workspace_only')return deliverableMetadata(v);if(Array.isArray(v))return Promise.all(v.map(item=>portable(item,context)));if(v&&typeof v==='object'){const o={};for(const [k,c] of Object.entries(v)){if(['requests','generationHistory','originalImage','diagnostics','assembly'].includes(k))continue;o[k]=await portable(c,v);}return o;}return v;}
  const sourceProject={...ctx.project,pages:ctx.project.pages.map(page=>{const owner=page.snapshot?.bookPageContext;return owner&&(owner.projectId!==ctx.project.id||owner.pageId!==page.id)?{...page,snapshot:null,snapshotOmission:{reason:'foreign_application_context'}}:page;})};
  const project=await portable(sourceProject);
+ project.materialProjects=Object.values(ctx.state.materialProjects||{});
  for(const page of project.pages){const e=completed.filter(p=>p.pageId===page.id).at(-1);if(e){page.export={relativeDirectory:'.',pngRelativePath:e.pngName,jsonRelativePath:e.jsonName,imageSha256:e.image.sha256,attemptId:e.attemptId,jobId:e.jobId};page.snapshot={...page.snapshot,generatedImage:{...e.image,relativePath:e.pngName},accepted:page.snapshot?.accepted??true};}}
  const app=JSON.parse(await fs.readFile(new URL('../../package.json',import.meta.url),'utf8'));
  const manifestPath=path.join(ctx.book,'作品全体.json'),record={format:2,project,productionHistory:{recordPurpose:'Production/restart evidence, not certification of rights or publisher acceptance.',exporterAppVersion:app.version,createdAt:ctx.project.createdAt,updatedAt:ctx.project.updatedAt,approval:ctx.project.approval??null,approvalResponse:ctx.project.approvalResponse??null,userEditRevision:ctx.project.userEditRevision??0,priorEditDetails:'Only recorded facts are included; unrecorded past edits are unavailable.',pages:await portable(completed.map(({status:_status,...p})=>p))}};await atomicJson(ctx.store,manifestPath,record);return {directory:ctx.book,manifestPath};

@@ -218,6 +218,16 @@ export const restoreFocusBefore756 = (value, { hierarchy = true } = {}) => Strin
 // Local hand-ink experiment: exact inverse of its bounded compiler-only delta.
 // Frozen historical hashes still reject any other camera, style, actor or source change.
 const handInkContracts = JSON.parse(readFileSync(new URL('../fixtures/hand-ink-normalization.json', import.meta.url), 'utf8'));
+// v8.0.4: neutral body counts replace human-only nouns with equal-length text.
+// Preserve every numeric count, actor name and other instruction in old art
+// snapshots; only these five reviewed output clauses have an inverse mapping.
+export function restoreCastCountWordingBefore804(value) {
+  return value.replace(/NO OTHER ACTORS: exactly (\d+) bodies\./g,'NO OTHER HUMANS: exactly $1 people.')
+    .replace(/TOTAL (\d+) bodies; no others\./g,'TOTAL $1 people; no others.')
+    .replace(/PHYSICAL TOTAL (\d+) full-size bodies; no other full-size actors\./g,'PHYSICAL TOTAL $1 full-size people; no other full-size humans.')
+    .replace(/ABSOLUTELY NO OTHER ACTORS ALLOWED\./g,'ABSOLUTELY NO OTHER HUMANS ALLOWED.')
+    .replace(/Total EXACTLY (\d+) distinct cast bodies\./g,'Total EXACTLY $1 distinct individuals.');
+}
 export const restoreHandInkBeforeLocal = value => handInkContracts.mappings.reduce(
   (text, [current, previous]) => text.replaceAll(current, previous),
-  value.replaceAll(handInkContracts.cue + ' ', ''));
+  restoreCastCountWordingBefore804(value).replaceAll(handInkContracts.cue + ' ', ''));

@@ -4,6 +4,7 @@ import { createBookPageMode } from '../page-production-contract.js';
 import { MangaControlError } from './contract.js';
 import {getScenarioPanelBlocks} from '../scenario-validation.js';
 import { applyBookHeroTop, bookHeroTopFrames } from '../book-presentation.js';
+import {readPageComposition, summarizePageComposition} from '../manga-page-composition.js';
 
 // Carry bounded observed continuity, never a previous panel's dialogue/camera/style instructions.
 export function bookDetailContinuity(pages) {
@@ -57,6 +58,8 @@ export async function buildBookDetail(project, generateScenario, { onProgress = 
     onProgress(`本の詳細台本 ${index + 1}/${project.pages.length} (${page.panelCount}コマ)`);
     const result = await generateScenario({ scenarioMode: createBookPageMode(page.panelCount, { finalPage: index === project.pages.length - 1 }),
       autoSelectPanelCount: false, bookOutlineExpansion:true, castList: castBible, categories: [], inputMode: 'manual', manualTopic: context, referenceAssetContext: bookContext,
+      recentPageCompositions: pages.filter(p=>p.kind!=='illustration'&&p.panelCount>=2).slice(-6).reverse()
+        .map(p=>summarizePageComposition(readPageComposition(p.scenario,p.panelCount),p.panelCount)).filter(Boolean),
       searchTopic: '', targetDate: '', customLocation: settings.customLocation || '', customOutfit: settings.customOutfit || '',
       punchlineType: settings.punchlineType || 'Auto', mosaicCopyrightedCharacters: settings.mosaicCopyrightedCharacters !== false,
       scenarioModelId: settings.scenarioModelId, onProgress, onCameraProgress: onProgress });

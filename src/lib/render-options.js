@@ -22,6 +22,8 @@ export const buildCopyrightMosaicInstruction = (enabled = true) => enabled
   : '';
 
 export const NO_PAGE_TITLE = 'NO PAGE TITLE: Do not print a page title, heading, title box or title band. Reclaim the entire former title area for the story panels, starting below the small outer safety margin. Keep the A4 portrait canvas, all four outer frame sides/corners, white outer margins and internal gutters. Preserve verbatim dialogue and scripted in-scene lettering, even when they mention the title. The scenario title remains metadata only.';
+export const pageTitleSuppression = (fullBleed = false) => fullBleed ? NO_PAGE_TITLE.replace('starting below the small outer safety margin.', 'using the authored top-edge bleed when specified, otherwise starting below the small outer safety margin.').replace('all four outer frame sides/corners, white outer margins and internal gutters.', 'internal gutters and the authored outer edges. Explicit FULL BLEED edges extend artwork to the canvas edge without a white outer margin or frame on those edges; preserve margins/frame sides on all other edges.') : NO_PAGE_TITLE;
+
 
 const MANGA_BACKGROUND_SIMPLIFICATION = [
   '[MANGA BACKGROUND SIMPLIFICATION]',
@@ -136,10 +138,10 @@ export const isPermittedWatermarkOverlapIssue = (issue,prompt='') => {
   return /occlu|hidden|overlap|clip|crop|truncat|missing|unreadable|not visible|隠|重な|見切|切れ|欠け|欠落|見え|読め|未表示/i.test(observation);
 };
 
-export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true, showTitle = true, bottomBleed = false } = {}) => [
+export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true, showTitle = true, bottomBleed = false, fullBleed = false } = {}) => [
   `[RENDER OPTIONS: copyrighted_mosaic=${mosaicCopyrightedCharacters ? 'on' : 'off'}; watermarks=${showWatermarks ? 'on' : 'off'}${showTitle ? '' : '; title=off'}]`,
   buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters),
-  showTitle ? '' : NO_PAGE_TITLE,
+  showTitle ? '' : pageTitleSuppression(fullBleed),
   showWatermarks ? WATERMARK_ART_PRIORITY : '',
   showWatermarks ? '' : `FOOTER: ${bottomBleed ? 'continue the authored bleed artwork to the canvas bottom; no blank footer band.' : 'leave the bottom margin blank.'} Do not draw either footer watermark, credit, signature or attribution URL. Preserve ${showTitle ? 'the title, ' : ''}dialogue and scripted in-scene lettering.`,
 ].filter(Boolean).join('\n');
@@ -153,7 +155,7 @@ export const readRenderOptions = (prompt = '') => {
 
 export const assertRenderOptions = (prompt, options) => {
   const bottomBleed=options.bottomBleed??/^FULL BLEED P\d+:.*on [^;\n]*\bbottom\b/m.test(String(prompt));
-  if (!String(prompt).includes(buildRenderOptionsContract({...options,bottomBleed}))) {
+  if (!String(prompt).includes(buildRenderOptionsContract({...options,bottomBleed,fullBleed:options.fullBleed??/^FULL BLEED P\d+:/m.test(String(prompt))}))) {
     throw new Error('タイトル／モザイク／ウオーターマークの設定が指示文と一致しません。STEP3で再構築してください。');
   }
   if (options.showTitle === false && /^(?:- )?(?:Top title EXACTLY|Top page:.*text title:|Page title: render|TYPE: title EXTRA-BOLD)/m.test(String(prompt))) {

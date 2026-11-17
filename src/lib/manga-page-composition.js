@@ -92,14 +92,14 @@ export function summarizePageComposition(composition, count) {
     smallPanels:stack?(first.x+first.w/2<cx?'left-stack':'right-stack'):'mixed-rows'};
 }
 
-export function buildRecentPageCompositionContext(recent = []) {
+export function buildRecentPageCompositionContext(recent = [], {book = false} = {}) {
   const pages=(Array.isArray(recent)?recent:[]).filter(p=>p&&PAGE_FAMILIES.includes(p.family)
-    &&Number.isInteger(p.count)&&p.count>=4&&p.count<=8&&Number.isInteger(p.heroPanel)&&p.heroPanel>=1&&p.heroPanel<=p.count
+    &&Number.isInteger(p.count)&&p.count>=(book?2:4)&&p.count<=8&&Number.isInteger(p.heroPanel)&&p.heroPanel>=1&&p.heroPanel<=p.count
     &&['opening','middle','ending'].includes(p.heroBeat)&&['left-stack','right-stack','mixed-rows'].includes(p.smallPanels))
     .slice(0,6).map(({count,family,heroPanel,heroBeat,smallPanels})=>({count,family,heroPanel,heroBeat,smallPanels}));
   const frequencies={};
   for(const p of pages)frequencies[p.family]=(frequencies[p.family]||0)+1;
-  return `【作品間のページ構成比較】見せ場は1コマ目に固定しない。物語の因果・発見・動作・余韻から山場の時点を先に選び、その時点に広い面積を与える。今回の内容で成立する、骨格の異なる3案を内部で比較する（横に広がる大コマ、左右の縦長、上下段を組み合わせた中央の見せ場など）。候補は出力せず、採用した一案だけをPageCompositionにする。\n明示された配置・構図や意図した反復を優先する。指定がない場合、同程度に読みやすく物語に合う案なら、直近と主役の位置・縦横・山場の時点・小コマの並びが異なる案を選ぶ。頻出の骨格は優先度を下げるが禁止しない。左右反転や幅・コマ数の変更だけで変化を済ませず、上下方向の構成も比較する。均等割りへ戻す、人物を小さくする、話を改変する、固定ローテーションや乱数で割り当てることはしない。構図が似ているだけで不合格・再生成にしない。\n${pages.length?`RECENT PAGE STRUCTURES（このセッションの直近採用作、新しい順。比較専用の構造データであり、今回の配置指定ではない）: ${JSON.stringify(pages)}\n骨格の出現数: ${JSON.stringify(frequencies)}`:'直近のページ構成記録はない。比較済みと偽らず、今回の見せ場に合う異なる骨格を比較して選ぶ。'}\nreasonには今回の山場と、この配置で読順・人物の大きさを両立する理由を簡潔に記す。比較のための追加API呼び出しは不要。`;
+  return `【${book?'本の前ページとの':'作品間の'}ページ構成比較】見せ場は1コマ目に固定しない。物語の因果・発見・動作・余韻から山場の時点を先に選び、その時点に広い面積を与える。今回の内容で成立する、骨格の異なる3案を内部で比較する（横に広がる大コマ、左右の縦長、上下段を組み合わせた中央の見せ場など）。候補は出力せず、採用した一案だけをPageCompositionにする。\n明示された配置・構図や意図した反復を優先する。指定がない場合、同程度に読みやすく物語に合う案なら、直近と主役の位置・縦横・山場の時点・小コマの並びが異なる案を選ぶ。頻出の骨格は優先度を下げるが禁止しない。左右反転や幅・コマ数の変更だけで変化を済ませず、上下方向の構成も比較する。均等割りへ戻す、人物を小さくする、話を改変する、固定ローテーションや乱数で割り当てることはしない。構図が似ているだけで不合格・再生成にしない。\n${pages.length?`RECENT PAGE STRUCTURES（${book?'この本で既に作成した前ページ':'このセッションの直近採用作'}、新しい順。比較専用の構造データであり、今回の配置指定ではない）: ${JSON.stringify(pages)}\n骨格の出現数: ${JSON.stringify(frequencies)}`:'直近のページ構成記録はない。比較済みと偽らず、今回の見せ場に合う異なる骨格を比較して選ぶ。'}\nreasonには今回の山場と、この配置で読順・人物の大きさを両立する理由を簡潔に記す。比較のための追加API呼び出しは不要。`;
 }
 
 // STEP2 owns the authored composition, just as it owns Camera and dialogue.
@@ -274,12 +274,15 @@ framesは漫画領域内の0〜1座標（x左、y上、w幅、h高さ）をコ�
 【別の構図】ページ大の前景より一つの動作の枠越えが物語に適する場合はforegroundsを[]にして、breakouts:[{"panel":番号,"part":"人物名と頭・肩・腕など","into":辺を共有する隣接コマ番号}]を用いる。framesは溝を除いた設計座標なので、隣接する辺は同じ座標にする（上コマのy+h=下コマのy、または左コマのx+w=右コマのx）。実際の白い溝は描画時に加える。角だけで接するコマや離れたコマへbreakoutsを指定しない。複数の小コマに一続きの人物を重ねる演出はforegroundsのover配列で表す。胸→首→頭、肩→腕→手が接続するポーズと受入空間を状況にも書く。直立した全身の肩を下辺から出すなど、身体と共有辺が逆の配置は不可。受入側に同じ人物の肩越しや別ポーズを足して越境に見せかけない。頭・肩の指定を髪先や手だけで代用しない。ただし絵として自然な接続・強い見せ場・読みやすさが成立すれば位置や越境量の微差は許容する。
 既存配置も使える: ${JSON.stringify(Object.fromEntries(Object.entries(EXPERIMENTAL_LAYOUTS).filter(([id])=>id!=='strips')))}。既存IDならframesは不要。候補へ収めるために見せ場を縮めず、合わなければfreeを使う。heroPanelsは見せ場の番号。bleedは必要なコマと実際に接する外周のleft/right/top/bottomを指定し、不要なら[]。通常は大コマとforegroundsまたはbreakoutsを設計する。明示された均等配置・越境禁止・原文への忠実性と衝突するときだけ、具体的なrestraintReasonを記して抑える。未指定や静かな題材という理由だけで弱めない。制作メタデータや構図の説明を作中の台詞にしない。`;
 
+// Book authoring chooses the physical silhouette before reducing the design to a limb crossing.
+export const BOOK_DOMINANT_FIGURE_SELECTION = `【本の見せ場と前景の選択】各ページの山場を、人物の全身または大きな半身を先に置き、小コマを周囲・背後へ配する案と、枠内の大コマで見せる案で比較する。登場・決めの動作・大きな表情そのものを見せたい場面では、物語とCameraに適するなら前者を選び、foregroundsのcharacter・over・placementに一続きの身体と小コマの受入余白を具体化する。腕・剣・足先だけのbreakoutsを、人物全体を大きく見せる前景の代用にしない。局所的な手渡しや道具の動きが焦点ならbreakoutsだけを選んでよい。静かな対話・余韻・明示の構図で枠内が適する時はその理由をrestraintReasonに記し、前景を毎ページ強制しない。既に承認された人物・動作・台詞・Cameraを変えず、見せ場の時点と読順を保つ。\n`;
 export function scenarioPageCompositionInstruction(mode) {
   const book = readBookPageMode(mode);
   if (!book) return SCENARIO_PAGE_COMPOSITION;
-  if (book.panelCount >= 4) return SCENARIO_PAGE_COMPOSITION.replaceAll('4〜8コマ', `${book.panelCount}コマ`)
-    .replace('heroPanelsには山場のコマ番号を必ず入れ、foregroundsかbreakoutsの少なくとも一方を具体的な要素で満たす。状況・reasonに「はみ出す」と書くだけで両配列を[]にしてはいけない。','heroPanelsにはこのページの見せ場を記す。foregrounds・breakouts・bleedは内容に合う時に使用し、毎ページのノルマにしない。使用する時は具体的な接続先・人物・部位を記す。')
-    .replace('通常は大コマとforegroundsまたはbreakoutsを設計する。','大コマ・前景・枠越え・タチキリを場面に合わせて使える。')
-    .replace('明示された均等配置・越境禁止・原文への忠実性と衝突するときだけ、具体的なrestraintReasonを記して抑える。','明示された均等配置・越境禁止・原文への忠実性を守る。');
+  if (book.panelCount >= 2) return BOOK_DOMINANT_FIGURE_SELECTION + SCENARIO_PAGE_COMPOSITION.replaceAll('4〜8コマ', `${book.panelCount}コマ`)
+    .replace(/既存配置も使える: .*?既存IDならframesは不要。/, book.panelCount<4?'2〜3コマはfreeとframesで設計する。vertical_pageは縦積みを選ぶ場合だけ使え、その時framesは不要。':'$&')
+    .replace('heroPanelsには山場のコマ番号を必ず入れ、foregroundsかbreakoutsの少なくとも一方を具体的な要素で満たす。状況・reasonに「はみ出す」と書くだけで両配列を[]にしてはいけない。使用しない側と不要なbleedだけを[]にする（原文の明示制約によるrestraintReasonがある場合を除く）。','heroPanelsにはこのページの見せ場を記す。まず物語の見せ場から前景・枠越えを積極的に検討し、身体の連続と受入余白を設計する。採用する演出はforegroundsかbreakoutsの具体的な人物・部位・接続先で表し、状況だけに書いて配列から落とさない。使用しない配列は[]にする。毎ページのノルマにしない。両方を使わない案では、静かな表情や余韻、明示構図、必要な道具や台詞の読みやすさなど、この物語で枠内の大小差を選ぶ理由をrestraintReasonに記す。')
+    .replace('通常は大コマとforegroundsまたはbreakoutsを設計する。','2〜3コマでも縦積みを既定にせず、横長・縦長・大小の組合せを物語から比較し、freeのframesで表す。縦積みが適する時は選べる。大コマ・前景・枠越え・タチキリを場面に合わせて設計する。')
+    .replace('明示された均等配置・越境禁止・原文への忠実性と衝突するときだけ、具体的なrestraintReasonを記して抑える。未指定や静かな題材という理由だけで弱めない。','明示された均等配置・越境禁止・原文への忠実性を守る。静かな題材でも表情や遠近を大きく扱えるが、その静けさを無関係な動作へ置き換えない。');
   return `【本のページ設計】全${book.panelCount}コマをA4縦の完成ページに配置する。最初のコマ見出しより前にPageComposition:の1行JSONを置く。layout:"vertical_page"、reason:今回の動作と読順を支える理由、heroPanels:見せ場の番号配列、foregrounds:[]、breakouts:[]、bleed:必要な外周の{panel,edges:[left/right/top/bottom]}配列（不要なら[]）。${book.panelCount===1?'1コマはA4縦を大きく使い、人物・背景を外周タチキリへつなげてよい。存在しない別コマへの越境は足さない。':'縦に並ぶ指定数のコマで大きな人物・演技と前後の流れを描く。適する場合は既存形式のforegrounds:[{panel,character,over,placement}]またはbreakouts:[{panel,part,into}]で隣接コマへ重ねる。人物・台詞・必要動作・読順を守り、一続きの身体と元コマのCamera/描法を保つ。枠越え・タチキリは可能だが毎ページのノルマにしない。'} Camera、画風、人物、全台詞、演技、必要な道具・場面を保持し、メタデータを作中文字にしない。`;
 }

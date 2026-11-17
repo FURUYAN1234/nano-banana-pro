@@ -48,7 +48,7 @@ test('a past object modifier cannot add a body beyond the explicit current shot'
   for (const description of [historical, '丙が運んだ荷物が床にある。', '丙が掲げた一個は塔の上に置かれ、']) {
     const source = scene(description);
     for (const compact of [false, true]) assert.deepEqual(names(extractCastLimitRule(source, cast, { compact })), ['乙', '甲']);
-    assert.match(extractCastLimitRule(source, cast, { compact: true }), /NO OTHER HUMANS: exactly 2 people/);
+    assert.match(extractCastLimitRule(source, cast, { compact: true }), /NO OTHER ACTORS: exactly 2 bodies/);
     assert.match(extractCastLimitRule(source, cast, { compact: true }), /do NOT draw \[丙\]/);
     assert.ok(extractActionOnly(source, cast).includes(description), 'story history remains in authored Action');
     assert.deepEqual(extractDialogueOnly(source, cast, { asEntries: true }).map(entry => entry.text), ['きれいだね。']);

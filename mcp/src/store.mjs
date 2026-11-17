@@ -135,6 +135,23 @@ export class ProjectStore {
       await this.atomic(await this.projectPath(id), p); return clone(result);
     });
   }
+  async validateSaveOwner(projectId, ownerProjectId) {
+    assertSafeIdentifier(ownerProjectId);
+    const visited=new Set([projectId]);let current=ownerProjectId;
+    while(current){
+      if(visited.has(current))throw new MangaControlError('SAVE_OWNER_CYCLE','Save ownership must not contain a cycle.');
+      visited.add(current);const owner=await this.get(current);
+      if(owner.id!==current)throw new MangaControlError('SAVE_OWNER_INVALID','Save owner identity does not match its workspace project.');
+      current=owner.saveOwnerProjectId;
+    }
+  }
+  setSaveOwner({projectId,ownerProjectId,expectedRevision,idempotencyKey}) {
+    return this.mutate(projectId,expectedRevision,idempotencyKey,{operation:'set_save_owner',ownerProjectId},async p=>{
+      if(p.id!==projectId)throw new MangaControlError('SAVE_OWNER_INVALID','Material project identity does not match its workspace project.');
+      if(p.saveOwnerProjectId&&p.saveOwnerProjectId!==ownerProjectId)throw new MangaControlError('SAVE_OWNER_CONFLICT','A material project already belongs to another work.');
+      await this.validateSaveOwner(projectId,ownerProjectId);p.saveOwnerProjectId=ownerProjectId;
+    },{affectsPlan:false});
+  }
   updatePage({ projectId, pageId, expectedRevision, idempotencyKey, settings = {}, panelCount, kind, presentation }) {
     validatePageSettings(settings);
     if(presentation!==undefined)validateBookPresentation(presentation);

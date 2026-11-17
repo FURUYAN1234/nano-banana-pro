@@ -348,7 +348,7 @@ try {
       if(colorMode==='color') for(const condition of ['対象は保持者でなくActionで決定','筐体/台座','文字の天地は読む人物向き','後ろ向き人物の胸元','明示Cameraの位置/高さ/仰俯角/レンズ/切取りは固定','位置未指定時のみ物でなくCamera','受取人として明示された時だけ','隠れた輪郭は整合して消失/再開','小口の表紙化は禁止','各字の天地を含め組版','行だけ回して字を画布に直立させない','元の組版を保持','出来事でなく輪郭を明確化']) assert.ok(prompt.includes(condition),condition);
       if(colorMode==='color') for(const condition of ['明示動作を全保持','指差し/伸手/打撃/全身反動/跳躍/強い短縮','支持/空中軌道・重心・左右の手の役割・接触対象','速度線で動作/透視を代用しない','静止へ動きを捏造しない','誇張自体は描画欠陥でない','他者が読む時に保持者の肩越しにしない','標準肩越しへ平坦化しない','耳は片側一つ','後頭部に顔を捏造しない','明示の両面意匠は許容']) assert.ok(prompt.includes(condition),condition);
       assert.equal(assertRenderOptions(prompt,options),prompt);
-      assert.match(prompt,/ABSENT|NO OTHER HUMANS/);
+      assert.match(prompt,/ABSENT|NO OTHER ACTORS/);
       if(colorMode==='color') assert.match(prompt,/black hair/);
       else {const cast=prompt.split('CAST: ')[1].split('[END REFERENCE CAST DATA]')[0];assert.match(cast,/hair/);assert.doesNotMatch(cast,/black hair/);}
       assert.match(prompt,/ユウは赤い上着/);

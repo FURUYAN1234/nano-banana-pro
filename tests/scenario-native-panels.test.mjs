@@ -196,6 +196,23 @@ test('new native generation cannot silently lose page composition and uses the b
  assert.equal(generations,3);
 });
 
+test('short book composition retry retains prior-page structure without forcing a crossing',async()=>{
+ const recentPageCompositions=[{count:2,family:'upper-wide',heroPanel:1,heroBeat:'opening',smallPanels:'right-stack'}];
+ const quiet={layout:'free',frames:[{x:0,y:0,w:1,h:.65},{x:0,y:.65,w:1,h:.35}],reason:'札を読む静かな表情と受け手の間を大きく見せる',heroPanels:[1],foregrounds:[],breakouts:[],bleed:[]};
+ let generations=0;
+ setFixtureResponse(async prompt=>{
+  if(prompt.includes('構成監査'))return {text:JSON.stringify(reviewFor(2)),model:'fixture'};
+  assert.match(prompt,/RECENT PAGE STRUCTURES[^\n]*"count":2/);
+  assert.match(prompt,/この本で既に作成した前ページ/);
+  generations++;
+  const composition=generations===1?{...quiet,frames:[]}:quiet;
+  return {text:'Topic: 札\nScenario:\nPageComposition: '+JSON.stringify(composition)+'\n'+panels(2),model:'fixture'};
+ });
+ const result=await provider.generateScenario({...args,scenarioMode:'book-page-2-continue',scenarioModelId:'gpt-6-luna',recentPageCompositions});
+ assert.equal(generations,2);
+ assert.match(result.scenario,/"breakouts":\[\]/);
+ assert.ok(result.scenario.includes('A「2枚目です。」'));
+});
 test('ordinary generated scenarios retry an unexplained missing breakout before narrative review',async()=>{
  const understated={layout:'hero_bottom',reason:'人物が隠れた幕を最後の大コマにする',heroPanels:[5],breakouts:[],bleed:[]};
  const bold={layout:'two_columns',reason:'人物の登場動作を大きく見せて反応へつなぐ',heroPanels:[1],breakouts:[{panel:1,part:'Aの肩につながる腕全体',into:2}],bleed:[]};

@@ -93,6 +93,15 @@ export const addGenerationHistoryItem = (history, item, { removeImages = new Set
     .slice(0, MAX_GENERATION_HISTORY_ITEMS);
 };
 
+// Checkpoint the image and its selected generation context as one consistent value.
+export const buildGenerationSaveSnapshot = (snapshot, item) => ({
+  ...snapshot,
+  generatedImage: item.img,
+  accepted: true,
+  generationHistory: [item, ...(snapshot.generationHistory || []).filter(previous => previous.id !== item.id)]
+    .map(entry => ({ ...entry, selected: entry.id === item.id })),
+});
+
 export const selectGenerationMetadataContext = (historyItem) => {
   if (historyItem?.metadataContext) return historyItem.metadataContext;
   const model = String(historyItem?.modelId || '');

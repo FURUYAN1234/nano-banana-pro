@@ -50,7 +50,7 @@ import {
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
-import { addGenerationHistoryItem, collectRecentScenarioOutcomes, collectRecentPageCompositions, createScenarioSourceKey, findScenarioSourceKey, getWorkflowStep } from '../lib/generation-history';
+import { buildGenerationSaveSnapshot, addGenerationHistoryItem, collectRecentScenarioOutcomes, collectRecentPageCompositions, createScenarioSourceKey, findScenarioSourceKey, getWorkflowStep } from '../lib/generation-history';
 import { createFinalImageSaver, prepareGeneratedImageSave } from '../lib/generated-image-save.js';
 import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus, finalizeMonochromeCandidate } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
@@ -446,10 +446,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       if(!isCurrent())return false;
       const saved=await prepareGeneratedImageSave(item,SYSTEM_VERSION);
       if(!isCurrent())return false;
-      const snapshot=captureMcpState();
-      snapshot.generatedImage=item.img;snapshot.accepted=true;
-      snapshot.generationHistory=[item,...snapshot.generationHistory.filter(previous=>previous.id!==item.id)];
+      const snapshot=buildGenerationSaveSnapshot(captureMcpState(),item);
       await mcpImageSaveRef.current({pageId:bookPageContextRef.current.pageId,dataUrl:saved.dataUrl,metadata:item.metadataContext,snapshot});
+      if(isCurrent())setGenerationHistory(previous=>buildGenerationSaveSnapshot({generationHistory:previous},item).generationHistory);
       mcpAcceptedImageRef.current=item.img;
       return isCurrent();
     }

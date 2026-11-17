@@ -281,7 +281,7 @@ ${scenario}
  * STEP2: シナリオ生成プロンプト
  * 指定された日付、カテゴリ、入力モードなどに基づいて4コマ漫画のシナリオを生成する
  */
-function buildBookScenarioPrompt({bookOutlineExpansion=false,inputMode,randomCategory,searchTopicKeywords,scenarioMode,manualTopic,newsContext,documentarySourceText,requestedPunchlineType,styleJson,customLocation,customOutfit,mosaicCopyrightedCharacters,targetDate}) {
+function buildBookScenarioPrompt({bookOutlineExpansion=false,recentPageCompositions=[],inputMode,randomCategory,searchTopicKeywords,scenarioMode,manualTopic,newsContext,documentarySourceText,requestedPunchlineType,styleJson,customLocation,customOutfit,mosaicCopyrightedCharacters,targetDate}) {
   const page=readBookPageMode(scenarioMode),policy=getEndingModePolicy(requestedPunchlineType);
   const pageRule=rule=>String(rule).replaceAll('4コマ目','ページ末のコマ').replaceAll('4コマ全体',`当ページの全${page.panelCount}コマ`).replaceAll('4コマ',`${page.panelCount}コマ`);
   return `あなたは複数ページ漫画の指定された1ページを、既存の人物・出来事・演技・台詞を保って具体的な台本にする演出家です。
@@ -310,6 +310,7 @@ ${buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters)}
 ${SCENARIO_SFX_CONTRACT}
 ${SCENARIO_BALLOON_LAYOUT_RULES}
 ${scenarioPageCompositionInstruction(scenarioMode)}
+${page.panelCount>1?buildRecentPageCompositionContext(recentPageCompositions,{book:true}):''}
 【出力】Topic:, Location:, Outfit:, Punchline:, Scenario:の順で出す。Punchlineは本全体の指定モード${requestedPunchlineType||'Auto'}を保持するためのメタデータで、途中ページへ独立したオチを強制しない。
 Scenario:の直後にPageComposition:の1行JSONを置く。次に[1コマ目: 当ページの出来事]から[${page.panelCount}コマ目: 当ページの出来事]まで、実際の指定数だけ出力する。各コマは[Camera: 具体的な撮影位置・投影・距離・向き・レンズと狙い]、[EMOTION: 許可された画風]、状況: 原文に対応する動作・反応・道具と焦点、人物の正式名:「台詞」、BalloonLayout:の既存形式を使う。無言はセリフなしと明示する。台詞の引用符内だけが印字される本文で、人物名・Camera・構図説明は印字しない。指定された数でページを終え、存在しないコマや次ページを足さない。`;
 }
@@ -339,7 +340,7 @@ export const getScenarioPrompt = ({
   styleJson
 }) => {
   const bookPage = readBookPageMode(scenarioMode);
-  if(bookPage)return buildBookScenarioPrompt({bookOutlineExpansion,inputMode,randomCategory,searchTopicKeywords,scenarioMode,manualTopic,newsContext,documentarySourceText,requestedPunchlineType,styleJson,customLocation,customOutfit,mosaicCopyrightedCharacters,targetDate});
+  if(bookPage)return buildBookScenarioPrompt({bookOutlineExpansion,recentPageCompositions,inputMode,randomCategory,searchTopicKeywords,scenarioMode,manualTopic,newsContext,documentarySourceText,requestedPunchlineType,styleJson,customLocation,customOutfit,mosaicCopyrightedCharacters,targetDate});
   const experimental = autoSelectPanelCount || scenarioMode === 'experimental-manga' || Boolean(bookPage);
   if (!experimental && scenarioMode !== 'four-panel') throw new Error('Unknown scenario mode: ' + scenarioMode);
   const panelTotal = bookPage ? String(bookPage.panelCount) : autoSelectPanelCount ? '4〜8' : experimental ? '4〜8' : '4';

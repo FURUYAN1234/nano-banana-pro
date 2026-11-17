@@ -182,7 +182,7 @@ SpeakerB「見えているよ。」`;
     const panel = panelTwoSection(buildPrompt(provider, scene));
     assert.doesNotMatch(panel, /(?:FG only|FOREGROUND MUST CONTAIN ONLY): \[SpeakerA\] and \[SpeakerB\]/);
     assert.match(panel, /each EXACTLY ONCE|each appears EXACTLY ONCE/);
-    assert.match(panel, /exactly 2 people|EXACTLY 2 distinct individuals|TOTAL 2 people; no others/i);
+    assert.match(panel, /exactly 2 bodies|EXACTLY 2 bodies|TOTAL 2 bodies; no others/i);
     assert.doesNotMatch(panel, /Slots fixed|BODY POSITION LOCK/);
   }
 });
@@ -479,7 +479,7 @@ MemberA「The loudest voice wins.」`;
     assert.match(panel, /(?:BG|BG only|BACKGROUND MUST CONTAIN ONLY): \[Focus\], \[MemberA\], \[MemberB\], \[MemberC\]\./);
     assert.match(panel, /OTS CAST INSTANCE LOCK:.*\[Observer\].*(?:sole instance|one and only instance)/i);
     assert.doesNotMatch(panel, /(?:BG only|BACKGROUND MUST CONTAIN ONLY):[^\n]*\[Observer\]/);
-    assert.match(panel, /(?:NO OTHER HUMANS: exactly 5 people|NO OTHERS: total 5 people|TOTAL 5 people; no others|Total EXACTLY 5 distinct individuals)\./);
+    assert.match(panel, /(?:NO OTHER ACTORS: exactly 5 bodies|NO OTHERS: total 5 bodies|TOTAL 5 bodies; no others|Total EXACTLY 5 distinct cast bodies)\./);
   }
 });
 
@@ -600,7 +600,7 @@ test('cast counting uses speech entries even when every tail targets a visible c
   const result = extractCastLimitRule(panel, '甲、乙');
   assert.match(result, /\[甲\]/);
   assert.match(result, /\[乙\]/);
-  assert.match(result, /2 (?:people|distinct individuals)/);
+  assert.match(result, /2 bodies/);
   assert.deepEqual(extractDialogueOnly(panel, '甲、乙', {asEntries: true, forImagePrompt: true}), [
     {speaker: '甲', text: '確認。'}, {speaker: '乙', text: '了解。'}
   ]);

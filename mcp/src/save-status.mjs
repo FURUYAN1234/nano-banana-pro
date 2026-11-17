@@ -45,7 +45,11 @@ export async function readMcpSaveStatus(store,project,{jobs,downloadsDirectory}=
  let journal;
  try{journal=await readJson(store,journalFile);}catch(error){if(error.code!=='ENOENT')result.verification={status:'unconfirmed',errorCode:error.code||'JOURNAL_INVALID'};else if(exportFailure)result.verification.status='failed';return result;}
  if(journal.projectId!==project.id||!safeName(journal.bookDirectory)){result.verification={status:'unconfirmed',errorCode:'EXPORT_STATE_INVALID'};return result;}
- const book=path.join(downloads,journal.bookDirectory);result.destination.bookDirectory=book;
+ const relative=journal.bookRelativeDirectory||journal.bookDirectory;
+ const book=path.resolve(downloads,relative);
+ if(!book.startsWith(downloads+path.sep)){result.verification={status:'unconfirmed',errorCode:'EXPORT_STATE_INVALID'};return result;}
+ let checked=downloads;for(const part of path.relative(downloads,book).split(path.sep)){checked=path.join(checked,part);try{await store.rejectLinkedFile(checked);}catch{result.verification={status:'unconfirmed',errorCode:'PATH_REJECTED'};return result;}}
+ result.destination.bookDirectory=book;
  const entries=Object.values(journal.pages||{}).sort((a,b)=>String(a.exportedAt).localeCompare(String(b.exportedAt)));
  const latest=entries.at(-1);
  let failed=false,uncertain=false,latestSidecar;

@@ -9,9 +9,10 @@ import { ProjectStore, approvalHash } from './store.mjs';
 import { acquireWorkspaceLease } from './workspace-lease.mjs';
 import { JobQueue } from './jobs.mjs';
 import { startBridge } from './bridge.mjs';
-import { MCP_CONTRACT_VERSION, MCP_OPERATION_COVERAGE, MCP_STATE_EDIT_ACTIONS, PAGE_SETTING_TYPES, assertNoSecrets } from '../../src/lib/mcp/contract.js';
+import { MCP_CONTRACT_VERSION, MCP_OPERATION_COVERAGE, MCP_STATE_EDIT_ACTIONS, PAGE_SETTING_TYPES, assertNoSecrets, MangaControlError } from '../../src/lib/mcp/contract.js';
 import { readMcpSaveStatus } from './save-status.mjs';
 import { getMcpSettingCatalog } from '../../src/lib/mcp/catalog.js';
+import { relocateProjectExports } from './exports.mjs';
 
 const id = z.string().min(1).max(128);
 const mutation = { projectId: id, expectedRevision: z.number().int().positive(), idempotencyKey: id };
@@ -61,6 +62,12 @@ export function createMangaMcpServer(store, { jobs, bridge } = {}) {
   }).strict(), async ({ idempotencyKey, ...input }) => publicProject(await store.create(input, idempotencyKey)));
   register('manga_project_list', 'List projects from the configured workspace without reading unrelated directories.', z.object({}).strict(), async () => ({ items: await store.list() }), true);
   register('manga_project_get', 'Read current project/page revisions, detailed plan, settings and approval state.', z.object({ projectId: id }).strict(), async a => publicProject(await store.get(a.projectId)), true);
+  register('manga_project_set_save_owner', 'Save a derived costume/material project inside an existing work folder under 資料. Copies all existing portable files with byte verification, preserves originals and future generation history. Save metadata only; no paid API or approval change. Ownership cannot be reassigned.', z.object({ ...mutation, ownerProjectId:id }).strict(), async a=>{
+    if([...(jobs?.jobs?.values()||[])].some(job=>[a.projectId,a.ownerProjectId].includes(job.projectId)&&['queued','waiting_for_connection','running','cancelling'].includes(job.state)))throw new MangaControlError('SERVICE_BUSY','Wait for this work and its material generation to finish before changing save ownership.');
+    const result=await store.setSaveOwner(a),project=await store.get(a.projectId);
+    const exported=await relocateProjectExports(store,project,{downloadsDirectory:jobs?.downloadsDirectory});
+    return {...result,...exported};
+  });
   register('manga_asset_import', 'Import a supplied image into immutable local storage. Return IDs/hash only. sourcePath is an explicitly supplied local image path, never a URL or credential file.', z.object({
     sourcePath: z.string().max(4096).optional(), dataUrl: z.string().max(67_000_000).optional(),
   }).strict(), async a => {

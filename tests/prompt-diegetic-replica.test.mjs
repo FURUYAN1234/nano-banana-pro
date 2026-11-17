@@ -75,12 +75,12 @@ test('both four-panel provider prompts keep reaction mentions on one body and is
     // The compact path keeps one physical instance through the per-panel cast
     // count instead of repeating the same global identity rule in every panel.
     assert.match(third, /CAST INSTANCE LOCK:.*(?:Camera\/Action\/dialogue\/reaction.*same physical body|all mentions reuse it|reuse same)|CAST COUNT:.*\[ミク\].*\[リン\].*\[ヒカリ\].*each EXACTLY ONCE/is);
-    assert.match(third, /(?:NO OTHER HUMANS: exactly|TOTAL) 5 people/);
+    assert.match(third, /(?:NO OTHER ACTORS: exactly|TOTAL) 5 bodies/);
     assert.doesNotMatch(third, /DIEGETIC REPLICA LAYER/);
 
     assert.match(fourth, /DIEGETIC REPLICA LAYER:.*\[ミク\].*\[リン\].*\[サエコ\].*\[アカリ\].*\[ヒカリ\]/is);
     assert.match(fourth, /one tiny replica each.*inside the explicitly scripted container\/surface|one tiny copy each inside scripted container only/is);
-    assert.match(fourth, /PHYSICAL TOTAL 5 full-size people; no other full-size humans/i);
-    assert.doesNotMatch(fourth, /(?:NO OTHER HUMANS: exactly|TOTAL) 5 people/);
+    assert.match(fourth, /PHYSICAL TOTAL 5 full-size bodies; no other full-size actors/i);
+    assert.doesNotMatch(fourth, /NO OTHER ACTORS: exactly 5 bodies/);
   }
 });

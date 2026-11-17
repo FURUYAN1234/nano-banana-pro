@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.0.3** / 現在のソース版: **v8.0.3**
+> Current source version: **v8.0.4** / 現在のソース版: **v8.0.4**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -76,6 +76,8 @@ The production skill also supports a single manga page. When a manga request lea
 
 The skill includes storytelling and revision guidance derived from Story Maker: reader expectations, motivation, setup and payoff, visible acting, and preserving successful drafts. It presents panel-by-panel proposals and uses the manga application's planning pipeline; Story Maker installation or extra provider calls are not required. / Story Makerの実装から抽出した、読者の期待、人物の動機、仕込みと回収、絵で伝わる演技、成立した案を保つ推敲の手順を同梱しています。コマごとのシナリオを提示し、漫画アプリの構成処理へつなぎます。Story Makerの導入や追加API呼び出しは不要です。
 
+When image production is also requested, the scenario skill carries conditional composition checks into the handoff: place the principal body action before surrounding beats when suitable, distinguish its crossing silhouette from later actors, check leg→shoe→contact continuity, and correct material defects while retaining a strong layout. It imposes no fixed coordinates, cast, drawing style or per-page crossing quota. / 画像制作も依頼された場合の引継ぎでは、場面に適すれば主動作の身体を先に置いて周辺場面を組み、越境身体と別時点の人物を区別し、脚→靴→接触面を確認します。強い構図を保って実害のある箇所だけを直し、固定座標・人物・画風や毎ページの枠越えを課しません。
+
 ### Manga workflow with AI / AIと進める漫画制作の流れ
 
 ![AI manga workflow from consultation to saved pages and optional SNS publication / 相談から保存・希望時のSNS投稿までを示すAI漫画制作の流れ](docs/assets/furu-manga-workflow.png)
@@ -106,14 +108,26 @@ During MCP control, use the single **Stop and return to manual** button at the t
 
 Choose supplied character sheets or AI-created originals, review the synopsis and detailed scenario, then approve the plan before rendering. Carry character, prop and setting assets across pages; use the previous completed page as an auxiliary reference. / キャラクターシートを用意するかAIで作るかを選び、あらすじと詳細シナリオを確認してから生成します。人物・小道具・背景の資料を引き継ぎ、前ページの完成画像は連続性の補助資料にします。
 
-OpenAI book pages can specify 1–8 panels, including an A4 one-panel page, two stacked panels or three panels. Choose color or monochrome, an illustrated cover or a large opening panel with a title logo, independent title/watermark/page-number options, and ending lettering over the final panel. Each completed page is saved as PNG plus matching JSON. / OpenAIの複数ページ制作ではA4縦1コマ・縦2コマ・3コマを含む1～8コマを指定できます。カラー／白黒、1枚絵表紙か冒頭大コマと題字、タイトル・ウォーターマーク・ページ番号、最終コマに重ねる終幕文字を選び、完成ページからPNGと同名JSONを保存します。
+OpenAI book pages can specify 1–8 panels, including an A4 one-panel page and free two- or three-panel layouts. Choose color or monochrome, an illustrated cover or a large opening panel with a title logo, independent title/watermark/page-number options, and ending lettering over the final panel. Each completed page is saved as PNG plus matching JSON. / OpenAIの複数ページ制作ではA4縦1コマや自由配置の2・3コマを含む1～8コマを指定できます。カラー／白黒、1枚絵表紙か冒頭大コマと題字、タイトル・ウォーターマーク・ページ番号、最終コマに重ねる終幕文字を選び、完成ページからPNGと同名JSONを保存します。
+
+Book-detail authoring actively considers a foreground figure or connected panel crossing around the strongest story moment. Two- and three-panel pages compare free layouts instead of starting from a fixed vertical stack. Up to six earlier comic-page structures guide comparison without copying their characters, dialogue or cameras; explicit layouts and intentional repetition take priority. Quiet scenes can use strong scale contrast while remaining within frames. Crossings are not required on every page, and approved dialogue and camera directions remain unchanged. / 複数ページの詳細台本では、物語の見せ場から大きな前景人物や一続きの枠越えを検討します。2・3コマも縦積みを既定にせず自由配置を比較し、直前の最大6ページの構成だけを参考にします。以前の人物・台詞・カメラは比較資料へ含めず、明示構図や意図した反復を優先します。静かな場面は枠内の大小差でも表現でき、全ページに枠越えを強制しません。承認済みの台詞とカメラは保持します。
+
+For book pages, compare placing one large full or half figure first with keeping the scene inside a large panel. A hand or sword-tip crossing is not a substitute for a page-dominant body; local prop-focused crossings remain available. This directs composition but does not guarantee a dramatic rendered overlap. A monochrome two-page test produced a large connected torso/hip/leg crossing with a tall right-hand hero scene and two smaller scenes on the left. Cast and boot-shape defects were corrected with ordinary image edits; this is not a guarantee for every layout. / 複数ページでは、一人の大きな全身・半身を先に配置する案と、枠内の大コマで見せる案を比較します。手や剣先だけの越境でページ大の人物を代用せず、道具の局所的な動きには部位の越境を使えます。ただし構図指示は、大きな越境の描画を保証するものではありません。今回の白黒・全2ページ作例では、右の縦長大コマと左の小コマ2つを使い、胴体・腰・脚が大きく一続きに越境する絵を確認しました。人物とブーツ形状の誤りは通常の画像修正で直したもので、あらゆる構図での再現を保証しません。 A subsequent color comparison used the final v8.0.4 runtime through the normal image flow: one generation, one automatic repair and one ordinary image edit corrected real duplicate/missing cast. The reviewed result retained a large connected body crossing, boots/shield contact, five returning actors and the ending. It is not a one-shot or universal-quality guarantee. / 続いて最終v8.0.4の通常画像経路でカラーも比較し、初回生成・自動修正1回・通常の画像編集1回で人物の重複と欠落を直しました。採用画像は、大きな一続きの身体の枠越え、ブーツと盾の接触、終コマの5人、結末を保持しています。一発生成や全入力での品質保証ではありません。
 
 Per-page settings override shared settings during outline planning as well as rendering. A color cover and monochrome body can coexist. Cover prompts and saved metadata carry the same title, watermark and mosaic switches; an explicitly requested author credit remains independent. / ページ別設定は、描画時だけでなくあらすじ作成時にも共通設定より優先します。表紙だけカラー、本文は白黒という組合せも使えます。表紙の題字・ウォーターマーク・モザイクは生成指示と保存情報で一致させ、明示した作者名は別の指定として扱います。
+
+With the title off, explicitly authored full-bleed edges still extend to the canvas edge; other outer margins remain. / タイトルOFFでも、明示したタチキリ辺は画布端まで絵を続け、他の外周余白は残します。
 
 Changing the outline, detailed plan, cast bible or asset specifications retires active derived scripts, prompts and images and archives the previous page snapshots. Reference sheets and recognition data remain available; identical plan submissions retain manual work and accepted pages. After editing an earlier image, check later pages and rebuild STEP3 when their preparation has expired. / 構成案・詳細台本・人物設定・素材仕様を変更すると、現行の派生台本・指示文・画像を失効させ、以前のページ状態を履歴へ退避します。資料と認識結果は保持し、同じ計画の再送信では手編集や採用済みページを消しません。先行画像の編集後は後続ページを確認し、準備が失効していればSTEP3で再構築してください。
 
 Silent actors and nonhuman opponents remain in the panel cast when their visible action or body is specified. Short names resolve only in bounded, unambiguous action/body contexts; quoted mentions, shared names and offscreen characters do not establish a visible body. Explicit aliases can be written as `正式名（別名）` in cast headings. / 無言の人物や非人間の敵も、その動作や身体を描く指定があればコマの登場人物へ含めます。省略名は一意な動作・身体参照の文脈で照合し、引用だけの言及、共有名、画面外の人物を実体の根拠にしません。別名は人物見出しで `正式名（別名）` と明示できます。
 
+Visible body references also resolve an opponent's qualified short name, including its own forearm, the camera-facing side, or a pause before a body description. A collective such as “the five” or “nearby companions” uses an unambiguous named party explicitly supplied in the input; names mentioned only in speech, depicted groups and offscreen actors do not establish physical presence. Mixed casts are counted as physical bodies rather than as people. A crossing body is counted once in its source scene; an independent later appearance remains part of the receiving scene. Explicit registered names take priority over derived aliases. / 敵の省略名も、自身の前腕、カメラ側の身体、読点を挟む身体描写から照合します。「五人」「周囲の仲間」は入力で名前を列挙した一意な集団へ対応させ、台詞だけの言及・画中の人物・画面外人物を実体へ加えません。人と獣が混在する人数指定は、身体の総数として表します。越境身体は元場面で一度だけ数え、受け側の別時点の再登場は残します。派生した別名より明示登録の正式名を優先します。
+
+Document quotations remain printed source text unless the script explicitly reads them aloud. Silent foreground figures remain part of their scene. When a reference sheet uses a provisional description and the script uses a role name, scene and appearance information guide the casting; a label difference alone does not require a new confirmation screen. / 書類の引用は紙面の文字として保持し、明示した読み上げだけを台詞として扱います。無言の前景人物もその場面に残します。人物シートの仮の呼び名と台本の役名が違っていても、場面と外見の情報から対応を補い、呼び名の違いだけで新たな確認画面を求めません。
+Costume/material projects can share the current work's save folder. After both projects finish their active jobs, set the work as save owner: all retained PNG/JSON pairs and future saves go under its existing `資料` folder, with links in the whole-work JSON. Existing outside originals remain intact; conflicting destination files are not overwritten. / 衣装・資料を別作品で作る場合も、両作品の処理終了後に保存先の作品を設定できます。保存済みのPNG・同名JSONと以後の保存を現行作品の「資料」へまとめ、作品全体JSONから関連付けます。元の別フォルダーは残し、異なる内容の保存先ファイルは上書きしません。
+
+Selecting a retained image exports that image with its own generation metadata and makes it the sole selected history item. If the save checkpoint fails, the previously displayed image stays selected. A later save must not reuse another candidate's metadata. / 履歴画像を選ぶと、その画像自身の生成情報で保存し、選択状態を対象1件に揃えます。保存の確認に失敗した場合は、それまでの表示・選択を保持し、別候補の生成情報を流用しません。
 Before production or resuming, the AI calls `manga_save_status(projectId)` to check automatic saving and the destination. MCP saves page PNG/JSON pairs, shared materials and the whole-book manifest directly; no browser download setting or folder picker is required. The tool distinguishes unsaved, missing, hash-mismatched and unreadable files using saved-file readback. It does not claim browser download permission is granted. Do not repeatedly ask the user to select the same destination. / AIは制作・再開の前に `manga_save_status(projectId)` で自動保存と保存先を確認します。MCPはPNG・JSON、共通資料、作品全体JSONを直接保存するため、ブラウザーのダウンロード設定やフォルダー選択は不要です。保存ファイルを読み戻し、未保存・欠落・ハッシュ不一致・読取不能を区別します。ブラウザーの保存許可を確認済みとは扱わず、同じ保存先の選択を繰り返し求めません。
 
 For troubleshooting, `manga_job_get` can return sanitized `error.failureContext`. Request `manga_run` with `operation:"read_state"` and `input:{includeDiagnostics:true}` for an opt-in, bounded diagnostic summary from the connected browser origin, including ordinary single-page troubleshooting. Keys and image bodies are excluded; omitted context is identified, and warnings are distinct from failed jobs. / 不具合調査では `manga_job_get` の安全化済み `error.failureContext` を確認できます。`manga_run` に `operation:"read_state"` と `input:{includeDiagnostics:true}` を指定すると、接続中ブラウザーの同じURLの診断要約を明示的に取得し、通常1ページの不具合調査にも使えます。キー・画像本体を除き、容量上限による省略と、警告・失敗を区別します。
@@ -169,7 +183,7 @@ STEP2 creates the required panels from the start; STEP3 preserves their count, o
 |---|---|
 | No count in a normal OpenAI page / 通常のOpenAI制作でコマ数未指定 | Choose four to eight panels to fit the events and dialogue. / 出来事と台詞に合う4～8コマを選びます。 |
 | An explicit count / コマ数を指定 | For example, “Six panels; panel 2 watercolor and panel 5 GEKIGA.” / 例：「全6コマ。2コマ目は水彩、5コマ目は劇画」。 |
-| Multipage book / 複数ページ作品 | Use the shared application page contract for explicit 1–8-panel pages, including one large panel, two stacked panels and three-panel pages. See the [MCP guide](mcp/README.md) for the supported provider and settings. / アプリ内の共通ページ仕様で1～8コマを指定し、1コマ大コマ・縦2コマ・3コマも扱います。対応プロバイダーと設定はMCPガイドを参照してください。 |
+| Multipage book / 複数ページ作品 | Use the shared application page contract for explicit 1–8-panel pages, including one large panel and free two- or three-panel layouts. See the [MCP guide](mcp/README.md) for the supported provider and settings. / アプリ内の共通ページ仕様で1～8コマを指定し、1コマ大コマや2・3コマの自由配置も扱います。対応プロバイダーと設定はMCPガイドを参照してください。 |
 | Color-only change / 色だけを変更 | Rebuild STEP3 while retaining the accepted free layout. / 採用済みの自由配置を保ってSTEP3を再構築します。 |
 
 ### Story-led composition / 物語に合わせて配置する
@@ -777,7 +791,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the custom-node ZIP from v8.0.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v8.0.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the custom-node ZIP from v8.0.2](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [v8.0.2のカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -841,7 +855,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -911,6 +925,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.0.4 (2026-11-17)
+- **[Fix & UX]** Design book-page emphasis and foreground crossings from the story, with prior-page structure context / 複数ページの見せ場と前景・枠越えを物語から設計し、前ページの構成を比較
 
 ### v8.0.3 (2026-11-17)
 - **[Fix & UX]** Improved startup progress and manual links. Updated scenario-writing guidance, cover and per-page settings, stale-plan invalidation, abbreviated cast names and silent-actor counts, and retained model provenance. Added a required pre-release skill review. / 起動進捗とマニュアル配置を改善。シナリオ制作スキル、表紙とページ設定、計画変更時の旧状態失効、日本語の省略名と背景人物の人数判定、使用モデルの保存を修正。スキル見直しを公開前の必須検査に追加。

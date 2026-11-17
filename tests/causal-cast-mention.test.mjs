@@ -9,14 +9,14 @@ test('a causal reference to earlier speech does not require an otherwise unseen 
     const rule=extractCastLimitRule(base.replace('言葉',word),cast,{compact:true});
     assert.match(rule,/CAST COUNT: \[ミク\], \[サエコ\], \[ヒカリ\] each EXACTLY ONCE/);
     assert.match(rule,/ABSENT: do NOT draw \[アカリ\]/);
-    assert.match(rule,/exactly 3 people/);
+    assert.match(rule,/exactly 3 bodies/);
   }
 });
 test('independent current action, camera presence and speech still require that actor',()=>{
   for(const extra of ['\n状況: アカリも壁を支えている。','\n[Camera: アカリの肩を手前に入れる。]','\nアカリ「ここを持つね。」']){
     const rule=extractCastLimitRule(base+extra,cast,{compact:true});
-    assert.match(rule,/exactly 4 people/);
+    assert.match(rule,/exactly 4 bodies/);
     assert.doesNotMatch(rule,/ABSENT:.*\[アカリ\]/);
   }
-  assert.match(extractCastLimitRule(base.replace('アカリの言葉を受け','アカリの手を受け止め'),cast,{compact:true}),/exactly 4 people/);
+  assert.match(extractCastLimitRule(base.replace('アカリの言葉を受け','アカリの手を受け止め'),cast,{compact:true}),/exactly 4 bodies/);
 });

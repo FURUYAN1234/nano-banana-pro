@@ -15,7 +15,13 @@ test('normal four-panel prompts and shared quality text match released v7.0.2',a
     name:'read-only-release-baseline',enforce:'pre',load(id){
       if(!id.endsWith('?released'))return;
       const name=id.match(/([^/]+)\.js\?released$/)?.[1];
-      return released.get(name);
+      if(name!=='prompt-assembler')return released.get(name);
+      // The released assembler's dependencies otherwise resolve to current
+      // panel-utils. Feed its unchanged legacy compactor legacy count wording,
+      // preserving every roster/count and all other dependency output.
+      return released.get(name).replace(/\bextractCastLimitRule,/, 'extractCastLimitRule as extractCurrentCastLimitRule,')
+        + '\nimport {restoreCastCountWordingBefore804} from "/tests/helpers/prompt-policy-normalization.mjs";\n'
+        + 'const extractCastLimitRule=(...args)=>restoreCastCountWordingBefore804(extractCurrentCastLimitRule(...args));\n';
     }
   }]});
   try {

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {createServer} from 'vite';
+import {restoreCastCountWordingBefore804} from './helpers/prompt-policy-normalization.mjs';
 const baseline=JSON.parse(readFileSync(new URL('./fixtures/native-mono-compact-before.json',import.meta.url)));
 const server=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
 try {
@@ -54,7 +55,7 @@ try {
  test('native color remains byte identical to pre-mono-compact renderer for each provider',()=>{
   for(const row of baseline.rows.filter(r=>r.colorMode==='color')) {
    const prompt=m.buildExperimentalImagePrompt(plan,source,{colorMode:row.colorMode,providerFamily:row.providerFamily,hasCharacterReferences:false});
-   assert.equal(createHash('sha256').update(prompt).digest('hex'),row.sha256);
+   assert.equal(createHash('sha256').update(restoreCastCountWordingBefore804(prompt)).digest('hex'),row.sha256);
   }
  });
 } finally {await server.close();}
