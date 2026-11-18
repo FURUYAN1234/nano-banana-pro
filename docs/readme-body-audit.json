@@ -1,7 +1,7 @@
 {
-  "pricingSourceSha256": "2ed14f2a6e491becdcb93fd2eb1b97d78bd5f81465d31f9418155050f477ef5e",
+  "pricingSourceSha256": "c117c8eb37e7bf8936e24c9b22991eae1101a3a75a2f5327b5ec36345c185a54",
   "manualVersion": "8.0.5",
-  "manualSourceSha256": "ec2e20e529518c055c9bf90671d746c703520eb3827d662d274d894cca2a2a0f",
+  "manualSourceSha256": "42c240ebe6134a7ec8b20f5f6ca21f66e6941cc506b59111b5d46117b2c62b9e",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
@@ -16,10 +16,10 @@
       "sha256": "e16e324f0c36df9ad3ec302ac64db9e99fd712705e09da4036cf6f87d6428133"
     }
   ],
-  "readmeSha256": "2ddbd1a623300f4aff925dfde8e03d787aacdf093ad53535fc3ec64d7b2d8368",
+  "readmeSha256": "7b6d6ef6ac1f36d32e974ea115cde57f13e6fb166732a875a7d118e26265c852",
   "readmeLanguageGaps": [],
-  "sourceTree": "14092d50d2b39e17fe2777165cc37635baf1cf1b",
-  "publicTree": "94756fd05c91d38b85de6aa6938e06595695ef99",
+  "sourceTree": "1eecf9dfeae3a17954a6635f3be1334e62ede8b9",
+  "publicTree": "a1eeca8ebc533e9ff7ce734038f1093e859772ac",
   "packageSha256": "ba7cea401a37b55e87785a3de737a2071cd7e6603eef8bf6e374ffc62946980d",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -42,16 +42,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "577429c38ca0fffe8a7c18abfea0255f68262bb6",
-  "reviewedAt": "2026-11-18T01:23:41.970Z",
-  "reviewedWorkingTree": true,
-  "reviewStage": "Unpublished local v8.0.5 candidate; recheck the actual release trees before publication.",
+  "sourceCommit": "5223134fbed454070eff79365745fb5ba724b54a",
+  "reviewedAt": "2026-11-18T01:44:19.320Z",
+  "reviewedWorkingTree": false,
+  "reviewStage": "Release-source commit. The following audit-only commit binds the identical README, code, public files, package and skill to this release.",
   "findings": "Compared changes to the v8.0.4 bilingual README with the launcher, selectable model catalog, preserved automatic chains, pricing tables and the candidate changelog. The per-page history interface and the required manifest status are documented in the MCP guide.",
   "manualFindings": "The feature manual contains 47 pages, with launch and skill synchronization on page 38 and historical PNG/JSON recovery on page 46. Page bounds, text, links, rendered pages and distributed PDF hashes were checked. The separately rebuilt OpenAI and Gemini guides contain 19 and 12 pages.",
   "pricingReview": {
     "version": "8.0.5",
-    "sourceSha256": "2ed14f2a6e491becdcb93fd2eb1b97d78bd5f81465d31f9418155050f477ef5e",
-    "checkedAt": "2026-11-18T01:23:41.970Z",
+    "sourceSha256": "c117c8eb37e7bf8936e24c9b22991eae1101a3a75a2f5327b5ec36345c185a54",
+    "checkedAt": "2026-11-18T01:44:19.320Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://developers.openai.com/api/docs/guides/prompt-caching",
