@@ -1,3 +1,4 @@
+import { DRAFT_SPOKEN_ENDINGS } from './bubble-text.js';
 import { getEndingModePolicy } from './ending-mode-policy.js';
 import { readBookPageMode, isNativePageMode, bookPageStoryGuidance } from './page-production-contract.js';
 import { buildStoryStructureGuidance } from './story-structure.js';
@@ -490,6 +491,7 @@ ${buildRecentStoryContext(recentScenarios)}
 ${mosaicReviewRule(mosaicCopyrightedCharacters)}
 
 必須条件:
+${stagingOnly || identityRepair ? '' : '指摘に対応して新しく台詞を書く場合のみ: ' + DRAFT_SPOKEN_ENDINGS}
 ${identityRepair ? '- cast_identityの基準設定と台本の根拠を照合し、指摘された外見・話者対応の取り違えだけを状況・Camera・BalloonLayoutで修正する。人物名と各台詞の話者・文言・順序は保持する。誤記に合う別人へ話者を変更しない。明示された変装・髪型変更・着脱、画風差は維持し、曖昧な特徴を創作しない。' : ''}
 - visual_feasibilityはmaterial_loss=trueの具体的な欠落だけを直す。既出印字の再掲可読性や補助細部だけのために、引き・アオリ・身体演技を顔中心へ変更しない。必要な情報を初めて読むコマと、身体演技を見せるコマを分け、内容に応じたコマ高と前後配置で解決する。ユーザーが明示した可読文字・カメラ・動作は保持する。
 ${readBookPageMode(scenarioMode) ? bookPageStoryGuidance(scenarioMode) : stagingOnly ? '- 成立しているフリ・予測・帰結はそのまま保持する。新しい種や別のオチを追加しない。' : surrealMode

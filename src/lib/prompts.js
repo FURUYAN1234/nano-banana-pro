@@ -86,7 +86,7 @@ ${buildAddedEndingGuidance(SERIOUS_ENDING_OPTIONS)}`;
              - **【強制シリアス結末: ${getPunchlineLabel(punchlineType)}】**: ${instruction}`;
 };
 
-import { VERTICAL_DIALOGUE_GEOMETRY } from './bubble-text.js';
+import { DRAFT_SPOKEN_ENDINGS, VERTICAL_DIALOGUE_GEOMETRY } from './bubble-text.js';
 
 const MANGA_PAGE_TYPOGRAPHY_LOCK = `PAGE TYPE HIERARCHY:
 - Page title: render the exact title once at the top in EXTRA-BOLD condensed Japanese Gothic sans-serif, solid black, horizontal, centered, and clearly separated from the panels.
@@ -308,6 +308,7 @@ ${SCENARIO_WARDROBE_CONTRACT}
 ${buildSeasonalOutfitInstruction({targetDate,customOutfit})}
 ${buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters)}
 ${SCENARIO_SFX_CONTRACT}
+${DRAFT_SPOKEN_ENDINGS}
 ${SCENARIO_BALLOON_LAYOUT_RULES}
 ${scenarioPageCompositionInstruction(scenarioMode)}
 ${page.panelCount>1?buildRecentPageCompositionContext(recentPageCompositions,{book:true}):''}
@@ -560,11 +561,8 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
               - セリフは**「短い一文」**に収めよ（例: 「なんだって！？」OK、「それはつまり...ということなのか？」NG）。
               - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ.
 
-               - **句読点・表現ルール**: セリフの末尾は必ず終止記号で締めよ。どの記号を使うかはセリフの感情・キャラの性格・場面の空気で自然に決めること。
-                 終止記号（単読で文末になれる）: 。/ ！/ ？/ ♪/ ♡/ っ/ ！？
-                 修飾記号（単独では文末にならない。必ず後ろに終止記号を添えよ）: ……→「……。」「……！」「……？」 / 〜→「〜！」「〜。」 / ー→「ー。」「ー！」
-                 **【反復禁止】同じ文末表現が3セリフ以上連続してはならない**。「……」系は1シナリオ中2回までに留めよ。
-                 禁止: 終止記号なしで終わるセリフ。読点の乱用（1セリフに2つ以上は多すぎ）。
+               - **句読点・表現ルール**: ${DRAFT_SPOKEN_ENDINGS}
+                 読点を増やしすぎず、並ぶ台詞の語気は場面・人物・意味に合わせる。
               - 画面の80%以上は「絵」でなければならない。文字で埋め尽くすな。
 
           ${isSeriousDocumentary ? `3. **【強制モード: シリアス・ドキュメンタリー（原文忠実＋オチだけシリアス漫画化・絵柄変更無し）】**:
@@ -778,8 +776,7 @@ ${buildAddedEndingGuidance(GAG_ENDING_OPTIONS)}` :
 
           ⚠️【最終確認・絶対厳守】⚠️
           ${experimental ? '選んだ' + panelTotal + 'コマの全見出しが1から最終番号まで欠番・重複なく存在し' : '[1コマ目] [2コマ目] [3コマ目] [4コマ目] がすべて存在し'}、各コマに独立した「」付きセリフ、または明示した「セリフなし」の行があるか出力前に確認せよ。
-          全てのセリフの末尾に必ず「。」や「！」等の終止記号がついているか出力前に確認せよ。
-          「…」や「～」など、終止記号なしで終わるセリフはシステムエラーとなるため完全禁止とする。
+          完結した全てのセリフの末尾に必ず「。」「！」「？」またはその語気に合う組合せがあるかを、最終コマまで出力前に確認せよ。
 
           【出力前思考プロセス：Semi-Formal Reasoning & Verbalized Confidence】
           あなたは最終回答を出力する前に、以下の思考プロセスを内部で必ず実行し、その推論ログ（Thought Trace）を必ず '<thought>' と '</thought>' のタグで囲んで出力の冒頭に残してください。

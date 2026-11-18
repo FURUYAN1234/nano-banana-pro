@@ -430,3 +430,20 @@ test('a malformed breakout retries its own schema and accepts the corrected bold
  assert.equal(generations,2);assert.match(result.scenario,/"part":"Aの頭髪","into":1/);
  assert(notices.some(m=>m.includes('ページ演出')));
 });
+
+test('ordinary pages and every book page author completed speech with the same endings before approval', async () => {
+  const {DRAFT_SPOKEN_ENDINGS} = await server.ssrLoadModule('/src/lib/bubble-text.js');
+  for (const scenarioMode of ['four-panel', 'experimental-manga', 'book-page-1-continue', 'book-page-3-continue', 'book-page-4-final']) {
+    const prompt = prompts.getScenarioPrompt({...args, scenarioMode, bookOutlineExpansion: true});
+    assert.ok(prompt.includes(DRAFT_SPOKEN_ENDINGS), scenarioMode);
+    assert.match(prompt, /各ページの最終コマ/);
+    assert.match(prompt, /「いいよ……。」/);
+    assert.match(prompt, /「行く？」を「行く。」へ変えない/);
+    assert.match(prompt, /閉じ括弧の内側/);
+    assert.match(prompt, /タイトル・人名札・擬音、同じ文が次の吹き出しや行に続く途中/);
+    assert.doesNotMatch(prompt, /終止記号（単読で文末になれる）|同じ文末表現が3セリフ以上連続してはならない/);
+  }
+  const original = panels(4);
+  assert.ok(enhancement.buildScenarioEnhancementPrompt({scenario: original, selectedCategories: ['dialogue']}).includes(DRAFT_SPOKEN_ENDINGS));
+  assert.ok(!enhancement.buildScenarioEnhancementPrompt({scenario: original, selectedCategories: ['background']}).includes(DRAFT_SPOKEN_ENDINGS));
+});

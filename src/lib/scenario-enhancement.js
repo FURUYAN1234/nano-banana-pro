@@ -1,3 +1,4 @@
+import { DRAFT_SPOKEN_ENDINGS } from './bubble-text.js';
 import { isNativePageMode } from './page-production-contract.js';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging.js';
 import {
@@ -273,7 +274,8 @@ export const buildScenarioEnhancementPrompt = ({
     .join('\n');
   const lockedLabels = locked.map((category) => categoryDefinitions[category].label).join('、');
   const dialogueRule = selected.includes('dialogue')
-    ? `- セリフ強化では、人物固有の口調、応答の間、伝わる意味のいずれかを具体的に改善する。同義語や句読点だけの置換を改善とみなさない。話者の順序と人数は変えない
+    ? `- ${DRAFT_SPOKEN_ENDINGS}
+- セリフ強化では、人物固有の口調、応答の間、伝わる意味のいずれかを具体的に改善する。同義語や句読点だけの置換を改善とみなさない。話者の順序と人数は変えない
 - 変更が不要なセリフまで一律に言い換えない。短く口語的に保ち、セリフ全体を元の約1.5倍以内に収める
 - 最終コマのオチは元より冗長にせず、「もしかしたら」「かもしれない」「気がする」など弱い婉曲表現を新たに足さない`
     : '- セリフは未選択なので、明示された発話・音読の本文と話者を一字一句変更しない。ト書き内の引用や比喩は発話として数えない';

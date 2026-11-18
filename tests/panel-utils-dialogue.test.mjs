@@ -1435,3 +1435,13 @@ BalloonLayout: ${JSON.stringify([{speaker:'甲',x:0.7,anchor:'手前の甲の口
   const en=render('from top to mouth; do not show the mouth');
   assert.match(en,/from top to 頭の見える輪郭; do not show the mouth/);
 });
+
+test('rendering preserves approved sentence endings and mid-sentence balloons without changing other lettering', () => {
+  const cast = '## 葵';
+  for (const spoken of ['見つけた。', '本当に？', '見て！', 'ここに！？', 'よかった……。', 'この先は']) {
+    const panel = '[3コマ目]\n状況: 葵が入口を見る。\n画面内文字:「受付」\nSFX:「カタ」\n葵:「'+spoken+'」';
+    const render = extractDialogueOnly(panel, cast, {forImagePrompt: true});
+    assert.ok(render.includes('B1='+JSON.stringify(spoken)), spoken);
+    assert.doesNotMatch(render, /本当に？。|見て！。|この先は。|受付。|カタ。|B2=/);
+  }
+});
