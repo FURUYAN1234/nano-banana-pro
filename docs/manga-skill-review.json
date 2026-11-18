@@ -1,8 +1,8 @@
 {
   "format": 1,
   "version": "8.0.5",
-  "skillSha256": "314dc51a1cfd4d2d1aa5a92a529785b183347e953b595b9775fa03ce2325fdd2",
-  "reviewedAt": "2026-11-18T02:28:55.766Z",
+  "skillSha256": "4847e1df907415d47490f5c3088fb19f34fc6b8c0e5f797e6b68f605de5fed50",
+  "reviewedAt": "2026-11-18T02:32:29.317Z",
   "reviewedSince": "v8.0.4 released skill through the approved four-page original color comic and the v8.0.5 private verification on 2026-11-18.",
   "sources": [
     "User corrected service substitution, required confirmation before launch/installation, built-in browser priority and browser selection suited to the actual client and PC.",
@@ -12,7 +12,8 @@
     "User required a final sharing choice even when an AI client uses the workflow prompt without a separately installed skill.",
     "User required the entire scenario to be checked and corrected before it is presented.",
     "User required prompt reporting, continued ownership of delegated jobs and evidence-led recovery from an interruption.",
-    "User requested legible line breaking, including small marginal lettering and narration."
+    "User requested legible line breaking, including small marginal lettering and narration.",
+    "User specified that the right background density depends on the story and individual panel."
   ],
   "findings": [
     {
@@ -56,6 +57,12 @@
       "disposition": "updated",
       "rule": "Preserve meaningful groups, proper names, ruby and punctuation in vertical and horizontal lettering. Adjust available space, read the image at publication size and check the adopted PNG, JSON and version history after a local correction.",
       "reason": "Legibility is determined by the rendered lettering and its context."
+    },
+    {
+      "observation": "A completed project’s preference for less background detail must not become a default for later stories.",
+      "disposition": "updated",
+      "rule": "Choose background detail, contrast and focus for the purpose of each panel. Check project settings and final drawing instructions against the rendered page and its reading order.",
+      "reason": "An establishing view and a close-up serve different narrative purposes."
     }
   ],
   "checks": [
@@ -93,7 +100,12 @@
       "name": "MCP lettering guidance",
       "result": "passed",
       "evidence": "The SDK retrieved the ordinary prompt and verified that it covers balloons, marginal text, narration, names, ruby, punctuation, both text directions, and the final artifacts."
+    },
+    {
+      "name": "Panel-specific background guidance",
+      "result": "passed",
+      "evidence": "Reviewed the skill and references for blanket background-density rules. The SDK retrieved the workflow instruction distinguishing establishing views and close-ups and checking settings, prompts and rendered pages."
     }
   ],
-  "sourceCommit": "02f3a6d9d443ac0604769034eef69766cd0647b5"
+  "sourceCommit": "dcf69e21d4ba4d519189a393601376baf02f571a"
 }
