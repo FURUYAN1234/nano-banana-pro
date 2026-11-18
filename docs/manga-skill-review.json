@@ -1,8 +1,8 @@
 {
   "format": 1,
   "version": "8.0.5",
-  "skillSha256": "187b68b0a457eb73fb39ef6a3b2024378a69da8bb2680bca8c5f0c82cca57ecf",
-  "reviewedAt": "2026-11-18T02:02:21.433Z",
+  "skillSha256": "e2de7999d65c6425f54ddef1038396897ea2044d5d0c2239b2a547f55f1f051c",
+  "reviewedAt": "2026-11-18T02:26:42.186Z",
   "reviewedSince": "v8.0.4 released skill through the approved four-page original color comic and the v8.0.5 private verification on 2026-11-18.",
   "sources": [
     "User corrected service substitution, required confirmation before launch/installation, built-in browser priority and browser selection suited to the actual client and PC.",
@@ -10,7 +10,8 @@
     "Accepted four-page production, production diagnostics and script approval were reviewed.",
     "User asked for joint application/skill update and adoption with a recoverable earlier PNG and JSON.",
     "User required a final sharing choice even when an AI client uses the workflow prompt without a separately installed skill.",
-    "User required the entire scenario to be checked and corrected before it is presented."
+    "User required the entire scenario to be checked and corrected before it is presented.",
+    "User required prompt reporting, continued ownership of delegated jobs and evidence-led recovery from an interruption."
   ],
   "findings": [
     {
@@ -42,6 +43,12 @@
       "disposition": "updated",
       "rule": "Compare every page and panel, cover and total, references, voice, dialogue and depiction, causes and payoffs. Fix inconsistencies and present the complete corrected script before visible review or approval.",
       "reason": "Basing approval on the fully checked script keeps internal review, visible audit and the user’s actual decision distinct."
+    },
+    {
+      "observation": "A failed release stage and long-running delegated work need a clear owner and a recovery path.",
+      "disposition": "updated",
+      "rule": "Report a changed state, trace the cause, try an authorized fix, verify the failed step and its successor. Keep independent work moving and avoid duplicate charges or publication.",
+      "reason": "Users need the actual status and continuation of permitted work without polling the assistant."
     }
   ],
   "checks": [
@@ -69,7 +76,12 @@
       "name": "Pre-presentation review via MCP",
       "result": "passed",
       "evidence": "The SDK fetched the production prompt and checked the complete internal read, every page and panel, character voices and actions, and presentation of the corrected script before a visible audit."
+    },
+    {
+      "name": "MCP progress and recovery guidance",
+      "result": "passed",
+      "evidence": "The ordinary SDK workflow prompt explicitly requires delegated work through its result, failure notification, checking retained evidence, resuming the failed step and verifying what follows."
     }
   ],
-  "sourceCommit": "97e841205ed57c067ec717fd1107778abcd4f1cf"
+  "sourceCommit": "9e5c8fd7fef5f1f43e6bcf47db9f9667f26a6ade"
 }
