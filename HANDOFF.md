@@ -1,3 +1,9 @@
+# v8.0.6 release candidate
+
+Super FURU AI 4-koma System v8.0.6 packages the updated manga production skill. It covers clickable approvals of the reviewed script, new character sheets and each page, AI-managed MCP reconnection and a same-tab reload when required, plus character continuity checks after panel revisions. The Windows ZIP ships the skill with the application. README and three PDF manuals are synchronized with the candidate. The v8.0.5 engine and its API behavior carry forward. The seven-page sample was produced and verified via the live MCP path on that engine.
+
+Release notes: [v8.0.6](docs/releases/v8.0.6.md). Use the shared publishing workflow in [deployment instructions](docs/deploy.md). Confirm the release, public site and local release copy from actual receipts before describing the candidate as deployed.
+
 # v8.0.5 release candidate · 2026-11-18
 
 The release candidate adds synchronized Windows launcher skills, recoverable saved PNG/JSON page revisions, GPT-6.2 choices and updated pricing. The bundled skill and MCP workflow include whole-script review before presentation, job and delegation tracking, and the final social-sharing decision. The last published release is v8.0.4. The v8.0.5 public release stopped before push when the dependency audit detected GHSA-fc5q-39xc-vjpf in picomatch. Check the official advisory and npm audit before running the common release procedure again. The old public launcher installed v8.0.4 in isolation. Verification of its upgrade to v8.0.5 requires the official release.
