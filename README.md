@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.0.6** / 現在のソース版: **v8.0.6**
+> Current source version: **v8.0.7** / 現在のソース版: **v8.0.7**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -85,6 +85,8 @@ When image production is also requested, the scenario skill carries conditional 
 Scenario and reference preparation may be revisited; rendering follows approval of the detailed plan. Saving is automatic: step 6 checks the saved PNG/JSON and displays all pages. Script-only consultation needs no MCP, and an ordinary single page can be made manually. / シナリオと資料は必要に応じて往復し、詳細案を確認してから画像化します。保存はアプリが自動で行い、⑥でPNG／JSONの保存結果を確認して全ページを再掲します。脚本相談だけならMCPは不要で、通常の1ページはアプリを手動でも制作できます。
 
 The manga skill presents the script, new character sheets and each saved page before asking for approval to move on. After the final page, it asks about social sharing and shows the proposed post before publishing. / 漫画制作スキルは台本、新しい人物資料、保存済みの各ページを示し、次へ進む前に採否を確認します。最終ページの後はSNS掲載の希望を伺い、具体的な投稿内容を示してから公開します。
+
+For action panels, read the drawing with dialogue and sound effects covered, then check the grip, the attachment and the tool from the same viewpoint. For revisions, distinguish the requested change from the details to preserve. Examples record the intended effect and the effect visible in the accepted page. / 動作のキメゴマは台詞と擬音を隠して読み、握りから取付部・道具本体まで同じ画角で確認します。修正では変える点と保つ点を明確にし、技法の見本では狙いと採用稿に見える演出を記録します。複数ページでは左右の製品クレジットを最終ページにまとめます。
 
 For a disconnected local MCP session, the AI checks the active tab and queued job, pairs again in the same tab and reloads it only if necessary after safeguarding production data. It checks that the waiting job is picked up before continuing. / ローカルMCPが切れたときは、AIが対象タブとジョブを確認して同じタブで再接続します。再読み込みが必要な場合は原稿を退避してからAIが行い、待機中のジョブが実行に入ったことを確かめます。
 
@@ -806,7 +808,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -870,7 +872,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.6 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.6 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.7 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.7 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -940,6 +942,10 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.0.7 (2026-11-18)
+- **[Skill]** Check decisive panels without lettering, trace hands and tools in perspective, specify what to keep in revisions, and record the intended and observed effects in examples. / キメゴマは台詞と擬音を隠して読み、手と道具を一つの画角で確認します。修正箇所と保つ点を分け、見本では狙いと実画像を記録します。
+- **[Skill]** Keep product credits on the final page of a multi-page manga. / 複数ページでは左右の製品クレジットを最終ページにまとめ、作者名と通し番号は個別に扱います。
 
 ### v8.0.6 (2026-11-18)
 - **[Fix & UX]** The manga skill handles MCP recovery and checks approval for the script, character sheets, each page and social sharing. / 漫画制作スキルがMCP切断時の復旧と、台本・人物設定・各ページ・SNS掲載の確認を進めます。
