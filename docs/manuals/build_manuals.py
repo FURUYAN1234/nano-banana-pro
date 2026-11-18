@@ -60,7 +60,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v8.0.5対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v8.0.6対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -222,7 +222,7 @@ page('STEP3  カラー／白黒の選択',
  ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
 page('タイトル・モザイク・ウオーターマーク',
  ('body','STEP3の出力モード直下に「タイトルを表示」があります。初期状態と全設定クリア後はONです。OFFでは題字と専用の帯を描かず、その領域をコマに配分します。指定タチキリの辺を除き、A4縦の外枠と余白、コマ間隔を保ちます。台本のタイトルは制作情報とファイル名に保持し、台詞や看板などの場面内文字は削除しません。選択は工程移動でも保持し、再読み込み・全設定クリアではONへ戻ります。切替後はSTEP3を作り直します。切替だけではAPIを呼びません。'),
- ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.6 / GPT-6 Luna / FURU AI 4-koma v8.0.5。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
+ ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.6 / GPT-6 Luna / FURU AI 4-koma v8.0.6。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
  ('rows',[['設定','反映する工程'],['タイトルを表示','STEP3から作り直して反映。初期状態ON'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初期状態ON']]),
  ('body','モザイクは台本の動作で描く既存作品の人物への描画指示です。登録したシート人物は自動モザイクから除外し、生成・品質検査へ同じ除外リストを渡します。原文で本人への遮蔽を明示した場合は、その対象・領域だけ例外です。除外リストが現在のキャストと合わない場合は、STEP3から再構築してください。'),
  ('body','ウオーターマークは画像下部の生成情報とクレジットです。OFFで左右の描画指示を外します。ONでは下部へ1回ずつ配置を試みますが、絵への重なり・全隠れ・見切れを許容します。人物・台詞・題字・タチキリを優先し、注記を見せるための白帯や絵の縮小を求めません。この許容状態だけでは自動修正しません。'),
@@ -390,13 +390,13 @@ page('MCPの導入と接続',
  ('body','通常はアプリZIPを全体展開し、直下のstart_app.batを一度実行、以後はデスクトップのショートカット1つを使います。更新確認・MCP起動・アプリ表示は同じ処理です。スキルもこの共通処理を呼び、未導入なら取得、停止中なら最新版を確認・更新してから起動します。公式チェックサムを検証し、必要なら公式ポータブルNode.jsも取得します。稼働中の制作は維持します。'),
  ('rows',[['操作','扱い'],['初回起動','アプリZIPを全体展開し、直下のstart_app.batを一度実行。'],['AIクライアント','導入ガイドのstdio設定を登録。起動は共通ランチャーを使用。'],['普段の起動','OneDrive Desktopにも対応。作成失敗は警告し本体起動を継続。'],['明示的な更新','Launch-Manga.cmd -Update。MCP切断・処理完了後だけ更新。'],['サービス終了','Launch-Manga.cmd -StopOnly。接続中・処理中は終了を拒否。'],['作品と成果物','非公開workspaceへ状態、ダウンロードへ完成PNGとJSON。']]),
  ('body','スキルZIPだけの場合は、展開先でSKILL.mdと同じフォルダーのLaunch-Manga.cmdを使います。同じ処理への別入口で、両方を押す必要はありません。標準導入先はLOCALAPPDATA内のSuperFURU-Mangaです。最新版を取得できなければ、ハッシュを確認できた導入版がある場合だけ使います。Linuxやソースからの導入、クライアント設定JSONはMCPガイドを参照してください。'),
- ('body','AIが期限付きローカルURLを既存タブで開きます。API未接続なら入力欄を前面に出し「今、キーを入力して『接続』を押してください」と案内します。その後、操作できるAIは「AI操作を許可」を押し、接続済みを確認します。操作できない場合は押すボタンを説明します。接続済みなら再入力は不要です。'),
+ ('body','AIが既存タブでMCPへ接続し「AI操作を許可」を押します。APIキーが未入力の場合だけ、本人がアプリの欄へ入力します。MCPが切れた場合もAIが同じタブで再接続し、リロードが必要なら先に原稿を退避します。'),
  ('body','MCP制作中はローカルの画面を開いておきます。画面上段に接続状態、スキル取得・ガイド・マニュアルをまとめ、少し間を空けて不具合調査ログ・Model Chainを置きます。STEP1〜4の進捗とループ／全自動の切り替えは、それぞれ別の行に表示します。公開デモサイトだけではMCP制作を開始できませんが、従来の通常制作はMCPなしで使えます。'),
  ('box','キーの扱い','APIキーはチャット、MCP設定、プロジェクト、制作情報JSONへ貼り付けません。ローカル接続URLにも一時的な接続情報が含まれるため公開しません。'),refs=('mcp','node')),
 page('資料の準備から詳細案の承認まで',
  ('body','最初に、キャラクターシートを用意するか、AIで人物とシートを作るかを決めます。人物の特徴、小道具、場所、カラー／白黒、総ページ数と扉の作者名を確認します。作者名は表記なしも選べ、指定済みの内容は聞き直しません。表紙は総ページ数に含めます。'),
  ('body','あらすじから各ページの詳細台本へ進みます。指定台詞・明示無言を守って自然な会話を補い、各コマの台詞は強制しません。依頼のない全編無言案は拒否します。前ページの場所・衣装・小道具の状態を長さ制限付きで継承し、当ページの場面・時刻・着替えの明示指定を優先します。'),
- ('body','詳細案には、登場人物、舞台、小道具、各ページの役割、コマ数、主な動作と台詞、場面転換、最後の着地を含めます。内容を見て、その案で生成するか返答してください。承認後、共通資料を用意して順番に生成します。'),
+ ('body','詳細案には、登場人物、舞台、小道具、各ページの役割、コマ数、主な動作と台詞、場面転換、最後の着地を含めます。内容を見て、その案で生成するか返答してください。承認後は新しい人物資料と各ページの採否を順に尋ね、完成後はSNS掲載の希望を伺います。'),
  ('box','承認は提示した案に対応する','確認を求めただけでは生成許可になりません。実際の返答を、その案の版と内容に結び付けて記録します。物語や共通資料を変えた場合は変更後の案を確認し、同じ承認済み案の再開だけなら承認を繰り返し求めません。'),
  ('body','終幕語は漫画に合う「END」「おしまい」「おわり」等を選び、明示した文字列を保ちます。最終コマの右下を基本に、空きがなければ下中央、次に左下へ。題字の雰囲気に合う字体で、顔・動作・台詞・番号・下端の表示を隠しません。'),
  ('h2','依頼例'),
@@ -434,7 +434,7 @@ SYSTEM.append(page('ページ設定・計画更新・登場人物の確認',
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v8.0.5 / 2026-11-18')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v8.0.6 / 2026-11-18')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -486,7 +486,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v8.0.5対応 | 2026年11月18日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v8.0.6対応 | 2026年11月18日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -526,7 +526,7 @@ def verify_and_render(path,layout,pages):
  assert len(r.pages)==len(pages)
  for page_index,pdf_page in enumerate(r.pages,1):
   assert f'{page_index:02d}/{len(r.pages)}' in re.sub(r'\s+','',pdf_page.extract_text()), 'Incorrect footer page count'
- assert all('v8.0.5対応' in p.extract_text() and '2026年11月18日更新' in p.extract_text() for p in r.pages)
+ assert all('v8.0.6対応' in p.extract_text() and '2026年11月18日更新' in p.extract_text() for p in r.pages)
  validate_manual_scope(path.name,text)
  if 'full-manual' in path.name:
   for required in ['14枚','10枚','1枚に複数人','人数による固定上限','保証','保持','認識できない','小物','pageVersions','history_select','saved_export','旧スキルを退避','gpt-6.2']:
@@ -537,7 +537,7 @@ def verify_and_render(path,layout,pages):
    assert obsolete not in text,obsolete
   for required in ['シリアス：9種類','ギャグ：13種類','怒り・抗議','逆転・反撃','激怒・逆ギレ','自業自得・ブーメラン','立場逆転']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v8.0.5'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v8.0.6'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)
