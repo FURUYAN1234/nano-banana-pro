@@ -1,45 +1,51 @@
 {
   "format": 1,
-  "version": "8.0.6",
-  "skillSha256": "9884865877df6a509c656e18efb46bc3ba911c2fb97aaf74b6ee9f1f7d42a66b",
-  "sourceCommit": "0877917f8b712b7ef00b435cfdf67f0de0a516ab",
-  "reviewedAt": "2026-11-18T11:05:44.872Z",
-  "reviewedSince": "Published v8.0.5 through the accepted seven-page sample on 2026-11-18.",
+  "version": "8.0.7",
+  "skillSha256": "21c6834e974696e673110a8f0589623526cfe03a1ce07ae42ddbcd0f1ba75fe3",
+  "sourceCommit": "342c34bd413f929ce13559fcb419c5be09a193ea",
+  "reviewedAt": "2026-11-18T14:20:25.393Z",
+  "reviewedSince": "From v8.0.6 publication through the three accepted pages of The Eclipse Today, 2026-11-18.",
   "sources": [
-    "User requested clickable approval of the script, new character sheet, page and optional SNS post.",
-    "The user reported a stalled MCP connection and requested AI-managed re-pairing and reload.",
-    "The final page required visible floor contact, full-body walking composition and recurring character consistency."
+    "User requests and approvals for page credits, balloon placement and four reusable editorial checks, 2026-11-18.",
+    "Native MCP page 2 rejected prompt 85949482-9a2f-4002-9f59-343722935545 and passed after precise camera wording.",
+    "Accepted three-page sample with reconciled PNG/JSON and published social readback, 2026-11-18."
   ],
   "findings": [
     {
-      "observation": "Real job remained unclaimed after the browser pairing expired.",
+      "observation": "Product credit appeared on an early page.",
       "disposition": "updated",
-      "rule": "Read diagnostics, check the tab and job, re-pair in the same tab and reload only if necessary after safeguarding work.",
-      "reason": "Service health does not prove that a browser has claimed a job."
+      "rule": "Keep the two product credits for the last page and retain the independent page numbers and author credit.",
+      "reason": "Makes credits a book-level decision while keeping page identification."
     },
     {
-      "observation": "User wanted to accept a shown item with a mouse.",
+      "observation": "A pointing gesture appeared to aim at a balloon, and an eye-level clause stopped an angled shot.",
       "disposition": "updated",
-      "rule": "Show the item and offer clickable choices at creative transitions when supported.",
-      "reason": "An approval refers to the exact deliverable and next operation."
+      "rule": "Check the gesture and balloon together. Validate camera height and direction in the actual page mode before assembling the prompt.",
+      "reason": "The reader and the application both need an unambiguous direction."
     },
     {
-      "observation": "A revision changed the recurring character hair and an earlier composition hid the boots.",
+      "observation": "Repair of one hand risked changing the good supporting hand and produced incompatible visible pan surfaces.",
       "disposition": "updated",
-      "rule": "Compare revised panels against the adopted sheet, adjacent appearances and important body contact.",
-      "reason": "Image edits can affect surrounding details beyond the requested change."
+      "rule": "Specify the changed and retained traits. Trace the grip, attachment and tool through one viewpoint.",
+      "reason": "Preserves the good pose and keeps the action physically readable."
+    },
+    {
+      "observation": "The action differed from the implied wording and the adopted framing used the pan rather than the sleeve.",
+      "disposition": "updated",
+      "rule": "Read decisive action without lettering. Record intended and observed effects when the manga is a technique sample.",
+      "reason": "Shows what the final sample demonstrates."
     }
   ],
   "checks": [
     {
-      "name": "Skill validation and Windows synchronization tests",
+      "name": "Skill and package checks",
       "result": "passed",
-      "evidence": "SKILL.md validator and ten bootstrap, synchronization and package tests."
+      "evidence": "Official skill format validation, 12 installed file matches, and 19 targeted package, skill and documentation tests."
     },
     {
-      "name": "Live MCP production and save on v8.0.5",
+      "name": "Live work and visual review",
       "result": "passed",
-      "evidence": "Original waiting job claimed after re-pairing. Final page completed through MCP and the matching PNG and JSON were approved and posted in order."
+      "evidence": "Three user-accepted native MCP pages, photo readback in order, camera rejection and corrected case, and matching saved PNG/JSON pairs."
     }
   ]
 }
