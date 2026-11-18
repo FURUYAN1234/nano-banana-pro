@@ -187,6 +187,7 @@ try {
         for(const issue of issues.filter(x=>x.letteringTargets)) for(const target of issue.letteringTargets){
           assert(prompt.includes(target.text));assert(prompt.includes(JSON.stringify(target.columnsRightToLeft)));
         }
+        assert.match(prompt, /改行・改列で句点を足さない/);
         assert.match(prompt,/stroke weight/);assert.match(prompt,/Panel 5 CAMERA OVERRIDE/);assert.match(prompt,/Panel 6 CAMERA OVERRIDE/);
         return {base64Img:'fixed'};
       }});

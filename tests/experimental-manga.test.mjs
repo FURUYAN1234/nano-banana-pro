@@ -1421,11 +1421,14 @@ try {
     for(const p of spokenPlan.panels) p.dialogueIds=p.kind==='anchor'?[p.sourcePanel-1]:[];
     const contract=m.validateExperimentalPlan(spokenPlan,spokenSource);
     const rects=m.experimentalLayout(contract.count,contract.layout);
-    const report={status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',pageEvidence:'上の題字と下の両クレジットを転記した内容',breakout:'not_requested',issues:[],evidence:contract.panels.map((p,i)=>({panel:i+1,camera:'人物の頭と肩の上面が見えている',style:'人物の顔に細い墨の陰影が見える',story:'手と小道具の接点から動作が読める',anatomy:'両腕と体の接続が連続している',dialogue:p.dialogueIds.map(id=>spokenSource.dialogue.find(d=>d.id===id).text.replace('同じ言葉','同じ 言葉！'))}))};
+    const report={status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',pageEvidence:'上の題字と下の両クレジットを転記した内容',breakout:'not_requested',issues:[],evidence:contract.panels.map((p,i)=>({panel:i+1,camera:'人物の頭と肩の上面が見えている',style:'人物の顔に細い墨の陰影が見える',story:'手と小道具の接点から動作が読める',anatomy:'両腕と体の接続が連続している',dialogue:p.dialogueIds.map(id=>spokenSource.dialogue.find(d=>d.id===id).text.replace('同じ言葉','同じ 言葉'))}))};
     report.evidence.forEach((e,i)=>e.center=[rects[i].x+rects[i].w/2,rects[i].y+rects[i].h/2]);
     report.evidence.forEach(e=>{e.cast_instances=(contract.expectedCast.find(c=>c.panel===e.panel)?.names||[]).map(name=>({name,observed_count:1,status:'ok',instances:[{location:'右前景の一つの身体',matched_features:['黒い短髪','赤い服']}]}));});
     assert.equal(m.validateExperimentalReview(report,contract).status,'pass');
-    // A genuine name inside dialogue and harmless spacing/punctuation pass;
+    const brokenSentence=structuredClone(report);
+    brokenSentence.evidence[0].dialogue=brokenSentence.evidence[0].dialogue.map(text=>text.replace('同じ 言葉','同じ。言葉'));
+    assert.equal(m.validateExperimentalReview(brokenSentence,contract).readingOrder,'fail');
+    // A genuine name inside dialogue and harmless spacing pass;
     // an extra speaker heading printed in every balloon must remain a defect.
     const labeled=structuredClone(report);
     labeled.evidence.forEach(e=>{e.dialogue=e.dialogue.map(text=>'人物A\n'+text);});
