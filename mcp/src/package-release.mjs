@@ -3,7 +3,7 @@ import {promises as fs} from 'node:fs';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {readRuntimeBuild} from './runtime-build.mjs';
+import {readRuntimeBuild,toolGlobBuildFiles} from './runtime-build.mjs';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 function command(command,args,{cwd,input,env}={}){
@@ -50,6 +50,9 @@ export async function collectReleaseFiles(root){
    files.push({source:location,name:relative.replaceAll('\\','/'),sha256:sha(await fs.readFile(location))});
   }
  }
+ // Only the reviewed install setting is distributable; user npm credentials must never enter a ZIP.
+ if((await fs.readFile(path.join(root,'.npmrc'),'utf8')).trim()!=='install-links=true')throw new Error('Unexpected release npm configuration.');
+ for(const name of toolGlobBuildFiles)await walk(name);
  for(const name of ['src','public','dist','docs/assets','docs/licenses','mcp/src','mcp/test','mcp/skills','mcp/package.json','mcp/package-lock.json','mcp/README.md','mcp/ARCHITECTURE.md','package.json','package-lock.json','index.html','vite.config.js','postcss.config.js','tailwind.config.js','eslint.config.js','start_app.bat','README.md','LICENSE','LICENSE-CONTENT.md','THIRD_PARTY_NOTICES.md','.gitattributes'])await walk(name);
  for(const name of ['install_mcp_dependencies.mjs','web-security.mjs','generate_workflow_diagram.mjs','verify_package.py'])await walk('scripts/'+name);
  return files;

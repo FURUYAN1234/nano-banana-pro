@@ -1,6 +1,12 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+export const toolGlobBuildFiles = [
+  '.npmrc', 'scripts/tool-glob/package.json', 'scripts/tool-glob/index.cjs',
+  'scripts/tool-glob/LICENSE.picomatch', 'scripts/tool-glob/README.md',
+  'scripts/tool-glob/lib/constants.js', 'scripts/tool-glob/lib/scan.js', 'scripts/tool-glob/lib/utils.js',
+];
+
 export async function runtimeFingerprint(appRoot) {
   const hash = createHash('sha256');
   async function visit(directory) {
@@ -13,6 +19,10 @@ export async function runtimeFingerprint(appRoot) {
   await visit(path.join(appRoot, 'src'));
   await visit(path.join(appRoot, 'public'));
   const buildFiles = (await fs.readdir(appRoot)).filter(name => name === 'index.html' || name === 'package.json' || name === 'package-lock.json' || /^vite\.config\./.test(name));
+  if (buildFiles.includes('package.json')) {
+    const pkg = JSON.parse(await fs.readFile(path.join(appRoot, 'package.json'), 'utf8'));
+    if (pkg.overrides?.picomatch === 'file:./scripts/tool-glob') buildFiles.push(...toolGlobBuildFiles);
+  }
   for (const name of buildFiles.sort()) { hash.update(name); hash.update(await fs.readFile(path.join(appRoot, name))); }
   return hash.digest('hex');
 }
