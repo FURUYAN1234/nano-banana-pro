@@ -1,183 +1,45 @@
 {
   "format": 1,
-  "version": "8.0.5",
-  "skillSha256": "4fc8620c257f403460f69f9d784599ab86aa1e2d5bd938c444efad8bfea2533d",
-  "reviewedAt": "2026-11-18T03:50:50.542Z",
-  "reviewedSince": "v8.0.4 released skill through the approved four-page original color comic and the v8.0.5 private verification on 2026-11-18.",
+  "version": "8.0.6",
+  "skillSha256": "9884865877df6a509c656e18efb46bc3ba911c2fb97aaf74b6ee9f1f7d42a66b",
+  "sourceCommit": "0877917f8b712b7ef00b435cfdf67f0de0a516ab",
+  "reviewedAt": "2026-11-18T11:05:44.872Z",
+  "reviewedSince": "Published v8.0.5 through the accepted seven-page sample on 2026-11-18.",
   "sources": [
-    "User corrected service substitution, required confirmation before launch/installation, built-in browser priority and browser selection suited to the actual client and PC.",
-    "User required complete diagnostic JSON first, presentation of the full dialogue and staging before audit or drawing, and explicit approval.",
-    "Accepted four-page production, production diagnostics and script approval were reviewed.",
-    "User asked for joint application/skill update and adoption with a recoverable earlier PNG and JSON.",
-    "User required a final sharing choice even when an AI client uses the workflow prompt without a separately installed skill.",
-    "User required the entire scenario to be checked and corrected before it is presented.",
-    "User required prompt reporting, continued ownership of delegated jobs and evidence-led recovery from an interruption.",
-    "User requested legible line breaking, including small marginal lettering and narration.",
-    "User specified that the right background density depends on the story and individual panel.",
-    "User specified that natural figures and limbs crossing panel borders are ordinary manga staging choices.",
-    "User reported a missing full stop in the last speech balloon and requested the same rule for standalone and multipage manga.",
-    "A generated lettering edit inserted extra full stops at column boundaries inside a single sentence.",
-    "Column wraps are layout; editing must retain the grammatical position of sentence marks and all approved artwork.",
-    "Users with a 20-image X composer can share five to twenty pages in a single post, in reading order.",
-    "On Facebook prefer one personal-feed photo post for the entire manga; Meta documents multiple photos and a distinct 1,000-photo album capacity."
+    "User requested clickable approval of the script, new character sheet, page and optional SNS post.",
+    "The user reported a stalled MCP connection and requested AI-managed re-pairing and reload.",
+    "The final page required visible floor contact, full-body walking composition and recurring character consistency."
   ],
   "findings": [
     {
-      "observation": "Production was initially routed to a different manga tool.",
+      "observation": "Real job remained unclaimed after the browser pairing expired.",
       "disposition": "updated",
-      "rule": "Identify FURU before launching. Follow the confirmed app and actual browser capabilities.",
-      "reason": "Two manga tools can be installed simultaneously."
+      "rule": "Read diagnostics, check the tab and job, re-pair in the same tab and reload only if necessary after safeguarding work.",
+      "reason": "Service health does not prove that a browser has claimed a job."
     },
     {
-      "observation": "Truncated log previews and a missing script handoff caused unnecessary questions.",
+      "observation": "User wanted to accept a shown item with a mouse.",
       "disposition": "updated",
-      "rule": "Read the latest full diagnostic JSON and show the whole detailed script before approval, audit and drawing.",
-      "reason": "The user needs the actual script and diagnostic events before decisions."
+      "rule": "Show the item and offer clickable choices at creative transitions when supported.",
+      "reason": "An approval refers to the exact deliverable and next operation."
     },
     {
-      "observation": "A redrawn page needs a single current pair plus restorable earlier files.",
+      "observation": "A revision changed the recurring character hair and an earlier composition hid the boots.",
       "disposition": "updated",
-      "rule": "Read pageVersions and restore a saved attempt on its explicitly applied page.",
-      "reason": "This preserves both the image and its own generation context without another generation."
-    },
-    {
-      "observation": "The separate skill included social-sharing consent but the client-facing MCP workflow prompt ended at saving.",
-      "disposition": "updated",
-      "rule": "After showing all saved pages, honor a choice already made. If undecided, ask once. Provide drafts on request; publication requires specific approval.",
-      "reason": "Clients using the workflow prompt and clients reading the bundled skill should offer the same final choice."
-    },
-    {
-      "observation": "A change in character voice in the last panel exposed a gap in the pre-presentation workflow.",
-      "disposition": "updated",
-      "rule": "Compare every page and panel, cover and total, references, voice, dialogue and depiction, causes and payoffs. Fix inconsistencies and present the complete corrected script before visible review or approval.",
-      "reason": "Basing approval on the fully checked script keeps internal review, visible audit and the user’s actual decision distinct."
-    },
-    {
-      "observation": "A failed release stage and long-running delegated work need a clear owner and a recovery path.",
-      "disposition": "updated",
-      "rule": "Report a changed state, trace the cause, try an authorized fix, verify the failed step and its successor. Keep independent work moving and avoid duplicate charges or publication.",
-      "reason": "Users need the actual status and continuation of permitted work without polling the assistant."
-    },
-    {
-      "observation": "A forced line break inside a name can make a small caption or balloon hard to read.",
-      "disposition": "updated",
-      "rule": "Preserve meaningful groups, proper names, ruby and punctuation in vertical and horizontal lettering. Adjust available space, read the image at publication size and check the adopted PNG, JSON and version history after a local correction.",
-      "reason": "Legibility is determined by the rendered lettering and its context."
-    },
-    {
-      "observation": "A completed project’s preference for less background detail must not become a default for later stories.",
-      "disposition": "updated",
-      "rule": "Choose background detail, contrast and focus for the purpose of each panel. Check project settings and final drawing instructions against the rendered page and its reading order.",
-      "reason": "An establishing view and a close-up serve different narrative purposes."
-    },
-    {
-      "observation": "User specified that natural figures and limbs crossing panel borders are ordinary manga staging choices.",
-      "disposition": "updated",
-      "rule": "Accept crossings when story, speech ownership, lettering and necessary action remain readable. A boundary crossing alone is not a reason to redraw or impose a page quota.",
-      "reason": "Legible manga benefits from freedom in framing."
-    },
-    {
-      "observation": "User reported a missing full stop in the last speech balloon and requested the same rule for standalone and multipage manga.",
-      "disposition": "updated",
-      "rule": "Author completed Japanese statements with 。 and preserve questions and exclamations, including combinations. Regulate speech before approval, leave source labels and mid-sentence breaks untouched, and copy approved lettering verbatim.",
-      "reason": "Book-page authoring had its own prompt. The old ordinary-page prompt also treated decorative symbols as sentence endings and contradicted the intended editorial rule."
-    },
-    {
-      "observation": "A generated lettering edit inserted extra full stops at column boundaries inside a single sentence.",
-      "disposition": "updated",
-      "rule": "Read speech across line and column wraps and compare sentence marks in context. Preserve terminal punctuation and its position. Repair only the affected balloon.",
-      "reason": "The prior native-page transcription comparison discarded punctuation and could miss extra or missing full stops and altered question or exclamation marks."
-    },
-    {
-      "observation": "Column wraps are layout; editing must retain the grammatical position of sentence marks and all approved artwork.",
-      "disposition": "updated",
-      "rule": "Keep the established native layout template. Localize replacements and verify original punctuation despite line breaks.",
-      "reason": "The first experimental implementation exceeded compact render and repair budgets; preserve byte-stable source layout and fit the explicit rule into the replacement instructions."
-    },
-    {
-      "observation": "Users with a 20-image X composer can share five to twenty pages in a single post, in reading order.",
-      "disposition": "updated",
-      "rule": "Use the requested single post in supported X clients; count finished attachments and the actual published album, and report specific errors only if a limit appears.",
-      "reason": "The previous generic limit guidance allowed an unnecessary four-image split on X and could omit intended pages."
-    },
-    {
-      "observation": "On Facebook prefer one personal-feed photo post for the entire manga; Meta documents multiple photos and a distinct 1,000-photo album capacity.",
-      "disposition": "updated",
-      "rule": "Record actual attachment limits. Prepare title-specific absolute file paths in reading order before opening the chooser, subscribe first, and verify the upload and published pages.",
-      "reason": "A numeric album capacity or an observed five-photo example does not establish a universal feed-post ceiling. Directly selecting the approved pages prevents wrong-work uploads."
+      "rule": "Compare revised panels against the adopted sheet, adjacent appearances and important body contact.",
+      "reason": "Image edits can affect surrounding details beyond the requested change."
     }
   ],
   "checks": [
     {
-      "name": "Same-tab execution",
+      "name": "Skill validation and Windows synchronization tests",
       "result": "passed",
-      "evidence": "Live application heading 8.0.5 and connected bridge. Two separate short outlines returned the specified models."
+      "evidence": "SKILL.md validator and ten bootstrap, synchronization and package tests."
     },
     {
-      "name": "Save and restore",
+      "name": "Live MCP production and save on v8.0.5",
       "result": "passed",
-      "evidence": "Restoring the actual older version on a copy matched PNG and generation-metadata hashes; the original book retained all nine files."
-    },
-    {
-      "name": "Skill synchronization",
-      "result": "passed",
-      "evidence": "Isolated launcher tests including the older batch, modified local files and backup recovery passed."
-    },
-    {
-      "name": "MCP workflow prompt",
-      "result": "passed",
-      "evidence": "The SDK stdio integration requested manga_book_workflow and checked final display, existing consent, single question, draft-only and publication approval."
-    },
-    {
-      "name": "Pre-presentation review via MCP",
-      "result": "passed",
-      "evidence": "The SDK fetched the production prompt and checked the complete internal read, every page and panel, character voices and actions, and presentation of the corrected script before a visible audit."
-    },
-    {
-      "name": "MCP progress and recovery guidance",
-      "result": "passed",
-      "evidence": "The ordinary SDK workflow prompt explicitly requires delegated work through its result, failure notification, checking retained evidence, resuming the failed step and verifying what follows."
-    },
-    {
-      "name": "MCP lettering guidance",
-      "result": "passed",
-      "evidence": "The SDK retrieved the ordinary prompt and verified that it covers balloons, marginal text, narration, names, ruby, punctuation, both text directions, and the final artifacts."
-    },
-    {
-      "name": "Panel-specific background guidance",
-      "result": "passed",
-      "evidence": "Reviewed the skill and references for blanket background-density rules. The SDK retrieved the workflow instruction distinguishing establishing views and close-ups and checking settings, prompts and rendered pages."
-    },
-    {
-      "name": "MCP workflow review",
-      "result": "passed",
-      "evidence": "The real SDK workflow prompt accepts natural panel crossings, checks speech and action, and does not demand a redraw for a crossing alone."
-    },
-    {
-      "name": "MCP workflow review",
-      "result": "passed",
-      "evidence": "285 focused checks passed, including real MCP prompt retrieval, emitted authoring instructions for single, middle and final book pages, selected dialogue editing versus locked lettering, preserved questions, exclamations, ellipses and unfinished turns in actual image-prompt TEXT."
-    },
-    {
-      "name": "MCP workflow review",
-      "result": "passed",
-      "evidence": "238 focused tests passed, including observed extra full stops at wraps, missing full stops, changed final marks, benign line wraps and spacing, unchanged correct speech and targeted repair."
-    },
-    {
-      "name": "MCP workflow review",
-      "result": "passed",
-      "evidence": "198 geometry, prompt budget, repair, transcription, comparison and native image regressions pass with the original limits and native-color golden fixtures."
-    },
-    {
-      "name": "MCP workflow review",
-      "result": "passed",
-      "evidence": "Read the canonical skill and SNS reference against ten requested clauses, including the exception, account/client scope and separate platform rules. Ten skill distribution, audit and client installation tests passed."
-    },
-    {
-      "name": "MCP workflow review",
-      "result": "passed",
-      "evidence": "Checked 18 named reference, scope and selection conditions across the canonical skill and workflow. The 10 skill packaging/update tests passed. The parent verified five images in one published post on each platform."
+      "evidence": "Original waiting job claimed after re-pairing. Final page completed through MCP and the matching PNG and JSON were approved and posted in order."
     }
-  ],
-  "sourceCommit": "13da9016eff3a804dcf5e897d08e4ada875e7fc7"
+  ]
 }
