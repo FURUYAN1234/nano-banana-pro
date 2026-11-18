@@ -1,8 +1,8 @@
 {
   "format": 1,
   "version": "8.0.5",
-  "skillSha256": "dc5697a4f602a5a8e63ba66cceaeaa205f1a2b8cd0dbf0e645b103cf44c0801c",
-  "reviewedAt": "2026-11-18T03:35:32.122Z",
+  "skillSha256": "4fc8620c257f403460f69f9d784599ab86aa1e2d5bd938c444efad8bfea2533d",
+  "reviewedAt": "2026-11-18T03:50:50.542Z",
   "reviewedSince": "v8.0.4 released skill through the approved four-page original color comic and the v8.0.5 private verification on 2026-11-18.",
   "sources": [
     "User corrected service substitution, required confirmation before launch/installation, built-in browser priority and browser selection suited to the actual client and PC.",
@@ -18,7 +18,8 @@
     "User reported a missing full stop in the last speech balloon and requested the same rule for standalone and multipage manga.",
     "A generated lettering edit inserted extra full stops at column boundaries inside a single sentence.",
     "Column wraps are layout; editing must retain the grammatical position of sentence marks and all approved artwork.",
-    "Users with a 20-image X composer can share five to twenty pages in a single post, in reading order."
+    "Users with a 20-image X composer can share five to twenty pages in a single post, in reading order.",
+    "On Facebook prefer one personal-feed photo post for the entire manga; Meta documents multiple photos and a distinct 1,000-photo album capacity."
   ],
   "findings": [
     {
@@ -98,6 +99,12 @@
       "disposition": "updated",
       "rule": "Use the requested single post in supported X clients; count finished attachments and the actual published album, and report specific errors only if a limit appears.",
       "reason": "The previous generic limit guidance allowed an unnecessary four-image split on X and could omit intended pages."
+    },
+    {
+      "observation": "On Facebook prefer one personal-feed photo post for the entire manga; Meta documents multiple photos and a distinct 1,000-photo album capacity.",
+      "disposition": "updated",
+      "rule": "Record actual attachment limits. Prepare title-specific absolute file paths in reading order before opening the chooser, subscribe first, and verify the upload and published pages.",
+      "reason": "A numeric album capacity or an observed five-photo example does not establish a universal feed-post ceiling. Directly selecting the approved pages prevents wrong-work uploads."
     }
   ],
   "checks": [
@@ -165,7 +172,12 @@
       "name": "MCP workflow review",
       "result": "passed",
       "evidence": "Read the canonical skill and SNS reference against ten requested clauses, including the exception, account/client scope and separate platform rules. Ten skill distribution, audit and client installation tests passed."
+    },
+    {
+      "name": "MCP workflow review",
+      "result": "passed",
+      "evidence": "Checked 18 named reference, scope and selection conditions across the canonical skill and workflow. The 10 skill packaging/update tests passed. The parent verified five images in one published post on each platform."
     }
   ],
-  "sourceCommit": "caa8503b5ab5a60af869923b84101c86b1541688"
+  "sourceCommit": "13da9016eff3a804dcf5e897d08e4ada875e7fc7"
 }
