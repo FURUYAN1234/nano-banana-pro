@@ -198,7 +198,7 @@ try {
     const plan={count:6,panels:Array.from({length:6},(_,i)=>({dialogueIds:i?[]:[1,2]})),expectedDialogue:expected.map((text,i)=>({id:i+1,text,speaker:i?'乙':'甲'}))};
     const report=spoken=>({inspectionVersion:11,readingOrder:'fail',corrections:[],evidence:[{panel:1,
       dialogue:spoken,text_regions:spoken.map((text,i)=>({region_kind:'speech_balloon',text,center_x:.8-i*.3,container_evidence:'白い吹き出しの内側に文字がある。'}))}]});
-    for(const spoken of [[expected[0],'なら、違いを残すわ。'],['宮殿や僧院の跡が僧侶を見つかったの。',expected[1]],[],[...expected].reverse()]) {
+    for(const spoken of [[expected[0],'なら、違いを残すわ。'],['宮殿や僧院の跡が僧侶を見つかったの。',expected[1]],['宮殿や僧院の跡が。\n見つかったの。',expected[1]],[expected[0],'なら、模型でも違いを残すわ'],['宮殿や僧院の跡が見つかったの？',expected[1]],[],[...expected].reverse()]) {
       const issues=m.experimentalRepairIssues(report(spoken),plan);
       assert.equal(issues.length,1,'local text mismatch must not disappear into an advisory');
       assert.equal(issues[0].type,'bubble_text');
@@ -219,8 +219,8 @@ try {
           return {base64Img:'fixed'};}});
       assert.equal(repairs,1);
     }
-    for(const spoken of [expected,['宮殿や僧院の跡が\n見つかったの！','なら 模型でも違いを残すわ']])
-      assert.deepEqual(m.experimentalRepairIssues(report(spoken),plan),[],'punctuation and line wrapping are harmless');
+    for(const spoken of [expected,['宮殿や僧院の跡が\n見つかったの。','なら 模型でも違いを残すわ。']])
+      assert.deepEqual(m.experimentalRepairIssues(report(spoken),plan),[],'line wraps, spacing and a comma do not change a sentence ending');
     const unknown=report(['読めない',expected[1]]);unknown.evidence[0].text_regions[0].text=null;
     assert.deepEqual(m.experimentalRepairIssues(unknown,plan),[],'unreadable pixels cannot authorize repair');
     const incomplete=report([expected[0],'欠落']);incomplete.validationErrors=['incomplete observation'];
