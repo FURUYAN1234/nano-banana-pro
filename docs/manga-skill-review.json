@@ -1,15 +1,16 @@
 {
   "format": 1,
   "version": "8.0.5",
-  "skillSha256": "4c778b4dfdd01db3353296e737df1f0c9294b40c6778b7b9fd8aba03f645eb18",
-  "reviewedAt": "2026-11-18T01:44:19.320Z",
+  "skillSha256": "187b68b0a457eb73fb39ef6a3b2024378a69da8bb2680bca8c5f0c82cca57ecf",
+  "reviewedAt": "2026-11-18T02:02:21.433Z",
   "reviewedSince": "v8.0.4 released skill through the approved four-page original color comic and the v8.0.5 private verification on 2026-11-18.",
   "sources": [
     "User corrected service substitution, required confirmation before launch/installation, built-in browser priority and browser selection suited to the actual client and PC.",
     "User required complete diagnostic JSON first, presentation of the full dialogue and staging before audit or drawing, and explicit approval.",
     "Accepted four-page production, production diagnostics and script approval were reviewed.",
     "User asked for joint application/skill update and adoption with a recoverable earlier PNG and JSON.",
-    "User required a final sharing choice even when an AI client uses the workflow prompt without a separately installed skill."
+    "User required a final sharing choice even when an AI client uses the workflow prompt without a separately installed skill.",
+    "User required the entire scenario to be checked and corrected before it is presented."
   ],
   "findings": [
     {
@@ -35,6 +36,12 @@
       "disposition": "updated",
       "rule": "After showing all saved pages, honor a choice already made. If undecided, ask once. Provide drafts on request; publication requires specific approval.",
       "reason": "Clients using the workflow prompt and clients reading the bundled skill should offer the same final choice."
+    },
+    {
+      "observation": "A change in character voice in the last panel exposed a gap in the pre-presentation workflow.",
+      "disposition": "updated",
+      "rule": "Compare every page and panel, cover and total, references, voice, dialogue and depiction, causes and payoffs. Fix inconsistencies and present the complete corrected script before visible review or approval.",
+      "reason": "Basing approval on the fully checked script keeps internal review, visible audit and the user’s actual decision distinct."
     }
   ],
   "checks": [
@@ -57,7 +64,12 @@
       "name": "MCP workflow prompt",
       "result": "passed",
       "evidence": "The SDK stdio integration requested manga_book_workflow and checked final display, existing consent, single question, draft-only and publication approval."
+    },
+    {
+      "name": "Pre-presentation review via MCP",
+      "result": "passed",
+      "evidence": "The SDK fetched the production prompt and checked the complete internal read, every page and panel, character voices and actions, and presentation of the corrected script before a visible audit."
     }
   ],
-  "sourceCommit": "5223134fbed454070eff79365745fb5ba724b54a"
+  "sourceCommit": "97e841205ed57c067ec717fd1107778abcd4f1cf"
 }
