@@ -28,6 +28,7 @@ test('official SDK stdio discovers tools, persists false settings and snapshot a
     const guide = workflow.messages[0].content.text;
     assert.match(guide, /privately read the entire draft.*review every page and panel.*character voices.*depicted actions.*complete corrected script before any visible audit/s);
     assert.match(guide, /Track each long-running job or delegated drawing, release or announcement through its result.*Report a stop, failure or changed recovery estimate promptly.*Continue independent authorized work/s);
+    assert.match(guide, /Trace the cause against retained evidence.*Resume the failed step, verify recovery and the next step.*avoid repeating a charge/s);
     assert.match(guide, /Show all saved pages in reading order.*honor any sharing decision already given.*ask once/s);
     assert.match(guide, /For drafts only, provide the proposed posts.*Publish only after approval/s);
     const cap = await call('manga_capabilities', {}); assert.equal(cap.totalPagesIncludesCover, true);
