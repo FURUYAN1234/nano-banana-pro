@@ -1,3 +1,9 @@
+# v8.0.7 release candidate
+
+Super FURU AI 4-koma System v8.0.7 bundles the updated manga production skill. The new checks cover carrying forward accepted details during revisions, tracing the grip and tool in perspective, reading decisive action without lettering, and recording intended and visible effects in technique samples. The skill also covers last-page credits, pointing gestures, and camera preflight.
+
+The accepted three-page sample used the live v8.0.5 MCP route. Candidate runtime changes are limited to the version marker. Skill and documentation tests passed, the three PDF manuals were rebuilt and compared, and both manga ZIPs passed strict extraction verification. The authorized shared release transaction publishes GitHub and Pages, then note and image-bearing social announcements precede the full backup. See [v8.0.7 release notes](docs/releases/v8.0.7.md).
+
 # v8.0.6 release candidate
 
 Super FURU AI 4-koma System v8.0.6 packages the updated manga production skill. It covers clickable approvals of the reviewed script, new character sheets and each page, AI-managed MCP reconnection and a same-tab reload when required, plus character continuity checks after panel revisions. The Windows ZIP ships the skill with the application. README and three PDF manuals are synchronized with the candidate. The v8.0.5 engine and its API behavior carry forward. The seven-page sample was produced and verified via the live MCP path on that engine.
