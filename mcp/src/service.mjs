@@ -47,5 +47,15 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   const service=await startMangaService({workspace:arg('--workspace'),port:Number(arg('--port')??45931),downloadsDirectory:arg('--downloads')});
   process.stderr.write(`Manga local service ready: ${service.bridge.origin}\n`);
   for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>{void service.close().then(()=>process.exit(0));});
+  // An older launcher installs the verified release and starts this new service
+  // in the same invocation. Give that first upgrade the same skill update.
+  if(process.platform==='win32'&&!process.argv.includes('--client-skill-checked')){
+   const root=fileURLToPath(new URL('../../',import.meta.url));
+   try{
+    await fs.access(path.join(root,'verified-install.json'));
+    const {syncClientSkills}=await import('./client-skill-update.mjs');
+    await syncClientSkills(root);
+   }catch(error){if(error.code!=='ENOENT')process.stderr.write('FURU skill update: '+error.message+'\n');}
+  }
  }catch(e){process.stderr.write(`Manga service startup: ${e.message}\n`);process.exitCode=1;}
 }

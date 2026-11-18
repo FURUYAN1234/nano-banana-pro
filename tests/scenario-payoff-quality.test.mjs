@@ -3,6 +3,8 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import * as payoffQuality from '../src/lib/scenario-payoff-quality.js';
 import {readDiagnostics, subscribeDiagnosticErrors} from '../src/lib/diagnostics.js';
+import { SCENARIO_BALLOON_LAYOUT_RULES } from '../src/lib/composition-variety.js';
+import { extractDialogueOnly } from '../src/lib/panel-utils.js';
 
 import {
   buildScenarioPayoffRepairPrompt,
@@ -345,6 +347,67 @@ const BALLOON_SCENARIO = '## タイトル: 試験\n' + [1, 2, 3, 4].map(panel =>
 const BALLOON_REVIEW = { ...STRONG_GAG_REVIEW, pass: false, reason_codes: ['BALLOON_LAYOUT_X_ANCHOR_CONTRADICTION'],
   visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 1
     ? { ...item, feasible: false, material_loss: true, correction: 'Move the sole balloon near its speaker without changing the action.' } : item) };
+
+test('continuing book pages do not require the whole-book ending but retain material checks', () => {
+  const review = { ...nativeReview(4), pass: false, reason_codes: ['ENDING_MODE_MISMATCH'],
+    setup_seed: '', panel3_prediction: '', visual_payoff: false, shift_kind: 'none', unseeded_fact: true };
+  const options = { punchlineType: 'GagAuto', scenarioMode: 'book-page-4-continue' };
+  assert.equal(evaluateScenarioPayoffReview(review, options).ok, true);
+  assert.equal(evaluateScenarioPayoffReview({ ...review, reason_codes: [] }, options).ok, false);
+  assert.equal(evaluateScenarioPayoffReview({ ...review, reason_codes: ['UNKNOWN_FAILURE'] }, options).ok, false);
+  const broken = structuredClone(review);
+  broken.visual_feasibility[1] = { panel: 2, feasible: false, material_loss: true,
+    evidence: 'The required hand-off is completely occluded.', correction: 'Expose the hand-off in the existing camera.' };
+  assert.ok(evaluateScenarioPayoffReview(broken, options).reasonCodes.includes('unrenderable_panel_2'));
+  assert.ok(evaluateScenarioPayoffReview(review, { ...options, scenarioMode: 'book-page-4-final' })
+    .reasonCodes.includes('ENDING_MODE_MISMATCH'));
+});
+
+test('generation, review and repair share panel-local balloon coordinates and the same schema', () => {
+  const options = { scenario: BALLOON_SCENARIO, punchlineType: 'GagAuto', scenarioMode: 'book-page-4-continue' };
+  for (const prompt of [SCENARIO_BALLOON_LAYOUT_RULES, buildScenarioPayoffReviewPrompt(options),
+    buildScenarioPayoffRepairPrompt({ ...options, review: BALLOON_REVIEW })]) {
+    assert.match(prompt, /コマ内/);
+    assert.match(prompt, /PageComposition/);
+    assert.match(prompt, /speaker/);
+    assert.match(prompt, /anchor/);
+    assert.match(prompt, /route/);
+  }
+  assert.match(buildScenarioPayoffReviewPrompt(options), /ENDING_MODE_MISMATCH.*付けない/);
+});
+
+test('optional panel-local y survives repair and rendering while invalid values and extra fields fail', () => {
+  const balloon = { speaker: 'A', x: 0.84, y: 0.17, anchor: '画面左のAの口元', route: '上の余白からAへ' };
+  const patch = value => JSON.stringify([{ panel: 1, field: 'BalloonLayout', value: [value] }]);
+  const repaired = applyScenarioStagingPatch(BALLOON_SCENARIO, patch(balloon));
+  assert.ok(repaired.includes(JSON.stringify([balloon])));
+  const firstPanel = repaired.slice(repaired.indexOf('[1コマ目')).split('[2コマ目')[0];
+  const rendered = extractDialogueOnly(firstPanel, '## A', { forImagePrompt: true });
+  assert.match(rendered, /panel-local/);
+  assert.match(rendered, /x=0\.84, y=0\.17/);
+  for (const y of [-0.1, 0, 1, 1.2, '0.2', null]) {
+    assert.throws(() => applyScenarioStagingPatch(BALLOON_SCENARIO, patch({ ...balloon, y })), /balloon/i);
+    const invalid = firstPanel.replace(JSON.stringify([balloon]), JSON.stringify([{ ...balloon, y }]));
+    assert.throws(() => extractDialogueOnly(invalid, '## A', { forImagePrompt: true }), /BalloonLayout/);
+  }
+  assert.throws(() => applyScenarioStagingPatch(BALLOON_SCENARIO, patch({ ...balloon, text: '別の台詞' })), /balloon/i);
+});
+
+test('a rejected staging repair records its actual response and validation error', async () => {
+  const diagnostics = await import('../src/lib/diagnostics.js');
+  diagnostics.beginDiagnosticAction('step2');
+  const { runId } = diagnostics.getDiagnosticContext();
+  const raw = 'invalid repair JSON: response must remain available for diagnosis';
+  const result = await runScenarioPayoffGate({ scenario: BALLOON_SCENARIO,
+    requestReview: async () => JSON.stringify(BALLOON_REVIEW), requestRepair: async () => raw });
+  assert.equal(result.status, 'retained');
+  const row = (await readDiagnostics()).events.find(event => event.runId === runId
+    && event.failureContext?.stage === 'scenario_payoff_repair');
+  assert.ok(row, 'the repair failure must be distinguishable from the initial review');
+  assert.equal(row.failureContext.repairResponse, raw);
+  assert.match(row.failureContext.repairError, /invalid_staging_patch: JSON array required/);
+  assert.equal(row.failureContext.scenario, BALLOON_SCENARIO);
+});
 
 test('unreadable reset payoff is repaired despite superficial visual outcome approval', async () => {
   const unclear = { ...STRONG_GAG_REVIEW, payoff_clarity: {

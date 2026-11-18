@@ -1,6 +1,6 @@
 {
-  "priceSnapshotDate": "2026-11-17",
-  "priceSnapshotSource": "OpenAI official model pricing",
+  "priceSnapshotDate": "2026-11-18",
+  "priceSnapshotSource": "https://developers.openai.com/api/docs/pricing",
   "models": [
     {
       "id": "gpt-6-astra",
@@ -9,27 +9,50 @@
       "description": "複雑な制約・演出を重視したシナリオ",
       "inputPriceUsdPerM": 10,
       "outputPriceUsdPerM": 50,
-      "comparisonNote": "最も難しい題材や複数の制約を優先。通常の4コマには過剰になり得ます。"
+      "comparisonNote": "最も難しい題材や複数の制約を優先。通常の4コマには過剰になり得ます。",
+      "cachedInputPriceUsdPerM": 1
+    },
+    {
+      "id": "gpt-6.2-astra",
+      "label": "GPT-6.2 Astra",
+      "group": "GPT-6.2",
+      "manualSelection": true,
+      "description": "複雑な台本、構図、画像の精査",
+      "inputPriceUsdPerM": 8,
+      "outputPriceUsdPerM": 40,
+      "cachedInputPriceUsdPerM": 0.4,
+      "comparisonNote": "複雑な人物関係や場面の整合性を細かく検討したいときに選択できます。"
+    },
+    {
+      "id": "gpt-6.2-sol",
+      "label": "GPT-6.2 Sol",
+      "group": "GPT-6.2",
+      "manualSelection": true,
+      "description": "画像解析と台本・描画指示の作成",
+      "inputPriceUsdPerM": 2,
+      "outputPriceUsdPerM": 10,
+      "cachedInputPriceUsdPerM": 0.1,
+      "comparisonNote": "画像と台本を扱う各工程で手動選択できます。"
     },
     {
       "id": "gpt-6.1-sol",
       "label": "GPT-6.1 Sol",
       "group": "GPT-6.1",
-      "priceSnapshotDate": "2026-11-17",
       "description": "新しいSol・構成品質と料金のバランス",
       "inputPriceUsdPerM": 2,
       "outputPriceUsdPerM": 10,
-      "comparisonNote": "手動選択できる高性能モデル。通常の入力・出力単価はAstraの5分の1。題材ごとの生成結果を確認してください。"
+      "comparisonNote": "手動選択できる高性能モデル。通常の入力・出力単価はAstraの5分の1。題材ごとの生成結果を確認してください。",
+      "cachedInputPriceUsdPerM": 0.1
     },
     {
       "id": "gpt-6.1-terra",
       "label": "GPT-6.1 Terra",
       "group": "GPT-6.1",
-      "priceSnapshotDate": "2026-11-17",
       "description": "画像理解と自然な文章を低コストで両立",
       "inputPriceUsdPerM": 1,
       "outputPriceUsdPerM": 5,
-      "comparisonNote": "標準・短文コンテキストでSol 6.1の半額。画像入力にも対応します。題材ごとの生成結果を確認してください。"
+      "comparisonNote": "標準・短文コンテキストでSol 6.1の半額。画像入力にも対応します。題材ごとの生成結果を確認してください。",
+      "cachedInputPriceUsdPerM": 0.05
     },
     {
       "id": "gpt-6-sol",
@@ -38,7 +61,8 @@
       "description": "複雑な構成と料金のバランスを重視",
       "inputPriceUsdPerM": 2,
       "outputPriceUsdPerM": 10,
-      "comparisonNote": "Astraより入力・出力単価を抑えられます。実際のシナリオ品質は題材ごとに確認してください。"
+      "comparisonNote": "Astraより入力・出力単価を抑えられます。実際のシナリオ品質は題材ごとに確認してください。",
+      "cachedInputPriceUsdPerM": 0.2
     },
     {
       "id": "gpt-5.6-sol",
@@ -47,7 +71,8 @@
       "description": "高い構成力を保ちつつAstraより節約",
       "inputPriceUsdPerM": 4,
       "outputPriceUsdPerM": 20,
-      "comparisonNote": "Astraより抑えつつ、複雑な構成や推論を重視したい場合に向きます。"
+      "comparisonNote": "Astraより抑えつつ、複雑な構成や推論を重視したい場合に向きます。",
+      "cachedInputPriceUsdPerM": 0.4
     },
     {
       "id": "gpt-5.6-terra",
@@ -56,7 +81,8 @@
       "description": "品質と料金のバランスを重視",
       "inputPriceUsdPerM": 2,
       "outputPriceUsdPerM": 12,
-      "comparisonNote": "GPT-4.1と入力単価は同じ。出力は高めですが、題材解釈・構成を推論で補強します。"
+      "comparisonNote": "GPT-4.1と入力単価は同じ。出力は高めですが、題材解釈・構成を推論で補強します。",
+      "cachedInputPriceUsdPerM": 0.2
     },
     {
       "id": "gpt-6-luna",
@@ -65,7 +91,8 @@
       "description": "料金を優先した軽量なシナリオ構成",
       "inputPriceUsdPerM": 0.1,
       "outputPriceUsdPerM": 0.5,
-      "comparisonNote": "GPT-5.6 Lunaより入力・出力単価が低め。複雑な制約では生成結果を確認してください。"
+      "comparisonNote": "GPT-5.6 Lunaより入力・出力単価が低め。複雑な制約では生成結果を確認してください。",
+      "cachedInputPriceUsdPerM": 0.01
     },
     {
       "id": "gpt-5.6-luna",
@@ -74,7 +101,8 @@
       "description": "簡潔な題材を低コストで素早く構成",
       "inputPriceUsdPerM": 0.2,
       "outputPriceUsdPerM": 1.2,
-      "comparisonNote": "大きく節約したい場合の第一候補。複雑な制約は上位モデルより弱くなります。"
+      "comparisonNote": "大きく節約したい場合の第一候補。複雑な制約は上位モデルより弱くなります。",
+      "cachedInputPriceUsdPerM": 0.02
     }
   ]
 }

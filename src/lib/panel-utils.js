@@ -384,7 +384,7 @@ const STRUCTURAL_LINE_PREFIX_PATTERN = String.raw`(?:[-*+>・●▪◦]\s*)?[【
 const STAGING_GAG_LABEL_PATTERN = String.raw`(?:演出(?:\s*[・･／/]?\s*ギャグ)?|ギャグ(?:\s*[・･／/]?\s*演出))`;
 const VISUAL_DIRECTION_LABEL_TOKEN_PATTERN = String.raw`(?:表情|身体|演出|動作|ポーズ|姿勢|目線|視線|間合い|SFX|SE|効果音|音響効果|音響|音声|BGM)`;
 const VISUAL_DIRECTION_LABEL_PATTERN = String.raw`(?:${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN}(?:\s*[・･／/]\s*${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN})*)`;
-const SCENE_LETTERING_LABEL_PATTERN = String.raw`(?:画面(?:内)?文字|字幕|テロップ|キャプション|Screen\s*text|On[- ]screen\s*text|Caption|Subtitle|VisualEvidence)`;
+const SCENE_LETTERING_LABEL_PATTERN = String.raw`(?:画面(?:内)?文字|字幕|テロップ|キャプション|地の文|終了表記|Screen\s*text|On[- ]screen\s*text|Caption|Subtitle|VisualEvidence)`;
 const SCENE_LETTERING_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${SCENE_LETTERING_LABEL_PATTERN}\\s*[:：]`, 'i');
 const META_SPEAKER_LABEL_PATTERN = String.raw`(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|${VISUAL_DIRECTION_LABEL_PATTERN}|${SCENE_LETTERING_LABEL_PATTERN}|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|${STAGING_GAG_LABEL_PATTERN}|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)`;
 const STAGING_GAG_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${STAGING_GAG_LABEL_PATTERN}\\s*[:：]`);
@@ -800,12 +800,15 @@ export const readOffscreenCast = (source, castList, extraNames = []) => {
   const text = String(source).replace(BALLOON_LAYOUT_LINE_RE, '')
     .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, '');
   const group = `((?:${pattern})(?:\\s*(?:と|や|、|及び)\\s*(?:${pattern}))*)`;
-  const outside = '(?:画面外|画角外|フレーム外)';
+  const outside = '(?:画面外|画角外|フレーム外|コマ外)';
+  const outsidePosition = outside + '(?:(?:左|右|上|下)(?:側)?)?';
   // A location may intervene ("甲、乙はラックのそばに画面外で待つ").
   // Do not cross another subject, an object, or a clause boundary to find it.
   const location = '(?:[^。！？\\n、はがを]{1,40}?(?:に|で))?';
   const absent = new Set();
   const rules = [
+    new RegExp(`${group}の声(?:は|が)${outsidePosition}から(?:届く|届いた|聞こえる|聞こえた|響く|響いた)(?=[。！？\\n、]|$)`, 'gu'),
+    new RegExp(`${outsidePosition}の${group}から(?:届く|聞こえる|響く)声`, 'gu'),
     new RegExp(`${group}(?:は|を)\\s*(?:描かない|描かず|描くな|表示しない|映さない|写さない|登場しない)(?=[。！？\\n、]|$)`, 'gu'),
     new RegExp(`${group}(?:は|が)\\s*(?:引き続き|そのまま)?${location}${outside}(?:の(?:前コマ|元の)?位置を維持|(?:の[^。！？\\n]{1,24}?(?:側|場所|位置))?に(?:いる|居る|残(?:る|っている)|留まる)|で(?!は?(?:ない|なく))|[。\\n]|$)`, 'gu'),
     new RegExp(`${outside}の${group}(?=へ|に|を|は|が|[、。！？\\n])`, 'gu'),
@@ -826,6 +829,20 @@ export const readOffscreenCast = (source, castList, extraNames = []) => {
   return absent;
 };
 
+// Older book scripts sometimes named the speaker only in the anchor. Recover
+// only when one speaker owns every line and the endpoint names that same person.
+function readSavedBalloon(item, entry, soleSpeaker) {
+  if (!soleSpeaker || !item || typeof item !== 'object' || Object.hasOwn(item, 'speaker')) return item;
+  if (Object.keys(item).some(key => !['x', 'y', 'anchor', 'route', 'tail', 'text'].includes(key))) return item;
+  if (Object.hasOwn(item, 'text') && item.text !== entry.text) return item;
+  if (item.tail && item.route && item.tail !== item.route) return item;
+  const anchor = String(item.anchor ?? '').trim();
+  if (!anchor.startsWith(soleSpeaker)) return item;
+  const endpoint = anchor.slice(soleSpeaker.length);
+  if (!/^(?:|の(?:頭|頭部|頭側|口元|口元側|手元|手元側|輪郭)|[（(](?:画面外|コマ外)[）)])$/.test(endpoint)) return item;
+  return { ...item, speaker: soleSpeaker, route: item.route ?? item.tail };
+}
+
 const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = false, validCharacters = [], offscreen = new Set()) => {
   const lines = [...String(source).matchAll(BALLOON_LAYOUT_LINE_RE)];
   if (!lines.length) return ''; // Existing/manual scenarios keep their supported format.
@@ -834,11 +851,17 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
   try { plan = JSON.parse(lines[0][1]); } catch { return fail('json', '配置JSONを読み取れません。'); }
   if (lines.length !== 1 || !Array.isArray(plan)) return fail('schema', '配置はコマごとに1つのJSON配列で指定してください。');
   if (plan.length !== entries.length) return fail('count', `配置${plan.length}件、抽出台詞${entries.length}件で一致しません。`);
+  const owners = new Set(entries.map(entry => entry.sourceSpeaker || entry.speaker));
+  if (owners.size === 1) {
+    const [owner] = owners;
+    plan = plan.map((item, i) => readSavedBalloon(item, entries[i], owner));
+  }
   for (const [i, item] of plan.entries()) {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return fail('schema', `配置${i + 1}はオブジェクトで指定してください。`);
     if (typeof item.speaker !== 'string') return fail('speaker', `配置${i + 1}の話者と抽出台詞の話者が一致しません。`);
     if (!layoutSpeakerMatches(item.speaker, entries[i], validCharacters)) return fail('speaker', `配置${i + 1}の話者${JSON.stringify(item.speaker)}と抽出台詞の話者${JSON.stringify(entries[i].sourceSpeaker || entries[i].speaker)}が一致しません。`);
     if (!Number.isFinite(item.x) || item.x <= 0 || item.x >= 1) return fail('x_range', `配置${i + 1}のxは0より大きく1未満の数値にしてください。`);
+    if (Object.hasOwn(item, 'y') && (!Number.isFinite(item.y) || item.y <= 0 || item.y >= 1)) return fail('y_range', `配置${i + 1}のyは0より大きく1未満の数値にしてください。`);
     if (i > 0 && plan[i - 1].x <= item.x) return fail('x_order', `配置${i + 1}のxが右から左の台詞順と一致しません。`);
     for (const key of ['anchor', 'route']) {
       if (typeof item[key] !== 'string' || !item[key].trim()) return fail(key, `配置${i + 1}の${key}が空欄です。`);
@@ -857,11 +880,13 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
       const hiddenBefore = /(?:do not|don't|never)\s+(?:show|draw|expose)\s+(?:the\s+)?$|(?:hidden|invisible)\s+$/i.test(before);
       return hiddenAfter || hiddenBefore ? match : (prefix || '') + '頭の見える輪郭';
     });
-  return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => {
+  const coordinates = plan.some(item => Object.hasOwn(item, 'y'))
+    ? 'panel-local x=0 left/1 right, y=0 top/1 bottom' : 'x=0 left/1 right';
+  return ` BALLOON LAYOUT (NEVER PRINT; ${coordinates}; preserve Camera/Action): ${plan.map((item, i) => {
     const sourceMembers = parseCollectiveSpeaker(item.speaker, validCharacters)?.members || parseCollectiveSpeaker(entries[i].sourceSpeaker, validCharacters)?.members;
     const members = sourceMembers ? (collectiveMemberKeys(sourceMembers, validCharacters, false) || [])
       .map(key => (findExactCastMatch(key, validCharacters)?.split(/[（(]/)[0].trim() || key).replace(/\s/g, '')).join('・') : '';
-    return `B${i + 1} x=${item.x}, [${entries[i].speaker}]${members ? ` members=${members}` : ''} ${visibleAnchor(item.anchor, entries[i].speaker)}, tail=${visibleAnchor(item.route, entries[i].speaker)}`;
+    return `B${i + 1} x=${item.x}${Object.hasOwn(item, 'y') ? `, y=${item.y}` : ''}, [${entries[i].speaker}]${members ? ` members=${members}` : ''} ${visibleAnchor(item.anchor, entries[i].speaker)}, tail=${visibleAnchor(item.route, entries[i].speaker)}`;
   }).join('; ')}.`;
 };
 
@@ -1205,7 +1230,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     const offscreen = readOffscreenCast(fullPanelText, castList, orderedEntries.map(entry => entry.speaker));
     const fullLayout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject, ['unresolved', 'ambiguous'].includes(rear.status), validCharacters, offscreen);
     const layout = options.compactMetadata
-      ? fullLayout.replace(/^ BALLOON LAYOUT \(NEVER PRINT; x=0 left\/1 right; preserve Camera\/Action\): /, ' BALLOON LAYOUT: ')
+      ? fullLayout.replace(/^ BALLOON LAYOUT \(NEVER PRINT; (?:panel-local x=0 left\/1 right, y=0 top\/1 bottom|x=0 left\/1 right); preserve Camera\/Action\): /, ' BALLOON LAYOUT: ')
       : fullLayout;
     const offscreenTargets = orderedEntries.flatMap((entry,index) => offscreen.has(entry.speaker) ? [`B${index+1}=>[${entry.speaker}] frame_edge`] : []);
     const offscreenContract = offscreenTargets.length ? `\nOFFSCREEN VOICE: ${offscreenTargets.join('; ')}. This panel overrides global visible mouth/head tail rules: point the tail toward the scripted frame edge/direction; retain speech ownership, never expose the offscreen body or face.` : '';

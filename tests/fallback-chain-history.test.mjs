@@ -34,7 +34,9 @@ test('Gemini image route, metadata default and Model Chain share Nano Banana 2.1
 
 test('the STEP2 OpenAI snapshot starts with the active scenario route', () => {
   assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step2-openai'], OPENAI_SCENARIO_TEXT_MODEL_IDS);
-  assert.deepEqual(chainModels('step2-openai'), OPENAI_SCENARIO_TEXT_MODEL_IDS);
+  const snapshot=FALLBACK_CHAINS.find(chain=>chain.id==='step2-openai').models;
+  assert.deepEqual(snapshot.filter(m=>m.role==='Selectable').map(m=>m.id),['gpt-6.2-astra','gpt-6.2-sol']);
+  assert.deepEqual(snapshot.filter(m=>m.role!=='Selectable').map(m=>m.id),OPENAI_SCENARIO_TEXT_MODEL_IDS.filter(id=>!id.startsWith('gpt-6.2')));
 });
 
 test('the STEP1 and STEP3 OpenAI chains use their active routes', () => {
@@ -64,7 +66,7 @@ test('the STEP4 OpenAI snapshot distinguishes its default model from selectable 
   assert.deepEqual(FALLBACK_CHAIN_SOURCE_IDS['step4-openai'], chain.models.map(({ id }) => id));
 });
 
-for (const selected of ['gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-astra', 'gpt-6-luna']) {
+for (const selected of ['gpt-6.2-astra', 'gpt-6.2-sol', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-astra', 'gpt-6-luna']) {
   test(`Model Chain reflects selection ${selected} without changing other routes`, async () => {
     const {getOpenAIScenarioModelRoute}=await import('../src/lib/openai-model-routes.js');
     const chains=getFallbackChains(selected);

@@ -14,6 +14,34 @@ try {
   const inputFor=count=>({enabled:true,scenarioMode:'experimental-manga',castList:'## ユウ',colorMode:'color',scenario:Array.from({length:count},(_,i)=>`[${i+1}コマ目]\n[Camera: 高い位置から俯瞰]\n[EMOTION: NORMAL]\n状況: ユウが道具を順に確かめる。\n${i===2?'セリフなし':`ユウ「確認${i+1}」`}`).join('\n')});
   const planFor=source=>({count:source.panels.length,layout:'two_columns',reason:'動作順を保ち、隣り合う場面を対比する',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'ユウが指定の道具を確かめる。',dialogueIds:p.dialogueIds,breakout:null}))});
 
+  test('authored narration and end lettering are retained outside the speech balloons', () => {
+    const input = inputFor(5);
+    input.scenario += '\nBalloonLayout: [{"speaker":"ユウ","x":0.7,"anchor":"ユウの頭","route":"上の余白"}]\n地の文:「明け方の駅だった。」\n終了表記:「つづく」';
+    const source = m.readExperimentalSource(input);
+    const final = source.panels.at(-1);
+    assert.deepEqual(final.dialogueIds.map(id => source.dialogue[id].text), ['確認5']);
+    for (const compact of [false, true]) {
+      const prompt = m.buildExperimentalImagePrompt(planFor(source),source,{...input,...(compact?{promptMaxChars:1}:{})});
+      const frame = prompt.split('[PAGE FRAME P5 ').at(-1);
+      assert.ok(frame.includes('明け方の駅だった。'));
+      assert.ok(frame.includes('つづく'));
+      assert.doesNotMatch(frame, /B\d+="(?:明け方の駅だった。|つづく)"|=>\[(?:地の文|終了表記)\]/);
+    }
+  });
+
+  test('native full and compact transport keep optional balloon y in panel-local coordinates', () => {
+    const input = inputFor(5);
+    input.scenario = input.scenario.replace('状況:', 'BalloonLayout: [{"speaker":"ユウ","x":0.84,"y":0.17,"anchor":"ユウの頭","route":"上の余白からユウへ"}]\n状況:');
+    const source = m.readExperimentalSource(input), plan = planFor(source);
+    for (const compact of [false, true]) {
+      const prompt = m.buildExperimentalImagePrompt(plan, source, { ...input, ...(compact ? { promptMaxChars: 1 } : {}) });
+      assert.match(prompt, /x\/y are panel-local, not page coordinates; y=0 top\/1 bottom/);
+      assert.equal(prompt.split('B1 x=0.84, y=0.17, [ユウ]').length - 1, 1);
+      assert.equal(prompt.split('"確認1"').length - 1, 1);
+      if (compact) assert.match(prompt, /BALLOON LAYOUT: B1 x=0\.84, y=0\.17/);
+    }
+  });
+
   test('native page compiler keeps a low camera when its framing starts above the knees',()=>{
     const camera='整備台の左前下方から約15度の緩いアオリ。中広角の直線投影でミナトの膝上から後輪までを大きく捉え、手元と歯車を同じ奥行きに見せる。';
     const input=inputFor(6);

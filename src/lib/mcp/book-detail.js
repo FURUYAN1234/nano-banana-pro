@@ -56,13 +56,26 @@ export async function buildBookDetail(project, generateScenario, { onProgress = 
       continue;
     }
     onProgress(`本の詳細台本 ${index + 1}/${project.pages.length} (${page.panelCount}コマ)`);
-    const result = await generateScenario({ scenarioMode: createBookPageMode(page.panelCount, { finalPage: index === project.pages.length - 1 }),
+    const input = { scenarioMode: createBookPageMode(page.panelCount, { finalPage: index === project.pages.length - 1 }),
       autoSelectPanelCount: false, bookOutlineExpansion:true, castList: castBible, categories: [], inputMode: 'manual', manualTopic: context, referenceAssetContext: bookContext,
       recentPageCompositions: pages.filter(p=>p.kind!=='illustration'&&p.panelCount>=2).slice(-6).reverse()
         .map(p=>summarizePageComposition(readPageComposition(p.scenario,p.panelCount),p.panelCount)).filter(Boolean),
       searchTopic: '', targetDate: '', customLocation: settings.customLocation || '', customOutfit: settings.customOutfit || '',
       punchlineType: settings.punchlineType || 'Auto', mosaicCopyrightedCharacters: settings.mosaicCopyrightedCharacters !== false,
-      scenarioModelId: settings.scenarioModelId, onProgress, onCameraProgress: onProgress });
+      scenarioModelId: settings.scenarioModelId, onProgress, onCameraProgress: onProgress };
+    let result;
+    try {
+      result = await generateScenario(input);
+    } catch (error) {
+      if (error instanceof Error) {
+        error.diagnosticContext = sanitizeFailureContext({
+          stage: 'book_detail_page', finalPrompt: '', ...error.diagnosticContext,
+          scenarioMode: input.scenarioMode, userTopic: input.manualTopic, castList: input.castList,
+          punchlineType: input.punchlineType,
+        });
+      }
+      throw error;
+    }
     signal?.throwIfAborted();
     if (!result?.scenario) throw new MangaControlError('SCENARIO_FAILED', 'The existing scenario engine did not return a completed page.');
     pages.push({ pageId: page.id, kind: page.kind, panelCount: page.panelCount, scenario: applyBookHeroTop(result.scenario,page.panelCount,page.presentation),

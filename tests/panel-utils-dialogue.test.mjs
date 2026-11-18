@@ -8,6 +8,20 @@ let extractEmotionStyle;
 let extractActionOnly;
 let extractDialogueOnly;
 
+test('saved single-speaker layouts can recover an omitted owner from an explicit named anchor', () => {
+  const layout = { x: 0.72, y: 0.12, anchor: '葵の頭側', tail: '上の余白から短く', text: 'あと少し。' };
+  const render = (items, speech = '葵:「あと少し。」') => extractDialogueOnly(
+    '[1コマ目]\n状況: 葵が顔を上げる。\n' + speech + '\nBalloonLayout: ' + JSON.stringify(items),
+    '## 葵\n## 梓', { forImagePrompt: true });
+  assert.match(render([layout]), /B1 x=0.72, y=0.12, \[葵\].*tail=上の余白から短く/);
+  assert.match(render([{x:0.72,anchor:'葵（コマ外）',route:'右上へ'}]), /\[葵\]/);
+  for (const entry of [{...layout,anchor:'梓の頭側'}, {...layout,text:'違う台詞'}, {...layout,speaker:'梓'},
+    {...layout,route:'別の経路'}, {...layout,x:1.3}, {...layout,anchor:'葵の隣の梓の頭側'}]) {
+    assert.throws(() => render([entry]), /BalloonLayout/);
+  }
+  assert.throws(() => render([layout,{x:0.3,anchor:'梓の頭側',route:'左上へ'}], '葵:「あと少し。」\n梓:「うん。」'), /BalloonLayout/);
+});
+
 test('explicit inline speech after action keeps owners, order and text without turning labels into bubbles', () => {
   const cast = '## 甲\n## 乙';
   const expected = [{speaker:'甲',text:'準備できた！'}, {speaker:'乙',text:'確認した。'}];

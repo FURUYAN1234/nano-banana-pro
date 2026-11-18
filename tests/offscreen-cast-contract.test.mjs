@@ -14,6 +14,18 @@ try {
   const gaze = '[Camera: 高所から甲と乙を見下ろす。二人の視線を画面外の丙へ向かわせる。]\n状況: 甲と乙が笑う。\n甲「いいね。」';
   const voice = '[Camera: 高所から乙を見下ろす]\n状況: 乙が窓際に立つ。甲は画面外にいる。\n甲「いいね。」';
 
+  test('a named voice coming from outside the panel never adds a physical speaker', () => {
+    for (const direction of ['甲の声はコマ外から届く。', '画面外右側の甲から届く声。']) {
+      const panel = '状況: タブレットに描かれた主人公が見える。' + direction + '\n甲「いいね。」';
+      assert.deepEqual([...p.readOffscreenCast(panel, cast)], ['甲']);
+      assert.deepEqual(names(p.extractCastLimitRule(panel, cast, {compact:true})), []);
+      assert.match(p.extractDialogueOnly(panel, cast, {forImagePrompt:true}), /OFFSCREEN VOICE: B1=>\[甲\] frame_edge/);
+    }
+    for (const direction of ['甲の声はコマ外からは届かない。', '甲の声はコマ外から届く。甲の手が画面内に見える。', '甲「乙の声はコマ外から届く。」']) {
+      assert.equal(p.readOffscreenCast(direction, cast).size, 0);
+    }
+  });
+
   test('offscreen targets are excluded by the shared full/compact physical roster', () => {
     for (const compact of [false, true]) for (const outside of ['画面外', '画角外', 'フレーム外']) {
       const rule = p.extractCastLimitRule(gaze.replaceAll('画面外', outside), cast, { compact });

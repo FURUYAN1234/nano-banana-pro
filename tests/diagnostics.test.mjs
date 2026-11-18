@@ -135,6 +135,21 @@ test('action-before-observer and image-edit alias finish their own run without r
   endDiagnosticRun(getDiagnosticContext(), 'settled');
 });
 
+test('MCP planning and asset generation keep their operation, inputs and run ID through busy observers', async () => {
+  for (const [operation, busyStep] of [['mcp_plan_story', 'step3'], ['mcp_generate_assets', 'step4']]) {
+    beginDiagnosticAction(operation, { inputMode: 'manual', failureContext: { userTopic: 'Current MCP project', stage: 'detail' } });
+    const request = getDiagnosticContext();
+    const observed = observeDiagnosticRun(busyStep);
+    assert.equal(observed.runId, request.runId);
+    assert.equal(observed.operation, operation);
+    assert.equal(observed.inputMode, 'manual');
+    assert.equal(observed.failureContext.userTopic, 'Current MCP project');
+    endDiagnosticRun(observed, 'settled');
+    const end = (await readDiagnostics()).events.find(e => e.event === 'workflow.end' && e.runId === request.runId);
+    assert.equal(end.operation, operation);
+  }
+});
+
 test('a guarded earlier action cannot lend its run ID to a different STEP1 intake', () => {
   beginDiagnosticAction('safe_prompt');
   const guarded = getDiagnosticContext();

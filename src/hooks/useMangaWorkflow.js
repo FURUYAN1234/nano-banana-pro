@@ -3610,7 +3610,14 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     if (isApiProcessing) throw Object.assign(new Error('Wait for the current application operation to finish.'), { code: 'APP_BUSY' });
     if (!apiKey) throw Object.assign(new Error('Connect an API in the normal application UI first.'), { code: 'API_CONNECTION_REQUIRED' });
     if(project.settings.engine&&project.settings.engine!==effectiveEngine)throw Object.assign(new Error('Connect the requested provider first.'),{code:'ENGINE_CONNECTION_REQUIRED'});
-    beginApiWork('mcp_plan_story');
+    beginApiWork('mcp_plan_story', {
+      provider: project.settings.engine || effectiveEngine,
+      scenarioModel: project.settings.scenarioModelId || scenarioModelId,
+      inputMode: project.settings.inputMode || 'manual', colorMode: project.settings.colorMode || colorMode,
+      failureContext: { stage: `mcp_plan_${phase}`, scenario: '', finalPrompt: '',
+        castList: project.castBible || '', userTopic: project.brief || '',
+        punchlineType: project.settings.punchlineType || 'Auto', scenarioMode: 'book-plan' },
+    });
     setIsAssembling(true);
     try {
       if (phase === 'detail') return { plan: await buildBookDetail(project, generateScenario, {
@@ -3702,6 +3709,20 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     } else if(input.action==='enhance_revert') {
       if(!originalScenario)throw new Error('No retained pre-enhancement scenario exists.');revertScenario();
     } else if(input.action==='history_select') {
+      if(input.value==='saved_export'){
+        const version=input.savedVersion;
+        if(!version?.image||!version.metadata||typeof savePage!=='function')throw new Error('復元するページのPNGとJSONを確認できません。');
+        const item={id:'saved-'+input.historyId,img:version.image,metadataContext:version.metadata,
+          generatedAt:version.generatedAt,modelId:version.modelId,selected:true};
+        const previous=captureMcpState();
+        const snapshot=buildGenerationSaveSnapshot({...previous,scenario:version.metadata.scenario??previous.scenario,
+          finalPrompt:version.metadata.finalPrompt??previous.finalPrompt},item);
+        await savePage({pageId:bookPageContextRef.current.pageId,dataUrl:version.image,metadata:version.metadata,snapshot});
+        setGeneratedImage(item.img);setGenerationHistory(snapshot.generationHistory);
+        setScenario(snapshot.scenario);setFinalPrompt(snapshot.finalPrompt);
+        mcpAcceptedImageRef.current=item.img;
+        return true;
+      }
       const item=generationHistory.find(item=>String(item.id)===input.historyId);
       if(!item||item.rejectedReason==='non_comic_output')throw new Error('Choose a retained non-rejected image from this page.');
       if(typeof savePage!=='function')throw new Error('History adoption requires the project export checkpoint.');

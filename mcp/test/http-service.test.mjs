@@ -32,9 +32,13 @@ test('one authenticated HTTP service serves official SDK clients and refuses hos
   const refused=await fetch(origin+'/service/stop',{method:'POST',headers:{Authorization:`Bearer ${token}`}});
   assert.equal(refused.status,400);assert.equal((await refused.json()).error.code,'SERVICE_BUSY');
   await service.jobs.disconnect('browser-test');
-  await adapter.close();adapter=null;await client.close();client=null;
+  await client.close();client=null;
   assert.equal((await fetch(origin+'/service/stop',{method:'POST',headers:{Authorization:`Bearer ${token}`}})).status,200);
   for(let i=0;i<40;i++){try{await fs.access(path.join(workspace,'local-service.json'));await new Promise(r=>setTimeout(r,10));}catch(e){if(e.code!=='ENOENT')throw e;break;}}
   await assert.rejects(fs.access(path.join(workspace,'local-service.json')),{code:'ENOENT'});
+  service=await startMangaService({workspace,port:0,downloadsDirectory:downloads});
+  const restarted=await adapter.callTool({name:'manga_capabilities',arguments:{}});
+  assert.notEqual(restarted.isError,true);
+  assert.equal(restarted.structuredContent.connection.status,'not_connected');
  }finally{await adapter?.close();await client?.close();await service?.close();await fs.rm(workspace,{recursive:true,force:true});}
 });

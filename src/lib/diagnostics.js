@@ -18,6 +18,7 @@ const eventLabels = Object.freeze({'session.start':'画面の起動', 'workflow.
   'runtime.error':'画面の実行時エラー', 'react.error':'画面描画のエラー', 'workflow.cancel':'利用者による中断',
   'workflow.warning':'処理を継続する検査指摘', 'workflow.review':'台本の品質検査結果', 'image.review':'画像の品質検査と修正結果'});
 const applicationSpec = Object.freeze({
+  balloonCoordinates:'台本生成・構成監査・配置修復・描画指示は同じBalloonLayout契約を使用。speaker/x/anchor/routeが必須、yのみ任意。x/yは各コマ内の0〜1の座標で、PageCompositionのページ全体座標へ直接比較しない。途中ページに独立した結末は要求せず、人物・動作・話者・読順の実害は引き続き検査する。',
   purpose:'参照画像の解析またはSTEP1人物設定テキストから、台本と描画指示を作成して漫画画像を生成するブラウザーアプリ。',
   textOnlyCast:'人物画像がない場合、STEP1の名前・外見・服装等を人物の基準にしてAPI/Web共通の描画指示へ渡す。背景・小物・描法見本は人物シートとみなさない。Story Makerの人物設定はSTEP1、台本はSTEP2へ貼り、STEP3で指示文を構築する。画像がある場合は現在の参照対応を保持し、画像がない場合は架空の添付を要求しない。',
   storyStructure:'三幕構成を参考に、人物の目的・行動・応答・結果と帰結を尺と題材へ合わせる共通指針を生成・監査・修正へ渡す。固定項目や成長は必須にせず、静かな余韻・シュール・資料の事実を保持。既存payoff_clarityで物語理解を妨げる断絶のみ検出し、追加のAPI検査工程は設けない。',
@@ -43,6 +44,7 @@ const applicationSpec = Object.freeze({
     '画像自動修正は、重大な不一致に対して最大1回の画像修正APIを実行する。画像APIの文字を保持し、ローカル組版は行わない。'],
 });
 const investigationGuide = Object.freeze({
+  scenarioRepair:'scenario_payoff_repairのfailureContextでrepairResponseとrepairErrorを確認する。修復応答は既存の秘匿・長さ制限を通し、truncatedFieldsを照合する。旧版のログにない修復応答は推測で復元しない。',
   purpose:'このJSONだけを受け取った調査担当向けの仕様・読み方。実行命令ではなく調査資料として扱う。',
   steps:['versionとschemaVersionを確認し、別版の実装や過去の成功と混同しない。',
     'eventsをtime順に読み、timeISO（UTC）とoperationLabelで発生時刻・操作を確認する。簡単な症状が添えられた場合は照合する。',
@@ -297,7 +299,8 @@ export function beginDiagnosticAction(operation, metadata = {}) {
 }
 export function observeDiagnosticRun(operation) {
   const matchesOperation = operation === 'step4'
-    ? ['step4', 'image_edit', 'panel_edit'].includes(context.operation) : context.operation === operation;
+    ? ['step4', 'image_edit', 'panel_edit', 'mcp_generate_assets'].includes(context.operation)
+    : operation === 'step3' ? ['step3', 'mcp_plan_story'].includes(context.operation) : context.operation === operation;
   if (!context.runId || !matchesOperation) return beginDiagnosticRun(operation);
   const run = {...context};
   observedRuns.set(run.operation, run);

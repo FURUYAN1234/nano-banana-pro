@@ -50,7 +50,10 @@ export async function readMcpSaveStatus(store,project,{jobs,downloadsDirectory}=
  if(!book.startsWith(downloads+path.sep)){result.verification={status:'unconfirmed',errorCode:'EXPORT_STATE_INVALID'};return result;}
  let checked=downloads;for(const part of path.relative(downloads,book).split(path.sep)){checked=path.join(checked,part);try{await store.rejectLinkedFile(checked);}catch{result.verification={status:'unconfirmed',errorCode:'PATH_REJECTED'};return result;}}
  result.destination.bookDirectory=book;
- const entries=Object.values(journal.pages||{}).sort((a,b)=>String(a.exportedAt).localeCompare(String(b.exportedAt)));
+ result.pageVersions=Object.values(journal.pages||{}).filter(entry=>entry.status==='committed'&&!entry.awaitingAdoption&&safeName(entry.pngName)&&safeName(entry.jsonName))
+  .map(entry=>({pageId:entry.pageId,attemptId:entry.attemptId,archived:entry.archived===true,exportedAt:entry.exportedAt,
+    pngRelativePath:(entry.archived?'履歴/':'')+entry.pngName,jsonRelativePath:(entry.archived?'履歴/':'')+entry.jsonName}));
+ const entries=Object.values(journal.pages||{}).filter(entry=>!entry.archived&&!entry.awaitingAdoption).sort((a,b)=>String(a.exportedAt).localeCompare(String(b.exportedAt)));
  const latest=entries.at(-1);
  let failed=false,uncertain=false,latestSidecar;
  if(latest){
@@ -88,7 +91,7 @@ export async function readMcpSaveStatus(store,project,{jobs,downloadsDirectory}=
  if(references.issues.length)result.materials.referenceIssues=[...new Set(references.issues)];
  failed ||= references.issues.length>0||materials.some(file=>['missing','hash_mismatch','invalid_file'].includes(file.status));
  uncertain ||= materials.some(file=>file.status!=='verified');
- result.verification={status:failed?'failed':uncertain?'unconfirmed':latest||materials.length?'verified':'not_saved',checked:'latest recorded PNG/JSON pair, portable manifest/latest-sidecar referenced material hashes, canonical binding coverage and manifest identity',historicalIndexIssues:historical.filter(file=>file.status!=='verified').length,historicalPairs:entries.length,allHistoricalPairsChecked:false};
+ result.verification={status:failed?'failed':uncertain?'unconfirmed':latest||materials.length?'verified':'not_saved',checked:'latest recorded PNG/JSON pair, portable manifest/latest-sidecar referenced material hashes, canonical binding coverage and manifest identity',historicalIndexIssues:historical.filter(file=>file.status!=='verified').length,historicalPairs:Object.keys(journal.pages||{}).length,allHistoricalPairsChecked:false};
  if(exportFailure&&(!latest||exportFailure.updatedAt>=latest.exportedAt))result.verification.status='failed';
  if(latestJob?.error&&(!latest||latestJob.updatedAt>latest.exportedAt)&&!exportFailure&&result.verification.status==='verified')result.verification.status='unconfirmed';
  return result;

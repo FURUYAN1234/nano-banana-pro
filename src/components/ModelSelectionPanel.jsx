@@ -34,15 +34,15 @@ export default function ModelSelectionPanel({
               disabled={disabled}
             >
               {OPENAI_SCENARIO_MODEL_OPTIONS.filter(({ id }) => !vision || OPENAI_VISION_MODEL_IDS.includes(id)).map(
-                ({ id, label, inputPriceUsdPerM, outputPriceUsdPerM }) => (
-                  <option key={id} value={id}>{label} · 入力 ${inputPriceUsdPerM} / 出力 ${outputPriceUsdPerM}</option>
+                ({ id, label, inputPriceUsdPerM, outputPriceUsdPerM, cachedInputPriceUsdPerM }) => (
+                  <option key={id} value={id}>{label} · 入力 ${inputPriceUsdPerM} / キャッシュ読取 ${cachedInputPriceUsdPerM} / 出力 ${outputPriceUsdPerM}</option>
                 )
               )}
             </select>
           </div>
         ))}
       </div>
-      <p className="model-selection-note">画像生成後の品質検査にもSTEP1の選択モデルを使います。参考単価は{OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点のUSD/100万トークン。選択はこの画面を開いている間だけ有効です。</p>
+      <p className="model-selection-note">画像生成後の品質検査にもSTEP1の選択モデルを使います。表示は{OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点のStandard短文単価（USD/100万トークン）。入力が272,000トークンを超えると、要求全体の入力・キャッシュが2倍、出力が1.5倍になります。選択はこの画面を開いている間だけ有効です。</p>
     </section>
   );
 }

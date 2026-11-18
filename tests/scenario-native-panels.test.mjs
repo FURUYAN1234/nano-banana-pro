@@ -45,6 +45,13 @@ test('adaptive story design reaches generation, audit and repair with genre and 
   }
  }
 });
+test('a quoted heading inside a direction or balloon is not a frame, but a repeated structural heading still fails', () => {
+ const text=panels(4).replace('状況: Aが札を動かす。','状況: Aは「[1コマ目: 展開]」の札を動かす。\n[USER STAGING LOCK - ABSOLUTE]: [2コマ目: 資料] の目線を参考にする。');
+ assert.deepEqual(validation.getScenarioPanelBlocks(text).map(panel=>panel.num),[1,2,3,4]);
+ assert.equal(validation.assertScenarioPanelStructure(text),true);
+ assert.throws(()=>validation.assertScenarioPanelStructure(text.replace('[3コマ目: 展開]', '[2コマ目: 展開]')), {code:'PANEL_STRUCTURE_CONTRACT'});
+});
+
 test('native validation accepts 5 and 8, preserves explicit silence, and normal mode accepts only 4', () => {
  for (const n of [5, 8]) {
   const text = panels(n).replace('A「2枚目です。」', 'セリフなし');

@@ -20,18 +20,25 @@ export async function connectLocalService(workspace){
  return {client,record};
 }
 export async function runStdioAdapter(workspace){
- const {client}=await connectLocalService(workspace);
  const server=new Server({name:'super-furu-manga-local-adapter',version:'0.1.0'},{capabilities:{tools:{},resources:{},prompts:{}}});
- server.setRequestHandler('tools/list',r=>client.listTools(r.params));
- server.setRequestHandler('tools/call',r=>client.callTool(r.params));
- server.setRequestHandler('resources/list',r=>client.listResources(r.params));
- server.setRequestHandler('resources/templates/list',r=>client.listResourceTemplates(r.params));
- server.setRequestHandler('resources/read',r=>client.readResource(r.params));
- server.setRequestHandler('prompts/list',r=>client.listPrompts(r.params));
- server.setRequestHandler('prompts/get',r=>client.getPrompt(r.params));
+ // A running desktop client may outlive a local app update. Resolve the
+ // verified workspace owner before dispatch, never replay a submitted action.
+ function forward(method, invoke) {
+  server.setRequestHandler(method, async request => {
+   const {client}=await connectLocalService(workspace);
+   try { return await invoke(client, request.params); }
+   finally { await client.close(); }
+  });
+ }
+ forward('tools/list',(c,p)=>c.listTools(p));
+ forward('tools/call',(c,p)=>c.callTool(p));
+ forward('resources/list',(c,p)=>c.listResources(p));
+ forward('resources/templates/list',(c,p)=>c.listResourceTemplates(p));
+ forward('resources/read',(c,p)=>c.readResource(p));
+ forward('prompts/list',(c,p)=>c.listPrompts(p));
+ forward('prompts/get',(c,p)=>c.getPrompt(p));
  const transport=new StdioServerTransport();
  await server.connect(transport);
- const onclose=transport.onclose;transport.onclose=()=>{onclose?.();void client.close();};
  return server;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

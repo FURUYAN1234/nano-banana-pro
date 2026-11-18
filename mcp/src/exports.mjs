@@ -132,25 +132,133 @@ async function copyPortableAsset(ctx,asset,binding={},slotId){
  return {...asset,relativePath:`資料/${e.name}`,role:e.role,provenance:e.provenance};
 }
 async function bindAssets(ctx){const refs=new Map();for(const [slot,b] of Object.entries(ctx.project.assetBindings||{}))refs.set(b.asset.id,await portableAsset(ctx,b.asset,b,slot));for(const page of ctx.project.pages)for(const [slot,b] of Object.entries(page.assetOverrides||{}))if(b)refs.set(b.asset.id,await portableAsset(ctx,b.asset,b,slot));return refs;}
+const historyDirectory = '履歴';
+const pairPath = (entry, name) => entry.archived ? historyDirectory + '/' + name : name;
+function assertPairNames(entry) {
+ const {pngName,jsonName}=entry;
+ if (typeof pngName!=='string'||!pngName.endsWith('.png')||/[\\/:\x00-\x1f]/.test(pngName)||
+     jsonName!==pngName.slice(0,-4)+'.json') throw fail('EXPORT_STATE_INVALID','Invalid saved page filenames.');
+}
+
+async function copyVerifiedFile(store, source, destination, expectedHash) {
+ await store.rejectLinkedFile(source);
+ await store.rejectLinkedFile(destination);
+ const bytes = await fs.readFile(source);
+ if (expectedHash && sha(bytes) !== expectedHash) throw fail('EXPORTED_PAGE_CHANGED','The source image is different from the saved version.');
+ if (!await exists(destination)) {
+  const temp = destination + '.' + randomUUID() + '.tmp';
+  try {
+   await durableWrite(temp,bytes);
+   try { await fs.copyFile(temp,destination,fsConstants.COPYFILE_EXCL); }
+   catch(error) { if(error.code!=='EEXIST')throw error; }
+  } finally { await fs.rm(temp,{force:true}); }
+ }
+ if (!(await fs.readFile(destination)).equals(bytes)) throw fail('EXPORTED_PAGE_CHANGED','The page history already contains a different file.');
+}
+
+// Stage both files before changing the book index. A crash leaves the
+// previous index readable. Repeating the save resumes verified copies.
+async function preparePageHistory(ctx, completed) {
+ const active = new Map(completed.map(entry=>[entry.pageId,entry]));
+ const superseded = completed.filter(entry=>active.get(entry.pageId)!==entry);
+ if (!superseded.length) return [];
+ for (const entry of superseded) assertPairNames(entry);
+ if (superseded.every(entry=>entry.archived)) return superseded;
+ const archive = await directory(ctx.store,ctx.book,historyDirectory);
+ const oldImages = new Map(superseded.map(entry=>[entry.pngName,entry]));
+ for (const entry of superseded) {
+  if (entry.archived) continue;
+  const sidecar = await verifyPair(ctx,entry);
+  // Preserve the exact historical JSON and its relative dependencies.
+  for (const ref of sidecar.assets || []) {
+   const parts=String(ref.relativePath).split('/');
+   if (parts.length>2 || (parts.length===2 && !['資料',historyDirectory].includes(parts[0])) ||
+       parts.some(p=>!p || p==='.' || p==='..' || /[\\/:]/.test(p))) throw fail('EXPORT_STATE_INVALID','Invalid saved page asset path.');
+   const destDir=parts.length===2 ? await directory(ctx.store,archive,parts[0]) : archive;
+   const original=path.join(ctx.book,...parts);
+   const dest=path.join(destDir,parts.at(-1));
+   const source=await exists(original) ? original : dest;
+   await copyVerifiedFile(ctx.store,source,dest,ref.sha256);
+  }
+  await copyVerifiedFile(ctx.store,path.join(ctx.book,entry.pngName),path.join(archive,entry.pngName),entry.image.sha256);
+  await copyVerifiedFile(ctx.store,path.join(ctx.book,entry.jsonName),path.join(archive,entry.jsonName));
+  await verifyPair(ctx,{...entry,archived:true});
+ }
+ // Older exports could refer directly to a previous page's root PNG.
+ // Keep still-current sidecars usable after that page is moved to history.
+ for (const entry of active.values()) {
+  const receipt=await verifyPair(ctx,entry);
+  let changed=false;
+  for (const ref of receipt.assets||[]) {
+   const old=oldImages.get(ref.relativePath);
+   if (!old) continue;
+   if (ref.sha256!==old.image.sha256) throw fail('EXPORTED_PAGE_CHANGED','Historical page reference has a different hash.');
+   ref.relativePath=historyDirectory+'/'+old.pngName;
+   changed=true;
+  }
+  if (changed) await atomicJson(ctx.store,path.join(ctx.book,entry.jsonName),receipt);
+ }
+ return superseded;
+}
+
+async function finishPageHistory(ctx, superseded) {
+ if (!superseded.length) return;
+ await ctx.save();
+ for (const entry of superseded) {
+  for (const name of [entry.pngName,entry.jsonName]) {
+   const source=path.join(ctx.book,name);
+   if (!await exists(source)) continue;
+   const archived=path.join(ctx.book,historyDirectory,name);
+   await ctx.store.rejectLinkedFile(source);
+   await ctx.store.rejectLinkedFile(archived);
+   if (!(await fs.readFile(source)).equals(await fs.readFile(archived))) throw fail('EXPORTED_PAGE_CHANGED','A superseded file was modified after archiving.');
+   await fs.unlink(source);
+  }
+ }
+}
+
 async function writeManifest(ctx){
- const refs=await bindAssets(ctx),completed=Object.values(ctx.state.pages).filter(p=>p.status==='committed'),pageImages=new Map(completed.map(p=>[p.image.id,{...p.image,relativePath:p.pngName}]));
+ const refs=await bindAssets(ctx);
+ const adopted=new Map(ctx.project.pages.map(page=>[page.id,page.export?.attemptId]));
+ const saved=Object.values(ctx.state.pages).filter(entry=>entry.status==='committed');
+ const justAdopted=saved.filter(entry=>entry.awaitingAdoption && adopted.get(entry.pageId)===entry.attemptId);
+ for(const entry of justAdopted)delete entry.awaitingAdoption;
+ if(justAdopted.length)await ctx.save();
+ const completed=saved.filter(entry=>!entry.awaitingAdoption);
+ const superseded=await preparePageHistory(ctx,completed);
+ for(const entry of superseded)entry.archived=true;
+ const pageImages=new Map(completed.map(p=>[p.image.id,{...p.image,relativePath:pairPath(p,p.pngName)}]));
  async function portable(v,context={}){if(v?.__mangaAsset===true)return refs.get(v.id)||pageImages.get(v.id)||portableAsset(ctx,v,referenceBinding(ctx,v,context));if(v&&['repair_source','original'].includes(v.role)&&v.storage!=='private_workspace_only')return deliverableMetadata(v);if(Array.isArray(v))return Promise.all(v.map(item=>portable(item,context)));if(v&&typeof v==='object'){const o={};for(const [k,c] of Object.entries(v)){if(['requests','generationHistory','originalImage','diagnostics','assembly'].includes(k))continue;o[k]=await portable(c,v);}return o;}return v;}
  const sourceProject={...ctx.project,pages:ctx.project.pages.map(page=>{const owner=page.snapshot?.bookPageContext;return owner&&(owner.projectId!==ctx.project.id||owner.pageId!==page.id)?{...page,snapshot:null,snapshotOmission:{reason:'foreign_application_context'}}:page;})};
  const project=await portable(sourceProject);
  project.materialProjects=Object.values(ctx.state.materialProjects||{});
  for(const page of project.pages){const e=completed.filter(p=>p.pageId===page.id).at(-1);if(e){page.export={relativeDirectory:'.',pngRelativePath:e.pngName,jsonRelativePath:e.jsonName,imageSha256:e.image.sha256,attemptId:e.attemptId,jobId:e.jobId};page.snapshot={...page.snapshot,generatedImage:{...e.image,relativePath:e.pngName},accepted:page.snapshot?.accepted??true};}}
  const app=JSON.parse(await fs.readFile(new URL('../../package.json',import.meta.url),'utf8'));
- const manifestPath=path.join(ctx.book,'作品全体.json'),record={format:2,project,productionHistory:{recordPurpose:'Production/restart evidence, not certification of rights or publisher acceptance.',exporterAppVersion:app.version,createdAt:ctx.project.createdAt,updatedAt:ctx.project.updatedAt,approval:ctx.project.approval??null,approvalResponse:ctx.project.approvalResponse??null,userEditRevision:ctx.project.userEditRevision??0,priorEditDetails:'Only recorded facts are included; unrecorded past edits are unavailable.',pages:await portable(completed.map(({status:_status,...p})=>p))}};await atomicJson(ctx.store,manifestPath,record);return {directory:ctx.book,manifestPath};
+ const manifestPath=path.join(ctx.book,'作品全体.json'),record={format:2,project,productionHistory:{recordPurpose:'Production/restart evidence, not certification of rights or publisher acceptance.',exporterAppVersion:app.version,createdAt:ctx.project.createdAt,updatedAt:ctx.project.updatedAt,approval:ctx.project.approval??null,approvalResponse:ctx.project.approvalResponse??null,userEditRevision:ctx.project.userEditRevision??0,priorEditDetails:'Only recorded facts are included; unrecorded past edits are unavailable.',pages:await portable(completed.map(({status:_status,...p})=>p))}};await atomicJson(ctx.store,manifestPath,record);await finishPageHistory(ctx,superseded);return {directory:ctx.book,manifestPath};
 }
 export async function writeProjectManifest(store,project,options={}){if(!Object.keys(project.assetBindings||{}).length&&!project.pages.some(p=>p.snapshot?.generatedImage||Object.values(p.assetOverrides||{}).some(Boolean)))return {skipped:true,reason:'NO_GENERATED_OR_IMPORTED_OUTPUT'};return withBook(store,project,options,writeManifest);}
-async function verifyPair(ctx,e){for(const name of [e.pngName,e.jsonName]){if(path.basename(name)!==name)throw fail('EXPORT_STATE_INVALID','Unsafe page file name.');await ctx.store.rejectLinkedFile(path.join(ctx.book,name));}const j=JSON.parse(await fs.readFile(path.join(ctx.book,e.jsonName),'utf8')),bytes=await fs.readFile(path.join(ctx.book,e.pngName));if(j.projectId!==ctx.project.id||j.pageId!==e.pageId||j.attemptId!==e.attemptId||j.image.relativePath!==e.pngName||j.image.sha256!==e.image.sha256||sha(bytes)!==e.image.sha256)throw fail('EXPORTED_PAGE_CHANGED','Committed page image/JSON changed.');return j;}
-function result(ctx,e,recovered=false){return {directory:ctx.book,relativeDirectory:'.',pngRelativePath:e.pngName,jsonRelativePath:e.jsonName,pngPath:path.join(ctx.book,e.pngName),jsonPath:path.join(ctx.book,e.jsonName),manifestPath:path.join(ctx.book,'作品全体.json'),image:e.image,recovered};}
+export async function readSavedPageVersion(store,project,pageId,attemptId,options={}) {
+ return withBook(store,project,options,async ctx=>{
+  const entry=ctx.state.pages[`${pageId}:${attemptId}`];
+  if(!entry||entry.pageId!==pageId||entry.status!=='committed'||entry.awaitingAdoption)throw fail('PAGE_VERSION_NOT_FOUND','This page has no accepted version with that ID.');
+  assertPairNames(entry);
+  const receipt=await verifyPair(ctx,entry);
+  if(entry.metadata && generationMetadataHash(receipt.metadata)!==generationMetadataHash(entry.metadata))throw fail('EXPORTED_PAGE_CHANGED','Saved generation details differ from the recorded version.');
+  const bytes=await fs.readFile(path.join(ctx.book,pairPath(entry,entry.pngName)));
+  const url='data:image/png;base64,'+bytes.toString('base64');
+  const image=await store.assets.putDataUrl(url);
+  const info=await extractGeneratedImageMetadata(url);
+  return {image,metadata:receipt.metadata,generatedAt:info?.generated_at||receipt.exportedAt,modelId:info?.ai?.model_id||'unknown'};
+ });
+}
+async function verifyPair(ctx,e){for(const name of [e.pngName,e.jsonName]){if(path.basename(name)!==name)throw fail('EXPORT_STATE_INVALID','Unsafe page file name.');await ctx.store.rejectLinkedFile(path.join(ctx.book,pairPath(e,name)));}const j=JSON.parse(await fs.readFile(path.join(ctx.book,pairPath(e,e.jsonName)),'utf8')),bytes=await fs.readFile(path.join(ctx.book,pairPath(e,e.pngName)));if(j.projectId!==ctx.project.id||j.pageId!==e.pageId||j.attemptId!==e.attemptId||j.image.relativePath!==e.pngName||j.image.sha256!==e.image.sha256||sha(bytes)!==e.image.sha256)throw fail('EXPORTED_PAGE_CHANGED','Committed page image/JSON changed.');return j;}
+function result(ctx,e,recovered=false){return {directory:ctx.book,relativeDirectory:'.',pngRelativePath:pairPath(e,e.pngName),jsonRelativePath:pairPath(e,e.jsonName),pngPath:path.join(ctx.book,pairPath(e,e.pngName)),jsonPath:path.join(ctx.book,pairPath(e,e.jsonName)),manifestPath:path.join(ctx.book,'作品全体.json'),image:e.image,recovered};}
 export async function exportCompletedPage(store,project,page,{dataUrl,metadata},options={}){
  assertNoSecrets(metadata);metadata=deliverableMetadata(metadata);const attemptId=options.attemptId||randomUUID();if(!/^[A-Za-z0-9_-]{1,128}$/.test(attemptId))throw fail('INVALID_ATTEMPT','Export requires a bounded attempt identifier.');const image=await store.assets.putDataUrl(dataUrl);if(image.mimeType!=='image/png')throw fail('PNG_REQUIRED','Use the normal PNG metadata saver before export.');
  return withBook(store,project,options,async ctx=>{
   const key=`${page.id}:${attemptId}`;let e=ctx.state.pages[key];if(e&&e.image.sha256!==image.sha256)throw fail('EXPORTED_PAGE_CHANGED','The completed attempt image changed.');if(e?.status==='committed'){await verifyPair(ctx,e);if(!options.deferManifest)await writeManifest(ctx);return result(ctx,e,true);}
-  const refs=await bindAssets(ctx);async function gather(v,context={}){if(v?.__mangaAsset===true){if(!refs.has(v.id)){const previous=Object.values(ctx.state.pages).find(p=>p.status==='committed'&&p.image.id===v.id);if(previous){await verifyPair(ctx,previous);refs.set(v.id,{...v,relativePath:previous.pngName,role:'previous_page_continuity',provenance:{source:'completed_page',sourcePageId:previous.pageId}});}else refs.set(v.id,await portableAsset(ctx,v,{role:context.role||'input_reference',...referenceBinding(ctx,v,context)}));}}else if(v&&typeof v==='object')for(const c of Object.values(v))await gather(c,v);}await gather(metadata);const assets=[...refs.values()].map(r=>({assetId:r.id,sha256:r.sha256,relativePath:r.relativePath,role:r.role,provenance:r.provenance}));
-  if(!e){const now=options.now||new Date(),base=`${title(project)}_${pageLabel(project,page)}_${timestamp(now)}`;for(let i=1;;i++){const stem=base+(i===1?'':`_${String(i).padStart(2,'0')}`),pngName=stem+'.png',jsonName=stem+'.json';if(Object.values(ctx.state.pages).some(p=>p.pngName===pngName)||await exists(path.join(ctx.book,pngName))||await exists(path.join(ctx.book,jsonName)))continue;e={pageId:page.id,pageIndex:page.index,attemptId,jobId:options.jobId,pngName,jsonName,image,exportedAt:new Date(now).toISOString(),status:'pending',metadata};ctx.state.pages[key]=e;await ctx.save();break;}}
+  const refs=await bindAssets(ctx);async function gather(v,context={}){if(v?.__mangaAsset===true){if(!refs.has(v.id)){const previous=Object.values(ctx.state.pages).find(p=>p.status==='committed'&&p.image.id===v.id);if(previous){await verifyPair(ctx,previous);refs.set(v.id,{...v,relativePath:pairPath(previous,previous.pngName),role:'previous_page_continuity',provenance:{source:'completed_page',sourcePageId:previous.pageId}});}else refs.set(v.id,await portableAsset(ctx,v,{role:context.role||'input_reference',...referenceBinding(ctx,v,context)}));}}else if(v&&typeof v==='object')for(const c of Object.values(v))await gather(c,v);}await gather(metadata);const assets=[...refs.values()].map(r=>({assetId:r.id,sha256:r.sha256,relativePath:r.relativePath,role:r.role,provenance:r.provenance}));
+  if(!e){const now=options.now||new Date(),base=`${title(project)}_${pageLabel(project,page)}_${timestamp(now)}`;for(let i=1;;i++){const stem=base+(i===1?'':`_${String(i).padStart(2,'0')}`),pngName=stem+'.png',jsonName=stem+'.json';if(Object.values(ctx.state.pages).some(p=>p.pngName===pngName)||await exists(path.join(ctx.book,pngName))||await exists(path.join(ctx.book,jsonName)))continue;e={pageId:page.id,pageIndex:page.index,attemptId,jobId:options.jobId,pngName,jsonName,image,exportedAt:new Date(now).toISOString(),status:'pending',...(options.requireAdoption?{awaitingAdoption:true}:{}),metadata};ctx.state.pages[key]=e;await ctx.save();break;}}
   const staging=await stagingDirectory(store,ctx.book),stage=await directory(store,staging,sha(key).slice(0,24)),json={format:2,projectId:project.id,pageId:page.id,pageIndex:page.index,attemptId,jobId:e.jobId,exportedAt:e.exportedAt,planRevision:project.plan?.revision,approvedPlanHash:project.approval?.hash,image:{sha256:image.sha256,relativePath:e.pngName,width:image.width,height:image.height},assets,metadata};assertNoSecrets(json);
   const moved=[];
   try{

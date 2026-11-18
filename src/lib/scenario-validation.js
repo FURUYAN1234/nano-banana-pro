@@ -34,7 +34,8 @@ const hasExplicitSilence = panelText => NO_DIALOGUE_RE.test(panelText)
 
 const stripThoughtBlocks = (text) => String(text || '').replace(/<thought>[\s\S]*?<\/thought>/gi, '');
 
-const createPanelHeaderRegex = () => /\[\s*([0-9\uFF10-\uFF19\u4E00\u4E8C\u4E09\u56DB\u4E94\u516D\u4E03\u516B\u4E5D\u5341]+)\s*(?:\u30B3\u30DE\u76EE|\u3053\u307E\u76EE)[^\]]*\]/gu;
+// A saved direction or dialogue can quote a heading inside its own line.
+const createPanelHeaderRegex = () => /^[^\S\r\n]*(?:#{1,6}[ \t]+)?(?:\*\*)?(\[[ \t]*([0-9０-９一二三四五六七八九十]+)[ \t]*(?:コマ目|こま目)[^\]\r\n]*\])/gmu;
 
 const normalizePanelNumber = (value) => {
   const normalized = String(value).normalize('NFKC');
@@ -43,10 +44,10 @@ const normalizePanelNumber = (value) => {
 
 const findPanelHeaders = (text) => [...text.matchAll(createPanelHeaderRegex())]
   .map((match) => ({
-    num: normalizePanelNumber(match[1]),
-    numberText: match[1],
+    num: normalizePanelNumber(match[2]),
+    numberText: match[2],
     index: match.index,
-    header: match[0]
+    header: match[1]
   }));
 
 const NO_DIALOGUE_PLACEHOLDER = '(Characters interact without dialogue in this panel)';

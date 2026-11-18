@@ -5,10 +5,20 @@ const PANEL_NUMBER = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '
 const LOCK_MARKER = '[USER STAGING LOCK - ABSOLUTE]';
 const ONE_SHOT_BEAT_RE = /(?:上映(?:前|中|後)|その後|直後|最後(?:に|の)|やがて|翌日|初めて|瞬間|とき|時点)/u;
 
-const splitDirectiveSentences = (manualTopic) => String(manualTopic || '')
-  .split(/(?<=[。！？!?])\s*|\r?\n+/u)
-  .map((sentence) => sentence.trim())
-  .filter(Boolean);
+const stagingSourceLine = (line) => {
+  const source = line.trim();
+  if (/^(?:(?:PageComposition|BalloonLayout|地の文|終了表記)\s*[:：]|\[(?:Camera|EMOTION)\s*[:：])/iu.test(source)) return '';
+  if (/^[^「『\s:：]{1,40}\s*[:：]?\s*(?:「[^」]*」|『[^』]*』)\s*$/u.test(source)) return '';
+  const heading = source.match(/^\[\s*([1-8１-８一二三四五六七八])\s*コマ目[^\]\n]*\](.*)$/u);
+  if (heading) return `${heading[1]}コマ目\n${heading[2]}`;
+  return source.replaceAll(LOCK_MARKER + ':', '').replace(/^状況\s*[:：]\s*/u, '').trim();
+};
+
+const splitDirectiveSentences = (manualTopic) => {
+  const prose = String(manualTopic || '').split(/\r?\n/u).map(stagingSourceLine).join('\n');
+  const sentences = prose.match(/(?:「[^」\n]*」?|『[^』\n]*』?|[^。！？!?\r\n「『])+[。！？!?]?/gu) || [];
+  return sentences.map(sentence => sentence.trim()).filter(Boolean);
+};
 
 const CAMERA_DIRECTIVE_RE = /(?:カメラ|画面|読者|観客)(?:正面|目線)?(?:を|へ|に|は)?(?:見ない|見るな|向かない|向く|向ける|禁止)|(?:カメラ|画面)正面.{0,8}(?:禁止|避け)|\b(?:look|face|gaze)\b.{0,20}\b(?:camera|viewer|audience)\b/i;
 const PAGE_SCOPE_RE = /全(?:[1-8１-８一二三四五六七八])?コマ|各コマ|ページ全体|全編|\b(?:every|all) panels?\b|throughout the page/i;

@@ -1,4 +1,6 @@
 import { getMcpSettingCatalog } from './catalog.js';
+import {MangaControlError} from './control-error.js';
+export {MangaControlError};
 import {isApprovedMcpScenario} from './scenario-approval.js';
 export const MCP_CONTRACT_VERSION = 1;
 export const MCP_STATE_EDIT_ACTIONS=Object.freeze(['topic','scenario','prompt','cast','recognition','reference_item','background','style_json','explanation','enhance_revert','history_select','history_clear','normalize_image','panel_inspect','panel_generate','panel_adopt','panel_discard']);
@@ -53,9 +55,6 @@ export function validateBookPresentation(value={}) {
     if(key==='pageNumberStart'&&(!Number.isInteger(item)||item<0||item>999))throw new MangaControlError('INVALID_PRESENTATION','Page number start must be an integer 0–999.');
   }
   return structuredClone(value);
-}
-export class MangaControlError extends Error {
-  constructor(code, message) { super(message); this.name = 'MangaControlError'; this.code = code; }
 }
 export function assertSafeIdentifier(id) {
   if (typeof id !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(id)) {

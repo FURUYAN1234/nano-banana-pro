@@ -24,6 +24,10 @@ test('official SDK stdio discovers tools, persists false settings and snapshot a
   };
   try {
     const discoveredTools=(await client.listTools()).tools; assert.ok(discoveredTools.some(x=>x.name==='manga_capabilities')); assert.ok(discoveredTools.some(x=>x.name==='manga_save_status'&&x.annotations?.readOnlyHint===true)); console.info('SDK discovered tool count:',discoveredTools.length);
+    const workflow = await client.getPrompt({name:'manga_book_workflow'});
+    const guide = workflow.messages[0].content.text;
+    assert.match(guide, /Show all saved pages in reading order.*honor any sharing decision already given.*ask once/s);
+    assert.match(guide, /For drafts only, provide the proposed posts.*Publish only after approval/s);
     const cap = await call('manga_capabilities', {}); assert.equal(cap.totalPagesIncludesCover, true);
     const p = await call('manga_project_create', { name: 'Vertical', idempotencyKey: 'create', totalPages: 4, settings: { showTitle: false, showWatermarks: false } });
     const saveStatus = await call('manga_save_status', {projectId:p.id}); assert.equal(saveStatus.enabled,true); assert.equal(saveStatus.verification.status,'not_generated'); assert.equal(saveStatus.browserDownloads.required,false); assert.equal(cap.exports.statusTool,'manga_save_status');

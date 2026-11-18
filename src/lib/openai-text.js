@@ -242,11 +242,10 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
     const useWebSearch = options.useWebSearch === true && (!images || images.length === 0);
     const isFixedScenarioRoute = options.modelRoute === 'scenario'
         && MODEL_IDS[0] === options.scenarioModelId;
-    const reportScenarioUsage = (modelId, usage) => {
-        if (options.modelRoute !== 'scenario') return null;
+    const reportTokenUsage = (modelId, usage) => {
         const costEstimate = getOpenAIScenarioCostEstimate(modelId, usage);
         if (costEstimate && onThinkingUpdate) {
-            onThinkingUpdate(`> [COST] 実績: 入力 ${costEstimate.inputTokens.toLocaleString()} / 出力 ${costEstimate.outputTokens.toLocaleString()} tokens、参考 ${costEstimate.estimatedUsd.toFixed(6)} USD`);
+            onThinkingUpdate(`> [COST] 入力 ${costEstimate.inputTokens.toLocaleString()} / 出力 ${costEstimate.outputTokens.toLocaleString()} tokens、Standardトークン料金の参考額 ${costEstimate.estimatedUsd.toFixed(6)} USD`);
         }
         return costEstimate;
     };
@@ -288,7 +287,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 });
                 if (onThinkingUpdate) onThinkingUpdate('> [API] OpenAI Web Searchでニュースを確認し、シナリオを生成しました。');
                 if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);
-                const costEstimate = reportScenarioUsage(modelId, finalOutput.usage);
+                const costEstimate = reportTokenUsage(modelId, finalOutput.usage);
                 return {
                     text: finalOutput.text,
                     sources: finalOutput.sources,
@@ -361,7 +360,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
 
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 応答の受信が完了しました。`);
             if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);
-            const costEstimate = reportScenarioUsage(modelId, data.usage);
+            const costEstimate = reportTokenUsage(modelId, data.usage);
 
             return {
                 text: finalOutput,

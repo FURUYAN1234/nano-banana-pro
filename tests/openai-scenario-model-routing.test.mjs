@@ -5,10 +5,11 @@ import {OPENAI_TEXT_MODEL_IDS, OPENAI_VISION_MODEL_IDS} from '../src/lib/openai-
 
 test('fixed helper and vision routes use maintained models without retired GPT-4 fallbacks', () => {
   for (const route of [OPENAI_TEXT_MODEL_IDS, OPENAI_VISION_MODEL_IDS]) {
-    assert.equal(route[0], 'gpt-6.1-sol');
     assert.ok(route.includes('gpt-6-luna'));
     assert.ok(route.every(id => !/^gpt-4/.test(id)));
   }
+  assert.equal(OPENAI_TEXT_MODEL_IDS[0], 'gpt-6.1-sol');
+  assert.ok(OPENAI_VISION_MODEL_IDS.includes('gpt-6.2-astra') && OPENAI_VISION_MODEL_IDS.includes('gpt-6.2-sol'));
 });
 
 test('only STEP2 generation and enhancement request the dedicated scenario route', async () => {

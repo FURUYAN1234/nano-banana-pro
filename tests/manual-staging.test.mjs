@@ -19,6 +19,30 @@ C「質問です。」
 状況: Aが答え、全員が反応する。
 A「終わります。」`;
 
+test('reusing a saved script scopes its directions without copying native markup into the next lock', () => {
+  const manual = [
+    'PageComposition: {"reason":"人物の視線を導く"}',
+    '[1コマ目: AがBを見つめる]',
+    '[Camera: Aの視線を見上げる]',
+    '状況: AはBを見つめる。',
+    '[USER STAGING LOCK - ABSOLUTE]: AはBへ話しかける。',
+    'A:「カメラを見ないで。」',
+    'BalloonLayout: [{"route":"視線の先"}]',
+    '[2コマ目: 続き]',
+    'BはAを見つめる。',
+  ].join('\n');
+  const result = applyManualStagingLocks(SCENARIO, manual);
+  const locks = result.split('\n').filter(line => line.startsWith('[USER STAGING LOCK'));
+  assert.equal(locks.length, 2);
+  assert.match(locks[0], /AはBを見つめる。/);
+  assert.match(locks[0], /AはBへ話しかける。/);
+  assert.match(locks[1], /BはAを見つめる。/);
+  for (const line of locks) {
+    assert.doesNotMatch(line.split(']: ')[1], /\[|PageComposition|BalloonLayout|状況:|カメラを見ないで/);
+    assert.equal(line.split('USER STAGING LOCK').length, 2);
+  }
+});
+
 test('global manual eye-line directions are copied into every panel action', () => {
   const manual = 'B・C・DはAに話しかける。画面正面は禁止。Aも全員に向かって話し、お互いに視線を合わせる。';
   const result = applyManualStagingLocks(SCENARIO, manual);

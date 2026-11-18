@@ -95,7 +95,7 @@ export const applyScenarioStagingPatch = (scenario, response, castList = '', { s
     let value = edit.value;
     if (edit.field === 'BalloonLayout') {
       if (!Array.isArray(value) || value.some(item => !item
-        || Object.keys(item).some(key => !['speaker', 'x', 'anchor', 'route'].includes(key))
+        || Object.keys(item).some(key => !['speaker', 'x', 'y', 'anchor', 'route'].includes(key))
         || ['speaker', 'anchor', 'route'].some(key => typeof item[key] !== 'string' || !item[key].trim() || /[\r\n]/.test(item[key])))) return fail('invalid balloon layout');
       value = JSON.stringify(value);
     } else if (typeof value !== 'string' || !value.trim() || /[\r\n]|\[\s*\d+\s*コマ目/.test(value)
@@ -171,6 +171,7 @@ export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userT
   const panelCount = payoffPanelCount(scenario, scenarioMode);
   const experimental = isNativePageMode(scenarioMode);
   const bookPage = readBookPageMode(scenarioMode);
+  const continuation = bookPage && !bookPage.finalPage;
   const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
   const toneRule = bookPage ? bookPageStoryGuidance(scenarioMode) : surrealMode
@@ -182,15 +183,17 @@ export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userT
     ? `ドキュメンタリーでは、元シナリオにない新しい事実・数値・時系列を${panelCount}コマ目へ追加してはならない。追加されていれば unseeded_fact=true。`
     : `新しい事実だけで結末を成立させず、1〜${Math.max(1, panelCount - 1)}コマ目に種があるかを判定する。`;
 
-  return `あなたは${panelCount}コマ漫画の構成監査担当です。次のシナリオを、選択された結末モードに合わせて厳格に監査してください。
+  return `あなたは${panelCount}コマ漫画の構成監査担当です。${continuation ? '連続する物語の途中ページとして、現在の出来事・感情・読順が成立しているか監査してください。' : '次のシナリオを、選択された結末モードに合わせて厳格に監査してください。'}
 
 ENDING MODE: ${punchlineType || 'Auto'}
 FINAL PANEL: ${panelCount}
+${continuation ? 'ENDING MODEは作品全体の結末に関する指定。この途中ページへ独立したオチ・反転・決着を要求せず、それらがない理由でENDING_MODE_MISMATCHを付けない。人物・話者・動作・読順の実害は引き続き検査する。' : ''}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
+${SCENARIO_BALLOON_LAYOUT_RULES}
 ${experimental ? '互換JSON名 panel3_prediction は最終直前までの予測、panel4_outcome は実際の最終コマの帰結を意味する。番号3・4へ固定しない。panel_development は全コマを確認し、新しい動作・応答・発見・意味のある沈黙や間の必要性を evidence に記す。同じ出来事・情報の再掲やカメラだけの変更で、削除しても時機・感情・理解を何も失わない明確な水増しだけ material_padding=true とし、同じ題材・結末を保つ correction を添える。無言という理由だけで失格にせず、台詞や沈黙の数のノルマを設けない。' : ''}
 ${toneRule}
 ${buildStoryStructureGuidance({ punchlineType, scenarioMode, phase: 'review' })}
-${policy.guidance ? `選択した結末の判定基準: ${policy.guidance}` : ''}
+${!continuation && policy.guidance ? `選択した結末の判定基準: ${policy.guidance}` : ''}
 ${policy.actionDirection ? `${policy.actionDirection}\n- action_continuity: 結末より前の別々のコマに、結末と因果でつながる動きの開始と、動きによる状態変化が描かれているか。コマ番号と台本にある動作・変化・結果を evidence に挙げる。最後のポーズだけ、会話中の身振りだけ、準備を口にするだけ、無関係な動作の羅列、同じ動作の別アングルだけであれば material_failure=true。元の題材と結末を保って途中の演技を直す案を correction に書く。明示された静止や固定のコマ割りが演技追加を禁じる場合は、ユーザー原文の該当指定を evidence に引用して false。動作の派手さや好みだけで不合格にしない。` : ''}
 ${policy.actionDirection ? '- action_staging: 連続性とは別に、見せ場で人物が力を出す・受ける身体演技が具体化されているか。コマ番号と重心・身体軸・手足・接点・反動のうち実際に書かれた根拠をevidenceへ引用する。普通の立ち歩き、物の位置替え、手先の身振りだけで見せ場が終わり、元の動作で描ける全身の動勢が欠ける場合はmaterial_failure=true。単なる派手さの好みや軽微な差は失格にせず、全コマの大動作や跳躍・格闘は要求しない。明示された静止・固定姿勢・カメラ・身体条件は優先し、制約の原文を根拠にfalse。具体化された緊張・踏ん張り・反動も有効。correctionは同じ出来事・台詞・結末を保ち、必要な状況とCameraの演技だけを強める案。事故・暴力・新しい事件を創作して解消しない。' : ''}
 ${policy.actionDirection ? '- action_stagingの判定基準: 手順紹介として整っていることや「ひねる・重心」という語の有無で合格にしない。上記【選択を満たす動きの強さ】【動作を選ぶ段階の確認】を適用し、普通の姿勢に戻しても動きの意味が変わらない日常動作しかないならmaterial_failure=true。準備で深くしゃがむだけ、決定的な操作は手先で小さく動かすだけ、カメラの近さで大きく見えるだけという組合せも不足。動作の頂点そのものに大きな身体の振れ幅・伸縮・反動が必要で、その力が対象へ届くかを確認する。これは好みの評価ではなく、選択されたアクションの不足。falseにする場合は、どの身体部位がどの方向へ大きく振れ、何へ力を出す／受ける動作の頂点か、台本の具体文を引用する。話題・場所が穏やかという理由だけで免除しない。ユーザーが明示した精密動作や静止は維持し、変更禁止なら原文を引用する。' : ''}
@@ -368,6 +371,11 @@ export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', p
 
 export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScenarios = [], scenarioMode = 'four-panel', panelCount = 4 } = {}) => {
   const book=readBookPageMode(scenarioMode),continuation=book&&!book.finalPage;
+  const continuationEndingCodes = new Set(['no_setup_seed', 'no_panel3_prediction', 'no_visual_payoff', 'no_payoff_shift', 'unseeded_fact', 'ending_mode_mismatch']);
+  // A continuation has no independent ending contract. Ignore only a rejection
+  // fully explained by that inapplicable contract; all material evidence below remains authoritative.
+  const inapplicableEndingRejection = continuation && review?.reason_codes?.length > 0
+    && review.reason_codes.every(code => continuationEndingCodes.has(String(code).toLowerCase()));
   const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
   const reasons = surrealMode
@@ -417,7 +425,9 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
   if (!continuation && !surrealMode && !ALLOWED_SHIFTS.has(review?.shift_kind)) reasons.add('no_payoff_shift');
   if (!continuation && !surrealMode && review?.unseeded_fact) reasons.add('unseeded_fact');
   if (policy.documentary && review?.unseeded_fact) reasons.add('documentary_fact_invention');
-  if(continuation) for(const code of ['no_setup_seed','no_panel3_prediction','no_visual_payoff','no_payoff_shift','unseeded_fact'])reasons.delete(code);
+  if (continuation) for (const code of reasons) {
+    if (continuationEndingCodes.has(code.toLowerCase())) reasons.delete(code);
+  }
   for (const item of review?.visual_feasibility || []) {
     if (item?.feasible === false) reasons.add(item.material_loss === true
       ? `unrenderable_panel_${item.panel}` : `visual_detail_panel_${item.panel}`);
@@ -431,9 +441,10 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScen
   }
   const camera = review?.camera_rhythm;
   if (hasCameraRhythmEvidence(camera, panelCount) && camera.material_repeat && !camera.intentional_repeat) reasons.add('repetitive_camera_sequence');
-  if (!surrealMode && !review?.pass && reasons.size === 0) reasons.add('reviewer_rejected');
+  const reviewerAccepted = surrealMode || review?.pass === true || inapplicableEndingRejection;
+  if (!reviewerAccepted && reasons.size === 0) reasons.add('reviewer_rejected');
 
-  return { ok: (surrealMode || review?.pass === true) && reasons.size === 0, reasonCodes: [...reasons] };
+  return { ok: Boolean(reviewerAccepted) && reasons.size === 0, reasonCodes: [...reasons] };
 };
 
 export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review, userTopic, recentScenarios = [], mosaicCopyrightedCharacters = true, scenarioMode = 'four-panel' } = {}) => {
@@ -472,6 +483,7 @@ ENDING MODE: ${punchlineType || 'Auto'}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
 監査結果: ${JSON.stringify(repairReview, null, 2)}
 ${buildStoryStructureGuidance({ punchlineType, scenarioMode, phase: 'repair' })}
+${SCENARIO_BALLOON_LAYOUT_RULES}
 ${getEndingModePolicy(punchlineType).guidance ? `選択した結末の意味を保つ: ${getEndingModePolicy(punchlineType).guidance}` : ''}
 ${getEndingModePolicy(punchlineType).actionDirection || ''}
 ${buildRecentStoryContext(recentScenarios)}
@@ -576,6 +588,7 @@ export const runScenarioPayoffGate = async ({
   let rechecks = 0;
   for (let attempt = 1; attempt <= maxRepairs; attempt += 1) {
     let repaired;
+    let repairResponse = '';
     try {
       onProgress(`構成・画像化を改善しています（${attempt}/${maxRepairs}）。`);
       repairAttempts += 1;
@@ -588,6 +601,7 @@ export const runScenarioPayoffGate = async ({
         mosaicCopyrightedCharacters,
         scenarioMode,
       }));
+      repairResponse = extractText(response);
       repaired = usesStagingPatch(current.scenario, current.evaluation.reasonCodes)
         ? applyScenarioStagingPatch(current.scenario, response, castList, { scenarioMode })
         : extractText(response).replace(/^Scenario:\s*/i, '').trim();
@@ -643,6 +657,7 @@ export const runScenarioPayoffGate = async ({
     } catch (error) {
       await recordDiagnostic('workflow.warning',{...summarizeDiagnosticError(error),failureContext:{
         scenario:repaired || current.scenario,castList,userTopic,punchlineType,scenarioMode,...error.diagnosticContext,
+        stage:'scenario_payoff_repair',repairResponse,repairError:error.message,
       }});
       lastError = error.message;
       current = best;

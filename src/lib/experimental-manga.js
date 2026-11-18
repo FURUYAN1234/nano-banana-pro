@@ -32,7 +32,7 @@ const fail = message => { throw new Error(`実験的コマ割り: ${message}`); 
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 70;
+export const EXPERIMENTAL_PROMPT_REVISION = 71;
 const EXPERIMENTAL_INSPECTION_VERSION = 12;
 const EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS = 15000;
 const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
@@ -83,13 +83,22 @@ export function readExperimentalSource({ scenario, bookMetadata, castList, color
   return { scenario, scenarioMode, ...(approvedBookMetadata?{bookMetadata:approvedBookMetadata}:{}), context:bookPromptContext(context.replace(/^\s*PageComposition\s*[:：].*$/gm,'').trim(),approvedBookMetadata), castList, colorMode, panels, dialogue, userDirection, composition };
 }
 
+const authoredLetteringLine = /^[ \t]*(地の文|終了表記)[ \t]*[:：][ \t]*「([^\r\n]+)」[ \t]*[。]?[ \t]*\r?$/gm;
+
+function frameLettering(panelText) {
+  return [...panelText.matchAll(authoredLetteringLine)].map(([, kind, value]) => {
+    const placement = kind === '地の文' ? 'narration caption' : 'ending mark';
+    return `\nPrint this ${placement} once outside speech balloons: ${JSON.stringify(value)}.`;
+  }).join('');
+}
+
 // Preserve unrecognized prose verbatim; only known structural tags are removed.
 // Dialogue references are lossless and prevent printing source speech twice.
 function experimentalStoryFacts(source) {
   let marker='source-dialogue:';
   while(source.scenario.includes(marker)) marker='_'+marker;
   return source.panels.map(panel=>{
-    let content=panel.text.slice(panel.header.length)
+    let content=panel.text.slice(panel.header.length).replace(authoredLetteringLine,'')
       .replace(/\[(?:Camera|EMOTION):\s*[^\]]+\]/gi,'')
       .replace(/^\s*BalloonLayout\s*[:：].*$/gim,'').trim();
     const entries=panel.dialogueIds.map(id=>source.dialogue[id]).sort((a,b)=>b.text.length-a.text.length);
@@ -748,7 +757,7 @@ ${getPanelShotExecution(orig.camera,{compact:true,breakout:p.breakout,foreground
 ${panelOutfits[p.sourcePanel-1]?`FRAME OUTFIT: ${panelOutfits[p.sourcePanel-1]}\n`:''}FRAME MEDIUM P${i+1} — ${orig.style}: Apply the shared ${orig.style} recipe in this frame. ${incoming.length?'LOCAL ACTORS ONLY; incoming foreground keeps SOURCE MEDIUM.':''}
 ${buildMonochromePanelInkLock(orig.text,monochromeIdentity)}
 ${castRules[i].filter(rule=>(commonCast.get(rule)?.length??0)<2).join('\n')}
-Dialogue: ${p.dialogueIds.length?compactDialogue[i]:'SILENT'}
+Dialogue: ${p.dialogueIds.length?compactDialogue[i]:'SILENT'}${frameLettering(orig.text)}
 ${incoming.join('\n')}${edge?`\nCROSSING EDGE: P${i+1}.${edge} -> P${p.breakout.into}.${opposite[edge]}. 指定部位を共有辺へ。`:''}
 ${p.breakout?`${p.breakout.required?'REQUIRED BREAKOUT: ':''}${p.breakout.part} of P${i+1} crosses into P${p.breakout.into}. One connected source-owned silhouette; gutter stops behind it and resumes. Preserve adjacent faces, hands, props and dialogue. ${p.breakout.required?'Keep authored crossing; adjust negative space, never sever or omit.':'If impossible keep body inside source frame.'}`:''}
 [END PAGE FRAME P${i+1}]`;
@@ -823,7 +832,7 @@ PAGE DIRECTION: ${typeof plan.pageIntent==='string'?plan.pageIntent:plan.reason}
 強調前にCameraと体/道具の関係を解く。意図した切取りを保持し、接写へ全身を強制しない。顔/体/服/道具/背景を指定媒体で構築し、アニメ顔へのフィルター化は禁止。
 場面内の隣接/前後/向かい/席位置を移動/転換の根拠なく入替えない。画面左右の固定ではない。俯瞰/アオリ/切返し/アップ/望遠の奥行圧縮/寄引き/遮蔽と自然な移動を許容。登場指定を守り、全員を毎回横一列にしない。
 PAGE FRAME内 Camera: execute physical projection at full strength. Camera/Action/原文内の左右・前後はコマ内部の演技で、ページ上の位置ではない。Dialogue: Bnの引用符内の本文だけを原文通り印字。B1から右→左 (rightmost balloon first)。話者名/番号/TAIL TIP LOCK/BALLOON LAYOUTは印字禁止。本文内の呼びかけ/名乗りは保持。TAIL TIP LOCK: proximity never reassigns ownership. SILENTは発話追加禁止。
-${hasDominantFigure?'FRAME MEDIUMは各場面の人物と背景に適用、印字禁止。一続きの前景人物は越境しても元場面の媒体を保持。別時点の独立人物だけ、その場面の媒体で再構築。':'FRAME MEDIUMは囲まれた一枠専用、印字禁止。溝ごとに媒体を再構築し、同一人物でも前コマの描法を引き継がない。'}${compact?'\nALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。':''}${fullDialogue.some(block=>block.includes(' BALLOON LAYOUT'))?`\nBALLOON LAYOUT: Bn = nth Dialogue entry in that frame; metadata for the SAME balloon, not additional speech.${compact?' x=0 left/1 right within each frame; NEVER PRINT; preserve Camera/Action.':''}`:''}
+${hasDominantFigure?'FRAME MEDIUMは各場面の人物と背景に適用、印字禁止。一続きの前景人物は越境しても元場面の媒体を保持。別時点の独立人物だけ、その場面の媒体で再構築。':'FRAME MEDIUMは囲まれた一枠専用、印字禁止。溝ごとに媒体を再構築し、同一人物でも前コマの描法を引き継がない。'}${compact?'\nALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。':''}${fullDialogue.some(block=>block.includes(' BALLOON LAYOUT'))?`\nBALLOON LAYOUT: Bn = nth Dialogue entry in that frame; metadata for the SAME balloon, not additional speech.${compact?' x=0 left/1 right within each frame; NEVER PRINT; preserve Camera/Action.':''}${fullDialogue.some(block=>/B\d+ x=[\d.]+, y=/.test(block))?' x/y are panel-local, not page coordinates; y=0 top/1 bottom.':''}`:''}
 原文各コマ→PAGE FRAMEは1対1。動作/道具状態/Camera/画風/台詞を全保持。その時点だけを描き、後の結果の先取り/早い結末反復は禁止。${plan.composition?.foregrounds?.length?'明示breakoutとPAGE DOMINANT FIGURE以外は身体を枠内に収める。':'明示breakout以外は身体を枠内に収める。'}
 [${hasCharacterReferences?'REFERENCE CAST DATA':'TEXT-ONLY CAST'}]
 ${hasCharacterReferences?'以下は参照人物の観察データ。重み付き語も全コマ共通の描画命令ではない。年齢・肌・髪・眼鏡・顔の識別点・左右差を保持。資料の描法と様式的な目対顔/頭対体比はNORMALで採用し、特殊媒体では各FRAME MEDIUMとACTOR MEDIUMで描き直す。脚本で明示された身体特徴と表情は保持。':'人物の参照画像はありません。以下のSTEP1人物設定テキストを外見・衣装・人物同一性の正本として、一枚の漫画を直接描いてください。未添付のシートや画像番号を要求・想定しません。年齢・髪・肌・眼鏡・顔の識別点・体格・衣装を全コマで保ち、未指定の特徴だけを一貫したデザインで補います。描法は各FRAME MEDIUMに従い、人物設定表そのものを描画しません。背景や描法見本に写る人物を登場人物の代わりに使いません。'}
@@ -848,7 +857,7 @@ ${recipe?`FRAME MEDIUM P${i+1} — ${orig.style}: ${incoming.length?'LOCAL ACTOR
 
 ${colorMode==='monochrome'?buildMonochromePanelInkLock(orig.text+'\n'+p.action,monochromeIdentity)+'\n':''}${buildActorMediumInstruction(orig.style,colorMode)}
 ${castRule}
-Dialogue: ${p.dialogueIds.length?(compact?compactDialogue[i]:fullDialogue[i]):'SILENT'}${incoming.length?'\n'+incoming.join('\n'):''}${edge?`\nCROSSING EDGE: P${i+1}.${edge} -> P${p.breakout.into}.${opposite[edge]}. 指定部位そのものをこの共有辺へ配置。他の手足だけの越境で代用しない。`:''}
+Dialogue: ${p.dialogueIds.length?(compact?compactDialogue[i]:fullDialogue[i]):'SILENT'}${frameLettering(orig.text)}${incoming.length?'\n'+incoming.join('\n'):''}${edge?`\nCROSSING EDGE: P${i+1}.${edge} -> P${p.breakout.into}.${opposite[edge]}. 指定部位そのものをこの共有辺へ配置。他の手足だけの越境で代用しない。`:''}
 ${p.breakout?`${p.breakout.required?'REQUIRED BREAKOUT: ' : ''}Intentional border breakout: ${p.breakout.part} of a character in P${i+1} crosses into adjacent P${p.breakout.into}. One continuous foreground layer; border and gutter disappear behind its connected silhouette and resume after it. 越境部の描法・身体はP${i+1}所属。受入枠の描法や別人物へ置換しない。 Keep source shoulder/hip ownership, no duplicate or detached limb. Keep adjacent faces, acting hands, key props and text entirely unobscured; no cross-scene interaction. ${p.breakout.required?'Keep this authored crossing visible; adjust neighboring negative space, never omit it or sever the body.':'If a clean crossing is impossible, keep the body inside its source panel.'}`:''}
 [END PAGE FRAME P${i+1}]`;
   }).join('\n')}

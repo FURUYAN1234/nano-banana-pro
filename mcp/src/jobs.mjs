@@ -4,7 +4,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { assertNoSecrets, assertSafeIdentifier, resolvePageAssetBindings, MangaControlError } from '../../src/lib/mcp/contract.js';
-import { exportCompletedPage, writeProjectManifest } from './exports.mjs';
+import { exportCompletedPage, readSavedPageVersion, writeProjectManifest } from './exports.mjs';
 import {compactPageTransport,assertPageTransportBudget} from './page-transport.mjs';
 import {AssetTransfer,ASSET_REFS_FEATURE} from './asset-transfer.mjs';
 import {pageContentHash,pageGenerationMetadata,generationMetadataHash} from './store.mjs';
@@ -106,8 +106,13 @@ export class JobQueue {
       const compact=materialize?compactPageTransport(project,page,signature,{recognitionReset:job.operation==='recognition'}):{};
       const transfer=this.client.features?.includes(ASSET_REFS_FEATURE)?new AssetTransfer(job.id,job.attemptId):null;
       const hydrate=value=>transfer?transfer.encode(value):this.store.assets.hydrate(value);
+      let input=job.input;
+      if(job.operation==='edit_state' && input.action==='history_select' && input.value==='saved_export'){
+        const version=await readSavedPageVersion(this.store,project,page.id,input.historyId,{downloadsDirectory:this.downloadsDirectory});
+        input={...input,savedVersion:await hydrate(version)};
+      }
       if(materialize&&!transfer)assertPageTransportBudget({snapshot:compact.snapshot,recognition:compact.recognition,assets:bindings.map(binding=>binding.asset),previous:previous?.snapshot?.accepted!==false?previous?.snapshot?.generatedImage:undefined});
-      return { job: { id: job.id, attemptId: job.attemptId, operation: job.operation, input: job.input,
+      return { job: { id: job.id, attemptId: job.attemptId, operation: job.operation, input,
         projectId: job.projectId, pageId: job.pageId, expectedRevision: job.expectedRevision,
         expectedScenario:page?.snapshot?.scenario??project.plan?.detail?.pages?.find(item=>item.pageId===page?.id)?.scenario??project.plan?.detail?.pages?.find(item=>item.pageId===page?.id)?.direction,
         project: { id: project.id, brief: project.brief, settings: project.settings, castBible: project.castBible, assetMode: project.assetMode, plan: project.plan,
@@ -215,7 +220,7 @@ export class JobQueue {
       const safeMetadata=await this.store.assets.dehydrate(metadata);
       const generationContext=pageGenerationMetadata(snapshot)?.context;
       if(generationContext&&generationMetadataHash(await this.store.assets.dehydrate(generationContext))!==generationMetadataHash(safeMetadata))throw new MangaControlError('GENERATION_METADATA_MISMATCH','The page export metadata differs from its retained generation snapshot.');
-      const exported=await exportCompletedPage(this.store,project,page,{dataUrl,metadata:safeMetadata},{attemptId,jobId,downloadsDirectory:this.downloadsDirectory});
+      const exported=await exportCompletedPage(this.store,project,page,{dataUrl,metadata:safeMetadata},{attemptId,jobId,downloadsDirectory:this.downloadsDirectory,deferManifest:true,requireAdoption:true});
       const completedSnapshot=await this.store.assets.dehydrate({...snapshot,generatedImage:exported.image,accepted:true});
       const contentChanged=pageContentHash(page.snapshot,page.export?.imageSha256)!==pageContentHash(completedSnapshot,page.export?.imageSha256?exported.image.sha256:undefined);
       job.result={...job.result,exports:[...(job.result?.exports||[]).filter(item=>item.pageId!==pageId),{pageId,...exported}]};await this.save(job);

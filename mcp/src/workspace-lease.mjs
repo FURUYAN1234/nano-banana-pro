@@ -1,6 +1,6 @@
 import net from 'node:net';
 import { createHash } from 'node:crypto';
-import { MangaControlError } from '../../src/lib/mcp/contract.js';
+import { MangaControlError } from '../../src/lib/mcp/control-error.js';
 
 // The OS owns this lease. No time-based takeover or stale-lock unlink can run
 // beside a live owner; process termination releases it even after a crash.

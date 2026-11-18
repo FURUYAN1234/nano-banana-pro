@@ -66,6 +66,8 @@ test('initial selection, invalid selection and full reset share the environment 
 test('the STEP2 selectable route includes every supported scenario fallback model', () => {
   assert.deepEqual(OPENAI_SCENARIO_TEXT_MODEL_IDS, [
     'gpt-6-astra',
+    'gpt-6.2-astra',
+    'gpt-6.2-sol',
     'gpt-6.1-sol',
     'gpt-6.1-terra',
     'gpt-6-sol',
@@ -79,8 +81,7 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
     OPENAI_SCENARIO_TEXT_MODEL_IDS,
   );
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ label, description }) => label && description));
-  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-11-17');
-  assert.equal(OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-sol').priceSnapshotDate, '2026-11-17');
+  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-11-18');
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ inputPriceUsdPerM, outputPriceUsdPerM }) => (
     Number.isFinite(inputPriceUsdPerM) && Number.isFinite(outputPriceUsdPerM)
   )));
@@ -147,6 +148,12 @@ test('Vite development and production render the three independent initial model
         }));
         assert.match(html, /STEP1 · 素材の画像解析[\s\S]*?STEP2 · シナリオ生成・強化[\s\S]*?STEP3 · 描画指示の構築・確認/);
         assert.equal((html.match(/value="gpt-6-luna" selected=""/g) || []).length, 3);
+        const menus = [...html.matchAll(/<select\b[^>]*>([\s\S]*?)<\/select>/g)];
+        assert.equal(menus.length, 3);
+        for (const [, options] of menus) {
+          assert.match(options, /value="gpt-6\.2-sol">GPT-6\.2 Sol · 入力 \$2 \/ キャッシュ読取 \$0\.1 \/ 出力 \$10<\/option>/);
+          assert.match(options, /value="gpt-6\.2-astra">GPT-6\.2 Astra · 入力 \$8 \/ キャッシュ読取 \$0\.4 \/ 出力 \$40<\/option>/);
+        }
       } finally {
         await server.close();
       }
@@ -158,8 +165,34 @@ test('Vite development and production render the three independent initial model
 });
 
 test('automatic or invalid selection keeps the complete default route', () => {
-  assert.deepEqual(getOpenAIScenarioModelRoute('auto'), OPENAI_SCENARIO_TEXT_MODEL_IDS);
-  assert.deepEqual(getOpenAIScenarioModelRoute('not-a-model'), OPENAI_SCENARIO_TEXT_MODEL_IDS);
+  const previousAutomaticRoute = OPENAI_SCENARIO_TEXT_MODEL_IDS.filter(id => !id.startsWith('gpt-6.2-'));
+  assert.deepEqual(getOpenAIScenarioModelRoute('auto'), previousAutomaticRoute);
+  assert.deepEqual(getOpenAIScenarioModelRoute('not-a-model'), previousAutomaticRoute);
+});
+
+test('6.2 models are selectable for text and vision without changing older fallback routes', () => {
+  for (const route of [getOpenAIVisionModelRoute, getOpenAIScenarioModelRoute]) {
+    assert.deepEqual(route('gpt-6.2-astra').slice(0, 3), ['gpt-6.2-astra', 'gpt-6.2-sol', 'gpt-6.1-sol']);
+    assert.deepEqual(route('gpt-6.2-sol').slice(0, 2), ['gpt-6.2-sol', 'gpt-6.1-sol']);
+    assert.ok(!route('gpt-6.2-sol').some(id => id.endsWith('-astra')));
+    assert.ok(!route('auto').some(id => id.startsWith('gpt-6.2')));
+  }
+  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-astra').slice(0, 2), ['gpt-6-astra', 'gpt-6.1-sol']);
+});
+
+test('Standard pricing counts ordinary input, cache reads/writes and output exactly once', () => {
+  for (const [id, input, cached, output] of [['gpt-6.2-sol',2,.1,10], ['gpt-6.2-astra',8,.4,40]]) {
+    for (const count of [272000, 272001]) {
+      const details = { cached_tokens:100000, cache_write_tokens:50000 };
+      const usage = { prompt_tokens:count, completion_tokens:5000, prompt_tokens_details:details, completion_tokens_details:{ reasoning_tokens:4000 } };
+      const expected = (((count-150000)*input + 100000*cached + 50000*input*1.25)*(count>272000?2:1) + 5000*output*(count>272000?1.5:1))/1e6;
+      assert.equal(getOpenAIScenarioCostEstimate(id, usage).estimatedUsd, Number(expected.toFixed(6)));
+      assert.equal(getOpenAIScenarioCostEstimate(id, { input_tokens:count, output_tokens:5000, input_tokens_details:details }).estimatedUsd, Number(expected.toFixed(6)));
+    }
+    for (const invalid of [{cached_tokens:-1}, {cached_tokens:750,cache_write_tokens:300}, {cache_write_tokens:'50'}]) {
+      assert.equal(getOpenAIScenarioCostEstimate(id, {input_tokens:1000,output_tokens:500,input_tokens_details:invalid}),null);
+    }
+  }
 });
 
 test('scenario usage has a transparent list-price estimate', () => {

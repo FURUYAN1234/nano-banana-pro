@@ -76,7 +76,12 @@ export async function startBridge({ store, jobs, appRoot, distDirectory, port = 
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
   origin = `http://127.0.0.1:${server.address().port}`;
-  return { origin, close: () => new Promise(resolve => server.close(resolve)), async connection() {
+  return { origin, close: () => new Promise(resolve => {
+    server.close(resolve);
+    // The authorized shutdown has already drained active jobs. A desktop MCP
+    // client's open event stream must not keep the old workspace owner alive.
+    server.closeAllConnections();
+  }), async connection() {
     const build = await readRuntimeBuild(appRoot, distDirectory);
     if (!build.current) return { connected: false, requiresBuild: true, build, command: 'npm run mcp:build' };
     pairing = { token: secret(), expiresAt: Date.now() + 10 * 60 * 1000 };

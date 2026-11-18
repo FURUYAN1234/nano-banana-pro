@@ -5,7 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
 import {ProjectStore,approvalHash} from '../src/store.mjs';
-import {exportCompletedPage,writeProjectManifest,resolveDownloadsDirectory,readPortableProject,migrateLegacyExports,reexportAcceptedPages} from '../src/exports.mjs';
+import {exportCompletedPage,writeProjectManifest,resolveDownloadsDirectory,readPortableProject,migrateLegacyExports,reexportAcceptedPages,readSavedPageVersion} from '../src/exports.mjs';
 
 const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6tZkAAAAASUVORK5CYII=';
 const now=new Date(2026,10,16,16,40,25);
@@ -41,9 +41,45 @@ test('same second never overwrites another attempt and recovery keeps its origin
  const first=await exportCompletedPage(f.store,f.project,f.project.pages[1],input,{downloadsDirectory:f.downloadsDirectory,attemptId:'first',now});
  const original=await fs.readFile(first.jsonPath);
  const second=await exportCompletedPage(f.store,f.project,f.project.pages[1],input,{downloadsDirectory:f.downloadsDirectory,attemptId:'second',now});
- assert.equal(first.directory,second.directory);assert.notEqual(first.pngPath,second.pngPath);assert.match(second.pngPath,/_02\.png$/);assert.deepEqual(await fs.readFile(first.jsonPath),original);
+ assert.equal(first.directory,second.directory);assert.notEqual(first.pngPath,second.pngPath);assert.match(second.pngPath,/_02\.png$/);
+ const archive=path.join(first.directory,'履歴');
+ await assert.rejects(fs.access(first.pngPath),{code:'ENOENT'});
+ await assert.rejects(fs.access(first.jsonPath),{code:'ENOENT'});
+ assert.deepEqual(await fs.readFile(path.join(archive,path.basename(first.jsonPath))),original);
  const recovered=await exportCompletedPage(f.store,f.project,f.project.pages[1],input,{downloadsDirectory:f.downloadsDirectory,attemptId:'first',now:new Date(2027,0,1)});
- assert.equal(recovered.recovered,true);assert.equal(recovered.pngPath,first.pngPath);
+ assert.equal(recovered.recovered,true);assert.equal(recovered.pngPath,path.join(archive,path.basename(first.pngPath)));
+ const manifest=JSON.parse(await fs.readFile(second.manifestPath));
+ assert.equal(manifest.project.pages[1].export.attemptId,'second');
+ assert.equal(manifest.productionHistory.pages.find(item=>item.attemptId==='first').archived,true);
+});
+
+test('a superseded page stays current if the new pair fails; selecting the old picture again restores it as a new accepted pair',async()=>{
+ const f=await fixture(),page=f.project.pages[1],options={downloadsDirectory:f.downloadsDirectory,now};
+ const first=await exportCompletedPage(f.store,f.project,page,{dataUrl:png,metadata:{scenario:'first script'}},{...options,attemptId:'one'});
+ const initial=await fs.readFile(first.manifestPath),original=await fs.readFile(first.jsonPath);
+ const dataUrl=await import('../../src/lib/generated-image-metadata.js').then(m=>m.embedGeneratedImageMetadata(png,{version:'redraw'}));
+ const rename=fs.rename;
+ try {
+  fs.rename=async(a,b)=>{if(b===first.manifestPath)throw Object.assign(new Error('test failure'),{code:'EIO'});return rename(a,b);};
+  await assert.rejects(exportCompletedPage(f.store,f.project,page,{dataUrl,metadata:{scenario:'redraw'}},{...options,attemptId:'two'}),{code:'EIO'});
+ }finally{fs.rename=rename;}
+ assert.deepEqual(await fs.readFile(first.manifestPath),initial);
+ assert.deepEqual(await fs.readFile(first.jsonPath),original);
+ const second=await exportCompletedPage(f.store,f.project,page,{dataUrl,metadata:{scenario:'redraw'}},{...options,attemptId:'two'});
+ await assert.rejects(fs.access(first.pngPath),{code:'ENOENT'});
+ const archivedJson=path.join(first.directory,'履歴',path.basename(first.jsonPath));
+ const old=JSON.parse(await fs.readFile(archivedJson));
+ const oldPng=await fs.readFile(path.join(path.dirname(archivedJson),old.image.relativePath));
+ const prior=await readSavedPageVersion(f.store,f.project,page.id,'one',options);
+ await assert.rejects(readSavedPageVersion(f.store,f.project,f.project.pages[0].id,'one',options),{code:'PAGE_VERSION_NOT_FOUND'});
+ const restored=await exportCompletedPage(f.store,f.project,page,{dataUrl:await f.store.assets.hydrate(prior.image),metadata:prior.metadata},{...options,attemptId:'restore-one'});
+ assert.deepEqual(await fs.readFile(restored.pngPath),oldPng);
+ assert.deepEqual(JSON.parse(await fs.readFile(restored.jsonPath)).metadata,old.metadata);
+ assert.deepEqual(await fs.readFile(archivedJson),original);
+ assert.ok(await fs.stat(path.join(first.directory,'履歴',path.basename(second.jsonPath))));
+ assert.equal(JSON.parse(await fs.readFile(restored.manifestPath)).project.pages[1].export.attemptId,'restore-one');
+ await fs.writeFile(archivedJson,JSON.stringify({...old,metadata:{scenario:'changed'}}));
+ await assert.rejects(readSavedPageVersion(f.store,f.project,page.id,'one',options),{code:'EXPORTED_PAGE_CHANGED'});
 });
 test('JSON write failure never commits a lone PNG and the same attempt can be retried',async()=>{
  const f=await fixture(),open=fs.open;let injected=false;

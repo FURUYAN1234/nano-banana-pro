@@ -41,6 +41,35 @@ test('independent STEP1 and STEP3 selections reach the matching OpenAI requests'
   assert.doesNotMatch(JSON.stringify(bodies[1].messages), /image_url/);
 });
 
+test('MCP selection, vision review and Chat/Responses requests use each requested 6.2 model and its price', async () => {
+  const {getMcpSettingCatalog}=await import('../src/lib/mcp/catalog.js');
+  const catalog=getMcpSettingCatalog();
+  for (const [id, price] of [['gpt-6.2-astra', .0136], ['gpt-6.2-sol', .0034]]) {
+    for (const setting of ['analysisModelId','scenarioModelId','promptModelId']) assert.ok(catalog[setting].includes(id));
+    for (const step of ['review','manual','search']) {
+      const web=step==='search';
+      const images=step==='review'?['data:image/png;base64,fixture']:null;
+      const options=images?{visionModelId:id,outputProfile:'image-quality-review'}:{modelRoute:'scenario',scenarioModelId:id,useWebSearch:web};
+      const requests=[];
+      globalThis.fetch=async(url, init)=>{
+        requests.push({url,body:JSON.parse(init.body)});
+        const result=payload(web,{text:'complete fixture'});
+        const details={cached_tokens:500,cache_write_tokens:100};
+        result.usage=web?{input_tokens:1000,output_tokens:230,input_tokens_details:details}
+          :{prompt_tokens:1000,completion_tokens:230,prompt_tokens_details:details};
+        return Response.json(result);
+      };
+      const result=await client.callOpenAIText('inspect fixture',images,null,null,options);
+      assert.equal(requests.length,1);
+      assert.equal(requests[0].body.model,id);
+      assert.match(requests[0].url,web?/\/responses$/:/\/chat\/completions$/);
+      if (images) assert.match(JSON.stringify(requests[0].body.messages),/image_url/);
+      assert.equal(result.model,id);
+      assert.equal(result.costEstimate.estimatedUsd,price);
+    }
+  }
+});
+
 test('Luna image QA reasons at high effort while ordinary routes keep their defaults', async () => {
   const bodies = [], logs = [];
   globalThis.fetch = async (_url, init) => { bodies.push(JSON.parse(init.body)); return Response.json(payload(false,{text:'complete'})); };

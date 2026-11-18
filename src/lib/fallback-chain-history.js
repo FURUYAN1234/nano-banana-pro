@@ -27,6 +27,8 @@ import {
 } from './openai-image-settings.js';
 
 const OPENAI_MODEL_NOTES = {
+  'gpt-6.2-astra': '画像解析・文章処理を手動選択・入力$8/出力$40 USD/MTok',
+  'gpt-6.2-sol': '画像解析・文章処理を手動選択・入力$2/出力$10 USD/MTok',
   'gpt-6.1-sol': '画像解析・文章処理の選択肢・入力$2/出力$10 USD/MTok',
   'gpt-6.1-terra': '画像解析・文章処理の選択肢・入力$1/出力$5 USD/MTok',
   'gpt-6-astra': 'STEP2・STEP3で選択可能・物語構成と演出推論',
@@ -46,6 +48,13 @@ const describeOpenAITextRoute = (modelIds) => modelIds.map((id, index) => ({
   role: index === 0 ? 'Primary' : index === modelIds.length - 1 ? 'Fallback' : 'Backup',
   note: OPENAI_MODEL_NOTES[id] || '実行時のOpenAIルート',
 }));
+
+const describeOpenAISelection = (available, route) => [
+  ...describeOpenAITextRoute(route),
+  ...available.filter(id => !route.includes(id)).map(id => ({
+    id, role: 'Selectable', note: `${OPENAI_MODEL_NOTES[id]}・手動選択可能（自動切替対象外）`,
+  })),
+];
 
 const GEMINI_MODEL_NOTES = {
   'gemini-3.8-flash': '最新GA・最も高性能なFlash',
@@ -120,7 +129,7 @@ export const FALLBACK_CHAINS = [
     description: 'ユーザーが入力したテーマやキーワードから、4コマ漫画のシナリオ（起承転結・セリフ・感情タグ・カメラワーク）を自動生成する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/lib/openai-text.js',
-    models: describeOpenAITextRoute(FALLBACK_CHAIN_SOURCE_IDS['step2-openai'])
+    models: describeOpenAISelection(OPENAI_SCENARIO_TEXT_MODEL_IDS, getOpenAIScenarioModelRoute())
   },
   {
     id: 'step3-gemini',
@@ -178,19 +187,23 @@ export const getFallbackChains = (selection = {}) => {
   return FALLBACK_CHAINS.map(chain => {
     const route = routes[chain.id];
     if (!route) return chain;
-    const alternatives = FALLBACK_CHAIN_SOURCE_IDS[chain.id].filter(id => !route.includes(id));
     return {
       ...chain,
       description: `${chain.step}の選択モデルから表示順に実行。Selectableは自動切替の対象外で、制作前に手動選択できます。`,
-      models: [
-        ...describeOpenAITextRoute(route),
-        ...alternatives.map(id => ({ id, role: 'Selectable', note: `${OPENAI_MODEL_NOTES[id]}・手動選択可能（自動切替対象外）` })),
-      ],
+      models: describeOpenAISelection(FALLBACK_CHAIN_SOURCE_IDS[chain.id], route),
     };
   });
 };
 
 export const FALLBACK_CHAIN_HISTORY = [
+  {
+    version: 'v8.0.5', date: '2026-11-18 09:50 JST',
+    note: 'GPT-6.2 Astra・Solを画像解析、台本、描画指示の手動選択に追加。選択中のモデルに合わせて検査と参考料金を表示。',
+    changes: [
+      { step: 'STEP1–3 (OpenAI)', action: '選択肢', detail: '既定はGPT-6 Luna。GPT-6.2は明示選択で利用できます。' },
+      { step: 'OpenAI', action: '料金', detail: 'キャッシュ読取、30分書込、長文に対応したStandardトークン料金を表示。' },
+    ],
+  },
   {
     version: 'v7.0.8', date: '2026-10-15',
     note: 'OpenAIの終了予定モデルを現行ルートから除外。画像解析・STEP3・STEP2の表示と実行定義を同期。',

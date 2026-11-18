@@ -11,13 +11,14 @@ async function fixture(t){const root=await fs.mkdtemp(path.join(os.tmpdir(),'sav
 async function save(f,p,attemptId){return exportCompletedPage(f.store,p,p.pages[0],{dataUrl:png,metadata:{scenario:'Complete text'}},{...f.options,attemptId});}
 test('regular save ownership preserves every pair and future writes under current work',async t=>{
  const f=await fixture(t),parent=await save(f,f.parent,'parent'),first=await save(f,f.child,'first'),second=await save(f,f.child,'second');
- const original=await fs.readFile(first.jsonPath),before=approvalHash(f.child);
+ const archived=path.join('履歴',path.basename(first.jsonPath));
+ const original=await fs.readFile(path.join(first.directory,archived)),before=approvalHash(f.child);
  await f.store.setSaveOwner({projectId:f.child.id,ownerProjectId:f.parent.id,expectedRevision:1,idempotencyKey:'owner'});
  const child=await f.store.get(f.child.id);assert.equal(approvalHash(child),before);
  const moved=await relocateProjectExports(f.store,child,f.options);
  assert.equal(path.dirname(path.dirname(moved.directory)),parent.directory);
- assert.deepEqual(await fs.readFile(path.join(moved.directory,path.basename(first.jsonPath))),original);
- assert.deepEqual(await fs.readFile(first.jsonPath),original);
+ assert.deepEqual(await fs.readFile(path.join(moved.directory,archived)),original);
+ assert.deepEqual(await fs.readFile(path.join(first.directory,archived)),original);
  assert.deepEqual(await fs.readFile(path.join(moved.directory,path.basename(second.pngPath))),await fs.readFile(second.pngPath));
  const third=await save(f,child,'third');assert.equal(third.directory,moved.directory);
  const portable=await readPortableProject(f.store,third.manifestPath);assert.equal(portable.id,child.id);

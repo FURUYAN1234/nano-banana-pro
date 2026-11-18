@@ -20,7 +20,7 @@ $ProgressPreference='SilentlyContinue'
 foreach($module in @('Microsoft.PowerShell.Utility','Microsoft.PowerShell.Management')){Import-Module (Join-Path $PSHOME ('Modules/'+$module+'/'+$module+'.psd1')) -ErrorAction Stop}
 $script:Repository='FURUYAN1234/nano-banana-pro'
 $script:AssetName='SuperFURU-Manga-MCP.zip'
-$script:LauncherRevision=1
+$script:LauncherRevision=2
 function Write-MangaStatus([string]$Message){
  # Keep stdout exclusively for the MCP stdio protocol and function results.
  [Console]::Error.WriteLine(('[{0:HH:mm:ss}] {1}' -f (Get-Date),$Message))
@@ -202,12 +202,30 @@ function Install-OfficialRelease([string]$Root,[string]$Node){
  $files=[ordered]@{}
  Write-MangaStatus 'インストール情報を保存中 / Recording the installed version'
  foreach($name in $required){$files[$name]=(Get-FileHash -LiteralPath (Join-Path $stage $name) -Algorithm SHA256).Hash.ToLowerInvariant()}
+ $manifest=Join-Path $stage 'SHA256SUMS.json'
+ if(Test-Path -LiteralPath $manifest -PathType Leaf){$files['SHA256SUMS.json']=(Get-FileHash -LiteralPath $manifest -Algorithm SHA256).Hash.ToLowerInvariant()}
  @{repository=$script:Repository;tag=$release.tag_name;archiveSha256=$asset.digest.Substring(7);files=$files}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'verified-install.json') -Encoding utf8
  Move-Item -LiteralPath $stage -Destination $destination
  Remove-Item -LiteralPath $archive
  return $destination
 }
 function Get-MangaDesktopDirectory { [Environment]::GetFolderPath('Desktop') }
+function Sync-MangaClientSkill([string]$VersionDirectory,[string]$Root,[string]$Node){
+ $updater=Join-Path $VersionDirectory 'mcp/src/client-skill-update.mjs'
+ if(-not(Test-Path -LiteralPath $updater -PathType Leaf)){return}
+ try{
+  Assert-PlainPath $updater
+  $receipt=Read-VerifiedInstall $VersionDirectory -MetadataOnly
+  if(-not $receipt){throw 'The skill source has no verified release receipt.'}
+  $manifest=Join-Path $VersionDirectory 'SHA256SUMS.json';Assert-PlainPath $manifest
+  if($receipt.files.PSObject.Properties.Name -contains 'SHA256SUMS.json' -and (Get-FileHash -LiteralPath $manifest).Hash -ne $receipt.files.'SHA256SUMS.json'){throw 'The verified package manifest changed.'}
+  $expected=(Get-Content -LiteralPath $manifest -Raw -Encoding UTF8|ConvertFrom-Json).files.'mcp/src/client-skill-update.mjs'
+  if($expected -notmatch '^[a-f0-9]{64}$' -or (Get-FileHash -LiteralPath $updater).Hash -ne $expected){throw 'The packaged skill updater changed.'}
+  if(-not $Node){$Node=Get-NodeExecutable $Root}
+  & $Node $updater
+  if($LASTEXITCODE -ne 0){throw 'See the client skill update message above.'}
+ }catch{Write-MangaStatus ('スキルの更新に失敗しました / Client skill update failed: '+$_.Exception.Message)}
+}
 function Set-OwnedShortcut([string]$Launcher){
  try{
   $desktop=Get-MangaDesktopDirectory
@@ -238,6 +256,7 @@ function Start-MangaLauncher {
  if($StopOnly){Write-MangaStatus '停止を確認しました / Service stopped';return}
  if($live){
   Write-MangaStatus '起動済みのアプリを利用します / Reusing the running app'
+  Sync-MangaClientSkill (Join-Path (Join-Path $root 'versions') ('v'+$live.appVersion)) $root ''
   if($Stdio){$node=Get-NodeExecutable $root;$version=Join-Path (Join-Path $root 'versions') ('v'+$live.appVersion);$null=Read-VerifiedInstall $version -MetadataOnly;& $node (Join-Path $version 'mcp/src/http-stdio-adapter.mjs') --workspace $ws;return}
   if(-not $NoOpen){Write-MangaStatus 'ブラウザーを開いています / Opening the browser';Start-Process ($live.origin+'/nano-banana-pro/')};Write-MangaStatus '起動完了 / Ready';return
  }
@@ -252,6 +271,7 @@ function Start-MangaLauncher {
   $live=Read-LiveService $ws
   if($live){
    Write-MangaStatus '起動済みのアプリを利用します / Reusing the running app'
+   Sync-MangaClientSkill (Join-Path (Join-Path $root 'versions') ('v'+$live.appVersion)) $root ''
    if($Stdio){$node=Get-NodeExecutable $root;$version=Join-Path (Join-Path $root 'versions') ('v'+$live.appVersion);$null=Read-VerifiedInstall $version -MetadataOnly;& $node (Join-Path $version 'mcp/src/http-stdio-adapter.mjs') --workspace $ws;return}
    if(-not $NoOpen){Write-MangaStatus 'ブラウザーを開いています / Opening the browser';Start-Process ($live.origin+'/nano-banana-pro/')};Write-MangaStatus '起動完了 / Ready';return
   }
@@ -265,13 +285,13 @@ function Start-MangaLauncher {
   $launcherRoot=Join-Path $root 'launcher';New-Item -ItemType Directory -Path $launcherRoot -Force|Out-Null
   $verifiedSkill=Join-Path $version 'mcp/skills/manga-book-production'
   Sync-MangaLauncher $verifiedSkill $launcherRoot
-  [Console]::Error.WriteLine('The verified release supplies the app and manga://skills/book-production workflow resource. Custom external skill files are preserved.')
+  Sync-MangaClientSkill $version $root $node
   if(-not $NoShortcut){Set-OwnedShortcut (Join-Path $launcherRoot 'Launch-Manga.cmd')}
   if($InstallOnly){Write-MangaStatus 'インストール完了 / Installation complete';return}
   $live=Read-LiveService $ws
   if(-not $live){
    Write-MangaStatus 'アプリを起動中 / Starting the local app'
-   $arguments=@(('"'+(Join-Path $version 'mcp/src/service.mjs')+'"'),'--workspace',('"'+$ws+'"'),'--port',[string]$Port)
+   $arguments=@(('"'+(Join-Path $version 'mcp/src/service.mjs')+'"'),'--workspace',('"'+$ws+'"'),'--port',[string]$Port,'--client-skill-checked')
    Start-Process -FilePath $node -ArgumentList $arguments -WindowStyle Hidden -RedirectStandardOutput (Join-Path $root 'service.stdout.log') -RedirectStandardError (Join-Path $root 'service.stderr.log')|Out-Null
    for($i=0;$i -lt 40 -and -not $live;$i++){Start-Sleep -Milliseconds 250;$live=Read-LiveService $ws;if(-not $live -and $i%8 -eq 7){Write-MangaStatus 'アプリの応答を待っています / Waiting for the app to respond'}}
    if(-not $live){throw 'The local service did not become healthy. Inspect service.stderr.log; no generation was submitted.'}
