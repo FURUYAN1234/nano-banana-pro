@@ -1,3 +1,7 @@
+# v8.0.5 release candidate · 2026-11-18
+
+The release candidate adds synchronized Windows launcher skills, recoverable saved PNG/JSON page revisions, GPT-6.2 choices and updated pricing. The bundled skill and MCP workflow include whole-script review before presentation, job and delegation tracking, and the final social-sharing decision. The last published release is v8.0.4. The v8.0.5 public release stopped before push when the dependency audit detected GHSA-fc5q-39xc-vjpf in picomatch. Check the official advisory and npm audit before running the common release procedure again. The old public launcher installed v8.0.4 in isolation. Verification of its upgrade to v8.0.5 requires the official release.
+
 # CURRENT - v8.0.4 authorized release transaction (2026-11-18)
 
 Specific deployment authorization followed the final color review. The repository release worker owns commit/tag/Release/Pages/C-copy; root owns note/X/Facebook and then the separate full backup. Do not pass -RunFullBackup. Keep all connected Manga browser tabs and their API memory intact.
