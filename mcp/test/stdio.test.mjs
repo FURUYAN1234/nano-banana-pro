@@ -31,6 +31,7 @@ test('official SDK stdio discovers tools, persists false settings and snapshot a
     assert.match(guide, /Trace the cause against retained evidence.*Resume the failed step, verify recovery and the next step.*avoid repeating a charge/s);
     assert.match(guide, /line breaks in balloons, marginal text and narration.*names, word groups, ruby and punctuation.*vertical column or a horizontal line.*verify the adopted PNG, JSON and history/s);
     assert.match(guide, /background detail for each panel in this story.*new project settings, final prompts and rendered reading order.*space, light and depth.*close-up/s);
+    assert.match(guide, /Figures or limbs may naturally cross panel borders.*story readability, speaker, dialogue and action.*Crossing alone does not require a redraw/s);
     assert.match(guide, /Show all saved pages in reading order.*honor any sharing decision already given.*ask once/s);
     assert.match(guide, /For drafts only, provide the proposed posts.*Publish only after approval/s);
     const cap = await call('manga_capabilities', {}); assert.equal(cap.totalPagesIncludesCover, true);
