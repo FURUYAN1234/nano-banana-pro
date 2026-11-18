@@ -1,8 +1,8 @@
 {
   "format": 1,
   "version": "8.0.5",
-  "skillSha256": "23d0dc10aadc112b510e75123cbb653917be32f298953b40dd7d5620a300d13a",
-  "reviewedAt": "2026-11-18T03:23:13.022Z",
+  "skillSha256": "dc5697a4f602a5a8e63ba66cceaeaa205f1a2b8cd0dbf0e645b103cf44c0801c",
+  "reviewedAt": "2026-11-18T03:35:32.122Z",
   "reviewedSince": "v8.0.4 released skill through the approved four-page original color comic and the v8.0.5 private verification on 2026-11-18.",
   "sources": [
     "User corrected service substitution, required confirmation before launch/installation, built-in browser priority and browser selection suited to the actual client and PC.",
@@ -17,7 +17,8 @@
     "User specified that natural figures and limbs crossing panel borders are ordinary manga staging choices.",
     "User reported a missing full stop in the last speech balloon and requested the same rule for standalone and multipage manga.",
     "A generated lettering edit inserted extra full stops at column boundaries inside a single sentence.",
-    "Column wraps are layout; editing must retain the grammatical position of sentence marks and all approved artwork."
+    "Column wraps are layout; editing must retain the grammatical position of sentence marks and all approved artwork.",
+    "Users with a 20-image X composer can share five to twenty pages in a single post, in reading order."
   ],
   "findings": [
     {
@@ -91,6 +92,12 @@
       "disposition": "updated",
       "rule": "Keep the established native layout template. Localize replacements and verify original punctuation despite line breaks.",
       "reason": "The first experimental implementation exceeded compact render and repair budgets; preserve byte-stable source layout and fit the explicit rule into the replacement instructions."
+    },
+    {
+      "observation": "Users with a 20-image X composer can share five to twenty pages in a single post, in reading order.",
+      "disposition": "updated",
+      "rule": "Use the requested single post in supported X clients; count finished attachments and the actual published album, and report specific errors only if a limit appears.",
+      "reason": "The previous generic limit guidance allowed an unnecessary four-image split on X and could omit intended pages."
     }
   ],
   "checks": [
@@ -153,7 +160,12 @@
       "name": "MCP workflow review",
       "result": "passed",
       "evidence": "198 geometry, prompt budget, repair, transcription, comparison and native image regressions pass with the original limits and native-color golden fixtures."
+    },
+    {
+      "name": "MCP workflow review",
+      "result": "passed",
+      "evidence": "Read the canonical skill and SNS reference against ten requested clauses, including the exception, account/client scope and separate platform rules. Ten skill distribution, audit and client installation tests passed."
     }
   ],
-  "sourceCommit": "4d8d7cedc36c09e359e4c6d1ab7a136f2b3ade7c"
+  "sourceCommit": "caa8503b5ab5a60af869923b84101c86b1541688"
 }
