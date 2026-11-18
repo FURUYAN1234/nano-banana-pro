@@ -49,6 +49,7 @@
     "vite": "^7.3.7"
   },
   "overrides": {
-    "minimatch": "11.0.1"
+    "minimatch": "11.0.1",
+    "picomatch": "file:./scripts/tool-glob"
   }
 }
