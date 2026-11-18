@@ -20,7 +20,7 @@
   "readmeLanguageGaps": [],
   "sourceTree": "c20d4bcb42b588a651e397243a32908a8ae9fd0e",
   "publicTree": "a1eeca8ebc533e9ff7ce734038f1093e859772ac",
-  "packageSha256": "ba7cea401a37b55e87785a3de737a2071cd7e6603eef8bf6e374ffc62946980d",
+  "packageSha256": "a650fa0258a9507dd8e48bea01f9c98aa0c7d928d8e0c69ede9c5242f144bcae",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -42,8 +42,8 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "13da9016eff3a804dcf5e897d08e4ada875e7fc7",
-  "reviewedAt": "2026-11-18T03:50:50.542Z",
+  "sourceCommit": "afbd0b8c89aea568ac4fc77bea3d9802b6ee96f8",
+  "reviewedAt": "2026-11-18T04:13:16.196Z",
   "reviewedWorkingTree": false,
   "reviewStage": "Release-source commit. The following audit-only commit binds the identical README, code, public files, package and skill to this release.",
   "findings": "Compared changes to the v8.0.4 bilingual README with the launcher, selectable model catalog, preserved automatic chains, pricing tables and the candidate changelog. The per-page history interface and the required manifest status are documented in the MCP guide.",
