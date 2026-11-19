@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "c117c8eb37e7bf8936e24c9b22991eae1101a3a75a2f5327b5ec36345c185a54",
-  "manualVersion": "8.0.7",
-  "manualSourceSha256": "9973aef54c4c362c28dec4325ebf57a9afa5813e8182e974fb4dd1ebb71200d6",
+  "pricingSourceSha256": "a6e9366d4a4145d4d40a9b829e8093fc5f01257c0b4b3034c63565d4ffa87d67",
+  "manualVersion": "8.0.8",
+  "manualSourceSha256": "59d195ac111187e5ac1256009aea7ac87176888dc4827d900ffc33d4dc664270",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "bd8850a694217430fc242d4171a71d12f05be894d4870b951a1e2cc30bc9cc85"
+      "sha256": "74713ee374c9173405bc80b8f64510ab1fcd1225267f3204f32a2ae96e453c36"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "3e44d0f92cbab1d7aa13f4b8bcc921393b870f667a8d70b15fb7ce31c077ace1"
+      "sha256": "cb9fe8d3e3ec9528170cd41a6fc0964c505d4bfa471f26899411f9bd3fd796c0"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "27ae9ed387d0f81205ca816842e28cb8416b5a1bdb246dc325a229c3994df869"
+      "sha256": "e9a7a3576c9d0cde9ad5c2164eebf8e92d1ca3debfdc2f3f5ab0e76baead3c61"
     }
   ],
-  "readmeSha256": "8cbb625a5fe3e64442090935d53047e4f1ab583fc24b23d68a06ad70a8d33356",
+  "readmeSha256": "b5642359e8960d51e52b1bdc7573f4f083b8c986e303ee2e8126a75ec6d2df65",
   "readmeLanguageGaps": [],
-  "sourceTree": "5251422ebba4e627c8290059b70f7bb8a4f4d17f",
-  "publicTree": "f041d49483d2a739a6a743395ea997b8615380df",
-  "packageSha256": "3e7ef9111dd6858fa60e84bb3f14e7d4437a7e24191e7a34dbc8e6407ea2ee4a",
+  "sourceTree": "6d02d8f6ecf15a46979b5d8b6f6fc2db30b31308",
+  "publicTree": "7a29bf753d76c4d4d24144fcc626c1a339356d40",
+  "packageSha256": "86a726c8d31552ea22f82ba146cd1902f830a369283f85d423162da676a021e3",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -42,26 +42,24 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "342c34bd413f929ce13559fcb419c5be09a193ea",
-  "reviewedAt": "2026-11-18T14:20:25.393Z",
+  "sourceCommit": "619fc4fccb16f8410de66648138061e56666bbc2",
+  "reviewedAt": "2026-11-19T04:13:02.528Z",
   "reviewedWorkingTree": false,
   "reviewStage": "candidate",
-  "findings": "Compared all current README sections with the v8.0.6 review and the candidate source tree. Production logic differs only in SYSTEM_VERSION. The MCP section now explains the four new editorial checks and the last-page credit rule. Current download labels, tag references, change history and all three PDF links match release v8.0.7. The Windows application ZIP contains the same skill used by the standalone ZIP.",
-  "manualFindings": "Rebuilt all 78 pages and checked v8.0.7 on each page. Compared rendered page bodies against v8.0.6. The changed bodies were Gemini page 1 and full manual pages 19 and 38. Visually reviewed their layout, new manga skill guidance, readable version and links. All other body renders matched. Preserved the three download filenames.",
+  "findings": "Reviewed the prior approved README body and the full v8.0.8 delta against the candidate. The MCP section now describes installed-version startup, idle pairing, manual pairing fallback and production checks for G-pen, cameras and credits. Workflow image and three original manga pages remain in order. Pricing labels, API route descriptions, download names, Windows package contents, three manuals, workflow asset and release notes match v8.0.8. Historical version descriptions remain dated.",
+  "manualFindings": "Checked all 78 pages against v8.0.7 via full page-body rendering and version text. Reviewed the changed Gemini page 1 and full manual pages 19, 38 and 45 in the actual renders. Reviewed the v8.0.8 footer, installed-version startup, author credit and final-page watermark conditions, table wrapping and intact links. The OpenAI manual and all other body regions retained their prior layouts.",
   "pricingReview": {
-    "version": "8.0.7",
-    "sourceSha256": "c117c8eb37e7bf8936e24c9b22991eae1101a3a75a2f5327b5ec36345c185a54",
-    "checkedAt": "2026-11-18T14:20:25.393Z",
+    "version": "8.0.8",
+    "sourceSha256": "a6e9366d4a4145d4d40a9b829e8093fc5f01257c0b4b3034c63565d4ffa87d67",
+    "checkedAt": "2026-11-19T04:13:02.528Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
-      "https://developers.openai.com/api/docs/guides/prompt-caching",
-      "https://developers.openai.com/api/docs/guides/image-generation",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Rechecked the current OpenAI short-context Standard tables (including GPT-6.2 Astra and Sol), Images Standard rates (not Batch), and the Gemini Standard tables. The existing Standard rates for Gemini 3.8 Flash and Nano Banana 2.1 match the tables, including $0.0336 for 1K output. The price-source files are byte-identical with the same-day v8.0.6 release."
+    "findings": "Reviewed OpenAI short-context Standard scenario and Images Standard rates and Gemini Standard scenario and per-image rates on 2026-11-19. Current displays and README retain the verified rates, including Nano Banana 2.1 at $0.0336 for 1K. Batch and faster-tier tables are separate from the comparison."
   },
   "apiValidation": {
-    "version": "8.0.5",
-    "scope": "Accepted three-page The Eclipse Today sample produced through the official MCP route on the running v8.0.5 engine; readback paired each saved PNG with its JSON. Page 2 camera wording was rejected before image submission, then corrected and validated in the same mode. This v8.0.7 candidate changes version markers, documentation and the production skill. No new provider or image behavior is claimed."
+    "version": "8.0.7",
+    "scope": "The repaired live local service generated and saved the approved AI Hunter and Umbrella sample pages. The accepted right-bottom author credit edit used native MCP job b11953db-769e-462a-9843-fa989ea6cc23 and matching PNG, JSON and production manifest. The candidate pairing regression and compiled runtime tests use the v8.0.8 source."
   }
 }
