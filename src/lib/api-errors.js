@@ -62,7 +62,7 @@ export const getApiErrorInfo = error => {
   if (/insufficient_quota|billing|credit balance|payment required/.test(text) || status === 402) return info('quota', '利用枠・残高不足', 'APIの残高・課金設定・利用枠を確認してください。待機だけでは解消しない場合があります。');
   if (status === 401 || /invalid_api_key|api_key_invalid|api key (?:not valid|is invalid)|invalid api key|incorrect api key/.test(text)) return info('auth', 'API認証エラー', '接続設定で使用中のプロバイダーのAPIキーを確認してください。');
   if (/key.*(?:not set|設定されていません)|apiキー.*設定されていません/.test(text)) return info('auth', 'API未接続', '接続設定で使用するプロバイダーのAPIキーを入力してください。');
-  if (/content_policy|blocked by safety|safety filter|responsible ai|prohibited_content/.test(text)) return info('policy', '安全基準による拒否', '拒否理由を確認し、入力内容を見直してください。');
+  if (/content_policy|blocked by safety|safety filter|responsible ai|prohibited_content|\bmoderation_blocked\b|rejected by the safety system|\bsafety_violations\s*=\s*\[/.test(text)) return info('policy', '安全基準による拒否', '拒否理由を確認し、入力内容を見直してください。');
   if (status === 403 || /permission_denied|permission denied/.test(text)) return info('permission', 'APIアクセス権限エラー', 'キーの権限・モデルの利用権限を確認してください。');
   if (status === 404 || /model_not_found|model.*(?:not found|not supported)/.test(text)) return info('model', 'モデルが利用できません', 'モデル名と利用権限を確認してください。');
   if (status === 429 || /resource_exhausted|rate.?limit|quota exceeded/.test(text)) return info('rate', 'APIレート制限・使用量制限', 'APIの制限内容を確認してください。短時間の制限なら時間を置き、日次上限などは解除時刻を確認してください。');

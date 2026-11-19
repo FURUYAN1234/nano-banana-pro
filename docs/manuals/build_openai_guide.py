@@ -49,7 +49,7 @@ def new(title,kicker='操作ガイド',sources=''):
  c.setFont('JPB',21); c.setFillColor(INK); c.drawString(M,H-73,title)
  c.setStrokeColor(HexColor('#cfdddf')); c.line(M,H-89,W-M,H-89)
  c.bookmarkPage(f'p{page}'); c.addOutlineEntry(title,f'p{page}',0,False)
- c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v8.0.8対応 | 2026年11月19日更新 | A4 日本語版')
+ c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v8.0.9対応 | 2026年11月19日更新 | A4 日本語版')
  c.drawRightString(W-M,31,f'{page:02d} / 19')
  if sources: c.setFont('JP',7.5); c.drawString(M,45,'根拠: '+sources+'（出典一覧は19ページ）')
  transcript.append('\n\n'+str(page)+'. '+title)
@@ -244,7 +244,7 @@ link('全機能マニュアル（接続後の操作）','https://furuyan1234.git
 
 # 17
 new('止まったときの確認表','同じボタンを連打する前に、表示された原因を確認','B・D・E・F・G・I・現行アプリ')
-table([['症状・表示','確認と次の操作'],['Billingが見つからない','6ページの直リンク、またはSettings → Organization settings → Billing。組織とOwner権限も確認。'],['クレジットが反映されない','同じ組織へ購入したか確認し、数分待つ。購入成功の表示がなければ、重複購入する前にBillingを確認。'],['401／invalid_api_key','秘密キーの全文・前後の空白・失効・有効期限を確認。省略キーやProject IDでは接続できません。'],['403／permission denied','Projectの許可モデル、キー権限、本人確認、組織やProjectの所属を確認。入金だけでは解決しません。'],['organization must be verified','10・11ページ。正しい組織の本人確認と承認の反映を確認。承認時間の保証はありません。'],['model_not_found／モデル利用不可','モデル名・利用権限を確認。GPT-6 Astraと画像モデルは別に確認。現在の契約・審査で使えない可能性もあります。'],['429／残高・月額上限のエラー','credit_balance_exhaustedは残高。project／organization_spend_limit_exceededは利用上限。レート制限とは別です。'],['429／rate limit','短時間の回数・トークン制限。表示された待機時間を守る。入金の繰り返しでは直らない場合があります。'],['接続はできたが画像が出ない','⑧⑨の権限・認証、選択モデルとエラー文を確認。モデル一覧の取得成功は描画成功の証明ではありません。'],['再読込後に未接続','このアプリのメモリー保持によるものです。保管したキーを再入力。制作途中の再読込は避けます。']])
+table([['症状・表示','確認と次の操作'],['Billingが見つからない','6ページの直リンク、またはSettings → Organization settings → Billing。組織とOwner権限も確認。'],['クレジットが反映されない','同じ組織へ購入したか確認し、数分待つ。購入成功の表示がなければ、重複購入する前にBillingを確認。'],['401／invalid_api_key','秘密キーの全文・前後の空白・失効・有効期限を確認。省略キーやProject IDでは接続できません。'],['403／permission denied','Projectの許可モデル、キー権限、本人確認、組織やProjectの所属を確認。入金だけでは解決しません。'],['organization must be verified','10・11ページ。正しい組織の本人確認と承認の反映を確認。承認時間の保証はありません。'],['model_not_found／モデル利用不可','モデル名・利用権限を確認。GPT-6 Astraと画像モデルは別に確認。現在の契約・審査で使えない可能性もあります。'],['429／残高・月額上限のエラー','credit_balance_exhaustedは残高。project／organization_spend_limit_exceededは利用上限。レート制限とは別です。'],['429／rate limit','短時間の回数・トークン制限。表示された待機時間を守る。入金の繰り返しでは直らない場合があります。'],['接続はできたが画像が出ない','⑧⑨の権限・認証、選択モデルとエラー文を確認。「安全基準による拒否」と表示された場合は、表示された理由と入力内容を確認してください。'],['再読込後に未接続','このアプリのメモリー保持によるものです。保管したキーを再入力。制作途中の再読込は避けます。']])
 p('解決しない場合は、操作番号・発生日時・モデル名・エラー文を控えて公式サポートへ。APIキー、本人確認書類、カード情報は公開しないでください。画面写真を共有するときは、個人情報を復元できない形で除きます。','small')
 link('OpenAI公式ヘルプ','https://help.openai.com/')
 

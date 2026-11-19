@@ -1,3 +1,7 @@
+# v8.0.9 release candidate
+
+The candidate includes Windows MCP build verification, image stream refusal messages, and the updated production skill. See [v8.0.9 release notes](docs/releases/v8.0.9.md).
+
 # v8.0.8 release candidate
 
 Super FURU AI 4-koma System v8.0.8 packages installed-version MCP startup, authorized idle pairing replacement, watermark-aware image review and the updated production skill. Release evidence follows the shared procedure in [deployment instructions](docs/deploy.md). Attach the accepted manga examples to release announcements, then run and verify the full backup. See [v8.0.8 release notes](docs/releases/v8.0.8.md).

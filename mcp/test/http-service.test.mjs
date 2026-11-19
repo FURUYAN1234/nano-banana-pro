@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {promises as fs} from 'node:fs';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -78,4 +80,42 @@ test('explicit local MCP pairing transfers only an idle browser and revokes its 
   assert.equal(service.jobs.client.id,'visible-new');
   assert.equal(service.jobs.jobs.size,0);
  }finally{await client?.close();await service?.close();await fs.rm(workspace,{recursive:true,force:true});}
+});
+
+test('the default Windows production workspace requires its verified installed runtime', {skip:process.platform!=='win32'}, async()=>{
+ const fixture=await fs.mkdtemp(path.join(process.env.MANGA_MCP_TEST_ROOT||os.tmpdir(),'manga-production-root-'));
+ const localAppData=path.join(fixture,'local-app-data');
+ const installRoot=path.join(localAppData,'SuperFURU-Manga');
+ const workspace=path.join(installRoot,'workspace');
+ const installed=path.join(installRoot,'versions','v8.0.8');
+ const development=path.join(fixture,'development');
+ const script=String.raw`
+  import {startMangaService} from './mcp/src/service.mjs';
+  const [workspace,appRoot]=process.argv.slice(1);
+  const service=await startMangaService({workspace,appRoot,port:0});
+  console.log(service.record.appVersion);
+  await service.close();
+ `;
+ const run=appRoot=>promisify(execFile)(process.execPath,['--input-type=module','-e',script,workspace,appRoot],{
+  cwd:fileURLToPath(new URL('../../',import.meta.url)),
+  env:{...process.env,LOCALAPPDATA:localAppData},
+ });
+ try{
+  for(const root of [development,installed]){
+   for(const dir of ['src','public','dist'])await fs.mkdir(path.join(root,dir),{recursive:true});
+   await fs.writeFile(path.join(root,'package.json'),'{"version":"8.0.8"}');
+  }
+  await assert.rejects(run(development),error=>/FURU_PRODUCTION_INSTALL_REQUIRED/.test(error.stderr));
+  await assert.rejects(promisify(execFile)(process.execPath,['mcp/src/server.mjs','--bridge','--workspace',workspace,'--port','0'],{
+   cwd:fileURLToPath(new URL('../../',import.meta.url)),
+   env:{...process.env,LOCALAPPDATA:localAppData},
+  }),error=>/Start the official installed version/.test(error.stderr));
+  await assert.rejects(fs.access(path.join(workspace,'local-service.json')),{code:'ENOENT'});
+  await fs.writeFile(path.join(installed,'verified-install.json'),'{"repository":"FURUYAN1234/nano-banana-pro","tag":"v8.0.8"}');
+  await assert.rejects(run(installed),error=>/APP_BUILD_STALE/.test(error.stderr));
+  const {runtimeFingerprint}=await import('../src/runtime-build.mjs');
+  const fingerprint=await runtimeFingerprint(installed);
+  await fs.writeFile(path.join(installed,'dist','mcp-runtime.json'),JSON.stringify({contractVersion:1,appVersion:'8.0.8',fingerprint}));
+  assert.equal((await run(installed)).stdout.trim(),'8.0.8');
+ }finally{await fs.rm(fixture,{recursive:true,force:true});}
 });

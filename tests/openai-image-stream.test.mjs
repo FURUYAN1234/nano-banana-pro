@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { readOpenAIImageStream, generateImageWithOpenAI, setOpenAIApiKey } from '../src/lib/openai.js';
+import { getApiErrorInfo, shouldStopApiFallback } from '../src/lib/api-errors.js';
 
 const streamResponse = (...events) => new Response(
   events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(''),
@@ -43,6 +44,24 @@ test('surfaces provider errors from the image stream', async () => {
     readOpenAIImageStream(response, () => {}),
     /image generation rejected/,
   );
+});
+
+test('classifies safety refusals from image edit streams with HTTP 200', async () => {
+  const errors = [
+    { message: 'Your request was rejected by the safety system. safety_violations=[violence, abuse].' },
+    { code: 'moderation_blocked', message: 'Image request rejected.' },
+  ];
+  for (const error of errors) {
+    await assert.rejects(
+      readOpenAIImageStream(streamResponse({type: 'error', error}), () => {}, {eventPrefix: 'image_edit'}),
+      failure => {
+        assert.equal(getApiErrorInfo(failure).kind, 'policy');
+        assert.equal(shouldStopApiFallback(failure), true);
+        if (error.code) assert.equal(failure.code, error.code);
+        return true;
+      },
+    );
+  }
 });
 
 test('does not report a partial image as a completed generation when the stream drops', async () => {

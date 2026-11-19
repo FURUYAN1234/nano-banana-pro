@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.0.8** / 現在のソース版: **v8.0.8**
+> Current source version: **v8.0.9** / 現在のソース版: **v8.0.9**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -165,6 +165,14 @@ One folder named for the book and its start time contains the page pairs, a `資
 The production skill normally puts the two standard footer credits on the final page only. The actual scenario model is retained when applying a book page or restoring its script after recognition, so the right footer uses the same formatter as ordinary single-page production. Unknown model provenance is not replaced with the selected setting. Optional page numbers appear separately at the bottom center. Explicit user settings take precedence. / 制作スキルの標準では、通常の左右2種類のウォーターマークを最終ページの下端だけに付けます。複数ページの適用と認識後の台本復元でも実際のシナリオ生成モデルを保持し、右下には通常1ページと同じ組立て処理を使います。生成元が不明な場合、選択中の設定値で代用しません。ページ番号は必要に応じて下中央へ分けて表示し、利用者から別の指定があればそちらを優先します。
 
 See the [MCP setup and operation guide](mcp/README.md), [portable production skill](mcp/skills/manga-book-production/SKILL.md) and [independent development boundary](mcp/ARCHITECTURE.md). The guide identifies current implementation status and provider limits; the ordinary hosted page alone does not launch a local MCP server. / 導入方法・現在の実装状況・プロバイダー別の制限はMCPガイドを参照してください。公開Webページを開くだけではローカルMCPは起動しません。
+
+Ordinary builds now generate MCP build metadata. The Windows production workspace checks the installation and build before opening. / 通常のビルドでMCPの照合情報も生成します。本番の保存領域を開く前に導入元とビルドの一致を確かめます。
+
+Image stream refusals are reported as safety refusals, with the provider error code preserved when available. / 画像APIのストリームで届く安全判定の拒否を正しく案内し、提供元のエラーコードがあれば保持します。
+
+The manga skill checks panel dimensions during lettering edits, the effect of overlapping foregrounds on adjacent panels, rear-view readability, and costume and prop continuity. / 漫画制作スキルに、文字だけを直すときのコマの寸法、隣のコマに重なる前景、後ろ姿の読みやすさ、ページをまたぐ衣装と小道具の確認を追加しました。
+
+The production checklist includes the final sharing decision. Uploads start with a file-chooser listener and end after the chooser is verified closed. / 完成作品のSNS掲載確認を手順に含め、画像添付はファイル選択の待ち受けから閉じたことの確認まで行います。
 
 ## Single-page design approach / 1ページ制作の設計方針
 
@@ -822,7 +830,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.8/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.8/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.0.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -886,7 +894,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.8 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.8 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.0.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.0.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -956,6 +964,13 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.0.9 (2026-11-19)
+
+- Ordinary builds now generate MCP build metadata. The Windows production workspace checks the installation and build before opening. / 通常のビルドでMCPの照合情報も生成します。本番の保存領域を開く前に導入元とビルドの一致を確かめます。
+- Image stream refusals are reported as safety refusals, with the provider error code preserved when available. / 画像APIのストリームで届く安全判定の拒否を正しく案内し、提供元のエラーコードがあれば保持します。
+- The manga skill checks panel dimensions during lettering edits, the effect of overlapping foregrounds on adjacent panels, rear-view readability, and costume and prop continuity. / 漫画制作スキルに、文字だけを直すときのコマの寸法、隣のコマに重なる前景、後ろ姿の読みやすさ、ページをまたぐ衣装と小道具の確認を追加しました。
+- The production checklist includes the final sharing decision. Uploads start with a file-chooser listener and end after the chooser is verified closed. / 完成作品のSNS掲載確認を手順に含め、画像添付はファイル選択の待ち受けから閉じたことの確認まで行います。
 
 ### v8.0.8 (2026-11-19)
 

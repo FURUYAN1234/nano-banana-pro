@@ -4,6 +4,7 @@ import * as z from 'zod/v4';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { verifyProductionRuntime } from './runtime-build.mjs';
 import { createHash } from 'node:crypto';
 import { ProjectStore, approvalHash } from './store.mjs';
 import { acquireWorkspaceLease } from './workspace-lease.mjs';
@@ -195,13 +196,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const option = process.argv.indexOf('--workspace');
   const workspace = option >= 0 ? process.argv[option + 1] : process.env.MANGA_MCP_WORKSPACE;
   try {
+    const appRoot = fileURLToPath(new URL('../../', import.meta.url));
+    await verifyProductionRuntime(workspace,appRoot);
     const store = await new ProjectStore(workspace).init();
     const lease = await acquireWorkspaceLease(store.root);
     const downloadsAt=process.argv.indexOf('--downloads');
     const downloadsDirectory=downloadsAt>=0?process.argv[downloadsAt+1]:undefined;
     if(downloadsDirectory&&(!path.isAbsolute(downloadsDirectory)||(await fs.lstat(downloadsDirectory)).isSymbolicLink()||!(await fs.stat(downloadsDirectory)).isDirectory()))throw new Error('--downloads must be an existing absolute directory without a symlink.');
     const jobs = await new JobQueue(store,{downloadsDirectory}).init();
-    const appRoot = fileURLToPath(new URL('../../', import.meta.url));
     const portAt = process.argv.indexOf('--port'), port = portAt >= 0 ? Number(process.argv[portAt + 1]) : 45931;
     const bridge = process.argv.includes('--bridge') ? await startBridge({ store, jobs, appRoot, distDirectory: path.join(appRoot, 'dist'), port }) : null;
     const server = createMangaMcpServer(store, { jobs, bridge });

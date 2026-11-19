@@ -93,6 +93,8 @@ Normal `npm ci` also installs the MCP dependencies in their separate directory. 
 
 Reinstall changed dependencies and rebuild after application updates. The MCP bridge checks that its served application matches the current source. / アプリのソースを更新した後も、依存関係を更新して `npm run mcp:build` を実行します。MCP用の起動画面は、ソースと一致しない古いビルドを拒否します。
 
+The normal build and MCP build both stamp the runtime. On Windows, Launch-Manga.cmd opens the production workspace from a verified installation. Give source builds a separate workspace so a rebuild cannot replace an active production runtime. / 通常ビルドとMCPビルドは、いずれも実行版の照合情報を生成します。Windowsの通常の制作環境は Launch-Manga.cmd から配布版で起動します。開発用のソースビルドには別のワークスペースを指定します。
+
 For a source checkout, use this direct-server entry instead of the managed Windows launcher. Building requires Node.js 22.12 or later, or 20.19 or later within the 20.x line, with npm. / ソースから実行する場合は、Windowsランチャーの代わりに次の直接起動設定を使えます。ビルドにはnpmとNode.js 22.12以上、または20系の20.19以上が必要です。
 
 ```json

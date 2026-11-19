@@ -9,19 +9,21 @@ import {JobQueue} from './jobs.mjs';
 import {acquireWorkspaceLease} from './workspace-lease.mjs';
 import {startBridge} from './bridge.mjs';
 import {createMangaMcpServer} from './server.mjs';
+import {verifyProductionRuntime} from './runtime-build.mjs';
 
 // One owner for HTTP clients and stdio adapters. This token authorizes only the
 // local service; provider credentials remain inside the browser session.
 export async function startMangaService({workspace,port=45931,downloadsDirectory,appRoot=fileURLToPath(new URL('../../',import.meta.url))}){
  if(!workspace||!path.isAbsolute(workspace))throw new Error('An absolute --workspace is required.');
  if(downloadsDirectory&&(!path.isAbsolute(downloadsDirectory)||(await fs.lstat(downloadsDirectory)).isSymbolicLink()||!(await fs.stat(downloadsDirectory)).isDirectory()))throw new Error('--downloads must be an existing absolute non-linked directory.');
+ const version=JSON.parse(await fs.readFile(path.join(appRoot,'package.json'),'utf8')).version;
+ await verifyProductionRuntime(workspace,appRoot,version);
  const store=await new ProjectStore(workspace).init();
  const lease=await acquireWorkspaceLease(store.root);
  let bridge,closeService;
  try{
   const jobs=await new JobQueue(store,{downloadsDirectory}).init();
   const token=randomBytes(32).toString('base64url'),instanceId=randomUUID();
-  const version=JSON.parse(await fs.readFile(path.join(appRoot,'package.json'),'utf8')).version;
   const handle=toNodeHandler(createMcpHandler(()=>createMangaMcpServer(store,{jobs,bridge})),{maxRequestBodySize:72_000_000});
   const identity={format:1,instanceId,workspace:store.root,appVersion:version,contractVersion:1,pid:process.pid};
   const connected=()=>Boolean(jobs.client&&Date.now()-jobs.client.seenAt<180000);

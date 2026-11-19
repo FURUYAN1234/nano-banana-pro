@@ -1,4 +1,5 @@
 import { diagnosticFetch as fetch } from './diagnostics.js';
+import { createApiError } from './api-errors.js';
 import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
@@ -150,7 +151,9 @@ export const readOpenAIImageStream = async (
     }
     if (event?.type === 'error' || event?.error) {
       const message = String(event.error?.message || event.message || 'OpenAI画像生成ストリームでエラーが発生しました。');
-      throw new Error(message.replace(/data:image\/[^\s"']+/g, '[image data omitted]'));
+      throw createApiError(message.replace(/data:image\/[^\s"']+/g, '[image data omitted]'), {
+        provider: 'openai', code: event.error?.code ?? event.code,
+      });
     }
     if (event?.type === `${eventPrefix}.partial_image`) {
       statCallback(`[OpenAI] 途中画像を受信しました (${Number(event.partial_image_index || 0) + 1})。最終画像を待機中...`);

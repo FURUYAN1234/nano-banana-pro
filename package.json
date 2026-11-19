@@ -2,7 +2,7 @@
   "license": "MIT",
   "name": "nano-banana-pro",
   "private": true,
-  "version": "8.0.8",
+  "version": "8.0.9",
   "homepage": "https://FURUYAN1234.github.io/nano-banana-pro",
   "type": "module",
   "scripts": {
@@ -17,9 +17,9 @@
     "version:up": "node scripts/update_version.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "postbuild": "node scripts/web-security.mjs --verify-dist",
+    "postbuild": "node scripts/web-security.mjs --verify-dist && node mcp/src/stamp-build.mjs",
     "postinstall": "node scripts/install_mcp_dependencies.mjs",
-    "mcp:build": "npm run build && node mcp/src/stamp-build.mjs",
+    "mcp:build": "npm run build",
     "mcp:test": "npm --prefix mcp test"
   },
   "dependencies": {
