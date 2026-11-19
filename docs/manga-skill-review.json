@@ -1,63 +1,57 @@
 {
   "format": 1,
-  "version": "8.0.8",
-  "skillSha256": "fe8b2d25bec60c88f8b6d9dc8834c104dfe425755b28361948a0c42718fe3cf1",
-  "sourceCommit": "619fc4fccb16f8410de66648138061e56666bbc2",
-  "reviewedAt": "2026-11-19T04:13:02.528Z",
-  "reviewedSince": "From v8.0.7 publication through both FURU production tests and author-credit correction on 2026-11-19.",
+  "version": "8.0.9",
+  "skillSha256": "6af71037ab05389c8ac0459fb4e820592109966e41b2eae4089080d51e53c9e6",
+  "sourceCommit": "79fca8957ab59d55ad5196778d6809adcb1c40e0",
+  "reviewedAt": "2026-11-19T07:36:40.243Z",
+  "reviewedSince": "Since v8.0.8, including three accepted pages of the monochrome book and the corresponding publication workflow on 2026-11-19.",
   "sources": [
-    "AI Hunter monochrome and color production notes with user choices, 2026-11-19.",
-    "Umbrella two-page mixed-style color production notes and final author-position edit b11953db-769e-462a-9843-fa989ea6cc23.",
-    "Observed local MCP connection outage and recovered normal path, including persistent saved pages and repaired pairing."
+    "User revisions and three accepted production PNGs for the monochrome book, saved on 2026-11-19.",
+    "Native MCP job refusal and subsequent successful revision, with production and social readback records.",
+    "Prior photo-picker incident visible in the user screenshot and local upload evidence."
   ],
   "findings": [
     {
       "disposition": "updated",
-      "observation": "Action was successful at strong perspective but needed clearer speed and ink.",
-      "rule": "Keep composition and add directional speed lines, focused blur and pressure-tapered marks where the action reads.",
-      "reason": "Preserves approved acting and perspective while conveying speed."
+      "observation": "A lettering edit made the final panel visibly smaller.",
+      "rule": "For local lettering edits retain panel boundaries and scale within the panel, with the original available for restoration.",
+      "reason": "Protects previously accepted composition."
     },
     {
       "disposition": "updated",
-      "observation": "Normal strokes disappeared against the color wash. POP already had suitable width.",
-      "rule": "Use readable pressure-tapered focal contours while retaining the specific media and finer facial detail.",
-      "reason": "Preserves distinct styles and makes normal panels legible at reading size."
-    },
-    {
-      "disposition": "already_covered",
-      "observation": "A scene intended to show a sleeve crossing initially showed mainly an umbrella and an extra rendering of a character.",
-      "rule": "Trace the connected character silhouette into the receiving panel and count its local characters separately.",
-      "reason": "Uses the existing observed-versus-intended breakout check."
+      "observation": "Long dash and white outline needed distinct treatment, and an unwanted line separated Japanese columns.",
+      "rule": "Read back the exact displayed text and use a glyph edge stroke when requested. Remove accidental rules.",
+      "reason": "Preserves wording and readable lettering."
     },
     {
       "disposition": "updated",
-      "observation": "A decisive romance panel appeared eye-level and reordered balloons briefly swapped their speakers.",
-      "rule": "Show matching perspective cues in figures and nearby forms, and verify balloon sequence and speaker attachment separately.",
-      "reason": "Tests the drawing and dialogue directly."
+      "observation": "A hooded back view was cropped or read as an implausible neck and shoulder silhouette.",
+      "rule": "Check head, hood, neck and shoulders in silhouette and maintain costume and story-prop continuity.",
+      "reason": "Preserves the intended subject and visual continuity."
     },
     {
       "disposition": "updated",
-      "observation": "Author credit appeared at the top of the final panel.",
-      "rule": "When requested, put author credit at the lower right and verify its wording, position and count. Use product watermarks only on the final page of a FURU-authored work by default.",
-      "reason": "Keeps independent credits, actual speech and page numbers readable."
+      "observation": "A spillover element and a crowd figure made the receiving panel ambiguous.",
+      "rule": "Check the foreground connection and the receiving panel story and character count separately.",
+      "reason": "Maintains panel continuity and local action."
     },
     {
       "disposition": "updated",
-      "observation": "A stale browser and its connection left a pending authorized production job.",
-      "rule": "Use normal installed startup and the in-chat browser. If the AI cannot operate the browser, ask for the actual pairing control and read back the same pending job.",
-      "reason": "Tracks the actual live browser, service, pairing and job independently."
+      "observation": "A social confirmation was missed and a file chooser had remained open.",
+      "rule": "Ask about sharing after final page approval, wait for the chooser before clicking Attach, and verify that it has closed before proceeding.",
+      "reason": "Tracks the actual sharing decision and avoids blocked work."
     }
   ],
   "checks": [
     {
-      "name": "Skill verification",
+      "name": "Installed and bundled skill",
       "result": "passed",
-      "evidence": "Official structure validation of installed and repository skills. Strict MCP and skill ZIP extraction validation. Installed skill differs only by the user-specific G-pen preference, which stays local."
+      "evidence": "Canonical skill validator passed both copies. Strict extraction verified 302 MCP files and 14 skill files. The installed copy differs by one local personal drawing preference."
     },
     {
-      "name": "Live production and visual comparison",
+      "name": "Production and build verification",
       "result": "passed",
-      "evidence": "Saved and visually compared accepted AI Hunter color and monochrome pages and Umbrella pages, including G-pen and author-credit edits, and verified PNG/JSON correspondence. Fresh compiled v8.0.8 pairing and pricing tests passed 38 of 38."
+      "evidence": "Compared retained production records with approved images and reviewed the v8.0.9 live authenticated MCP candidate. The target suite passed all 29 tests after the build."
     }
   ]
 }

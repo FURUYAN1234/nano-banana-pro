@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "a6e9366d4a4145d4d40a9b829e8093fc5f01257c0b4b3034c63565d4ffa87d67",
-  "manualVersion": "8.0.8",
-  "manualSourceSha256": "59d195ac111187e5ac1256009aea7ac87176888dc4827d900ffc33d4dc664270",
+  "manualVersion": "8.0.9",
+  "manualSourceSha256": "292df5462271bfe78f7a7e7d1ba8a7b8567eba1be79b465998341f540febc148",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "74713ee374c9173405bc80b8f64510ab1fcd1225267f3204f32a2ae96e453c36"
+      "sha256": "0fd7e6a41caac993aeb856dd38afb9dd5983ca280036087329b160bca7ae6596"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "cb9fe8d3e3ec9528170cd41a6fc0964c505d4bfa471f26899411f9bd3fd796c0"
+      "sha256": "8bb658af2f95e5f703eaab8a19ca30d415d3957c9cf17e8865310d858626b907"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "e9a7a3576c9d0cde9ad5c2164eebf8e92d1ca3debfdc2f3f5ab0e76baead3c61"
+      "sha256": "45cb8623e774d914c47244ae17164d1b636bbfe8ac331a95387d84c7f0df55b7"
     }
   ],
-  "readmeSha256": "b5642359e8960d51e52b1bdc7573f4f083b8c986e303ee2e8126a75ec6d2df65",
+  "readmeSha256": "f751f0d461e8b97526d470a04ea9032ce4b7bc33cabf3480ef4d8d6bed8bad4a",
   "readmeLanguageGaps": [],
-  "sourceTree": "6d02d8f6ecf15a46979b5d8b6f6fc2db30b31308",
-  "publicTree": "7a29bf753d76c4d4d24144fcc626c1a339356d40",
-  "packageSha256": "86a726c8d31552ea22f82ba146cd1902f830a369283f85d423162da676a021e3",
+  "sourceTree": "92880afdf9c6351bf1bd030863d71eb5dfad7879",
+  "publicTree": "3f531717ede9914f69bf02c6de270c0bf4200f5f",
+  "packageSha256": "cec73369d38112e94119e8191b0bb61fb1f73aff5a99d3f3d4eba857c284f1b2",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -42,24 +42,24 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "619fc4fccb16f8410de66648138061e56666bbc2",
-  "reviewedAt": "2026-11-19T04:13:02.528Z",
+  "sourceCommit": "79fca8957ab59d55ad5196778d6809adcb1c40e0",
+  "reviewedAt": "2026-11-19T07:36:40.243Z",
   "reviewedWorkingTree": false,
   "reviewStage": "candidate",
-  "findings": "Reviewed the prior approved README body and the full v8.0.8 delta against the candidate. The MCP section now describes installed-version startup, idle pairing, manual pairing fallback and production checks for G-pen, cameras and credits. Workflow image and three original manga pages remain in order. Pricing labels, API route descriptions, download names, Windows package contents, three manuals, workflow asset and release notes match v8.0.8. Historical version descriptions remain dated.",
-  "manualFindings": "Checked all 78 pages against v8.0.7 via full page-body rendering and version text. Reviewed the changed Gemini page 1 and full manual pages 19, 38 and 45 in the actual renders. Reviewed the v8.0.8 footer, installed-version startup, author credit and final-page watermark conditions, table wrapping and intact links. The OpenAI manual and all other body regions retained their prior layouts.",
+  "findings": "Reviewed the previously accepted README and the v8.0.9 changes against the built candidate. Version, Windows deployment, build verification, replayed provider refusal, skill changes, asset names and history agree. The workflow image and manga pages remain in their published order.",
+  "manualFindings": "Compared 78 PDF page bodies and checked all five changed pages visually: Gemini page 1, OpenAI page 17 and full manual pages 19, 33, 38. The narrow text changes describe startup verification, provider refusal and manga production rules, with intact wrapping and links.",
   "pricingReview": {
-    "version": "8.0.8",
+    "version": "8.0.9",
     "sourceSha256": "a6e9366d4a4145d4d40a9b829e8093fc5f01257c0b4b3034c63565d4ffa87d67",
-    "checkedAt": "2026-11-19T04:13:02.528Z",
+    "checkedAt": "2026-11-19T07:36:40.243Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Reviewed OpenAI short-context Standard scenario and Images Standard rates and Gemini Standard scenario and per-image rates on 2026-11-19. Current displays and README retain the verified rates, including Nano Banana 2.1 at $0.0336 for 1K. Batch and faster-tier tables are separate from the comparison."
+    "findings": "Reviewed the official OpenAI and Gemini pricing tables and unchanged Standard pricing definitions. Confirmed GPT-6.2 short-context Standard text rates, GPT Image 2.6 Standard image and text rates, and the Gemini 1K Standard rate in the current display. The separate batch rates were not substituted for Standard."
   },
   "apiValidation": {
-    "version": "8.0.7",
-    "scope": "The repaired live local service generated and saved the approved AI Hunter and Umbrella sample pages. The accepted right-bottom author credit edit used native MCP job b11953db-769e-462a-9843-fa989ea6cc23 and matching PNG, JSON and production manifest. The candidate pairing regression and compiled runtime tests use the v8.0.8 source."
+    "version": "8.0.9",
+    "scope": "Verified the compiled candidate via authenticated MCP HTTP from its isolated workspace and build stamp. The HTTP-200 refusal and successful revised request were observed in real v8.0.8 production; v8.0.9 regression tests replay refusal and valid stream behavior. No new paid image request was made against the candidate."
   }
 }
