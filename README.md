@@ -82,6 +82,16 @@ When image production is also requested, the scenario skill carries conditional 
 
 ![AI manga workflow from consultation to saved pages and optional SNS publication / 相談から保存・希望時のSNS投稿までを示すAI漫画制作の流れ](docs/assets/furu-manga-workflow.png)
 
+**Three-page manga: See how a page comes together / 白黒3ページで見る、漫画の制作工程**
+
+In “Super FURU AI 4-koma System — How a Comic Comes Together,” five characters show how gaze, backgrounds and panel breaks guide the reader. / 『Super FURU AI 4-koma System ― 漫画ができるまで、全部見せます。』では、いつもの5人が、視線や背景、コマ枠を越える演技を実演します。
+
+![Manga page 1 of 3 / 漫画・全3ページの第1ページ](docs/assets/furu-manga-production/page-1.png)
+
+![Manga page 2 of 3 / 漫画・全3ページの第2ページ](docs/assets/furu-manga-production/page-2.png)
+
+![Manga page 3 of 3 / 漫画・全3ページの第3ページ](docs/assets/furu-manga-production/page-3.png)
+
 Scenario and reference preparation may be revisited; rendering follows approval of the detailed plan. Saving is automatic: step 6 checks the saved PNG/JSON and displays all pages. Script-only consultation needs no MCP, and an ordinary single page can be made manually. / シナリオと資料は必要に応じて往復し、詳細案を確認してから画像化します。保存はアプリが自動で行い、⑥でPNG／JSONの保存結果を確認して全ページを再掲します。脚本相談だけならMCPは不要で、通常の1ページはアプリを手動でも制作できます。
 
 The manga skill presents the script, new character sheets and each saved page before asking for approval to move on. After the final page, it asks about social sharing and shows the proposed post before publishing. / 漫画制作スキルは台本、新しい人物資料、保存済みの各ページを示し、次へ進む前に採否を確認します。最終ページの後はSNS掲載の希望を伺い、具体的な投稿内容を示してから公開します。
