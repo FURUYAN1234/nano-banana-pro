@@ -57,4 +57,24 @@ $children=@()
 foreach($i in 1..2){$child=Microsoft.PowerShell.Management\Start-Process -FilePath 'powershell.exe' -ArgumentList $args -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $root ('concurrent-'+$i+'.out')) -RedirectStandardError (Join-Path $root ('concurrent-'+$i+'.err'));$null=$child.Handle;$children+=$child}
 foreach($child in $children){if(-not $child.WaitForExit(15000)){throw 'Concurrent fixture timed out'};$child.Refresh();if($child.ExitCode -ne 0){throw ('Concurrent launcher failed: '+[IO.File]::ReadAllText((Join-Path $root ('concurrent-'+([array]::IndexOf($children,$child)+1)+'.err'))))}}
 if(@(Get-Content -LiteralPath (Join-Path $concurrent 'installs.txt')).Count -ne 1 -or @(Get-Content -LiteralPath (Join-Path $concurrent 'starts.txt')).Count -ne 1){throw 'Concurrent launches duplicated installation or service'}
+# An existing verified install must cold-start through the ordinary MCP command
+# without checking GitHub. The fixtures never bind a real port.
+$script:InstallOnly=$false
+$script:Stdio=$true
+$script:FixtureService=$null
+function Read-LiveService([string]$Root){$script:FixtureService}
+function Start-Process {
+ param($FilePath,$ArgumentList,$WindowStyle,$RedirectStandardOutput,$RedirectStandardError)
+ if($ArgumentList[0] -notlike '*v8.0.1*mcp*src*service.mjs*'){throw 'Unexpected automatic startup version'}
+ $script:FixtureService=[pscustomobject]@{origin='http://127.0.0.1:1';appVersion='8.0.1'}
+}
+$before=$script:Lookups
+$script:FixtureVersion='8.0.0'
+Start-MangaLauncher
+if($script:Lookups -ne $before -or -not $script:FixtureService){throw 'Automatic MCP startup queried GitHub or failed to start'}
+$script:FixtureService=$null
+$script:InstallRoot=Join-Path $root 'empty-stdio'
+$rejected=$false
+try{Start-MangaLauncher}catch{$rejected=$_.Exception.Message -like '*Install the official app*'}
+if(-not $rejected -or $script:Lookups -ne $before -or $script:FixtureService){throw 'Automatic startup attempted first-time installation'}
 Write-Output ('BOOTSTRAP_LIFECYCLE_VERIFIED empty-install/same-version/update/old-preserved/offline/empty-offline-rejected/active-preserved root='+$root)

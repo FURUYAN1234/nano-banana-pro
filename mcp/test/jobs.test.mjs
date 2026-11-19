@@ -46,6 +46,30 @@ test('expired-client replacement interrupts the old attempt, rejects late succes
   await assert.rejects(jobs.resume(one.id, { expectedRevision: 1, idempotencyKey: 'resume' }), { code: 'COMPLETION_UNKNOWN' });
 });
 
+test('explicit idle handover targets the observed client and preserves the project without redispatching jobs', async () => {
+  const { store, project, jobs } = await fixture();
+  await assert.rejects(jobs.connect('browser-two', ['read_state'], [], { replaceIdleClientId: 'different-client' }), { code: 'HANDOVER_CLIENT_CHANGED' });
+  assert.equal(jobs.client.id, 'browser-one');
+
+  await jobs.connect('browser-two', ['read_state'], [], { replaceIdleClientId: 'browser-one' });
+  assert.equal(jobs.client.id, 'browser-two');
+  assert.throws(() => jobs.heartbeat('browser-one'), { code: 'BROWSER_NOT_CONNECTED' });
+  assert.deepEqual(await store.get(project.id), project);
+  assert.equal((await jobs.next('browser-two')).job, null);
+});
+
+test('explicit idle handover refuses queued and running work without mutating ownership', async () => {
+  const { project, jobs } = await fixture();
+  const work = await jobs.submit({ projectId: project.id, expectedRevision: 1, idempotencyKey: 'handover-busy', operation: 'read_state' });
+  const handover = () => jobs.connect('browser-two', ['read_state'], [], { replaceIdleClientId: 'browser-one' });
+  await assert.rejects(handover(), { code: 'HANDOVER_BUSY' });
+  const attempt = (await jobs.next('browser-one')).job;
+  await jobs.start('browser-one', { jobId: work.id, attemptId: attempt.attemptId });
+  await assert.rejects(handover(), { code: 'HANDOVER_BUSY' });
+  assert.equal(jobs.client.id, 'browser-one');
+  assert.equal(jobs.get(work.id).state, 'running');
+});
+
 test('unknown completion can be recovered from verified retained state or abandoned without another request', async () => {
   const { project, jobs } = await fixture();
   const one = await jobs.submit({ projectId: project.id, expectedRevision: 1, idempotencyKey: 'one', operation: 'read_state' });

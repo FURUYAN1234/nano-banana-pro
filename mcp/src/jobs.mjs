@@ -52,10 +52,16 @@ export class JobQueue {
         expectedRevision, keyHash, requestHash, state: this.client ? 'queued' : 'waiting_for_connection', createdAt: now, updatedAt: now };
       await this.save(job); this.jobs.set(job.id, job); return this.summary(job);
   }
-  async connect(clientId, operations, features=[]) {
+  async connect(clientId, operations, features=[], { replaceIdleClientId } = {}) {
     return this.exclusive(async () => {
     if(this.closing)throw new MangaControlError('SERVICE_STOPPING','This service is shutting down; reconnect to the next healthy instance.');
-    if (this.client && this.client.id !== clientId && Date.now() - this.client.seenAt < 180000) throw new MangaControlError('BROWSER_ALREADY_CONNECTED', 'Disconnect the currently paired application before replacing it.');
+    if (replaceIdleClientId !== undefined) {
+      if (this.client && this.client.id !== replaceIdleClientId) throw new MangaControlError('HANDOVER_CLIENT_CHANGED', 'The paired application changed. Obtain a new pairing URL before switching.');
+      const pending = [...this.jobs.values()].some(job => !terminal.has(job.state) || (job.state === 'interrupted' && !job.recoveryAcknowledged));
+      if (pending) throw new MangaControlError('HANDOVER_BUSY', 'Finish pending work and resolve unknown results before switching applications.');
+    } else if (this.client && this.client.id !== clientId && Date.now() - this.client.seenAt < 180000) {
+      throw new MangaControlError('BROWSER_ALREADY_CONNECTED', 'Disconnect the currently paired application or request an explicit idle handover.');
+    }
     if (this.client && this.client.id !== clientId) {
       for (const job of this.jobs.values()) if (job.clientId === this.client.id && ['running', 'cancelling'].includes(job.state)) {
         job.state = job.executionStarted===false?'cancelled':'interrupted'; job.error = { code: job.executionStarted===false?'NOT_STARTED':'COMPLETION_UNKNOWN', message: 'The prior application connection expired. Inspect retained state and explicitly resume acknowledged unknown work; late results cannot replace another attempt.' }; await this.save(job);

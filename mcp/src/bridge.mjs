@@ -30,6 +30,7 @@ export async function startBridge({ store, jobs, appRoot, distDirectory, port = 
       if (url.pathname.startsWith('/mcp-bridge/')) {
         const token = String(req.headers.authorization ?? '').replace(/^Bearer /, '');
         const pairingRequest = url.pathname === '/mcp-bridge/connect';
+        const offeredPairing = pairingRequest ? pairing : null;
         if (pairingRequest ? !pairing || pairing.expiresAt < Date.now() || !equal(token, pairing.token) : !session || session.expiresAt < Date.now() || !equal(token, session.token)) return json(401, { error: { code: 'PAIRING_REQUIRED', message: 'Obtain a fresh connection URL through manga_connection.' } });
         if(url.pathname.startsWith('/mcp-bridge/asset/')&&req.method==='GET'){
           const id=url.pathname.slice('/mcp-bridge/asset/'.length),transfer=session.transfer;
@@ -50,8 +51,10 @@ export async function startBridge({ store, jobs, appRoot, distDirectory, port = 
           if (!(await readRuntimeBuild(appRoot, distDirectory)).current) throw new MangaControlError('APP_BUILD_STALE', 'Rebuild the current source with npm run mcp:build; stale UI runtimes are not accepted.');
           if (body.contractVersion !== 1 || typeof body.clientId !== 'string' || !Array.isArray(body.operations) || body.operations.some(x => typeof x !== 'string')) throw new MangaControlError('CONTRACT_MISMATCH', 'The connected application has an incompatible bridge contract.');
           const features=Array.isArray(body.features)&&body.features.includes(ASSET_REFS_FEATURE)?[ASSET_REFS_FEATURE]:[];
-          await jobs.connect(body.clientId, body.operations,features);
-          session = { token: secret(), clientId: body.clientId,features, expiresAt: Date.now() + 8 * 60 * 60 * 1000 }; pairing = null;
+          if (offeredPairing !== pairing || offeredPairing.expiresAt < Date.now()) throw new MangaControlError('PAIRING_REQUIRED', 'Obtain a fresh connection URL through manga_connection.');
+          await jobs.connect(body.clientId, body.operations,features, {replaceIdleClientId:offeredPairing.replaceIdleClientId});
+          session = { token: secret(), clientId: body.clientId,features, expiresAt: Date.now() + 8 * 60 * 60 * 1000 };
+          if (pairing === offeredPairing) pairing = null;
           return json(200, { token: session.token, expiresAt: session.expiresAt,features });
         }
         if (url.pathname === '/mcp-bridge/next' && req.method === 'GET') {const value=await jobs.next(session.clientId);if(value.job)session.transfer=value.job.assetTransfer;return json(200,value);}
@@ -81,10 +84,10 @@ export async function startBridge({ store, jobs, appRoot, distDirectory, port = 
     // The authorized shutdown has already drained active jobs. A desktop MCP
     // client's open event stream must not keep the old workspace owner alive.
     server.closeAllConnections();
-  }), async connection() {
+  }), async connection({ replaceIdle = false } = {}) {
     const build = await readRuntimeBuild(appRoot, distDirectory);
     if (!build.current) return { connected: false, requiresBuild: true, build, command: 'npm run mcp:build' };
-    pairing = { token: secret(), expiresAt: Date.now() + 10 * 60 * 1000 };
+    pairing = { token: secret(), expiresAt: Date.now() + 10 * 60 * 1000, ...(replaceIdle ? {replaceIdleClientId: jobs.client?.id ?? null} : {}) };
     return { url: `${origin}/nano-banana-pro/#mcp=${pairing.token}`, expiresAt: pairing.expiresAt, connected: Boolean(session), note: 'Open this same-origin local application, explicitly enable MCP, and enter API keys only in its normal connection UI.' };
   } };
 }

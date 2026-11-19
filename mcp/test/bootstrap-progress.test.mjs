@@ -85,7 +85,7 @@ Copy-Item -LiteralPath $Bootstrap -Destination (Join-Path $target 'bootstrap.ps1
 [IO.File]::WriteAllText((Join-Path $target 'Launch-Manga.cmd'),'current')
 Sync-MangaLauncher $incoming $target
 if([IO.File]::ReadAllText((Join-Path $target 'Launch-Manga.cmd')) -ne 'current'){throw 'Repaired launcher was downgraded'}
-[IO.File]::WriteAllText((Join-Path $incoming 'bootstrap.ps1'),'$script:LauncherRevision=2')
+[IO.File]::WriteAllText((Join-Path $incoming 'bootstrap.ps1'),('$script:LauncherRevision='+($script:LauncherRevision+1)))
 Sync-MangaLauncher $incoming $target
 if([IO.File]::ReadAllText((Join-Path $target 'Launch-Manga.cmd')) -ne 'old'){throw 'Newer launcher did not update'}
 Write-Output 'FAST_START_AND_LAUNCHER_UPDATE_VERIFIED'

@@ -42,3 +42,40 @@ test('one authenticated HTTP service serves official SDK clients and refuses hos
   assert.equal(restarted.structuredContent.connection.status,'not_connected');
  }finally{await adapter?.close();await client?.close();await service?.close();await fs.rm(workspace,{recursive:true,force:true});}
 });
+
+test('explicit local MCP pairing transfers only an idle browser and revokes its former session',async()=>{
+ const root=process.env.MANGA_MCP_TEST_ROOT||os.tmpdir();
+ await fs.mkdir(root,{recursive:true});
+ const workspace=await fs.mkdtemp(path.join(root,'manga-handover-'));
+ await fs.mkdir(path.join(workspace,'downloads'));
+ let service,client;
+ try{
+  service=await startMangaService({workspace,port:0,downloadsDirectory:path.join(workspace,'downloads')});
+  const {origin,token}=service.record;
+  client=new Client({name:'local-handover-regression',version:'1.0.0'});
+  await client.connect(new StreamableHTTPClientTransport(new URL('/mcp',origin),{requestInit:{headers:{Authorization:`Bearer ${token}`}}}));
+  const makeOffer=async (args={})=>{
+   const result=await client.callTool({name:'manga_connection',arguments:args});
+   assert.notEqual(result.isError,true);
+   return new URLSearchParams(new URL(result.structuredContent.url).hash.slice(1)).get('mcp');
+  };
+  const post=(route,key,body)=>fetch(new URL('/mcp-bridge/'+route,origin),{
+   method:'POST',headers:{Origin:origin,Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(body),
+  });
+  const body=clientId=>({clientId,contractVersion:1,operations:['read_state']});
+  const old=await post('connect',await makeOffer(),body('visible-old'));
+  assert.equal(old.status,200);
+  const oldSession=(await old.json()).token;
+  const ordinary=await post('connect',await makeOffer(),{...body('visible-new'),replaceIdle:true});
+  assert.equal((await ordinary.json()).error.code,'BROWSER_ALREADY_CONNECTED');
+  assert.equal((await post('heartbeat',oldSession,{})).status,200);
+
+  const handover=await post('connect',await makeOffer({replaceIdle:true}),body('visible-new'));
+  assert.equal(handover.status,200);
+  const newSession=(await handover.json()).token;
+  assert.equal((await post('heartbeat',newSession,{})).status,200);
+  assert.equal((await post('heartbeat',oldSession,{})).status,401);
+  assert.equal(service.jobs.client.id,'visible-new');
+  assert.equal(service.jobs.jobs.size,0);
+ }finally{await client?.close();await service?.close();await fs.rm(workspace,{recursive:true,force:true});}
+});

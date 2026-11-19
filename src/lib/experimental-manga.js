@@ -10,7 +10,7 @@ import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, no
 import { translateMonochromeCompilerRules } from './monochrome-compiler-prose.js';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_FOCAL_READABILITY, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
-import { buildRenderOptionsContract, buildRenderOptionsQa, buildProtectedCastContract, allowsWatermarkOverlap, COPYRIGHT_MOSAIC_TARGET_SCOPE, pageTitleSuppression } from './render-options.js';
+import { buildRenderOptionsContract, buildRenderOptionsQa, readRenderOptions, buildProtectedCastContract, allowsWatermarkOverlap, COPYRIGHT_MOSAIC_TARGET_SCOPE, pageTitleSuppression } from './render-options.js';
 import { createApiError, formatApiErrorDetails, getApiErrorInfo, sanitizeErrorMessage } from './api-errors.js';
 import { selectImageQualityCandidate, runPageImageQuality, isMaterialImageQualityIssue } from './image-quality-failsafe.js';
 import { inspectImageDimensions, extractNativeImageRegion, inspectVariablePanelFrames } from './manga-page-layout.js';
@@ -910,7 +910,9 @@ export function buildExperimentalReviewPrompt(plan, source, options={}) {
   const left = footerLine.match(/Bottom-left EXACTLY ("(?:\\.|[^"\\])*")/)?.[1];
   const right = footerLine.match(/Bottom-right EXACTLY ("(?:\\.|[^"\\])*")/)?.[1];
   const titleKnown = Boolean(titleMatch) || options.finalPrompt.includes('NO PAGE TITLE:');
-  const footerKnown = Boolean(left && right) || options.finalPrompt.includes('No watermark or footer text;');
+  // Compacted prompts can rephrase the footer prose; the render contract is stable.
+  const footerDisabled = !readRenderOptions(options.finalPrompt).showWatermarks;
+  const footerKnown = Boolean(left && right) || footerDisabled || options.finalPrompt.includes('No watermark or footer text;');
   const pageTextContract = titleKnown && footerKnown
     ? `Title required EXACTLY ${titleMatch?.[1] || 'null'}. Footer expected exact text: ${left && right ? JSON.stringify({left:JSON.parse(left),right:JSON.parse(right)}) : 'null'} (null means no footer).\n`
     : '';

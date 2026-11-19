@@ -20,7 +20,7 @@ $ProgressPreference='SilentlyContinue'
 foreach($module in @('Microsoft.PowerShell.Utility','Microsoft.PowerShell.Management')){Import-Module (Join-Path $PSHOME ('Modules/'+$module+'/'+$module+'.psd1')) -ErrorAction Stop}
 $script:Repository='FURUYAN1234/nano-banana-pro'
 $script:AssetName='SuperFURU-Manga-MCP.zip'
-$script:LauncherRevision=2
+$script:LauncherRevision=3
 function Write-MangaStatus([string]$Message){
  # Keep stdout exclusively for the MCP stdio protocol and function results.
  [Console]::Error.WriteLine(('[{0:HH:mm:ss}] {1}' -f (Get-Date),$Message))
@@ -236,6 +236,22 @@ function Set-OwnedShortcut([string]$Launcher){
   $link.TargetPath=$Launcher;$link.WorkingDirectory=Split-Path $Launcher;$link.Description='SuperFURU Manga managed launcher';$link.Save()
  }catch{[Console]::Error.WriteLine('Desktop shortcut was not created; existing files were preserved. The app can still start. '+$_.Exception.Message)}
 }
+function Find-VerifiedMangaInstall([string]$Root){
+ $versions=Join-Path $Root 'versions'
+ Assert-PlainPath $versions
+ if(-not(Test-Path -LiteralPath $versions -PathType Container)){return $null}
+ $candidates=Get-ChildItem -LiteralPath $versions -Directory |
+  Where-Object {$_.Name -match '^v\d+\.\d+\.\d+$'} |
+  Sort-Object {[version]$_.Name.Substring(1)} -Descending
+ foreach($candidate in $candidates){
+  try{
+   if(Read-VerifiedInstall $candidate.FullName -MetadataOnly){return $candidate.FullName}
+  }catch{
+   # Ignore incomplete or invalid installations and check the next local version.
+  }
+ }
+ return $null
+}
 function Start-MangaLauncher {
  Write-MangaStatus 'AI四コマの起動準備中 / Preparing Super FURU Manga'
  $root=Get-CanonicalPath $InstallRoot;Assert-PlainPath $root;New-Item -ItemType Directory -Path $root -Force|Out-Null
@@ -275,12 +291,20 @@ function Start-MangaLauncher {
    if($Stdio){$node=Get-NodeExecutable $root;$version=Join-Path (Join-Path $root 'versions') ('v'+$live.appVersion);$null=Read-VerifiedInstall $version -MetadataOnly;& $node (Join-Path $version 'mcp/src/http-stdio-adapter.mjs') --workspace $ws;return}
    if(-not $NoOpen){Write-MangaStatus 'ブラウザーを開いています / Opening the browser';Start-Process ($live.origin+'/nano-banana-pro/')};Write-MangaStatus '起動完了 / Ready';return
   }
-  $node=Get-NodeExecutable $root
-  try{$version=Install-OfficialRelease $root $node}catch{
-   Write-MangaStatus '最新版を準備できませんでした。導入済みの版を確認します / Checking an installed version after update failure'
-   $failure=$_;$version=$null;$versions=Join-Path $root 'versions'
-   if(Test-Path -LiteralPath $versions){foreach($dir in (Get-ChildItem -LiteralPath $versions -Directory|Where-Object {$_.Name -match '^v\d+\.\d+\.\d+$'}|Sort-Object {[version]$_.Name.Substring(1)} -Descending)){try{if(Read-VerifiedInstall $dir.FullName -MetadataOnly){$version=$dir.FullName;break}}catch{}}}
-   if(-not $version){throw $failure};[Console]::Error.WriteLine('Latest release could not be obtained; using a previously installed release.')
+  if($Stdio -and -not ($Update -or $InstallOnly)){
+   Write-MangaStatus '導入済みのアプリを確認中 / Checking the installed app'
+   $version=Find-VerifiedMangaInstall $root
+   if(-not $version){throw 'Install the official app with Launch-Manga.cmd before using its MCP server.'}
+   $node=Get-NodeExecutable $root
+  }else{
+   $node=Get-NodeExecutable $root
+   try{$version=Install-OfficialRelease $root $node}catch{
+    Write-MangaStatus '最新版を準備できませんでした。導入済みの版を確認します / Checking an installed version after update failure'
+    $failure=$_
+    $version=Find-VerifiedMangaInstall $root
+    if(-not $version){throw $failure}
+    [Console]::Error.WriteLine('Latest release could not be obtained; using a previously installed release.')
+   }
   }
   $launcherRoot=Join-Path $root 'launcher';New-Item -ItemType Directory -Path $launcherRoot -Force|Out-Null
   $verifiedSkill=Join-Path $version 'mcp/skills/manga-book-production'

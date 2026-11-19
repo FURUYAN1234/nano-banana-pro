@@ -1,3 +1,7 @@
+# v8.0.8 release candidate
+
+Super FURU AI 4-koma System v8.0.8 packages installed-version MCP startup, authorized idle pairing replacement, watermark-aware image review and the updated production skill. Release evidence follows the shared procedure in [deployment instructions](docs/deploy.md). Attach the accepted manga examples to release announcements, then run and verify the full backup. See [v8.0.8 release notes](docs/releases/v8.0.8.md).
+
 # v8.0.7 release candidate
 
 Super FURU AI 4-koma System v8.0.7 bundles the updated manga production skill. The new checks cover carrying forward accepted details during revisions, tracing the grip and tool in perspective, reading decisive action without lettering, and recording intended and visible effects in technique samples. The skill also covers last-page credits, pointing gestures, and camera preflight.
