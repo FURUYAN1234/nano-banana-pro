@@ -692,10 +692,12 @@ body {
 .system-header-with-diagnostics { background:#0f1115; }
 .diagnostic-slot { width:100%; margin:0 auto; }
 .diagnostic-panel { box-sizing:border-box; width:100%; max-height:min(42dvh,var(--diagnostic-available-height,42dvh)); margin:12px 0 20px; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; border:1px solid #475569; border-radius:8px; background:#0f1723; color:#cbd5e1; text-align:left; }
+.diagnostic-panel--connection { position:fixed; z-index:100000; inset:auto 12px 12px; width:auto; margin:0; max-height:55dvh; }
 .diagnostic-header { position:sticky; top:0; z-index:1; display:flex; align-items:center; gap:16px; padding:10px 14px; border-bottom:1px solid #334155; background:#0f1723; }
 .diagnostic-header h2 { margin:0; font-size:14px; font-weight:700; line-height:1.5; }
 .diagnostic-content { padding:10px 14px; }
 .diagnostic-content p { margin:0 0 6px; font-size:12px; line-height:1.45; overflow-wrap:anywhere; }
+.diagnostic-review-notice { padding:8px 10px; border-left:3px solid #93c5fd; background:#172334; color:#e2e8f0; }
 .diagnostic-error-notice { padding:8px 10px; border-left:3px solid #fbbf24; background:#30291a; color:#fde68a; }
 .diagnostic-actions { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
 .diagnostic-json { box-sizing:border-box; margin:0; padding:12px; border:1px solid #94a3b8; background:#fff; color:#111; font:12px/1.5 monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
@@ -792,5 +794,10 @@ body {
 @media(min-width:721px) { .workflow-document-tools { top:20px; justify-content:flex-start; } }
 @media(max-width:720px) { .workflow-document-tools { top:68px; right:12px; justify-content:center; } .workflow-header-row { padding-top:172px; } }
 @media(max-width:480px) { .workflow-document-links { justify-content:center; gap:8px; } .workflow-document-tools { column-gap:20px; } .workflow-header-row { padding-top:204px; } }
+@media(max-width:900px) {
+  body:has(.api-key-overlay) .workflow-document-tools { top:12px; }
+  .api-key-overlay { --connection-tools-space:136px; padding-top:var(--connection-tools-space); }
+  .api-key-modal { max-height:calc(100dvh - var(--connection-tools-space) - 24px); }
+}
 
 .mcp-corner-status.mcp-corner-connected { color:#f87171; font-size:16px; font-weight:800; line-height:20px; }

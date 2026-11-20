@@ -1,4 +1,4 @@
-import { OPENAI_IMAGE_PROMPT_MAX_CHARS, assertImagePromptBudget } from './image-prompt-budget.js';
+import { OPENAI_IMAGE_PROMPT_MAX_CHARS, assertImagePromptBudget, normalizeImagePromptForMultipart } from './image-prompt-budget.js';
 import { COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
 import { OPENAI_IMAGE_INPUT_LIMIT } from './image-input-budget.js';
 import { describeReferenceAsset, getReferenceAsset, buildReferenceAssetRules, getReferenceMetadataRole, CHARACTER_REFERENCE_IDENTITY_RULE } from './reference-assets.js';
@@ -7,6 +7,12 @@ import { MONOCHROME_INK_ECONOMY } from './manga-render-mode.js';
 
 export { OPENAI_IMAGE_INPUT_LIMIT };
 export const OPENAI_IMAGE_DATA_URL_MAX_CHARS = 20971520;
+export const usesOpenAIImageMultipart = (imageInputs = []) =>
+  imageInputs.some(image => image.image_url.length > OPENAI_IMAGE_DATA_URL_MAX_CHARS);
+
+export function measureOpenAIImagePrompt(prompt, imageInputs) {
+  return usesOpenAIImageMultipart(imageInputs) ? normalizeImagePromptForMultipart(prompt).length : prompt.length;
+}
 // JSON image_url has a character limit; multipart files have a separate byte
 // limit. A full-resolution generated PNG must not be resized to fit JSON.
 export const OPENAI_IMAGE_FILE_MAX_BYTES = 50_000_000;
@@ -152,9 +158,11 @@ export function stripImageReferenceManifest(prompt) {
 }
 
 export function appendOpenAIReferencePrompt(prompt, plan) {
-  return assertImagePromptBudget(appendOpenAIWebReferencePrompt(prompt, plan));
+  const result = appendOpenAIWebReferencePrompt(prompt, plan);
+  assertImagePromptBudget(usesOpenAIImageMultipart(plan.imageInputs) ? normalizeImagePromptForMultipart(result) : result);
+  return result;
 }
 
 export function getOpenAIPromptBodyBudget(plan) {
-  return OPENAI_IMAGE_PROMPT_MAX_CHARS - (plan.rolePrompt ? plan.rolePrompt.length + 2 : 0);
+  return OPENAI_IMAGE_PROMPT_MAX_CHARS - (plan.rolePrompt ? measureOpenAIImagePrompt(`\n\n${plan.rolePrompt}`, plan.imageInputs) : 0);
 }

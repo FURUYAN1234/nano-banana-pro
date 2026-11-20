@@ -208,6 +208,8 @@ After saving and showing the finished pages, the workflow asks once about social
 
 The bundled skill describes the production workflow. Install the entire skill directory in your client's supported skill location; the MCP server configuration is separate. / [manga-book-production/SKILL.md](skills/manga-book-production/SKILL.md)が、資料の確認から承認・連続生成・保存までの進行を記述しています。スキル対応クライアントでは、このフォルダー一式をクライアント所定のスキル配置先へ登録してください。MCP設定は別途必要です。
 
+The distributed manga skill uses the work’s author credit, watermark preferences, and accurate AI-production disclosure. Social links are included when the user chooses them for the post. The optional, separately maintained personal preferences file is retained by the skill updater. / 配布スキルは作品ごとの作者表記・製品ウォーターマーク・実際のAI制作工程に従います。SNSには利用者が選んだリンクを添えます。導入先で別途作った個人設定ファイルはスキル更新時に引き継がれます。
+
 Skill-only updates also enter the deployment workflow. The app bundle and separate skill ZIP use the same reviewed source; release announcements include relevant reference images showing the change. Publication still requires valid authorization for that release. / スキルだけの更新もデプロイ対象です。アプリ同梱版と単体スキルZIPは見直し済みの同じ正本から作り、公開更新の告知には変更内容が分かる参考画像を添えます。公開は、その版への有効な許可に従います。
 
 Clients without skill installation can use the MCP prompt and resource instead. / スキルをインストールできないクライアントにも、MCPプロンプト `manga_book_workflow` とリソース `manga://skills/book-production` で同じ進め方を渡せます。

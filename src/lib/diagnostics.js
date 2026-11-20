@@ -18,6 +18,7 @@ const eventLabels = Object.freeze({'session.start':'画面の起動', 'workflow.
   'runtime.error':'画面の実行時エラー', 'react.error':'画面描画のエラー', 'workflow.cancel':'利用者による中断',
   'workflow.warning':'処理を継続する検査指摘', 'workflow.review':'台本の品質検査結果', 'image.review':'画像の品質検査と修正結果'});
 const applicationSpec = Object.freeze({
+  diagnosticPanel:'調査ログのボタンを利用者やAIが押して開いた場合は確認用の表示。アプリが新たなエラーを検出して自動で開いた場合はエラー検出を表示する。確認中に新たなエラーを検出した場合もエラー検出の表示に切り替わる。',
   balloonCoordinates:'台本生成・構成監査・配置修復・描画指示は同じBalloonLayout契約を使用。speaker/x/anchor/routeが必須、yのみ任意。x/yは各コマ内の0〜1の座標で、PageCompositionのページ全体座標へ直接比較しない。途中ページに独立した結末は要求せず、人物・動作・話者・読順の実害は引き続き検査する。',
   purpose:'参照画像の解析またはSTEP1人物設定テキストから、台本と描画指示を作成して漫画画像を生成するブラウザーアプリ。',
   textOnlyCast:'人物画像がない場合、STEP1の名前・外見・服装等を人物の基準にしてAPI/Web共通の描画指示へ渡す。背景・小物・描法見本は人物シートとみなさない。Story Makerの人物設定はSTEP1、台本はSTEP2へ貼り、STEP3で指示文を構築する。画像がある場合は現在の参照対応を保持し、画像がない場合は架空の添付を要求しない。',
@@ -63,7 +64,7 @@ const investigationGuide = Object.freeze({
     'image.reviewは画像検査と修正の最終採否。passedだけが検査合格で、repaired_unverifiedは修正出力を受信したが再検査していない状態。repair_failedは修正失敗。送信前の上限超過にもerrorCode・promptLength・promptMaxCharsとfailureContextの台本・指摘・観察を保存する。image.letteringとsettings.local_letteringは、撤回済みの旧候補の文字上書き記録であり、現在の通常処理は画像APIの文字を保持する。',
     '白黒の線の密度を調べる場合は、通常生成と部分修正を区別し、通常コマの線整理と劇画等の意図的なカケアミを混同しない。肌・素材トーンや台詞・カメラの維持は実画像で別に確認する。',
     '失敗イベントのfailureContextには、その実行開始時の台本・人物設定・入力・描画指示を記録する。吹き出し修復失敗には修復応答・各コマの抽出台詞・具体的な不一致も付く。STEP3の文字数超過には、step3_image_prompt_budgetとして組立後の候補全文も残す。STEP2の品質検査不合格には、step2_scenario_validationとして実際に不合格になった生成候補とvalidationErrorの判定理由を残す。実行開始時に表示されていた前の台本とは区別する。originalLengthsとtruncatedFieldsで省略を確認し、再読み込み後の別台本と混同しない。一般API本文・任意の例外全文は保存しない。4〜8コマも台詞なしの品質警告は原文を保持して継続し、配置だけの修復後にも同じ条件を使う。壊れた台詞はDIALOGUE_SYNTAX、コマ構造の不備はPANEL_STRUCTURE_CONTRACTで停止する。旧版で保存されなかった本文は復元できない。',
-    'IMAGE_PROMPT_BUDGETは描画指示が文字数上限を超えたときの検証エラー。promptLengthとpromptMaxCharsを照合する。参照説明分を予約した本文上限は32,000文字より小さくなる。',
+    'IMAGE_PROMPT_BUDGETは描画指示が文字数上限を超えたときの検証エラー。promptLengthとpromptMaxCharsを照合する。参照説明分を予約した本文上限は32,000文字より小さくなる。高解像度画像をファイルで添付する通信では、改行がCRLFになった送信時の文字数で判定し、requestPromptLengthにも同じ長さを記録する。',
     'REFERENCE_ANALYSIS_INVALIDは素材解析結果の対応検証で発生する。HTTP成功後にも起こり得る。ログのコードだけでは具体的な不一致を断定せず、画面の解析エラーと対象版の人物名・画像番号等の検証処理を照合する。',
     'DOCUMENTARY_SOURCE_FIDELITYは事実本文の数値・重要語句・語句網羅の検査で発生する。自由入力の制作指示を本文と誤認していないか、実入力と画面の失敗理由を対象版の本文選択処理へ照合する。コードだけで生成物の事実欠落と断定しない。',
     'ログにない本文・画像・実際の保存完了や、消えた古い記録は推測で補わない。必要な場合だけ再現手順・短い症状・対象版のソースや成果物を求める。'],

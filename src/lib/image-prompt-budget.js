@@ -2,6 +2,9 @@
 // This is the API limit, not a claim about ChatGPT's composer or file size limit.
 export const OPENAI_IMAGE_PROMPT_MAX_CHARS = 32000;
 
+// Multipart string fields are serialized with CRLF per the HTML form encoding rules.
+export const normalizeImagePromptForMultipart = prompt => prompt.replace(/\r\n|\r|\n/g, '\r\n');
+
 export function assertImagePromptBudget(prompt, maxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS) {
   if (!Number.isInteger(maxChars) || maxChars < 1 || maxChars > OPENAI_IMAGE_PROMPT_MAX_CHARS) {
     throw new Error('画像生成プロンプトの文字数上限が不正です。');

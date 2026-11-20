@@ -26,7 +26,7 @@ import { buildImageEditRequest } from '../lib/image-edit.js';
 import { readPanelStyleEditFrames, preparePanelStyleEdit, composePanelStyleEdit } from '../lib/panel-style-edit.js';
 import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
-import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt, getOpenAIPromptBodyBudget, stripImageReferenceManifest} from '../lib/openai-image-references.js';
+import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt, getOpenAIPromptBodyBudget, measureOpenAIImagePrompt, stripImageReferenceManifest} from '../lib/openai-image-references.js';
 import { assertImagePromptBudget } from '../lib/image-prompt-budget.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
 import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildRecognitionEditorText, parseRecognitionEditorText, parseCharacterEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers, editReferenceAsset } from '../lib/reference-assets.js';
@@ -2718,6 +2718,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         }),
         repairSourceMode: isOpenAIEngine ? 'source-image' : 'regenerate',
         repairPromptMaxChars: isOpenAIEngine ? getOpenAIPromptBodyBudget(repairReferencePlan) : GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
+        measureRepairPrompt: repairReferencePlan
+          ? prompt => measureOpenAIImagePrompt(prompt, repairReferencePlan.imageInputs)
+          : undefined,
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
       });
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;

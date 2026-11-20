@@ -478,6 +478,7 @@ function App() {
       <ControlBar
         embedded
         diagnosticHost={diagnosticHost}
+        connectionDialogOpen={showModal || showOpenAIKeyModal}
         analysisModelId={analysisModelId}
         scenarioModelId={scenarioModelId}
         promptModelId={promptModelId}

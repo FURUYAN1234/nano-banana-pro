@@ -1,3 +1,7 @@
+# v8.1.0 release candidate
+
+Privacy-neutral manga skill, diagnostic inspection notices and multipart image edit prompt budgeting. See [release notes](docs/releases/v8.1.0.md).
+
 # v8.0.9 release candidate
 
 The candidate includes Windows MCP build verification, image stream refusal messages, and the updated production skill. See [v8.0.9 release notes](docs/releases/v8.0.9.md).

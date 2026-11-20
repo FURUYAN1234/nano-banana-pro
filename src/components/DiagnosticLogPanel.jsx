@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { createPortal } from 'react-dom';
 import { readDiagnostics, clearDiagnostics, subscribeDiagnosticErrors } from '../lib/diagnostics.js';
 
-export default function DiagnosticLogPanel({defaultOpen = false, panelHost}) {
+export default function DiagnosticLogPanel({defaultOpen = false, panelHost, connectionDialogOpen = false}) {
   const [report, setReport] = useState(null);
   const [open, setOpen] = useState(defaultOpen);
   const [fromError, setFromError] = useState(defaultOpen);
@@ -56,7 +56,7 @@ export default function DiagnosticLogPanel({defaultOpen = false, panelHost}) {
       document.removeEventListener('keydown', onKey);
       if (previousFocus?.isConnected) previousFocus.focus({preventScroll:true});
     };
-  }, [open]);
+  }, [open, connectionDialogOpen]);
   const save = () => {
     const url = URL.createObjectURL(new Blob([reportJson], {type:'application/json'}));
     const anchor = document.createElement('a');
@@ -65,13 +65,18 @@ export default function DiagnosticLogPanel({defaultOpen = false, panelHost}) {
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const panel = open && <section role="region" id={`${titleId}-panel`} aria-labelledby={titleId} className="diagnostic-panel" ref={dialogRef} tabIndex={0}>
+  const panel = open && <section role="region" id={`${titleId}-panel`} aria-labelledby={titleId}
+    className={connectionDialogOpen ? 'diagnostic-panel diagnostic-panel--connection' : 'diagnostic-panel'} ref={dialogRef} tabIndex={0}>
           <div className="diagnostic-header">
             <h2 id={titleId}>不具合調査ログ</h2>
             <button type="button" ref={closeRef} onClick={() => setOpen(false)} className="diagnostic-button">閉じる</button>
           </div>
           <div className="diagnostic-content">
-            {fromError && <p role="status" className="diagnostic-error-notice">エラーを検出したため開きました。調査記録をJSONで保存できます。</p>}
+            <p role="status" className={fromError ? 'diagnostic-error-notice' : 'diagnostic-review-notice'}>
+              {fromError
+                ? 'エラーを検出したため開きました。調査記録をJSONで保存できます。'
+                : '確認のためにログを表示しています。エラー通知ではありません。'}
+            </p>
             <p>発生時刻・操作・アプリの仕様・調査手順はログに含まれます。JSONを丸ごと調査担当のAIへ渡し、簡単な症状をひと言添えてください。</p>
             <p>同じブラウザー・同じURL内に直近7日分を保存します。記録データは最大2MiB・2,000件で、古い方から削除します。失敗時は、その実行の台本・人物設定・入力・描画指示と修復内容も残します。JSONを共有するとこれらの文章も渡ります。APIキーと画像本体は除外し、長文の省略はJSONに明記します。</p>
             {report ? <>
@@ -99,7 +104,7 @@ export default function DiagnosticLogPanel({defaultOpen = false, panelHost}) {
   return <>
     <button type="button" onClick={() => open ? setOpen(false) : show()} aria-expanded={open} aria-controls={`${titleId}-panel`}
       className="diagnostic-button diagnostic-trigger">不具合調査ログ</button>
-    {panelHost ? createPortal(panel, panelHost) : panel}
+    {connectionDialogOpen ? createPortal(panel, document.body) : panelHost ? createPortal(panel, panelHost) : panel}
     {open && busy && createPortal(<div className="diagnostic-loading" role="status" aria-live="polite">
       <span className="diagnostic-loading-spinner" aria-hidden="true" />
       <div><strong>{report ? '調査ログを更新しています' : '調査ログを準備しています'}</strong>

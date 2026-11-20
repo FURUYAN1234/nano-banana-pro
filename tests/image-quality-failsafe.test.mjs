@@ -33,6 +33,35 @@ test('long page repair budgets the sendable source and preserves every issue in 
   assert.equal(reviews,1);assert.equal(edits,1);assert.equal(result.candidate,fixed);assert.equal(result.finalReview.notRechecked,true);
 });
 
+test('repair compacts compiler instructions when the wire budget is larger than the original text length', async () => {
+  const original={base64Img:'original'},fixed={base64Img:'fixed'};
+  const approved=['Camera: 左前からアオリ、右後方は俯瞰。望遠・広角・ダッチアングルと演技を保持。',
+    '紫の上:「明石の姫を、頼みます。」', ...Array(265).fill('構図・手・視線・前後左右はそのまま。')].join('\n');
+  const issues=[{type:'bubble_text',panel:4,subject:'lettering',reason:'Extra punctuation',
+    correction:'Run only the specified lettering repair.'}];
+  const build=(extra={})=>buildImageQualityRepairPrompt({originalPrompt:approved,issues,
+    mode:'experimental-manga',panelCount:8,sourceMode:'source-image',maxAttempts:2,...extra});
+  const wireLength=text=>text.replace(/\r\n|\r|\n/g,'\r\n').length;
+  const maxChars=build().length+50;
+  assert.ok(wireLength(build())>maxChars);
+  assert.ok(wireLength(build({compact:true}))<=maxChars);
+  let sendCount=0;
+  const result=await pageWorkflow.runPageImageQuality({kind:'experimental-manga',count:8},{
+    mode:'experimental-manga',allowRepair:true,originalCandidate:original,originalPrompt:approved,
+    repairPromptMaxChars:maxChars,measureRepairPrompt:wireLength,
+    reviewCandidate:async()=>({pass:false,issues}),
+    generateRepairCandidate:async prompt=>{
+      sendCount++;
+      assert.ok(wireLength(prompt)<=maxChars);
+      assert.ok(prompt.endsWith(approved));
+      assert.ok(prompt.includes(issues[0].correction));
+      return fixed;
+    },
+  });
+  assert.equal(sendCount,1);
+  assert.equal(result.candidate,fixed);
+});
+
 test('oversize repair fails before API and reports its real reason without dropping source or issues',async()=>{
   const progress=[],image={base64Img:'original'};
   const result=await pageWorkflow.runPageImageQuality({kind:'four-panel',count:4},{mode:'four-panel',allowRepair:true,

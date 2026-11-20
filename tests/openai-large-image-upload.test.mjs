@@ -48,6 +48,38 @@ test('a completed A4 PNG over the JSON URL limit reaches the same edit API lossl
   } finally { globalThis.fetch = previousFetch; setOpenAIApiKey(''); }
 });
 
+
+test('multipart checks the 32,000-character limit after encoding newlines', async () => {
+  const previousFetch = globalThis.fetch;
+  const line = '保持。'.repeat(38);
+  const prompt = Array(266).fill(line).join('\n').padEnd(31_949, '確');
+  const approved = '上段は俯瞰、下段は広角。台詞「明石の姫を、頼みます。」';
+  const overLimit = prompt.slice(0, -approved.length) + approved;
+  assert.equal(overLimit.length, 31_949);
+  const before = new FormData();
+  before.append('prompt', overLimit);
+  assert.equal(((await new Response(before).formData()).get('prompt')).length, 32_214);
+  let calls = 0;
+  setOpenAIApiKey('test-only-upload-key');
+  try {
+    globalThis.fetch = async (_url, options) => {
+      calls++;
+      const wirePrompt = (await new Response(options.body).formData()).get('prompt');
+      assert.equal(wirePrompt.length, 32_000);
+      assert.ok(wirePrompt.endsWith(approved));
+      return new Response(JSON.stringify({data:[{b64_json:'ZG9uZQ=='}]}), {headers:{'content-type':'application/json'}});
+    };
+    await assert.rejects(
+      generateImageWithOpenAI(overLimit, () => {}, {imageInputs:[{image_url:source}]}),
+      {code:'IMAGE_PROMPT_BUDGET', promptLength:32_214, promptMaxChars:32_000}
+    );
+    assert.equal(calls, 0, 'the invalid multipart request must never reach fetch');
+    const exactLimit = overLimit.slice(0, -approved.length - 214) + approved;
+    await generateImageWithOpenAI(exactLimit, () => {}, {imageInputs:[{image_url:source}]});
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = previousFetch; setOpenAIApiKey(''); }
+});
+
 test('images at the file upload size limit fail before any request without leaking bytes', async () => {
   const oversized = `data:image/png;base64,${Buffer.alloc(50_000_000).toString('base64')}`;
   assert.throws(() => buildImageEditRequest(oversized, '修正'), error => {

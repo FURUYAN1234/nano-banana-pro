@@ -17,6 +17,7 @@ export function EmergencyStopButton({ isApiProcessing = false, workReady = false
 export default function ControlBar({
   embedded = false,
   diagnosticHost,
+  connectionDialogOpen = false,
   analysisModelId,
   scenarioModelId,
   promptModelId,
@@ -66,7 +67,7 @@ export default function ControlBar({
           target="_blank" rel="noreferrer" className="manual-link-button workflow-manual-link">使い方マニュアル</a>
         </div>
         <div className="workflow-utility-tools">
-        <DiagnosticLogPanel panelHost={diagnosticHost} />
+        <DiagnosticLogPanel panelHost={diagnosticHost} connectionDialogOpen={connectionDialogOpen} />
         <button type="button" className="diagnostic-button workflow-model-chain" onClick={() => setShowFallbackChain(true)}
           title="AIモデルフォールバックチェーンの構成を確認">⚙ Model Chain</button>
         </div>

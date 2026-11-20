@@ -4,10 +4,10 @@ import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellati
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
 import { assertPrintableDialogue } from './bubble-text.js';
-import { OPENAI_IMAGE_PROMPT_MAX_CHARS } from './image-prompt-budget.js';
+import { OPENAI_IMAGE_PROMPT_MAX_CHARS, assertImagePromptBudget, normalizeImagePromptForMultipart } from './image-prompt-budget.js';
 
 import { resolveOpenAIImageOption, normalizeOpenAIImageSize } from './openai-image-settings.js';
-import {OPENAI_IMAGE_INPUT_LIMIT, OPENAI_IMAGE_DATA_URL_MAX_CHARS, normalizeOpenAIImageUpload} from './openai-image-references.js';
+import {OPENAI_IMAGE_INPUT_LIMIT, normalizeOpenAIImageUpload, usesOpenAIImageMultipart} from './openai-image-references.js';
 const OPENAI_IMAGE_TIMEOUT_MS = 600000;
 const OPENAI_IMAGE_TIMEOUT_SECONDS = OPENAI_IMAGE_TIMEOUT_MS / 1000;
 
@@ -43,16 +43,17 @@ export function buildOpenAIImageRequest(prompt, {quality, size, stream = true, i
 }
 
 async function generateOpenAIImageEdit(request, selectedOption, apiKey, statCallback, workSignal) {
+  const multipart = usesOpenAIImageMultipart(request.body.images);
+  const prompt = multipart ? assertImagePromptBudget(normalizeImagePromptForMultipart(request.body.prompt)) : request.body.prompt;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), OPENAI_IMAGE_TIMEOUT_MS);
   const signal = AbortSignal.any([controller.signal, workSignal]);
   try {
-    const multipart = request.body.images.some(image => image.image_url.length > OPENAI_IMAGE_DATA_URL_MAX_CHARS);
     let body;
     if (multipart) {
       body = new FormData();
       for (const [name, value] of Object.entries(request.body)) {
-        if (name !== 'images') body.append(name, String(value));
+        if (name !== 'images') body.append(name, name === 'prompt' ? prompt : String(value));
       }
       request.body.images.forEach(({image_url}, index) => {
         const comma = image_url.indexOf(',');
