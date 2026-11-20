@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "a6e9366d4a4145d4d40a9b829e8093fc5f01257c0b4b3034c63565d4ffa87d67",
-  "manualVersion": "8.0.9",
-  "manualSourceSha256": "292df5462271bfe78f7a7e7d1ba8a7b8567eba1be79b465998341f540febc148",
+  "manualVersion": "8.1.0",
+  "manualSourceSha256": "305c257aadafe5548336130ebfa1825d7f4f1c03ba07cdbacfd9d0a2e9a2b057",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "0fd7e6a41caac993aeb856dd38afb9dd5983ca280036087329b160bca7ae6596"
+      "sha256": "547148aa7fecbd6469f50c6f07caa67ce6f5d2d811171de1dfc4be57c624465d"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "8bb658af2f95e5f703eaab8a19ca30d415d3957c9cf17e8865310d858626b907"
+      "sha256": "07a5d428f9f332abbd5531716f7712d30fc95602fe0af72603ef248f7220258e"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "45cb8623e774d914c47244ae17164d1b636bbfe8ac331a95387d84c7f0df55b7"
+      "sha256": "48304874d8cbeeb9613caee2c65d04161fa62503e8cdb09c1fd0fb478540ef02"
     }
   ],
-  "readmeSha256": "f751f0d461e8b97526d470a04ea9032ce4b7bc33cabf3480ef4d8d6bed8bad4a",
+  "readmeSha256": "4d9775f4a9c3bfaecfcfa5b37c63cc5834a7260b6fe2d176693c3f51e2d59ee5",
   "readmeLanguageGaps": [],
-  "sourceTree": "92880afdf9c6351bf1bd030863d71eb5dfad7879",
-  "publicTree": "3f531717ede9914f69bf02c6de270c0bf4200f5f",
-  "packageSha256": "cec73369d38112e94119e8191b0bb61fb1f73aff5a99d3f3d4eba857c284f1b2",
+  "sourceTree": "5b7aaf0298f0a9b73bf5c168dc28ed37877b1281",
+  "publicTree": "ab90544ee42f46018710f567bf406f2bc0991fa4",
+  "packageSha256": "a570f5ee55cfa8842cf578592576f55b63f9db0431cfa8e16804eb8dfdb1b67f",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -42,16 +42,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "79fca8957ab59d55ad5196778d6809adcb1c40e0",
-  "reviewedAt": "2026-11-19T07:36:40.243Z",
+  "sourceCommit": "b05128c20e173e1bd4abbb4c0efe3dc5ce6f6529",
+  "reviewedAt": "2026-11-20T03:09:01.247Z",
   "reviewedWorkingTree": false,
-  "reviewStage": "candidate",
-  "findings": "Reviewed the previously accepted README and the v8.0.9 changes against the built candidate. Version, Windows deployment, build verification, replayed provider refusal, skill changes, asset names and history agree. The workflow image and manga pages remain in their published order.",
-  "manualFindings": "Compared 78 PDF page bodies and checked all five changed pages visually: Gemini page 1, OpenAI page 17 and full manual pages 19, 33, 38. The narrow text changes describe startup verification, provider refusal and manga production rules, with intact wrapping and links.",
+  "reviewStage": "local-committed-source",
+  "findings": "READMEの英日本文を確認。配布スキルの個人既定を作品ごとの指定に変更した説明を追加し、調査ログの表示原因の区別と高解像度画像編集の送信バイト列上の改行を含む文字数検査を実装へ照合。",
+  "manualFindings": "3冊のPDFを既存候補と全ページ比較し、版・日付以外の本文と紙面寸法に差がないことを確認。12・19・47ページ全ページにv8.1.0表記、表紙のレンダリングも確認済み。",
   "pricingReview": {
-    "version": "8.0.9",
+    "version": "8.1.0",
     "sourceSha256": "a6e9366d4a4145d4d40a9b829e8093fc5f01257c0b4b3034c63565d4ffa87d67",
-    "checkedAt": "2026-11-19T07:36:40.243Z",
+    "checkedAt": "2026-11-20T03:09:01.247Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
@@ -60,6 +60,29 @@
   },
   "apiValidation": {
     "version": "8.0.9",
-    "scope": "Verified the compiled candidate via authenticated MCP HTTP from its isolated workspace and build stamp. The HTTP-200 refusal and successful revised request were observed in real v8.0.8 production; v8.0.9 regression tests replay refusal and valid stream behavior. No new paid image request was made against the candidate."
+    "scope": "Actual candidate UI/MCP image-edit transport for the original CRLF overflow and one valid multipart request; the full auto-repair compiler was replayed locally using the original diagnostic and source materials. Runtime verification did not modify published work. The relevant runtime source is unchanged in 8.1.0 apart from version metadata.",
+    "releaseVersion": "8.1.0"
+  },
+  "localDiagnosticUiReview": {
+    "api": "候補版の実APIによる画像編集後、ログを確認目的で開いた表示を実ブラウザーで読み戻した。自動エラー表示の切り替えは模擬エラーで確認。",
+    "baseline": "確認表示なし",
+    "checked": [
+      "1280px",
+      "390px",
+      "通常表示",
+      "API入力の手前で表示・閉じる",
+      "模擬エラーで切り替え",
+      "関連21件",
+      "ビルド",
+      "lint"
+    ]
+  },
+  "localMultipartRepairReview": {
+    "version": "8.0.9",
+    "scope": "local no-provider replay of recorded v8.0.8 request and synthetic wire boundary",
+    "originalWireChars": 32214,
+    "candidateWireChars": 31992,
+    "approvedPromptUntouched": true,
+    "liveCandidateApi": "同じ候補版の通常画像編集で実API送信31,992字、HTTP 200、保存PNGの寸法・ハッシュ一致。32,214字は送信前停止、画像APIリクエスト0件。"
   }
 }

@@ -1,57 +1,86 @@
 {
   "format": 1,
-  "version": "8.0.9",
-  "skillSha256": "6af71037ab05389c8ac0459fb4e820592109966e41b2eae4089080d51e53c9e6",
-  "sourceCommit": "79fca8957ab59d55ad5196778d6809adcb1c40e0",
-  "reviewedAt": "2026-11-19T07:36:40.243Z",
-  "reviewedSince": "Since v8.0.8, including three accepted pages of the monochrome book and the corresponding publication workflow on 2026-11-19.",
+  "version": "8.1.0",
+  "skillSha256": "8c976d81ed6ddd44cee99cc765330d7dffde7f7c09fb469d5fca723f1fc4deb4",
+  "sourceCommit": "b05128c20e173e1bd4abbb4c0efe3dc5ce6f6529",
+  "reviewedAt": "2026-11-20T03:09:01.247Z",
+  "reviewedSince": "前回公開以降の2ページの制作、告知、個人設定の棚卸し。",
   "sources": [
-    "User revisions and three accepted production PNGs for the monochrome book, saved on 2026-11-19.",
-    "Native MCP job refusal and subsequent successful revision, with production and social readback records.",
-    "Prior photo-picker incident visible in the user screenshot and local upload evidence."
+    "2026-11-20の漫画制作中の変更指示と採用PNG。",
+    "公開版のスキル本文、関連資料及びアプリZIP・単体ZIPの展開検査。"
   ],
   "findings": [
     {
       "disposition": "updated",
-      "observation": "A lettering edit made the final panel visibly smaller.",
-      "rule": "For local lettering edits retain panel boundaries and scale within the panel, with the original available for restoration.",
-      "reason": "Protects previously accepted composition."
+      "observation": "冒頭でページ数を説明するメタ台詞が入った。",
+      "rule": "本文1コマ目から作中の出来事を進め、会話と反応でつなぐ。",
+      "reason": "指定されたメタ演出には適用せず、冒頭の尺を本編の出来事へ使う。"
     },
     {
       "disposition": "updated",
-      "observation": "Long dash and white outline needed distinct treatment, and an unwanted line separated Japanese columns.",
-      "rule": "Read back the exact displayed text and use a glyph edge stroke when requested. Remove accidental rules.",
-      "reason": "Preserves wording and readable lettering."
+      "observation": "常連1人が衣装資料から欠け、別の常連が二役になった。",
+      "rule": "配役・設定画・作画参照を照合し、既存キャラと役名札は作品の条件に合わせる。",
+      "reason": "既存人物を使う条件と一人一役の指定を守る。"
     },
     {
       "disposition": "updated",
-      "observation": "A hooded back view was cropped or read as an implausible neck and shoulder silhouette.",
-      "rule": "Check head, hood, neck and shoulders in silhouette and maintain costume and story-prop continuity.",
-      "reason": "Preserves the intended subject and visual continuity."
+      "observation": "文字修正の候補が全幅の枠を縮めた。",
+      "rule": "文字修正の前後でカメラ・配置・枠・演技を実画像で確認し、元版を保持する。",
+      "reason": "修正対象外の演出を保ち、候補の意図しない変化を検出する。"
     },
     {
       "disposition": "updated",
-      "observation": "A spillover element and a crowd figure made the receiving panel ambiguous.",
-      "rule": "Check the foreground connection and the receiving panel story and character count separately.",
-      "reason": "Maintains panel continuity and local action."
+      "observation": "扉を用意せず、本文の右下に作者名が付いていた。",
+      "rule": "扉なしの場合は本文1ページ目のタイトル行右下に作者名を一度添える。",
+      "reason": "指定位置とフッターを分け、実プロンプトと画像で重複を確認する。"
     },
     {
       "disposition": "updated",
-      "observation": "A social confirmation was missed and a file chooser had remained open.",
-      "rule": "Ask about sharing after final page approval, wait for the chooser before clicking Attach, and verify that it has closed before proceeding.",
-      "reason": "Tracks the actual sharing decision and avoids blocked work."
+      "observation": "投稿文の長さと添付数は同じサービスでも利用者の環境で異なる。",
+      "rule": "投稿先と対象アカウントの実際の上限に合わせる。",
+      "reason": "使える長文投稿や画像枚数を活かす。"
+    },
+    {
+      "disposition": "updated",
+      "observation": "漫画本編に加え、採用済み設定画の添付が指定された。",
+      "rule": "同意済みの設定画は、全本文の読順の後ろに並べて投稿前後に照合する。",
+      "reason": "作品の読順を保ちながら指定された設定画を載せる。"
+    },
+    {
+      "disposition": "updated",
+      "observation": "制作はほぼ全自動で、利用者が原稿の確認や修正指示を行った。",
+      "rule": "制作の事実に合うAI注釈を末尾に置き、指定リンクを次の行に添える。",
+      "reason": "作画までと発信の扱いを曖昧にせず、異なる制作工程には事実に合う文言を用いる。"
+    },
+    {
+      "disposition": "updated",
+      "observation": "特定の作者名が製品ウォーターマークの表示条件になっていた。",
+      "rule": "題字・作者名・ページ番号・製品表示の設定を独立して扱う。",
+      "reason": "作品の意図と指定の有無に合わせられる。"
+    },
+    {
+      "disposition": "updated",
+      "observation": "個人のSNS注釈と固定リンクが配布版に含まれていた。",
+      "rule": "AIの担当・人が行った確認や修正など実際の工程を記載し、利用者が指定したリンクを使う。",
+      "reason": "別の利用者が異なる制作工程や案内先を使える。"
+    },
+    {
+      "disposition": "updated",
+      "observation": "特定のチャットとブラウザーが操作確認の前提になっていた。",
+      "rule": "利用者が確認できる既存の画面を使い、作業や認証を保って切り替える。",
+      "reason": "別のAIクライアント、OS、ブラウザーにも適用できる。"
     }
   ],
   "checks": [
     {
-      "name": "Installed and bundled skill",
+      "name": "配布スキルの形式と規則確認",
       "result": "passed",
-      "evidence": "Canonical skill validator passed both copies. Strict extraction verified 302 MCP files and 14 skill files. The installed copy differs by one local personal drawing preference."
+      "evidence": "canonical validator、関連リファレンスを確認。作品ごとの作者・製品表示とSNS条件を確認。"
     },
     {
-      "name": "Production and build verification",
+      "name": "両候補ZIPの展開検査",
       "result": "passed",
-      "evidence": "Compared retained production records with approved images and reviewed the v8.0.9 live authenticated MCP candidate. The target suite passed all 29 tests after the build."
+      "evidence": "verify_package.py --strictでアプリ302ファイルと単体14ファイルを照合。個人設定ファイル・固定SNS情報は配布外。"
     }
   ]
 }
