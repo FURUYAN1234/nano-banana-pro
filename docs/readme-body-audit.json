@@ -61,6 +61,6 @@
   },
   "apiValidation": {
     "version": "8.1.1",
-    "scope": "GPT-6 Luna in the normal candidate UI assembled five exact lines and speakers, retained artwork role labels and emitted watermarks=off. Two text-only image requests returned unrelated imagery and were rejected before save. Image generation with references is being checked separately."
+    "scope": "The normal connected UI used GPT-6 Luna without model fallback for specified and unspecified role labels. Five speech entries and their speakers remained intact. No role-plaque instruction appeared in the ordinary prompt. With the two bundled references, GPT Image 2.6 Sunburst generated a five-panel comic, followed by the existing single bounded repair. The visible page retained scripted plaques and had no product footer. Two text-only generation requests returned unrelated imagery, were rejected by the existing review gate and were not saved. No cause on the provider side was established."
   }
 }
