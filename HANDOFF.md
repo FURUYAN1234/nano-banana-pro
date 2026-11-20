@@ -1,3 +1,7 @@
+# v8.1.1 release candidate
+
+New manual sessions and MCP projects start with product watermarks off. The manual checkbox stores its choice in the current browser. Page-level overrides remain available. The parser keeps role plaques in the artwork and out of speech balloons. The bundled skill describes source verification, gaze, byline placement and full-page redrawing. See [v8.1.1 release notes](docs/releases/v8.1.1.md).
+
 # v8.1.0 release candidate
 
 Privacy-neutral manga skill, diagnostic inspection notices and multipart image edit prompt budgeting. See [release notes](docs/releases/v8.1.0.md).
