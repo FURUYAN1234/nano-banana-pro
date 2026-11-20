@@ -54,7 +54,7 @@ Commit sequence: stage reviewed source/docs/PDF changes except docs/readme-body-
 
 # CURRENT — Revised manga completed locally (2026-11-17)
 
-Latest addition: finished-manga optional SNS-sharing skill added (references/sns-publication.md): ask intent/destination/account/audience, guide missing browser connection, propose intro+fulltext+pageorder, concreteOK thenpost, verifyrealpost+URL andavoiddoublepost. Skill-onlyrequest; noSNSactionperformed.12filesmatchsource/Codex/bundledapp; staticreviewandvalidationpassed. Latestaggregatehash 6e977633dd0fb5c8e946e4cc60b519aa68bf7ed26f1244aa750f09ec6cb39447. Earlier11file/hashdetailsbelowarehistorical.
+Earlier revisions included detailed SNS procedures in the bundled skill. The current public skill asks once whether to post after presenting the completed manga.
 
 『もう一回、好きって言って。』 authorFURUlogo, cover+body5/5/4panels completed. Accepted jobs: cover71dad639,body1 6bcf461c,body2 4a8f2fc1,body3 panel-adopt8ba8f7eb. Body3initial223b21e7 retained as unaccepted because finalfemale-tail pointed to male; panel4-only f9259f0f fixed it, actualoutsidepixelsunchanged. FinalPNG3c434366... saved. All4pages visuallyreviewed,PNG/JSON/hash/scenarioverified;nativeMCPsave_statusverified,7requiredmaterials+1historical,0activejobs. Readerindex and oldhistoryarchive saved. Finalresponse re-embeds all4pages.
 
