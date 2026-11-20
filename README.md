@@ -60,6 +60,10 @@ Application terms are in [LICENSE](LICENSE). / 利用条件は [LICENSE](LICENSE
 
 The API connection dialog shows the usage, OpenAI API and Gemini API manuals in that order below the key-acquisition buttons, with the skill download centered on the next row. Narrow screens use one column. / API接続画面は、キー取得ボタンの下に「使い方・OpenAI API・Gemini API」の3マニュアルを並べ、スキル取得ボタンをその次の段の中央へ配置します。狭い画面ではマニュアルを縦一列にします。
 
+## Introduction video / 紹介動画
+
+[![Watch the Super FURU AI 4-koma System introduction / Super FURU AI 4-koma Systemの紹介動画を見る](https://i.ytimg.com/vi/fqSRLqBuFHg/hqdefault.jpg)](https://youtu.be/fqSRLqBuFHg)
+
 ## Application screen and output / 操作画面と生成例
 
 | Application / 操作画面 | Generated manga / 生成例 |
