@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.1.0** / 現在のソース版: **v8.1.0**
+> Current source version: **v8.1.1** / 現在のソース版: **v8.1.1**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -104,7 +104,7 @@ For action panels, read the drawing with dialogue and sound effects covered, the
 
 For a manga panel with a sound composition, the skill keeps the camera, perspective and acting while emphasizing motion with directional streaks, local blur and tapered G-pen edits. The same breakout technique can bring out a small gesture in everyday scenes. / 構図が成立しているコマは画角・パース・演技を保ち、流線・局所ブラー・Gペンの太細で勢いを加えます。日常の小さなしぐさも、人物の肩や袖を自然に枠越えさせて見せ場にできます。
 
-For requested G-pen work, strengthen key contours in everyday panels at reading size and preserve the texture of each medium. Review the camera angle on figures and props, check balloon order and speakers separately, and place any requested author credit at the lower right. / Gペン指定では日常のコマも掲載寸法で要所の輪郭を読みやすくし、各画風の質感を保ちます。人物と小道具で画角を確かめ、吹き出しの読む順と話者を別々に確認します。作者名を載せるときは右下の余白を使います。
+For requested G-pen work, strengthen key contours in everyday panels at reading size and preserve the texture of each medium. Review the camera angle on figures and props, check balloon order and speakers separately, and place requested author credit at the lower right of the cover or, when there is no cover, at the lower right of the title line on page 1. / Gペン指定では日常のコマも掲載寸法で要所の輪郭を読みやすくし、各画風の質感を保ちます。人物と小道具で画角を確かめ、吹き出しの読む順と話者を別々に確認します。作者名を載せるときは扉絵の右下を使い、扉絵がなければ本文1ページ目のタイトル行右下に置きます。
 
 For a disconnected local MCP session, the AI checks the active tab and queued job, pairs again in the same tab and reloads it only if necessary after safeguarding production data. It verifies that the pending job resumes. When the AI has no control of the visible browser, it asks the reader to press the specific control. A fresh pairing link can switch away from an idle app with user approval. / ローカルMCPが切れたときは、AIが対象タブとジョブを確認して同じタブで再接続します。再読み込みが必要な場合は原稿を退避してからAIが行い、待機中のジョブが実行に入ったことを確かめます。AIが操作できない場合は本人に画面上のボタンを案内します。旧画面が待機中なら、本人の許可を得て新しいURLで切り替えられます。
 
@@ -166,7 +166,7 @@ The skill asks which author name to print on the cover, with an option to omit i
 
 One folder named for the book and its start time contains the page pairs, a `資料/` folder of shared materials, and `作品全体.json`. The whole-book JSON links pages, references and available production records; unverified material sources or permissions remain unconfirmed. Keep the folder together for transfer. These records help explain production and do not guarantee a publisher's acceptance or rights. / 作品タイトルと開始日時のフォルダーに、各ページの画像とJSON、共通資料をまとめた`資料/`、`作品全体.json`を保存します。全体JSONはページ・資料・確認できた制作記録を結び付け、素材の出典や許諾が不明な場合は未確認として残します。受け渡しはフォルダー全体で行ってください。制作経緯を説明する資料であり、出版社の受理や権利を保証するものではありません。
 
-The production skill normally puts the two standard footer credits on the final page only. The actual scenario model is retained when applying a book page or restoring its script after recognition, so the right footer uses the same formatter as ordinary single-page production. Unknown model provenance is not replaced with the selected setting. Optional page numbers appear separately at the bottom center. Explicit user settings take precedence. / 制作スキルの標準では、通常の左右2種類のウォーターマークを最終ページの下端だけに付けます。複数ページの適用と認識後の台本復元でも実際のシナリオ生成モデルを保持し、右下には通常1ページと同じ組立て処理を使います。生成元が不明な場合、選択中の設定値で代用しません。ページ番号は必要に応じて下中央へ分けて表示し、利用者から別の指定があればそちらを優先します。
+Watermarks are off by default for new manual sessions and MCP projects. STEP3 remembers your manual choice in the current browser. In an MCP project, enable watermarks in the project settings or on selected pages. If enabled, the right footer names the actual scenario model when known. Title, author credit and page numbers are configured separately. / 手動の初回作画とMCPの新規作品では、ウォーターマークは初期状態でオフです。手動作画のSTEP3で選んだ状態は、そのブラウザーに保存されます。MCPでは作品共通の設定やページごとの指定でオンにできます。オンにした場合、右下には確認できた実際のシナリオ生成モデルを記載します。題字・作者名・ページ番号は個別に指定できます。
 
 See the [MCP setup and operation guide](mcp/README.md), [portable production skill](mcp/skills/manga-book-production/SKILL.md) and [independent development boundary](mcp/ARCHITECTURE.md). The guide identifies current implementation status and provider limits; the ordinary hosted page alone does not launch a local MCP server. / 導入方法・現在の実装状況・プロバイダー別の制限はMCPガイドを参照してください。公開Webページを開くだけではローカルMCPは起動しません。
 
@@ -315,7 +315,7 @@ Camera parsing distinguishes prohibitions such as "no fisheye or eye-level shots
 
 Relative shooting origins such as a wide view from below a reference surface and the front, rear or diagonal side are recognized as camera placement, including full directional names. Actor or prop height alone and rejected viewpoints do not establish a camera; explicit eye-level permission remains panel-specific. Camera text, side, lens, acting and projection strength are preserved. / 基準面より低い位置から前方・後方・斜めに捉える広角など、比較で示した撮影起点と方位を認識します。「右前方」等の表記も扱い、人物・物の高さだけや否定された視点とは区別します。アイレベルの例外は明示されたコマに限り、元のCamera・撮影側・レンズ・演技・投影の強さを保持します。
 
-Drawing options: STEP2 mosaic masking for existing copyrighted characters and STEP3 watermarking default to ON. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. Settings last until a full reset or reload, do not alter existing images retroactively, and require visual confirmation. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
+Drawing options: STEP2 mosaic masking starts on. STEP3 watermarking starts off and remembers the manual choice in this browser. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. The mosaic setting lasts until a full reset or reload. Changes apply when you generate a new image. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」は初期状態でオンです。STEP3の「ウオーターマークを表記する」は初回オフで、手動作画での選択はそのブラウザーに保存します。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。モザイクの選択は全設定リセットまたは再読込まで保持します。設定の変更は次の作画から反映し、対象判断・描画は実画像で確認してください。
 
 Bottom credits are lower priority than the manga artwork: they may overlay the image or be partly/fully obscured or clipped. These visibility differences alone do not trigger automatic repair. Dialogue, title and story-required lettering remain protected; turning watermarking OFF still removes both credit instructions. / 下部クレジットは漫画の絵より優先度を下げ、絵の上への重なりや、一部・全部の遮蔽、端の見切れを許容します。この見え方だけでは自動修正を行いません。台詞・タイトル・物語に必要な文字は引き続き保護し、ウオーターマークOFFでは左右のクレジット指示を外します。
 
@@ -838,7 +838,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -902,7 +902,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -973,6 +973,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ## 📋 ChangeLog / 更新履歴
 
+### v8.1.1 (2026-11-20)
+- **[Fix & UX]** Default watermarks to off in the public release. Keep role labels out of dialogue and improve source, gaze and redraw guidance. / 公開版のウォーターマークを初期状態でオフに変更。役名札が台詞に混ざる問題を修正し、原典・視線・描き直しの制作手順を更新。
+
 ### v8.1.0 (2026-11-20)
 - **[Fix & UX]** Separate personal manga preferences from the bundled skill, distinguish inspection from diagnostic errors, and count image edit prompts as transmitted / 配布スキルの個人既定を分離し、診断ログの確認表示と画像編集の文字数判定を改善
 
@@ -988,7 +991,7 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 - When an earlier MCP screen is idle, it can be replaced through an authorized pairing link. The server protects queued, running and unresolved work. / 旧画面が待機中なら、許可を得た接続用URLでMCPの操作先を切り替えられます。待機ジョブ・処理中・結果不明の処理は保護します。
 - A registered Windows MCP client launches the latest verified installed app when needed and reuses the existing service. Installation and updates remain separate operations. / 登録済みのWindows MCPクライアントは必要に応じて導入済みの検証済み版を起動し、稼働中のサービスは再利用します。導入・更新は別の操作です。
 - Image review reads the actual watermark setting when deciding whether product credits belong on a page. / 画像検査は実際のウォーターマーク指定を読み、左右の製品クレジットが必要なページかを判断します。
-- The updated manga skill checks character breakouts, gaze, body continuity, speed lines and selective motion blur. G-pen direction strengthens focal contours in normal panels and uses heavier marks in action and comedy. The skill checks perspective cues and reads balloon sequence and speaker attribution independently. Author credit belongs at the lower right when requested. FURU-authored works place product watermarks on the final page by default. / 漫画制作スキルに人物の枠越え、視線、胴と脚のつながり、流線と局所ブラーの確認を追加しました。Gペンは通常画風でも要所の輪郭を強め、アクションとギャグでは太線や黒ベタを効かせます。画角の手掛かりと、吹き出しの順・話者を実画像で確認します。作者名は右下を基本とし、作者がFURUの作品では左右の製品ウォーターマークを最終ページに付けます。
+- The updated manga skill checks character breakouts, gaze, body continuity, speed lines and selective motion blur. G-pen direction strengthens focal contours in normal panels and uses heavier marks in action and comedy. The skill checks perspective cues and reads balloon sequence and speaker attribution independently. Author credit belongs at the lower right when requested. The workflow supports limiting product watermarks to the final page. / 漫画制作スキルに人物の枠越え、視線、胴と脚のつながり、流線と局所ブラーの確認を追加しました。Gペンは通常画風でも要所の輪郭を強め、アクションとギャグでは太線や黒ベタを効かせます。画角の手掛かりと、吹き出しの順・話者を実画像で確認します。作者名の右下配置と、製品ウォーターマークを最終ページに限る指定に対応しました。
 - The Windows app ZIP and the standalone skill ZIP use the same skill source. / WindowsアプリZIPと単体スキルZIPは同じスキル原本から配布します。
 
 ### v8.0.7 (2026-11-18)

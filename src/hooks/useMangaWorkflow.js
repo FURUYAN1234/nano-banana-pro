@@ -20,7 +20,7 @@ import { createMcpCommitFence } from '../lib/mcp/commit-fence.js';
 import { setApiKey } from '../lib/gemini';
 import { GEMINI_IMAGE_MODEL } from '../lib/gemini-image-settings.js';
 import { generateImageWithImagen } from '../lib/imagen';
-import { assertRenderOptions, readRenderOptions, hasMangaBackgroundSimplification, setMangaBackgroundSimplification } from '../lib/render-options.js';
+import { assertRenderOptions, DEFAULT_SHOW_WATERMARKS, readRenderOptions, readWatermarkPreference, writeWatermarkPreference, hasMangaBackgroundSimplification, setMangaBackgroundSimplification } from '../lib/render-options.js';
 import { collectCastNameEntries } from '../lib/panel-utils.js';
 import { buildImageEditRequest } from '../lib/image-edit.js';
 import { readPanelStyleEditFrames, preparePanelStyleEdit, composePanelStyleEdit } from '../lib/panel-style-edit.js';
@@ -263,7 +263,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const [status, setStatus] = useState("");
   const [colorMode, setColorModeState] = useState("color");
   const [mosaicCopyrightedCharacters, setMosaicCopyrightedCharactersState] = useState(true);
-  const [showWatermarks, setShowWatermarksState] = useState(true);
+  const [showWatermarks, setShowWatermarksState] = useState(readWatermarkPreference);
   const [showTitle, setShowTitleState] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [genLog, setGenLog] = useState([]); // New Log State
@@ -1408,7 +1408,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   const setShowWatermarks = (enabled) => {
     if (isColorModeLocked || enabled === showWatermarks) return;
-    setShowWatermarksState(Boolean(enabled));
+    const next = Boolean(enabled);
+    if (!bookPageContextRef.current) writeWatermarkPreference(next);
+    setShowWatermarksState(next);
     invalidateScenarioOutput();
     setAssembleThought('');
     setGenLog([]);
@@ -1815,7 +1817,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setPolicyAutoRetrying(false);
     setColorModeState("color");
     setMosaicCopyrightedCharactersState(true);
-    setShowWatermarksState(true);
+    setShowWatermarksState(readWatermarkPreference());
     setShowTitleState(true);
     resetScenarioModelId();
     setAnalysisModelId(DEFAULT_OPENAI_STEP1_MODEL_ID);
@@ -3550,7 +3552,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setMcpGeneratedAssets([]);
     bookPageContextRef.current = context; setBookPageContext(context);
     pageModeRef.current = isOpenAIEngine; onAutoPageModeChange?.(isOpenAIEngine);
-    setColorMode(settings.colorMode); setShowTitle(settings.showTitle); setShowWatermarks(settings.showWatermarks);
+    setColorMode(settings.colorMode); setShowTitle(settings.showTitle);
+    setShowWatermarksState(settings.showWatermarks ?? (restoreNormal ? readWatermarkPreference() : DEFAULT_SHOW_WATERMARKS));
     setMosaicCopyrightedCharacters(settings.mosaicCopyrightedCharacters); setAllowImageQualityRepair(settings.allowImageQualityRepair);
     if (settings.analysisModelId) setAnalysisModelId(settings.analysisModelId);
     if (settings.scenarioModelId) setScenarioModelId(settings.scenarioModelId);

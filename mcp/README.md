@@ -170,7 +170,7 @@ Total pages include the cover. Cover numbering is separate. An approval request 
 
 Describe costume or setting changes per page. Inspect actual cast continuity, dialogue and reading order. Harmless differences are distinct from defects that break the scene. / 衣装替えや場所の移動は、ページ固有の変更として伝えます。登場人物・小道具の対応、台詞、読順は実画像でも確認してください。無理のない重なりや勢いのある誇張は許容し、微小な指定差だけで有料生成を繰り返さない運用です。
 
-The production skill normally adds the application's two footer credits only to the final page: common `showWatermarks: false`, with `true` on that page. Page numbers remain independent. Explicit user overrides are preserved. / 制作スキルの標準では、最終ページの下端だけに通常の左右2種類のウォーターマークを付けます。共通の `showWatermarks: false` を最終ページだけ `true` で上書きし、ページ番号は独立して表示します。利用者が別の条件を指定した場合は、その指定を優先します。
+New projects start with `showWatermarks: false`. To enable the two product credits, set `showWatermarks: true` in the project or on individual pages. Page-level overrides allow credits on the final page only. Page numbers and author credit have independent settings. / 新規作品の `showWatermarks` は初期状態で `false` です。製品クレジットを入れる場合は、作品共通または該当ページで `true` を指定します。ページごとの上書きで最終ページだけに表示できます。ページ番号と作者名は個別に設定します。
 
 Unnumbered pages are excluded from the sequence. Body pages after an unnumbered cover start at 1 by default. `presentation.pageNumberStart` starts or restarts numbering at that page. / ページ番号を表示しないページは数えません。番号なしの表紙に続く本文は、初期値で1・2・3と進みます。`presentation.pageNumberStart`を指定すると、そのページから指定した番号で再開します。
 

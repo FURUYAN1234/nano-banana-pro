@@ -5,6 +5,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
+import { DEFAULT_SHOW_WATERMARKS } from '../lib/render-options.js';
 
 /**
  * STEP 03: プロンプト生成パネル
@@ -12,7 +13,7 @@ import ThinkingLog from './ThinkingLog';
 export default function Step3Panel({
   bookPanelCount,
   bookPageKind,
-  showWatermarks = true,
+  showWatermarks = DEFAULT_SHOW_WATERMARKS,
   showTitle = true,
   setShowTitle,
   setShowWatermarks,
@@ -105,7 +106,7 @@ export default function Step3Panel({
               onChange={(event) => setShowWatermarks(event.target.checked)} />
             <span>ウオーターマークを表記する</span>
           </label>
-          <p id="manga-watermarks-help" style={{ margin: '0 0 0 19px', padding: 0, fontSize: '11px', lineHeight: 1.4, color: '#94a3b8' }}>画像下部に生成情報とクレジットを表記します。</p>
+          <p id="manga-watermarks-help" style={{ margin: '0 0 0 19px', padding: 0, fontSize: '11px', lineHeight: 1.4, color: '#94a3b8' }}>オンにすると画像下部に生成情報とクレジットを表示します。手動作画での選択はこのブラウザーに保存します。</p>
         </div>
       </div>
 

@@ -463,7 +463,7 @@ test('hard reset clears both story-history sources and stale STEP2 cannot restor
   const { state, bind } = harness({
     recentScenarioTextsRef: { current: ['[4コマ目: 結]\n状況: 箱を開くと贈り物が現れる。'] },
     generationHistory: [{ metadataContext: { scenario: '[4コマ目: 結]\n状況: 探していた鍵は手元にあった。' } }],
-    resetScenarioModelId: () => {}, DEFAULT_CATEGORIES: [],
+    resetScenarioModelId: () => {}, DEFAULT_CATEGORIES: [], readWatermarkPreference: () => false,
     generateScenario: input => { providerInput = input; return request.promise; },
   });
   const pending = bind('generateScenarioFromNews')();

@@ -384,8 +384,9 @@ const STRUCTURAL_LINE_PREFIX_PATTERN = String.raw`(?:[-*+>・●▪◦]\s*)?[【
 const STAGING_GAG_LABEL_PATTERN = String.raw`(?:演出(?:\s*[・･／/]?\s*ギャグ)?|ギャグ(?:\s*[・･／/]?\s*演出))`;
 const VISUAL_DIRECTION_LABEL_TOKEN_PATTERN = String.raw`(?:表情|身体|演出|動作|ポーズ|姿勢|目線|視線|間合い|SFX|SE|効果音|音響効果|音響|音声|BGM)`;
 const VISUAL_DIRECTION_LABEL_PATTERN = String.raw`(?:${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN}(?:\s*[・･／/]\s*${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN})*)`;
-const SCENE_LETTERING_LABEL_PATTERN = String.raw`(?:画面(?:内)?文字|字幕|テロップ|キャプション|地の文|終了表記|Screen\s*text|On[- ]screen\s*text|Caption|Subtitle|VisualEvidence)`;
+const SCENE_LETTERING_LABEL_PATTERN = String.raw`(?:画面(?:内)?文字|字幕|テロップ|キャプション|地の文|終了表記|(?:役名|人物名|人名)(?:札|ラベル)?|名札|Screen\s*text|On[- ]screen\s*text|Caption|Subtitle|VisualEvidence)`;
 const SCENE_LETTERING_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${SCENE_LETTERING_LABEL_PATTERN}\\s*[:：]`, 'i');
+const SCENE_LETTERING_QUOTE_PREFIX_RE = new RegExp(String.raw`${SCENE_LETTERING_LABEL_PATTERN}\s*(?:[:：=＝]\s*)?$`, 'i');
 const META_SPEAKER_LABEL_PATTERN = String.raw`(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|${VISUAL_DIRECTION_LABEL_PATTERN}|${SCENE_LETTERING_LABEL_PATTERN}|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|${STAGING_GAG_LABEL_PATTERN}|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)`;
 const STAGING_GAG_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${STAGING_GAG_LABEL_PATTERN}\\s*[:：]`);
 const META_SPEAKER_LABEL_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${META_SPEAKER_LABEL_PATTERN}\\s*[】\\]）)]?\\s*$`, 'i');
@@ -572,6 +573,7 @@ const getExplicitSameLineSpeakerName = (value = '', validCharacters = []) => {
 };
 
 const getImmediateInlineSpeakerName = (value = '', validCharacters = [], allowUnregistered = false) => {
+  if (allowUnregistered && SCENE_LETTERING_QUOTE_PREFIX_RE.test(value)) return '';
   const resolve = (label) => {
     const known = getExplicitSameLineSpeakerName(label, validCharacters);
     if (known || !allowUnregistered) return known;

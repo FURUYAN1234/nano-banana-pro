@@ -138,6 +138,26 @@ export const isPermittedWatermarkOverlapIssue = (issue,prompt='') => {
   return /occlu|hidden|overlap|clip|crop|truncat|missing|unreadable|not visible|隠|重な|見切|切れ|欠け|欠落|見え|読め|未表示/i.test(observation);
 };
 
+export const DEFAULT_SHOW_WATERMARKS = false;
+
+const WATERMARK_PREFERENCE_KEY = 'manga.showWatermarks';
+
+export function readWatermarkPreference() {
+  try {
+    return (globalThis.localStorage?.getItem(WATERMARK_PREFERENCE_KEY) ?? String(DEFAULT_SHOW_WATERMARKS)) === 'true';
+  } catch {
+    return DEFAULT_SHOW_WATERMARKS;
+  }
+}
+
+export function writeWatermarkPreference(enabled) {
+  try {
+    globalThis.localStorage?.setItem(WATERMARK_PREFERENCE_KEY, String(enabled));
+  } catch {
+    // Restricted browser storage still allows changing the current page.
+  }
+}
+
 export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true, showTitle = true, bottomBleed = false, fullBleed = false } = {}) => [
   `[RENDER OPTIONS: copyrighted_mosaic=${mosaicCopyrightedCharacters ? 'on' : 'off'}; watermarks=${showWatermarks ? 'on' : 'off'}${showTitle ? '' : '; title=off'}]`,
   buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters),

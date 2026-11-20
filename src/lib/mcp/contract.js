@@ -1,3 +1,4 @@
+import { DEFAULT_SHOW_WATERMARKS } from '../render-options.js';
 import { getMcpSettingCatalog } from './catalog.js';
 import {MangaControlError} from './control-error.js';
 export {MangaControlError};
@@ -17,7 +18,7 @@ export const PAGE_SETTING_TYPES = Object.freeze({
   enhanceBackgrounds: 'boolean', enhanceCameraWork: 'boolean', enhanceDialogue: 'boolean', enhanceGag: 'boolean',
 });
 export const DEFAULT_PAGE_SETTINGS = Object.freeze({
-  colorMode: 'color', showTitle: true, showWatermarks: true, pageNumber: false,
+  colorMode: 'color', showTitle: true, showWatermarks: DEFAULT_SHOW_WATERMARKS, pageNumber: false,
   mosaicCopyrightedCharacters: true, allowImageQualityRepair: true,
   backgroundSimplification:false,useBackground360:false,inputMode:'manual',newsCategories:[],
   enhanceExpressions:false,enhanceBodyLang:false,enhanceEffects:false,enhanceBackgrounds:false,enhanceCameraWork:false,enhanceDialogue:false,enhanceGag:false,

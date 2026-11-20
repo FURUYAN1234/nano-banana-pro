@@ -134,3 +134,19 @@ test('ordinary and native prompt plus QA cast contracts share the current-body d
     assert.equal(prepared.source.scenario, input.scenario);
   } finally { await server.close(); }
 });
+
+test('role plaques remain in the artwork and cannot become actor speech', () => {
+  const cast = '## 甲\n## 乙';
+  const panel = '状況: 甲と乙が向き合う。コマ内の小さな役名「地図係」「案内役」。\n'
+    + '役名札:「道案内」\n'
+    + '甲:「灯りを持って。」\n'
+    + '状況: 乙がうなずく。旅人「門を開けて。」';
+  for (const forImagePrompt of [false, true]) {
+    assert.deepEqual(extractDialogueOnly(panel, cast, { asEntries: true, forImagePrompt }), [
+      { speaker: '甲', text: '灯りを持って。' },
+      { speaker: '旅人', text: '門を開けて。' },
+    ]);
+  }
+  const action = extractActionOnly(panel, cast);
+  for (const label of ['地図係', '案内役', '道案内']) assert.ok(action.includes(label), action);
+});

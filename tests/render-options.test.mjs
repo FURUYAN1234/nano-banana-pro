@@ -5,7 +5,8 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { assertRenderOptions, buildRenderOptionsContract, readRenderOptions } from '../src/lib/render-options.js';
+import { DEFAULT_PAGE_SETTINGS } from '../src/lib/mcp/contract.js';
+import { assertRenderOptions, buildRenderOptionsContract, readRenderOptions, readWatermarkPreference, writeWatermarkPreference } from '../src/lib/render-options.js';
 import { buildOpenAIReferencePlan } from '../src/lib/openai-image-references.js';
 import { buildGeminiReferencePlan } from '../src/lib/gemini-image-references.js';
 
@@ -22,6 +23,40 @@ after(async () => { await server?.close(); });
 const castList = '## 葵\n黒髪の成人女性、眼鏡。\n## 凛\n茶髪の成人女性。';
 const scenario = `Topic: 展示会の記念写真\nLocation: 展示会\n${[1, 2, 3, 4].map(n => `[${n}コマ目]\n[Camera: ローアングル]\nAction: 葵が凛に本を渡す。凛は本を受け取る。\n葵「記念写真だね」\n凛「よく見えるよ」`).join('\n')}`;
 const build = (options = {}) => buildMangaPrompt({ scenario, castList, providerFamily: 'chatgpt', systemVersion: 'test', punchlineType: 'Auto', cinematicTechniques: false, ...options });
+
+test('public defaults omit application watermarks while preserving title lettering', () => {
+  assert.equal(DEFAULT_PAGE_SETTINGS.showWatermarks, false);
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = build({ providerFamily, showWatermarks: DEFAULT_PAGE_SETTINGS.showWatermarks });
+    assert.deepEqual(readRenderOptions(prompt), {
+      mosaicCopyrightedCharacters: true, showWatermarks: false, showTitle: true,
+    });
+    assert.match(prompt, /Do not draw either footer watermark/);
+    assert.equal(readRenderOptions(build({ providerFamily, showWatermarks: true })).showWatermarks, true);
+  }
+});
+
+test('the browser remembers manual watermark choices and safely starts off without storage', () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const saved = new Map();
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+    getItem: key => saved.get(key) ?? null,
+    setItem: (key, value) => saved.set(key, value),
+  } });
+  try {
+    assert.equal(readWatermarkPreference(), false);
+    writeWatermarkPreference(true);
+    assert.equal(readWatermarkPreference(), true);
+    writeWatermarkPreference(false);
+    assert.equal(readWatermarkPreference(), false);
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { throw new Error('storage disabled'); } });
+    assert.equal(readWatermarkPreference(), false);
+    assert.doesNotThrow(() => writeWatermarkPreference(true));
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, 'localStorage', descriptor);
+    else delete globalThis.localStorage;
+  }
+});
 
 test('registered cast exclusion is bound to final generation, QA, repair and send validation', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
@@ -118,8 +153,8 @@ for (const providerFamily of ['chatgpt', 'gemini']) {
   }
 }
 
-test('defaults preserve both footer credits; unchecked options preserve story text', () => {
-  const prompt = build();
+test('enabled watermarks preserve both footer credits; unchecked options preserve story text', () => {
+  const prompt = build({ showWatermarks: true });
   assert.match(prompt, /版権キャラクターにおおきなモザイクをかける/);
   assert.match(prompt, /https:\/\/note.com\/happy_duck780/);
   const off = build({ mosaicCopyrightedCharacters: false, showWatermarks: false });
@@ -129,7 +164,7 @@ test('defaults preserve both footer credits; unchecked options preserve story te
   assert.doesNotMatch(off, /both exact watermarks|Keep every watermark glyph|Draw tiny.*watermark/);
 });
 test('watermarks may overlap or be hidden without triggering automatic image repair',async()=>{
- const prompt=build();
+ const prompt=build({ showWatermarks: true });
  assert.match(prompt,/WATERMARK ART PRIORITY/);
  assert.doesNotMatch(prompt,/Keep every watermark glyph fully inside|no watermark\/credit inside panels/);
  const reviewPrompt=qa({finalPrompt:prompt});
@@ -156,7 +191,7 @@ test('option contract survives long-prompt compaction and cannot be silently rem
   }
 });
 
-test('both native checkboxes default ON, remain compact, and lock while work is active', async () => {
+test('native checkboxes use their respective defaults, remain compact, and lock while work is active', async () => {
   const { default: Step2 } = await server.ssrLoadModule('/src/components/Step2Panel.jsx');
   const { default: Step3 } = await server.ssrLoadModule('/src/components/Step3Panel.jsx');
   for (const [Component, label, props, lock] of [
@@ -165,7 +200,8 @@ test('both native checkboxes default ON, remain compact, and lock while work is 
   ]) {
     const render = extra => renderToStaticMarkup(React.createElement(Component, { ...props, ...extra }));
     const checkbox = html => html.match(new RegExp('<label[^>]*>\\s*<input type="checkbox"[^>]*>\\s*<span>' + label + '</span>\\s*</label>'))?.[0];
-    assert.match(checkbox(render({})), /checked=""/);
+    assert.equal(/checked=""/.test(checkbox(render({}))), Component === Step2);
+    assert.match(checkbox(render({ mosaicCopyrightedCharacters: true, showWatermarks: true })), /checked=""/);
     assert.match(checkbox(render({})), /text-xs/);
     assert.match(checkbox(render(lock)), /disabled=""/);
     assert.doesNotMatch(checkbox(render({ mosaicCopyrightedCharacters: false, showWatermarks: false })), /checked=""/);
@@ -181,13 +217,24 @@ test('actual checkbox handlers invalidate stale output, keep inputs/history and 
     const body = source.match(new RegExp(`const ${name} = \\(enabled\\) => \\{([\\s\\S]*?)\\n  \\};`))?.[1];
     assert.ok(body);
     const calls = [];
-    const context = { Boolean, isColorModeLocked: false, [valueName]: true, showStatus() {} };
+    const context = {
+      Boolean, isColorModeLocked: false, [valueName]: true, showStatus() {},
+      bookPageContextRef: { current: null },
+      writeWatermarkPreference: value => calls.push(['writeWatermarkPreference', value]),
+    };
     for (const fn of new Set(body.match(/\b(?:set\w+|invalidateScenarioOutput)(?=\()/g))) context[fn] = value => calls.push([fn, value]);
     vm.runInNewContext(`(enabled => {${body}})(false)`, context);
     assert.ok(calls.some(([fn]) => fn === invalidator));
     assert.ok(calls.some(([fn, value]) => fn === name + 'State' && value === false));
     assert.doesNotMatch(body, /generateScenario\(|assemblePrompt\(|regenerateImage\(|setGenerationHistory\(|setCastList\(|setImages\(|setManualTopic\(/);
     calls.length = 0;
+    if (name === 'setShowWatermarks') {
+      context.bookPageContextRef.current = { projectId: 'example' };
+      vm.runInNewContext(`(enabled => {${body}})(false)`, context);
+      assert.ok(calls.some(([fn, value]) => fn === 'setShowWatermarksState' && value === false));
+      assert.ok(!calls.some(([fn]) => fn === 'writeWatermarkPreference'));
+      calls.length = 0;
+    }
     context.isColorModeLocked = true;
     vm.runInNewContext(`(enabled => {${body}})(false)`, context);
     assert.equal(calls.length, 0);
