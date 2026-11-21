@@ -170,7 +170,7 @@ Total pages include the cover. Cover numbering is separate. An approval request 
 
 Describe costume or setting changes per page. Inspect actual cast continuity, dialogue and reading order. Harmless differences are distinct from defects that break the scene. / 衣装替えや場所の移動は、ページ固有の変更として伝えます。登場人物・小道具の対応、台詞、読順は実画像でも確認してください。無理のない重なりや勢いのある誇張は許容し、微小な指定差だけで有料生成を繰り返さない運用です。
 
-New projects start with `showWatermarks: false`. To enable the two product credits, set `showWatermarks: true` in the project or on individual pages. Page-level overrides allow credits on the final page only. Page numbers and author credit have independent settings. / 新規作品の `showWatermarks` は初期状態で `false` です。製品クレジットを入れる場合は、作品共通または該当ページで `true` を指定します。ページごとの上書きで最終ページだけに表示できます。ページ番号と作者名は個別に設定します。
+New projects start with `showWatermarks: false`. Set it to `true` at project or page level to enable page credits. Set `watermarkLeft` or `watermarkRight` to a single line of up to 80 characters, or use an empty string to omit that side. Unspecified text uses the inherited setting or the built-in credit. Page-level overrides allow credits on the final page only. Page numbers and author credit have independent settings. / 新規作品の `showWatermarks` は初期状態で `false` です。表示する作品またはページで `true` にします。`watermarkLeft` と `watermarkRight` で左右を各1行・最大80文字で指定でき、空文字ならその側を表示しません。文言の指定を省くと作品共通の値または初期文言を使います。最終ページだけの表示も指定できます。ページ番号と作者名は個別に設定します。
 
 Unnumbered pages are excluded from the sequence. Body pages after an unnumbered cover start at 1 by default. `presentation.pageNumberStart` starts or restarts numbering at that page. / ページ番号を表示しないページは数えません。番号なしの表紙に続く本文は、初期値で1・2・3と進みます。`presentation.pageNumberStart`を指定すると、そのページから指定した番号で再開します。
 

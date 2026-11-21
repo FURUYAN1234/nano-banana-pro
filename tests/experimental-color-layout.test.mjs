@@ -111,6 +111,7 @@ try {
   function workflowState() {
     const input=fixture();
     const state={bookPageContextRef:{current:null},hasCharacterReferenceImages,...input,isColorModeLocked:false,isOpenAIEngine:true,experimentalEnabled:true,scenarioModelId:'test-model',promptModelId:'test-model',
+      watermarkOverrides:{},customFooterTextFor:()=>undefined,readWatermarkTextPreference:()=>({}),setWatermarkOverrides(){},
       castListRef:{current:input.castList},imagesRef:{current:input.referenceImages},referenceAssetsRef:{current:[]},bg360Image:null,bg360Enabled:false,bg360Analysis:null,bg360EnabledRef:{current:false},
       scenarioUsedModelRef:{current:null},OPENAI_SCENARIO_MODEL_OPTIONS:[],getBuiltinPanelMediumReference:()=>null,formatOpenAIImageEngineName:()=> 'ChatGPT Images 2.5',getOpenAIPromptBodyBudget:()=>32000,buildOpenAIReferencePlan:()=>({}),GEMINI_IMAGE_MODEL:'gemini-nano-banana-test',inputMode:'manual',manualTopic:input.userDirection,
       generationHistory:[{img:'saved-image'}],generatedImage:'visible-image',finalPrompt:'',isAssembling:false,referenceEditorError:'',

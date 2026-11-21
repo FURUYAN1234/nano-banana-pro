@@ -20,7 +20,7 @@ import { createMcpCommitFence } from '../lib/mcp/commit-fence.js';
 import { setApiKey } from '../lib/gemini';
 import { GEMINI_IMAGE_MODEL } from '../lib/gemini-image-settings.js';
 import { generateImageWithImagen } from '../lib/imagen';
-import { assertRenderOptions, DEFAULT_SHOW_WATERMARKS, readRenderOptions, readWatermarkPreference, writeWatermarkPreference, hasMangaBackgroundSimplification, setMangaBackgroundSimplification } from '../lib/render-options.js';
+import { assertRenderOptions, DEFAULT_SHOW_WATERMARKS, isValidWatermarkText, readRenderOptions, readWatermarkPreference, writeWatermarkPreference, readWatermarkTextPreference, writeWatermarkTextPreference, resolveWatermarkTexts, hasMangaBackgroundSimplification, setMangaBackgroundSimplification } from '../lib/render-options.js';
 import { collectCastNameEntries } from '../lib/panel-utils.js';
 import { buildImageEditRequest } from '../lib/image-edit.js';
 import { readPanelStyleEditFrames, preparePanelStyleEdit, composePanelStyleEdit } from '../lib/panel-style-edit.js';
@@ -47,6 +47,7 @@ import { isEquirectangularFile, readFileAsDataURL } from '../lib/input-files.js'
 import { getCharacterAnalysisPrompt } from '../lib/prompts';
 import {
   validateMangaPromptArtifact,
+  buildMangaWatermark,
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
@@ -264,6 +265,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const [colorMode, setColorModeState] = useState("color");
   const [mosaicCopyrightedCharacters, setMosaicCopyrightedCharactersState] = useState(true);
   const [showWatermarks, setShowWatermarksState] = useState(readWatermarkPreference);
+  const [watermarkOverrides, setWatermarkOverrides] = useState(readWatermarkTextPreference);
   const [showTitle, setShowTitleState] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [genLog, setGenLog] = useState([]); // New Log State
@@ -1417,6 +1419,33 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     showStatus('ウオーターマーク設定を変更しました。STEP3で指示文を再構築してください。');
   };
 
+  const footerTextFor = (family) => {
+    const isChatGPTFamily = family === PROMPT_PROVIDER_FAMILIES.CHATGPT;
+    const imageEngineLabel = isChatGPTFamily ? formatOpenAIImageEngineName(openAIImageQuality)
+      : GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana ');
+    const scenarioModelLabel = OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioUsedModelRef.current)?.label;
+    return resolveWatermarkTexts(watermarkOverrides, buildMangaWatermark({
+      imageEngineLabel, scenarioModelLabel, systemVersion: SYSTEM_VERSION, isChatGPTFamily,
+    }));
+  };
+  const customFooterTextFor = (family) => {
+    if (watermarkOverrides.left === undefined && watermarkOverrides.right === undefined) return undefined;
+    const { left, right } = footerTextFor(family);
+    return { left: left.trim(), right: right.trim() };
+  };
+  const setWatermarkText = (side, value) => {
+    if (isColorModeLocked || !['left', 'right'].includes(side) || !isValidWatermarkText(value)) return;
+    const next = { ...watermarkOverrides, [side]: value };
+    setWatermarkOverrides(next);
+    if (!bookPageContextRef.current) writeWatermarkTextPreference(next);
+    if (finalPrompt) {
+      invalidateScenarioOutput();
+      setAssembleThought('');
+      setGenLog([]);
+      showStatus('ウオーターマークの文章を変更しました。STEP3で指示文を再構築してください。');
+    }
+  };
+
   // Selection invalidates dependent output but never initiates assembly/API work.
   // STEP1/STEP2 resets preserve this preference; only full settings reset clears it.
   const setColorMode = (value) => {
@@ -1447,7 +1476,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   };
 
   const cacheCurrentPage = () => {
-    const context=[castListRef.current,colorMode,showWatermarks,showTitle,mosaicCopyrightedCharacters,punchlineType,
+    const context=[castListRef.current,colorMode,showWatermarks,watermarkOverrides,showTitle,mosaicCopyrightedCharacters,punchlineType,
       selectedEngine,openAIImageQuality,imagesRef.current,referenceAssetsRef.current,
       bg360EnabledRef.current,bg360ImageRef.current,bg360Analysis,styleJson,getCurrentPromptProviderFamily(),inputMode,manualTopic];
     const pages=promptAssemblyRunRef.pages ||= {};
@@ -1460,6 +1489,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   const experimentalInput = (sourceScenario = scenario) => ({
     enabled:true,scenarioMode:getScenarioMode(),scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,showTitle,
+    watermarkTexts:customFooterTextFor(getCurrentPromptProviderFamily()),
     ...(bookPageContextRef.current?{bookMetadata:{title:bookPageContextRef.current.projectTitle,location:lockedLocation,outfit:lockedOutfit}}:{}),
     ...(bookPageContextRef.current?{bookPresentation:{presentation:bookPageContextRef.current.presentation,pageIndex:bookPageContextRef.current.pageIndex,pageNumber:bookPageContextRef.current.pageNumber,displayPageNumber:bookPageContextRef.current.displayPageNumber,showTitle}}:{}),
     allowScenarioQualityWarning:true,
@@ -1599,6 +1629,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       const assembled = await assembleMangaPromptWithRecovery({
         mosaicCopyrightedCharacters,
         showWatermarks,
+        watermarkTexts: customFooterTextFor(effectiveProviderFamily),
         showTitle,
         scenario: currentScenario,
         castList,
@@ -1657,7 +1688,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
       assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType, hasCharacterReferences: hasCharacterReferenceImages(imagesRef.current, referenceAssetsRef.current) });
       assertPrintableDialogue(reviewed.prompt);
-      assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
+      assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, watermarkTexts: customFooterTextFor(effectiveProviderFamily), protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
       promptAssemblyRunRef.completedRun = assemblyRun;
       promptAssemblyRunRef.completedScenario = assembled.scenario;
       if (assembled.repaired) setScenario(assembled.scenario);
@@ -1818,6 +1849,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setColorModeState("color");
     setMosaicCopyrightedCharactersState(true);
     setShowWatermarksState(readWatermarkPreference());
+    setWatermarkOverrides(readWatermarkTextPreference());
     setShowTitleState(true);
     resetScenarioModelId();
     setAnalysisModelId(DEFAULT_OPENAI_STEP1_MODEL_ID);
@@ -2285,7 +2317,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     }
     if (enforceAssemblySettings) assertPromptEndingModeConsistency({ prompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType, hasCharacterReferences: hasCharacterReferenceImages(imagesRef.current, referenceAssetsRef.current) });
     assertPrintableDialogue(prompt);
-    if (enforceAssemblySettings && inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
+    if (enforceAssemblySettings && inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, showTitle, watermarkTexts: customFooterTextFor(getCurrentPromptProviderFamily()), protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
   };
 
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
@@ -3554,6 +3586,11 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     pageModeRef.current = isOpenAIEngine; onAutoPageModeChange?.(isOpenAIEngine);
     setColorMode(settings.colorMode); setShowTitle(settings.showTitle);
     setShowWatermarksState(settings.showWatermarks ?? (restoreNormal ? readWatermarkPreference() : DEFAULT_SHOW_WATERMARKS));
+    const manualWatermarks = restoreNormal ? readWatermarkTextPreference() : {};
+    setWatermarkOverrides({
+      left: settings.watermarkLeft ?? manualWatermarks.left,
+      right: settings.watermarkRight ?? manualWatermarks.right,
+    });
     setMosaicCopyrightedCharacters(settings.mosaicCopyrightedCharacters); setAllowImageQualityRepair(settings.allowImageQualityRepair);
     if (settings.analysisModelId) setAnalysisModelId(settings.analysisModelId);
     if (settings.scenarioModelId) setScenarioModelId(settings.scenarioModelId);
@@ -3605,6 +3642,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       mangaTitle,usedModel,scenarioUsedModel:scenarioUsedModelRef.current,resolvedPunchlineType:resolvedPunchlineTypeRef.current,analyzeThought,
       assembly: { completedRun: promptAssemblyRunRef.completedRun, experimentalPrepared: promptAssemblyRunRef.experimentalPrepared },
       settings: { colorMode, showTitle, showWatermarks, mosaicCopyrightedCharacters, allowImageQualityRepair,
+        ...(watermarkOverrides.left === undefined ? {} : { watermarkLeft: watermarkOverrides.left }),
+        ...(watermarkOverrides.right === undefined ? {} : { watermarkRight: watermarkOverrides.right }),
         analysisModelId, scenarioModelId, promptModelId, openAIImageQuality, openAIImageSize, punchlineType,
         enhanceExpressions, enhanceBodyLang, enhanceEffects, enhanceBackgrounds, enhanceCameraWork, enhanceDialogue, enhanceGag,
         engine:effectiveEngine,useBackground360:bg360Enabled,backgroundSimplification:hasMangaBackgroundSimplification(finalPrompt),
@@ -3679,7 +3718,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const assembleMcpCover = () => {
     if (bookPageContextRef.current?.kind !== 'illustration') throw new Error('This page is not an illustration cover.');
     invalidatePromptAssembly();
+    const providerFamily = getCurrentPromptProviderFamily();
     const source = buildBookIllustrationPrompt({direction:scenario,castList,colorMode,showTitle,showWatermarks,mosaicCopyrightedCharacters,
+      watermarkTexts: customFooterTextFor(providerFamily) ?? footerTextFor(providerFamily),
       ...bookPageContextRef.current});
     const prompt = assertImagePromptBudget(prepareFinalPrompt(source,{sourceScenario:scenario}));
     setFinalPrompt(prompt); setAssembleThought('承認済み表紙の1枚絵描画指示を準備しました。');
@@ -3810,6 +3851,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setMosaicCopyrightedCharacters,
     showWatermarks,
     setShowWatermarks,
+    watermarkTexts: footerTextFor(getCurrentPromptProviderFamily()),
+    setWatermarkText,
     showTitle,
     setShowTitle,
     setColorMode,

@@ -61,6 +61,8 @@ function App() {
     setMosaicCopyrightedCharacters,
     showWatermarks,
     setShowWatermarks,
+    watermarkTexts,
+    setWatermarkText,
     showTitle,
     setShowTitle,
     setColorMode,
@@ -678,6 +680,8 @@ function App() {
                   setShowTitle={setShowTitle}
                   showWatermarks={showWatermarks}
                   setShowWatermarks={setShowWatermarks}
+                  watermarkTexts={watermarkTexts}
+                  setWatermarkText={setWatermarkText}
                   colorMode={colorMode}
                   setColorMode={setColorMode}
                   isColorModeLocked={isColorModeLocked}

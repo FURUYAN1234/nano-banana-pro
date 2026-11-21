@@ -128,7 +128,7 @@ test('native title checkbox defaults checked, can be unchecked and locks while b
 
 test('title and watermark help use small text with compact spacing', () => {
   const html = renderToStaticMarkup(React.createElement(Step3, { currentStep: 3 }));
-  for (const text of ['OFFで題字の領域をコマに使います。外枠と余白は残します。', 'オンにすると画像下部に生成情報とクレジットを表示します。手動作画での選択はこのブラウザーに保存します。']) {
+  for (const text of ['OFFで題字の領域をコマに使います。外枠と余白は残します。', 'ページ下部の左・右に各1行（最大80文字）。空欄の側は表示しません。']) {
     const paragraph = [...html.matchAll(/<p([^>]*)>([^<]+)<\/p>/g)].find(m => m[2] === text);
     assert.ok(paragraph, `Missing compact help: ${text}`);
     assert.match(paragraph[1], /font-size:11px/);

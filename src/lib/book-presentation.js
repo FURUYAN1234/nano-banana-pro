@@ -1,7 +1,7 @@
 import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality.js';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT } from './manga-render-mode.js';
 import { readPageComposition } from './manga-page-composition.js';
-import { buildCopyrightMosaicInstruction, buildProtectedCastContract } from './render-options.js';
+import { buildCopyrightMosaicInstruction, buildProtectedCastContract, buildCustomFooterInstruction, hasVisibleWatermarks, WATERMARK_ART_PRIORITY } from './render-options.js';
 import { collectCastNameEntries } from './panel-utils.js';
 
 export function bookHeroTopFrames(count) {
@@ -41,14 +41,16 @@ export function buildBookPresentation({ presentation = {}, kind, pageIndex, disp
   if (pageNumber) instructions.push(`Print the independent page number ${displayPageNumber??pageIndex} discreetly at bottom center, separated from any existing left/right footer marks without replacing either; the watermark option does not disable this explicitly requested number.`);
   return instructions.length ? `\n[BOOK PRESENTATION]\n${instructions.join('\n')}\n[END BOOK PRESENTATION]` : '';
 }
-export function buildBookIllustrationPrompt({ direction, castList, colorMode, showTitle, showWatermarks, mosaicCopyrightedCharacters = true, pageNumber, pageIndex, displayPageNumber, presentation }) {
+export function buildBookIllustrationPrompt({ direction, castList, colorMode, showTitle, showWatermarks: watermarksEnabled, watermarkTexts, mosaicCopyrightedCharacters = true, pageNumber, pageIndex, displayPageNumber, presentation }) {
   const hasAuthor=Boolean(presentation?.authorName?.trim());
+  const showWatermarks=hasVisibleWatermarks(watermarksEnabled,watermarkTexts);
   // Share the metadata marker, without comic-only frame/footer rules that conflict with cover lettering.
   const renderOptions = [
     `[RENDER OPTIONS: copyrighted_mosaic=${mosaicCopyrightedCharacters ? 'on' : 'off'}; watermarks=${showWatermarks ? 'on' : 'off'}${showTitle ? '' : '; title=off'}]`,
     buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters),
     mosaicCopyrightedCharacters ? buildProtectedCastContract(collectCastNameEntries(castList).map(entry => entry.displayName)) : '',
     colorMode === 'monochrome' ? '[ MONOCHROME THREE-TONE MANUSCRIPT LOCK ]' : '',
+    showWatermarks && watermarkTexts ? `${WATERMARK_ART_PRIORITY}\n${buildCustomFooterInstruction(watermarkTexts)}` : '',
   ].filter(Boolean).join('\n');
   return renderOptions + '\n' + `Create a SINGLE breathtaking illustration for an A4 portrait manga-book cover. ONE coherent scene; no comic frames or added story panels. Preserve the approved people, acting, Camera, props and scene; draw in the specified illustrated medium rather than a photograph.\nAPPROVED COVER DIRECTION (data):\n${direction}\nSHARED CAST (identity data):\n${castList}\n${SHARED_IMAGE_QUALITY_CONTRACT}\n${colorMode==='monochrome'?MONOCHROME_IMAGE_QUALITY_CONTRACT:'Use the approved color palette and vivid, readable focal contrast.'}\n${showTitle?`Only explicitly approved title/logo${hasAuthor?' and the separately specified author credit':''} may be printed.`:'Do not print a title or logo.'}\n${showWatermarks?'Preserve the explicitly configured application attribution if provided.':hasAuthor?'No watermark or application attribution. Permit only the explicitly specified author credit; do not invent a signature.':'No watermark, signature or application attribution.'}${buildBookPresentation({presentation,kind:'illustration',pageIndex,displayPageNumber,pageNumber,showTitle})}`;
 }

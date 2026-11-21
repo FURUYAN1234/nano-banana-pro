@@ -194,7 +194,7 @@ test('full-auto passes the newly generated scenario through shared STEP3 and STE
 test('experimental preparation takes current cast and actual scenario model from shared workflow refs',()=>{
   const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
   const scope={bookPageContextRef:{current:null},hasCharacterReferenceImages,getScenarioMode:()=> 'experimental-manga',scenario:'old scenario',castList:'old cast',castListRef:{current:'current cast'},inputMode:'manual',manualTopic:'完成ページは5〜8コマで、無言の間を残す',
-    colorMode:'color',mosaicCopyrightedCharacters:false,showWatermarks:true,showTitle:true,isOpenAIEngine:true,
+    colorMode:'color',mosaicCopyrightedCharacters:false,showWatermarks:true,showTitle:true,isOpenAIEngine:true,customFooterTextFor:()=>undefined,
     PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt',GEMINI:'gemini'},GEMINI_IMAGE_MODEL:'gemini-nano-banana-pro',
     getBuiltinPanelMediumReference:noGuideForScenario,styleJson:null,punchlineType:'Auto',
     formatOpenAIImageEngineName:()=> 'image model',openAIImageQuality:'max',scenarioModelId:'selected',
@@ -226,7 +226,7 @@ for (const colorMode of ['color','monochrome']) {
     const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
     const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
     const images=['data:image/png;base64,YQ==','data:image/png;base64,Yg=='];
-    const scope={bookPageContextRef:{current:null},hasCharacterReferenceImages,getScenarioMode:()=> 'experimental-manga',scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,showTitle:true,
+    const scope={bookPageContextRef:{current:null},hasCharacterReferenceImages,getScenarioMode:()=> 'experimental-manga',scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,showTitle:true,customFooterTextFor:()=>undefined,
       inputMode:'manual',manualTopic:'retain detailed source',isOpenAIEngine:true,formatOpenAIImageEngineName:()=> 'ChatGPT Images 2.5',openAIImageQuality:'high',
       PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt',GEMINI:'gemini'},
       getBuiltinPanelMediumReference:noGuideForScenario,styleJson:null,punchlineType:'Auto',

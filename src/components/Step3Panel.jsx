@@ -5,7 +5,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
-import { DEFAULT_SHOW_WATERMARKS } from '../lib/render-options.js';
+import { DEFAULT_SHOW_WATERMARKS, MAX_WATERMARK_LENGTH } from '../lib/render-options.js';
 
 /**
  * STEP 03: プロンプト生成パネル
@@ -14,9 +14,11 @@ export default function Step3Panel({
   bookPanelCount,
   bookPageKind,
   showWatermarks = DEFAULT_SHOW_WATERMARKS,
+  watermarkTexts,
   showTitle = true,
   setShowTitle,
   setShowWatermarks,
+  setWatermarkText,
   step3Ref,
   currentStep,
   isSearching,
@@ -106,7 +108,20 @@ export default function Step3Panel({
               onChange={(event) => setShowWatermarks(event.target.checked)} />
             <span>ウオーターマークを表記する</span>
           </label>
-          <p id="manga-watermarks-help" style={{ margin: '0 0 0 19px', padding: 0, fontSize: '11px', lineHeight: 1.4, color: '#94a3b8' }}>オンにすると画像下部に生成情報とクレジットを表示します。手動作画での選択はこのブラウザーに保存します。</p>
+          <p id="manga-watermarks-help" style={{ margin: '0 0 0 19px', padding: 0, fontSize: '11px', lineHeight: 1.4, color: '#94a3b8' }}>ページ下部の左・右に各1行（最大{MAX_WATERMARK_LENGTH}文字）。空欄の側は表示しません。</p>
+          {showWatermarks && watermarkTexts && (
+            <div className="grid gap-2" style={{ marginLeft: '19px', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 15rem), 1fr))' }}>
+              {[['left', '左下'], ['right', '右下']].map(([side, label]) => (
+                <label key={side} className="flex min-w-0 items-center gap-2 text-xs text-slate-300">
+                  <span className="shrink-0">{label}</span>
+                  <input type="text" value={watermarkTexts[side]} maxLength={MAX_WATERMARK_LENGTH}
+                    aria-label={label + 'の文章'} aria-describedby="manga-watermarks-help" disabled={controlsDisabled}
+                    onChange={event => setWatermarkText(side, event.target.value)}
+                    className="min-w-0 flex-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-slate-100 focus:border-orange-400 disabled:opacity-60" />
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

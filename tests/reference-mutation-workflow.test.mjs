@@ -15,6 +15,7 @@ function workflow() {
   const ctx = { promptAssemblyRunRef:{current:0}, DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID,
     DEFAULT_CATEGORIES:[], reconcileReferenceCast,remapReferenceNumbers,editReferenceAsset,parseCharacterEditorText,castNameBaselineRef:{current:state.castList},finishScenarioTiming:()=>{},cancelApiWork:()=>{state.cancelled=true;},
     invalidatePromptAssembly:()=>{},showStatus:()=>{},resetScenarioModelId:()=>{},readWatermarkPreference:()=>false,
+    readWatermarkTextPreference:()=>({}),setWatermarkOverrides(){},
     scenarioRunEpochRef:{current:5},scenarioUsedModelRef:{current:null},qualityRetryAbortRef:{current:false},fullAutoAbortRef:{current:false},
     isFullAutoModeRef:{current:true},isEndlessModeRef:{current:true},isAnalyzingRef:{current:true},
     imagesRef:{current:state.images},referenceAssetsRef:{current:[a,b]},castListRef:{current:state.castList},castRevisionRef:{current:1},

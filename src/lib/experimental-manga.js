@@ -10,7 +10,7 @@ import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, no
 import { translateMonochromeCompilerRules } from './monochrome-compiler-prose.js';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_FOCAL_READABILITY, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
-import { buildRenderOptionsContract, buildRenderOptionsQa, readRenderOptions, buildProtectedCastContract, allowsWatermarkOverlap, COPYRIGHT_MOSAIC_TARGET_SCOPE, pageTitleSuppression } from './render-options.js';
+import { buildRenderOptionsContract, buildRenderOptionsQa, readRenderOptions, buildProtectedCastContract, allowsWatermarkOverlap, hasVisibleWatermarks, DEFAULT_LEFT_WATERMARK, readFooterLettering, COPYRIGHT_MOSAIC_TARGET_SCOPE, pageTitleSuppression } from './render-options.js';
 import { createApiError, formatApiErrorDetails, getApiErrorInfo, sanitizeErrorMessage } from './api-errors.js';
 import { selectImageQualityCandidate, runPageImageQuality, isMaterialImageQualityIssue } from './image-quality-failsafe.js';
 import { inspectImageDimensions, extractNativeImageRegion, inspectVariablePanelFrames } from './manga-page-layout.js';
@@ -674,8 +674,9 @@ export function buildExperimentalImagePrompt(plan, source, options={}) {
   assertImagePromptBudget(prompt,maximum);
   return prompt;
 }
-function buildExperimentalImagePromptBase(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks=false, showTitle=true, referenceContext='', hasCharacterReferences=true, imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
+function buildExperimentalImagePromptBase(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks:watermarksEnabled=false, watermarkTexts, showTitle=true, referenceContext='', hasCharacterReferences=true, imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
   const effectiveProviderFamily=normalizePromptProviderFamily(providerFamily);
+  const showWatermarks=hasVisibleWatermarks(watermarksEnabled,watermarkTexts);
   validateExperimentalPlan(plan,source);
   const rects=pageCompositionRects(plan);
   const spans=spanningPanelGroups(rects).map(([tall,top,bottom])=>
@@ -795,10 +796,10 @@ PANEL EDGE CONTINUITY LOCK: 明示タチキリ以外の外周保持。越境は�
 ${MONOCHROME_RENDERING_LOCK_COMPACT}
 ${MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT}
 BACKGROUND: 不要な背景テクスチャ密度だけ減らし、環境形状/遠近/手掛かり/明部の紙白と境界ある影を残す。背景一面の網点膜/背景消去は禁止。非焦点defocusは輪郭/細部の焦点差で、紙白へ薄灰を掛けない。ペンかすれは局所、紙全体の汚れ/粒子にしない。暗い肌/素材の割当トーンと根拠ある影は保持。
-${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks,showTitle,bottomBleed,fullBleed})}
+${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks,showTitle,bottomBleed,fullBleed,watermarkTexts})}
 ${mosaicCopyrightedCharacters?'':COPYRIGHT_MOSAIC_TARGET_SCOPE}
 ${buildProtectedCastContract(collectCastNameEntries(source.castList).map(entry=>entry.displayName))}
-${showWatermarks?`FOOTER ONLY: Bottom-left EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780". Bottom-right EXACTLY ${JSON.stringify(watermark)}. Horizontal once each; never on story objects.`:bottomBleed?'No watermark/footer; continue bottom bleed artwork.':'No watermark/footer text; leave footer blank.'}
+${watermarkTexts?'':showWatermarks?`FOOTER ONLY: Bottom-left EXACTLY ${JSON.stringify(DEFAULT_LEFT_WATERMARK)}. Bottom-right EXACTLY ${JSON.stringify(watermark)}. Horizontal once each; never on story objects.`:bottomBleed?'No watermark/footer; continue bottom bleed artwork.':'No watermark/footer text; leave footer blank.'}
 非印字確認: 正確なコマ数/順序/原文出来事/結末/全台詞/話者、強いCamera/演技、各指定媒体、明瞭な墨と紙白。`);
   }
   // Translate only compiler-owned prose. Authored facts, actions and recipes stay exact.
@@ -874,10 +875,10 @@ ${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects
 ${translateMonochrome?translateMonochromeCompilerRules(qualityContract):qualityContract}${colorMode==='monochrome'?'\n'+(translateMonochrome?translateMonochromeCompilerRules(MONOCHROME_RENDERING_LOCK_COMPACT):MONOCHROME_RENDERING_LOCK_COMPACT)+'\n'+MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT:''}
 PANEL EDGE CONTINUITY LOCK: PAGE CONTAINMENT: ${plan.composition?.bleed.length?'FULL BLEEDで指定したコマの辺だけタチキリ必須。他の外周は余白付きで保持。':'外枠の四辺/四隅を余白付きで画布内へ収め、切落とし/画外拡張は禁止。明示の枠なし/裁切り指定は優先。'}内部の枠越えは外周裁切りの許可ではない。道具/画面/文字は自枠内、隣場面への流出は明示時のみ。${hasDominantFigure?'小コマの独立人物は枠内へ。PAGE DOMINANT FIGUREは枠を越える大きさを保つ。':'原則、見える頭と髪の全輪郭を余裕付きで枠内に。'}演出上の枠越えは一つの連続した前景層とし、枠線は頭/髪の全輪郭の後ろで止まり、その後に再開。顔/髪を枠線で貫く・輪郭の切断・外側断片の複製・枠内外の位置ずれは禁止。${hasDominantFigure?'PAGE DOMINANT FIGUREと指定のREQUIRED BREAKOUTは省略しない。人物を縮めず周囲の枠と台詞の余白を調整し、一続きの輪郭を描く。':plan.composition?.breakouts.length?'REQUIRED BREAKOUTは省略しない。隣接の余白を調整し一続きの輪郭を描く。':'綺麗に越えられなければ全輪郭を枠内に保持。'}
 LIMB OWNERSHIP CHECK (internal; never print): 全コマの各人物の左右の腕/手/脚/足を可視・自然な遮蔽・画面外に分類。見える手→手首→肘→本人の肩、足→足首→膝→本人の腰を辿り、隠れた部分も自然につなぐ。所有者不明/余分/融合/分離/理由のない欠落、家具や他人の体から出る手足は禁止。指定の解剖/ポーズ/接触/Camera/切取り/短縮を保持し、隠れた四肢の露出や全身画角を強制しない。仕上げ前に所有/接続の曖昧さだけを直し、動作や構図を変えない。
-${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks,showTitle,bottomBleed,fullBleed})}
+${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks,showTitle,bottomBleed,fullBleed,watermarkTexts})}
 ${mosaicCopyrightedCharacters?'':COPYRIGHT_MOSAIC_TARGET_SCOPE}
 ${buildProtectedCastContract(collectCastNameEntries(source.castList).map(entry=>entry.displayName))}
-${showWatermarks?`FOOTER ONLY: Bottom-left EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780". Bottom-right EXACTLY ${JSON.stringify(watermark)}. 横書き各1回、作中道具転載禁止。`:bottomBleed?'No watermark or footer text; continue the authored bleed artwork to the canvas bottom.':'No watermark or footer text; leave footer blank.'}
+${watermarkTexts?'':showWatermarks?`FOOTER ONLY: Bottom-left EXACTLY ${JSON.stringify(DEFAULT_LEFT_WATERMARK)}. Bottom-right EXACTLY ${JSON.stringify(watermark)}. 横書き各1回、作中道具転載禁止。`:bottomBleed?'No watermark or footer text; continue the authored bleed artwork to the canvas bottom.':'No watermark or footer text; leave footer blank.'}
 描画前確認: コマ数/日本式読順/元の結末/全台詞と話者/強い物理Camera/連続する人体/正確な枠越え層。全コマを正面バストへ変換しない。原文にない題字を作らない。`;
   const full=render(false);
   if(full.length<=Math.min(promptMaxChars,EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS)) return full;
@@ -906,15 +907,13 @@ export function buildExperimentalReviewPrompt(plan, source, options={}) {
   // Keep the deterministic lettering check, but derive its expectations from
   // the edited document rather than restoring STEP2's title or UI settings.
   const titleMatch = options.finalPrompt.match(/^Top title EXACTLY ("(?:\\.|[^"\\])*")/m);
-  const footerLine = options.finalPrompt.match(/^FOOTER ONLY[^\n]*/m)?.[0] || '';
-  const left = footerLine.match(/Bottom-left EXACTLY ("(?:\\.|[^"\\])*")/)?.[1];
-  const right = footerLine.match(/Bottom-right EXACTLY ("(?:\\.|[^"\\])*")/)?.[1];
+  const footer = readFooterLettering(options.finalPrompt);
   const titleKnown = Boolean(titleMatch) || options.finalPrompt.includes('NO PAGE TITLE:');
   // Compacted prompts can rephrase the footer prose; the render contract is stable.
   const footerDisabled = !readRenderOptions(options.finalPrompt).showWatermarks;
-  const footerKnown = Boolean(left && right) || footerDisabled || options.finalPrompt.includes('No watermark or footer text;');
+  const footerKnown = Boolean(footer) || footerDisabled || options.finalPrompt.includes('No watermark or footer text;');
   const pageTextContract = titleKnown && footerKnown
-    ? `Title required EXACTLY ${titleMatch?.[1] || 'null'}. Footer expected exact text: ${left && right ? JSON.stringify({left:JSON.parse(left),right:JSON.parse(right)}) : 'null'} (null means no footer).\n`
+    ? `Title required EXACTLY ${titleMatch?.[1] || 'null'}. Footer expected exact text: ${JSON.stringify(footer)} (null means no footer).\n`
     : '';
   return prompt.replace(/Title required EXACTLY[\s\S]*$/, () => `${pageTextContract}${buildRenderOptionsQa(options.finalPrompt)}\nFINAL USER-EDITED INSTRUCTIONS (authoritative for title, footer, story, actions, clothing and all requested content; expected speech withheld for independent transcription):\n${finalInstructions}\nUse these edited instructions, never an earlier scenario. Unreadable or ambiguous instructions remain uncertain. Return pass only with complete visual evidence; report grounded material defects and retain uncertainty for the rest.`);
 }
@@ -930,10 +929,11 @@ function buildExperimentalReviewPromptBase(plan, source, options={}) {
     }
     return serialized;
   };
-  const expectedFooter=options.showWatermarks?{
-    left:'ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780',
+  const showWatermarks=hasVisibleWatermarks(options.showWatermarks,options.watermarkTexts);
+  const expectedFooter=showWatermarks?(options.watermarkTexts??{
+    left:DEFAULT_LEFT_WATERMARK,
     right:buildMangaWatermark({imageEngineLabel:options.imageEngineLabel||'Gemini',scenarioModelLabel:options.scenarioModelLabel,systemVersion:SYSTEM_VERSION,isChatGPTFamily:/^ChatGPT/.test(options.imageEngineLabel||'')})
-  }:null;
+  }):null;
   return `Read the actual attached generated manga. Return ONLY JSON with pageContent (kind comic|non_comic|uncertain, category sequential_art|single_photograph|unrelated_image|blank_or_error_screen|uncertain, evidence of actual visible format/content; lack of borders alone is not non_comic), status (pass|warning|unverified), observedCount (integer or null), readingOrder/camera/style/story/anatomy/pageText (pass|fail|uncertain), breakout (pass|fail|uncertain|not_requested), issues (array of Japanese observed problems, empty when none), pageEvidence (STRING: transcribe actual title/footer lettering seen, including missing/unreadable text), evidence (one item for EVERY panel, with panel number, Japanese view.evidence/style_observation.evidence/story/anatomy observations, and breakout observation when requested). ${buildExperimentalReadingReviewContract(plan)} Never copy example text, source descriptions, or Camera labels as observed evidence. Defaults for anything not observable are uncertain/null, never pass. ${pageCompositionReview(plan)} Optional border breakouts and visualEffects may be omitted if needed for a clean coherent composition; their absence alone is not a material failure or a reason for regeneration. Distinguish translucent prop motion trails from solid duplicate props or extra limbs. Observe slanted borders as borders, not a change to the physical Camera.
 ${READING_FLOW_DIRECTION}
 Inspect exact panel count/reading order, ALL required camera elevations/projections/crops and style differences, original action/facts/ending/dialogue ownership and connected anatomy; adjacent faces/text remain legible. Locate each observation in the actual page, describe visible body extent and occlusion; never infer hidden/cropped feet or a breakout from the plan. Cropped feet alone are advisory, never a camera failure or a regeneration reason. Camera observations describe visible head/shoulder planes, horizon and perspective; style observations describe actor faces/bodies and background pigment/ink separately, not tag names. Keep each observation concise.
@@ -956,7 +956,7 @@ CAST INSTANCE INVENTORY: Include cast_instances in each panel evidence for every
 PAGE FOREGROUND OWNERSHIP: ${plan.composition?.foregrounds?.length||plan.composition?.breakouts?.length?`Authored cross-panel layers: ${JSON.stringify({foregrounds:plan.composition.foregrounds||[],breakouts:plan.composition.breakouts||[]})}. Still inventory EVERY visible physical body/fragment in its actual panel crop. For a fragment visibly connected across the gutter to an authored source body, put it in body_dispositions with kind=foreground, source_panel, source_body_id and feature_indices for its actual visible features. Describe the visible continuous connection in evidence and in its foreground or breakout compositionCheck. Do not also count that fragment in local cast_instances. This exemption requires an observed source body with grounded named identity and a passing continuity check (or a failed exact-placement check explicitly observed as a harmless minor_variation with the same continuous body); natural shifts to another receiving frame remain one foreground, not a local duplicate; metadata or a similar costume alone cannot establish it. A disconnected second head/body is NOT a foreground link. A separate later story appearance remains in local cast_instances even when the same character is the page foreground. Judge the fragment's medium against its SOURCE panel, and the recipient's local actors/view against the recipient scene. If uncertain, record kind=uncertain; do not invent a connection.`:'No page-level foreground layer is authored.'}
 SCRIPTED DEPICTION INVENTORY: expectedCast.names are physical actors; expectedCast.depictedNames are screen/picture figures. Return depicted_figures for EVERY depictedName: {name,status:present|missing|uncertain,evidence,container_evidence,feature_indices,body,style_observation}. Observe the actual containing screen/picture and silhouette independently. body uses its own unique id, tight panel-normalized bounds/head_bounds and observed features; feature_indices selects at least two visible identity cues, never copied expectations. No physical_bodies/head_inventory entry for this representation. Missing means the observed containing surface visibly lacks the required figure, body:null; unreadable/hidden/ambiguous is uncertain, never missing. Include its actual face/ink medium in style_observation at scripted size/pose. This census also grounds a screen speaker's balloon tail; a printed name alone cannot establish a figure. Never add a live visitor or tiny substitute. Authored crossing remains one depiction.
 BODY IDENTITY COVERAGE: Assess EVERY independent physical_bodies ID, including after all required cast names have a match. Never stop after the first identity match: another separate matching body belongs in that actor's instances. For each body not assigned to cast_instances, return exactly one body_dispositions entry: {body_id,kind:"non_cast|foreground|uncertain",source_panel:null,source_body_id:null,feature_indices:[two or more distinct zero-based indices into that same census body's features],evidence:"visible reason for the identity disposition"}. Use non_cast only for grounded ordinary background people with at least two observed distinguishing features and explain why they are not a required actor; background position, small size, clothing alone or already having found the named actor is not sufficient. Possible named-cast identity, rear views, crops and occlusion without enough cues remain uncertain, not a confirmed duplicate. Do not force ordinary background people into the named cast or invent hidden bodies. Never list a body in both cast_instances and body_dispositions, and do not invent IDs. Use source_panel/source_body_id only for a grounded authored foreground, otherwise null. Use [] only when every census body is already assigned. Unresolved or unexamined bodies make anatomy uncertain; preserve any independently confirmed duplicate or anatomy failure.
-Title required EXACTLY ${JSON.stringify(options.showTitle===false?null:extractScenarioTitle(source.bookMetadata?source.context:source.scenario))}. Footer expected exact text: ${JSON.stringify(expectedFooter)} (null means no footer). ${buildRenderOptionsQa(buildRenderOptionsContract({ ...options, mosaicCopyrightedCharacters: options.mosaicCopyrightedCharacters ?? false, showWatermarks: options.showWatermarks ?? false }))} Transcribe observed lettering separately; never complete unreadable lettering from this expected text. Missing requested title is fail; unreadable story text is uncertain. Footer visibility follows WATERMARK VISIBILITY CHECK and never requires uncovering allowed hidden credits. Requested labels are NOT visual evidence. status=warning when a concrete material failure is confirmed, even if another check is uncertain. Otherwise status=pass only when count matches, all required checks pass, and complete visual evidence exists; unresolved required checks mean unverified. Optional breakout absence alone does not change status. Do not suggest paid regeneration for a minor coherent variation. SOURCE (expected speech withheld; transcribe only the attached crops): ${blind({context:source.context,castList:source.castList,panels:source.panels})}\nPLAN: ${blind({count:plan.count,layout:plan.layout,panels:plan.panels})}`;
+Title required EXACTLY ${JSON.stringify(options.showTitle===false?null:extractScenarioTitle(source.bookMetadata?source.context:source.scenario))}. Footer expected exact text: ${JSON.stringify(expectedFooter)} (null means no footer). ${buildRenderOptionsQa(buildRenderOptionsContract({ ...options, mosaicCopyrightedCharacters: options.mosaicCopyrightedCharacters ?? false, showWatermarks }))} Transcribe observed lettering separately; never complete unreadable lettering from this expected text. Missing requested title is fail; unreadable story text is uncertain. Footer visibility follows WATERMARK VISIBILITY CHECK and never requires uncovering allowed hidden credits. Requested labels are NOT visual evidence. status=warning when a concrete material failure is confirmed, even if another check is uncertain. Otherwise status=pass only when count matches, all required checks pass, and complete visual evidence exists; unresolved required checks mean unverified. Optional breakout absence alone does not change status. Do not suggest paid regeneration for a minor coherent variation. SOURCE (expected speech withheld; transcribe only the attached crops): ${blind({context:source.context,castList:source.castList,panels:source.panels})}\nPLAN: ${blind({count:plan.count,layout:plan.layout,panels:plan.panels})}`;
 }
 
 // Turn only a grounded failing check into an edit. Missing observations,
@@ -1587,7 +1587,7 @@ function colorLayoutContext(input) {
   // Keep image strings by reference; no duplicate serialized image payloads.
   return {revision:EXPERIMENTAL_PROMPT_REVISION,providerFamily:input.providerFamily??PROMPT_PROVIDER_FAMILIES.GEMINI,scenario:input.scenario,castList:input.castList,
     scenarioMode:input.scenarioMode,userDirection:input.userDirection,referenceContext:input.referenceContext,hasCharacterReferences:input.hasCharacterReferences,
-    mosaicCopyrightedCharacters:input.mosaicCopyrightedCharacters,showWatermarks:input.showWatermarks,showTitle:input.showTitle!==false,
+    mosaicCopyrightedCharacters:input.mosaicCopyrightedCharacters,showWatermarks:input.showWatermarks,watermarkTexts:JSON.stringify(input.watermarkTexts),showTitle:input.showTitle!==false,
     imageEngineLabel:input.imageEngineLabel,scenarioModelLabel:input.scenarioModelLabel,
     referenceImages:input.referenceImages?.slice(),backgroundImage:input.backgroundImage,backgroundEnabled:input.backgroundEnabled};
 }

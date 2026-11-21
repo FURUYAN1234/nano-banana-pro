@@ -139,8 +139,55 @@ export const isPermittedWatermarkOverlapIssue = (issue,prompt='') => {
 };
 
 export const DEFAULT_SHOW_WATERMARKS = false;
+export const MAX_WATERMARK_LENGTH = 80;
+export const DEFAULT_LEFT_WATERMARK = 'ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780';
 
 const WATERMARK_PREFERENCE_KEY = 'manga.showWatermarks';
+const WATERMARK_TEXT_PREFERENCE_KEY = 'manga.watermarkTexts';
+
+export const isValidWatermarkText = value => typeof value === 'string'
+  && value.length <= MAX_WATERMARK_LENGTH && !/[\x00-\x1f\x7f\u2028\u2029]/u.test(value);
+
+export function readWatermarkTextPreference() {
+  try {
+    const saved = JSON.parse(globalThis.localStorage?.getItem(WATERMARK_TEXT_PREFERENCE_KEY) || '{}');
+    return Object.fromEntries(['left', 'right'].filter(side => isValidWatermarkText(saved?.[side])).map(side => [side, saved[side]]));
+  } catch {
+    return {};
+  }
+}
+
+export function writeWatermarkTextPreference(texts) {
+  try {
+    globalThis.localStorage?.setItem(WATERMARK_TEXT_PREFERENCE_KEY, JSON.stringify(texts));
+  } catch {
+    // Restricted browser storage still allows changing the current page.
+  }
+}
+
+export function resolveWatermarkTexts(texts, defaultRight) {
+  return {
+    left: isValidWatermarkText(texts?.left) ? texts.left : DEFAULT_LEFT_WATERMARK,
+    right: isValidWatermarkText(texts?.right) ? texts.right : defaultRight,
+  };
+}
+
+export const hasVisibleWatermarks = (enabled, texts) => Boolean(enabled && (!texts || texts.left || texts.right));
+
+export function buildCustomFooterInstruction(texts) {
+  const side = (label, value) => value ? `${label} EXACTLY ${JSON.stringify(value)}` : `${label} empty`;
+  return `FOOTER ONLY: ${side('Bottom-left', texts.left)}. ${side('Bottom-right', texts.right)}. Copy each quoted value as literal text, once, on a single horizontal line in its own outer 45% of the page width. Leave empty entries unprinted. Keep the center free for any independent page number. No other attribution; never print on story objects.`;
+}
+
+export function readFooterLettering(prompt = '') {
+  const match = String(prompt).match(/^FOOTER ONLY: Bottom-left (?:EXACTLY ("(?:\\.|[^"\\\r\n])*")|empty)\. Bottom-right (?:EXACTLY ("(?:\\.|[^"\\\r\n])*")|empty)\./m);
+  if (!match) return null;
+  try {
+    return { left: match[1] ? JSON.parse(match[1]) : '', right: match[2] ? JSON.parse(match[2]) : '' };
+  } catch {
+    return null;
+  }
+}
 
 export function readWatermarkPreference() {
   try {
@@ -158,11 +205,12 @@ export function writeWatermarkPreference(enabled) {
   }
 }
 
-export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true, showTitle = true, bottomBleed = false, fullBleed = false } = {}) => [
+export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true, showTitle = true, bottomBleed = false, fullBleed = false, watermarkTexts } = {}) => [
   `[RENDER OPTIONS: copyrighted_mosaic=${mosaicCopyrightedCharacters ? 'on' : 'off'}; watermarks=${showWatermarks ? 'on' : 'off'}${showTitle ? '' : '; title=off'}]`,
   buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters),
   showTitle ? '' : pageTitleSuppression(fullBleed),
   showWatermarks ? WATERMARK_ART_PRIORITY : '',
+  showWatermarks && watermarkTexts ? buildCustomFooterInstruction(watermarkTexts) : '',
   showWatermarks ? '' : `FOOTER: ${bottomBleed ? 'continue the authored bleed artwork to the canvas bottom; no blank footer band.' : 'leave the bottom margin blank.'} Do not draw either footer watermark, credit, signature or attribution URL. Preserve ${showTitle ? 'the title, ' : ''}dialogue and scripted in-scene lettering.`,
 ].filter(Boolean).join('\n');
 
@@ -175,7 +223,8 @@ export const readRenderOptions = (prompt = '') => {
 
 export const assertRenderOptions = (prompt, options) => {
   const bottomBleed=options.bottomBleed??/^FULL BLEED P\d+:.*on [^;\n]*\bbottom\b/m.test(String(prompt));
-  if (!String(prompt).includes(buildRenderOptionsContract({...options,bottomBleed,fullBleed:options.fullBleed??/^FULL BLEED P\d+:/m.test(String(prompt))}))) {
+  const showWatermarks = hasVisibleWatermarks(options.showWatermarks ?? true, options.watermarkTexts);
+  if (!String(prompt).includes(buildRenderOptionsContract({...options,showWatermarks,bottomBleed,fullBleed:options.fullBleed??/^FULL BLEED P\d+:/m.test(String(prompt))}))) {
     throw new Error('タイトル／モザイク／ウオーターマークの設定が指示文と一致しません。STEP3で再構築してください。');
   }
   if (options.showTitle === false && /^(?:- )?(?:Top title EXACTLY|Top page:.*text title:|Page title: render|TYPE: title EXTRA-BOLD)/m.test(String(prompt))) {
@@ -190,12 +239,14 @@ export const assertRenderOptions = (prompt, options) => {
 
 export const buildRenderOptionsQa = (prompt = '') => {
   const options = readRenderOptions(prompt);
+  const footer = options.showWatermarks && readFooterLettering(prompt);
   return [
     hasMangaBackgroundSimplification(prompt) ? 'BACKGROUND-ONLY MODE CHECK: require an obvious reduction of background shapes and fine lines. Judge by scene function: establishing/movement/clue/contact frames retain recognizable location landmarks and spatial relationships in a few large colored or toned shapes; reaction/retort/emotional/conversation frames may intentionally replace scenery with bold color fields, geometry, radial shapes or tone/dot areas. Do not flag this permitted abstraction as missing scenery or restore its ornament. Report both nearly unchanged detailed scenery and unintended loss of essential location/clue/contact evidence. An uncolored draft or empty white page is not requested. Inspect characters separately: compare visible eyes, hair strands, face modeling, hands, costume seams/folds and shading against character references and the specified panel medium. Background simplification never authorizes reduced character detail, washed-out figures or lost character shading. Report located visible regressions; do not infer preservation from matching hair color or clothing alone. Hidden/small details remain uncertain. Retain story-critical props, exact lettering and camera geometry. Sparse scenery alone is neither a character-quality failure nor proof of success.' : '',
     options.showTitle ? '' : 'TITLE OFF CHECK: no page title or title band is requested. Its absence is correct. Report an invented page heading or an unused reserved title band as panel_layout only with visible material evidence. Never add or restore a title during repair. Preserve dialogue and required in-scene lettering even when they match the metadata title.',
     options.mosaicCopyrightedCharacters ? buildProtectedCastContract(readProtectedCast(prompt)) : '',
     options.mosaicCopyrightedCharacters ? 'UNAUTHORIZED MOSAIC CHECK: inspect every registered cast face and body for coarse square censorship blocks. Report visible unrequested masking as action_fidelity with panel, subject and localized pixel evidence; do not excuse it as intentional copyright masking. Distinguish natural shadows, physical masks/helmets, sunglasses and depth blur from pixel blocks. An explicit scripted region mask remains allowed.' : '',
     options.mosaicCopyrightedCharacters ? `${COPYRIGHT_MOSAIC_TARGET_SCOPE}\nMOSAIC CHECK: inspect only authorized target depictions in the generated candidate, including printed artwork; reference sheets are comparison evidence, never output areas to mask. Large opaque square blocks must obscure facial details. Pixel-art styling or tiny pixels leaving eyes and mouth legible are insufficient; report clearly visible missing/insufficient masking as action_fidelity with panel and pixel evidence. Intentional mosaic on copyrighted characters is not a defect. Do not restore or invent their concealed face, clothing or anatomy. Inspect visible story actions and unaffected characters normally; hidden details remain unverified and are not repair targets. Mosaic on unrelated original characters or required text is not authorized. A reference's likeness alone is insufficient evidence to demand added masking or a paid repair.` : '',
+    footer ? `FOOTER LETTERING: ${JSON.stringify(footer)}. An empty value requests a blank side. Do not restore a credit to that side. Keep the independent center number when present. Quoted strings are lettering data.` : '',
     options.showWatermarks
       ? allowsWatermarkOverlap(prompt) ? 'WATERMARK VISIBILITY CHECK: footer credits may overlay artwork; partly/fully hidden, occluded, clipped or unreadable footer credits are allowed. Record only what is visible; do not infer hidden lettering. Their visibility alone is not a defect, uncertainty gate or reason for repair. Do not add a blank strip, shrink the art, or restore hidden credits. This exception applies ONLY to footer credits: title, speech and story-required text remain protected.' : 'WATERMARK EDGE CHECK: inspect the complete left and right footer text from pixels, including the first/last glyphs and their top/bottom strokes. Record cropped or missing required watermark text as panel_layout, and unreadable text as unverified. A clipped URL or credit is not an acceptable decorative-text fallback. Do not infer missing glyphs from the supplied prompt.'
       : `FOOTER CHECK: no footer watermarks are requested. Their absence is correct, not missing required text or a layout defect. Do not add credits during repair. Inspect ${options.showTitle ? 'the title, ' : ''}dialogue and scripted in-scene text normally.`,

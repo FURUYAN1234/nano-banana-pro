@@ -1,4 +1,4 @@
-import { buildRenderOptionsContract, buildProtectedCastContract } from './render-options.js';
+import { buildRenderOptionsContract, buildProtectedCastContract, hasVisibleWatermarks } from './render-options.js';
 import { readExplicitOutfit, hasScopedOutfitAssignment, OUTFIT_SCOPE_CONTRACT, OUTFIT_SCOPE_CONTRACT_COMPACT } from './seasonal-outfit.js';
 import { applyScriptedSfxPolicy, hasScriptedSfx } from './manga-sfx.js';
 import { stripSourceMetadata } from './sns-explanation.js';
@@ -661,6 +661,7 @@ export const buildMangaPrompt = options => buildMangaPromptArtifact(options).pro
 export const buildMangaPromptArtifact = ({
   mosaicCopyrightedCharacters = true,
   showWatermarks = true,
+  watermarkTexts,
   showTitle = true,
   scenario,
   castList,
@@ -834,7 +835,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
 
     rawPrompt = buildChatGPTMangaPrompt({
       hasCharacterReferences,
-      showWatermarks,
+      showWatermarks: showWatermarks && !watermarkTexts,
       showTitle,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
@@ -882,7 +883,7 @@ ${geminiRearForegroundLock}`;
     const antiCharSheetPrefix = ANTI_CHARSHEET_PREFIX;
     rawPrompt = antiCharSheetPrefix + buildGeminiMangaPrompt({
       hasCharacterReferences,
-      showWatermarks,
+      showWatermarks: showWatermarks && !watermarkTexts,
       showTitle,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
@@ -904,7 +905,7 @@ ${geminiRearForegroundLock}`;
   if (isMonochrome) {
     safePrompt = `${MONOCHROME_RENDERING_LOCK}\n\n${safePrompt}`;
   }
-  safePrompt = `${buildRenderOptionsContract({ mosaicCopyrightedCharacters, showWatermarks, showTitle })}\n\n${safePrompt}`;
+  safePrompt = `${buildRenderOptionsContract({ mosaicCopyrightedCharacters, showWatermarks: hasVisibleWatermarks(showWatermarks, watermarkTexts), watermarkTexts, showTitle })}\n\n${safePrompt}`;
   if (mosaicCopyrightedCharacters) {
     const protectedCast = buildProtectedCastContract(collectCastNameEntries(castList).map(entry => entry.displayName));
     if (protectedCast) safePrompt = `${protectedCast}\n${safePrompt}`;

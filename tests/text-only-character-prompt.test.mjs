@@ -40,6 +40,7 @@ try {
     const input=hook.match(/const assembled = await assembleMangaPromptWithRecovery\((\{[\s\S]+?\}), callStep3AI/)[1];
     for(const effectiveProviderFamily of ['chatgpt','gemini'])for(const hasImages of [false,true]) {
       const scope={mosaicCopyrightedCharacters:false,showWatermarks:false,showTitle:true,currentScenario:scenarioFor(4),castList,colorMode:'color',effectiveProviderFamily,
+        customFooterTextFor:()=>undefined,
         hasCharacterReferenceImages,imagesRef:{current:hasImages?['character-image']:[]},referenceAssetsRef:{current:[]},buildReferenceAssetContext:()=>'',
         bg360Image:null,bg360Analysis:null,bg360Enabled:false,bg360CroppedPanels:[],activePunchlineType:'Auto',SYSTEM_VERSION:'test',
         PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt'},formatOpenAIImageEngineName:()=> 'OpenAI',openAIImageQuality:'max',GEMINI_IMAGE_MODEL:'gemini',

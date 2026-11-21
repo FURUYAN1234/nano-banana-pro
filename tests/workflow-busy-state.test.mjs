@@ -82,6 +82,7 @@ function harness(overrides = {}) {
     translateApiError: error => error.message, console: { error: () => {} },
     assertPromptEndingModeConsistency: () => {}, assertPrintableDialogue: () => {}, assertRenderOptions: () => {},
     inferImageQualityMode: () => 'four-panel', collectCastNameEntries: () => [], showTitle: true, showWatermarks: true,
+    watermarkOverrides: {}, readWatermarkTextPreference: () => ({}), setWatermarkOverrides() {}, customFooterTextFor: () => undefined,
     setInterval: () => 1, clearInterval: () => {}, setTimeout: fn => { fn(); return 1; },
     window: { scrollTo: () => {} }, document: { body: { scrollHeight: 1 } },
     getCurrentPromptProviderFamily: () => 'chatgpt', ...overrides,

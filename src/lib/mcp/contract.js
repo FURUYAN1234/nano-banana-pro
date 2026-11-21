@@ -1,4 +1,4 @@
-import { DEFAULT_SHOW_WATERMARKS } from '../render-options.js';
+import { DEFAULT_SHOW_WATERMARKS, isValidWatermarkText, MAX_WATERMARK_LENGTH } from '../render-options.js';
 import { getMcpSettingCatalog } from './catalog.js';
 import {MangaControlError} from './control-error.js';
 export {MangaControlError};
@@ -7,6 +7,7 @@ export const MCP_CONTRACT_VERSION = 1;
 export const MCP_STATE_EDIT_ACTIONS=Object.freeze(['topic','scenario','prompt','cast','recognition','reference_item','background','style_json','explanation','enhance_revert','history_select','history_clear','normalize_image','panel_inspect','panel_generate','panel_adopt','panel_discard']);
 export const PAGE_SETTING_TYPES = Object.freeze({
   colorMode: ['color', 'monochrome'], showTitle: 'boolean', showWatermarks: 'boolean',
+  watermarkLeft: 'string', watermarkRight: 'string',
   engine:['openai','gemini'],backgroundSimplification:'boolean',useBackground360:'boolean',newsCategories:'string[]',
   mosaicCopyrightedCharacters: 'boolean',
   allowImageQualityRepair: 'boolean', pageNumber: 'boolean',
@@ -87,6 +88,9 @@ export function validatePageSettings(settings = {}) {
       throw new MangaControlError('INVALID_SETTINGS', `Unsupported value for setting ${key}. Read manga_capabilities.`);
     }
     if (catalog[key] && (Array.isArray(value)?value.some(item=>!catalog[key].includes(item)):!catalog[key].includes(value))) throw new MangaControlError('UNKNOWN_SETTING_VALUE', `Unknown ${key}; choose a value listed by manga_capabilities. No default fallback is used.`);
+    if (['watermarkLeft', 'watermarkRight'].includes(key) && !isValidWatermarkText(value)) {
+      throw new MangaControlError('INVALID_SETTINGS', `${key} must be one line, at most ${MAX_WATERMARK_LENGTH} characters. An empty string omits that side.`);
+    }
   }
   return structuredClone(settings);
 }
