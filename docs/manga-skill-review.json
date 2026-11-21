@@ -1,61 +1,47 @@
 {
   "format": 1,
-  "version": "8.1.2",
+  "version": "8.1.3",
   "skillSha256": "e61c478d4ba71560a9f9354ee1e68395ba8f3bc2a23e32c6ba4827c44552c9e0",
-  "sourceCommit": "dec093f65b8dd0efa2af894f2dea49ebc08731a5",
-  "reviewedAt": "2026-11-21T03:12:05.224Z",
-  "reviewedSince": "v8.1.1の公開後から2026-11-21の2作品と利用者の指示まで。",
+  "reviewedAt": "2026-11-21T07:08:05.049Z",
+  "reviewedSince": "v8.1.2 release and the subsequent horror manga production and STEP3 diagnostic",
   "sources": [
-    "超高速・銀河鉄道の夜の承認台本、採用全2ページ、衣装設定画、修正と採用記録。",
-    "超高速！忠臣蔵の採用全2ページ、元禄衣装設定画、局所修正の記録。",
-    "全コマの通読とウォーターマークの左右編集に関する利用者の指定。"
+    "2026-11-21 approved pages of 街が、声を覚える。 and the corresponding editorial and publication corrections",
+    "2026-11-21 diagnostics for STEP3 layout validation and STEP2 scenario review"
   ],
   "findings": [
     {
-      "disposition": "updated",
-      "observation": "ページをまたぐ話者・行動・小道具の連続性は、個別の画像確認だけでは見落としやすかった。",
-      "rule": "初稿・修正後・投稿前に実画像を読順で通読し、原典・台本・人物設定と照合する。",
-      "reason": "紙面だけから読者が話者と出来事を追えるか判断するため。"
-    },
-    {
-      "disposition": "updated",
-      "observation": "天文用語が字面から別の道具として描かれた例があった。",
-      "rule": "原典固有の比喩や通称には対象の種類・形・位置・必要な大きさを描画指示へ添える。",
-      "reason": "承認済み本文を保ち、絵で誤読しやすい箇所を明確にするため。"
-    },
-    {
-      "disposition": "updated",
-      "observation": "絵と吹き出しの尾を保ったまま、台詞の欠けを局所修正できた。",
-      "rule": "文字だけの修正では実画像と修正範囲外を比較し、採用PNG・同名JSON・アプリ履歴を照合する。",
-      "reason": "読者への影響を直し、成立している絵と演出を保つため。"
-    },
-    {
+      "observation": "指定した枠越え、足のつながり、最後の吹き出しの意図を完成画像で確認した。",
       "disposition": "already_covered",
-      "observation": "尺、人物設定、翻訳、音声化で別の関連スキルを使用している。",
-      "rule": "各スキルは対応する工程で使い、制作後の通読を漫画制作スキルへ集約する。",
-      "reason": "工程やツールの対応が異なるため、スキル単位での削除は不要。"
+      "rule": "MCP制作資料の全コマ通読、コマを越える一続きの身体、吹き出しの話者と読順の確認を適用する。",
+      "reason": "頒布版の手順は原稿と実画像の両方で確認できる条件をすでに扱う。"
     },
     {
+      "observation": "無言の階段動作をSTEP3が登場根拠として受理せず、STEP2の例示で品質レビューの項目が不足した。",
+      "disposition": "already_covered",
+      "rule": "台本の人物と動作を具体化し、判定から落ちる場合はアプリ側の人物解釈と検査を調べる。",
+      "reason": "同じ台本の再生でアプリの修正を確認した。頒布版に作品固有の語句を追加する必要はない。"
+    },
+    {
+      "observation": "FURUのSNS添付・Drive制作資料・リポジトリへの案内を個人ルールにした。",
       "disposition": "not_generalized",
-      "observation": "今回の作品固有の衣装・題字・クレジットや投稿先の好みがあった。",
-      "rule": "作品固有の指示は作品設定、本人固有の投稿設定は別ファイルに保持する。",
-      "reason": "汎用版に個別作品やアカウントを既定として持ち込まないため。"
+      "rule": "公開先と資料の個人設定はその利用者の承認済み手順に従う。",
+      "reason": "本人が個人ルールと明示した。"
     }
   ],
   "checks": [
     {
-      "name": "採用原稿と修正対象",
-      "evidence": "2作品の採用版を参照し、複数ページの話者・順序と局所文字修正の手順を確認。1ページは同じ全コマ確認を適用し、ページ間の項目だけ該当時に使用。",
+      "name": "approved manga readback",
+      "evidence": "扉・本文5ページと同名制作JSON、枠越えと話者を確認した。",
       "result": "passed"
     },
     {
-      "name": "必要ファイルと同期",
-      "evidence": "公開正本と同PC導入版のSKILL.md、参照ファイル、起動ポリシーを確認。公式quick_validate.pyをUTF-8モードで両版に適用。",
+      "name": "public skill identity",
+      "evidence": "前版の配布スキルと同じファイル集合と内容ハッシュを照合した。",
       "result": "passed"
     },
     {
-      "name": "左右の文言",
-      "evidence": "通常幅と狭幅で入力欄を確認し、保存PNGで片側表示、同名JSONで左右の描画指示を確認。",
+      "name": "application regression cases",
+      "evidence": "添付2版の失敗履歴を再生。階段の動作を行った人と、名前だけ言及された人を対象にした回帰テストを実行した。",
       "result": "passed"
     }
   ]

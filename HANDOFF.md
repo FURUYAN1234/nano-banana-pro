@@ -1,3 +1,7 @@
+# v8.1.3 release candidate
+
+STEP3 recognizes a silent guest who climbs or descends stairs, a ramp or a ladder in the source panel. The authored actor stays attached to their own action, including when a different person moves in the same sentence. STEP2's scenario review example includes the required material-loss verdict. The browser used GPT-6 Luna to verify the strict STEP3 case in one OpenAI request and the STEP2 review in the same behavior candidate. See [v8.1.3 release notes](docs/releases/v8.1.3.md).
+
 # v8.1.2 release candidate
 
 STEP3 provides separately editable bottom-left and bottom-right footer text, with the existing credits prefilled and one line of up to 80 characters per side. Empty fields omit their respective marks. The MCP setting can inherit project text or override it per page. The real OpenAI smoke test confirmed a left-only credit in the saved 2240×3168 PNG, with the corresponding custom instruction in its JSON. The bundled production skill now gives a whole-manuscript reading procedure and a localized lettering repair procedure. See [v8.1.2 release notes](docs/releases/v8.1.2.md).
