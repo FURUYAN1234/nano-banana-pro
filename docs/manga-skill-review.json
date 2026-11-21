@@ -1,47 +1,42 @@
 {
   "format": 1,
-  "version": "8.1.4",
+  "version": "8.1.5",
   "skillSha256": "e61c478d4ba71560a9f9354ee1e68395ba8f3bc2a23e32c6ba4827c44552c9e0",
-  "reviewedAt": "2026-11-21T09:08:01.036472Z",
-  "reviewedSince": "v8.1.3 release and the following STEP2/STEP3 diagnostic",
+  "reviewedAt": "2026-11-21T23:41:44.685Z",
+  "reviewedSince": "v8.1.4 release",
   "sources": [
-    "2026-11-21 user diagnostic for STEP3 foreground presence and STEP2 cast review",
-    "Current bundled manga production guidance and the user request for a local one-page workflow"
+    "2026-11-21 STEP2 diagnostic and targeted camera regressions",
+    "2026-11-22 five-app production feedback and controlled whole-page edit"
   ],
   "findings": [
     {
-      "observation": "衣装に続く無言の動作で主語が省略され、元コマの人物が前景に指定できなかった。",
+      "observation": "相対位置で書いた正しい撮影起点をSTEP2が拒否した。",
       "disposition": "already_covered",
-      "rule": "元コマで人物を特定し、服装と動作が継続しているか確認する。",
-      "reason": "利用者が人物を明記した台本でアプリの判定が止まったため、既存の執筆手順を維持してアプリ側を修正した。"
+      "rule": "撮影位置と人物・物の位置を区別し、指定の視点で描けるか確認する。",
+      "reason": "今回必要なのはアプリの判定修正で、書き手に表現の縛りを追加する必要はない。"
     },
     {
-      "observation": "登録済み人物の設定を毎コマへ転載せず、役付きゲストも登場させたい。",
+      "observation": "ページ全体を修正した画像の制作JSONで、元の台本が空欄になった。",
       "disposition": "already_covered",
-      "rule": "人物設定を維持し、登場する人物、話者と動作を台本と完成画像で照合する。",
-      "reason": "STEP2のモデル向け指示はアプリ側で明確化した。既存の制作手順に重複する項目は追加しない。"
+      "rule": "採用PNGと同名JSONの内容を読み戻し、修正前を履歴に残す。",
+      "reason": "書き出し処理で元台本を保持するよう修正した。"
     },
     {
-      "observation": "3アプリを使った1ページ漫画の制作とSNS投稿のローカル連携スキルの依頼があった。",
+      "observation": "5アプリ連携版でも題字・作者名、ページ境界、吹き出しと小道具を確認したい。",
       "disposition": "not_generalized",
-      "rule": "投稿先や利用者の記名・添付要件は個人設定を使用する。",
-      "reason": "連携は個別の制作依頼として扱い、今回のアプリ配布やボタン追加の対象に含めない。"
+      "rule": "単体版には既存の通読と作品指定を使い、5アプリ側の工程には配布連携スキルで反映する。",
+      "reason": "単体版に外部4アプリの手順を追加すると発動が曖昧になる。"
     }
   ],
   "checks": [
     {
-      "name": "production skill review",
-      "evidence": "既存台本の人物・動作・衣装、コマ順、完成原稿の通読の記載を照合し、追加・削除の必要を確認した。",
+      "name": "bundled skill review",
+      "evidence": "画像の通読、話者、作画前の承認、PNGと同名JSONの照合を既存手順と照合し、今回は単体版の追加・削除なし。",
       "result": "passed"
     },
     {
-      "name": "public skill identity",
-      "evidence": "配布スキルのファイル集合とハッシュは前版と同一。",
-      "result": "passed"
-    },
-    {
-      "name": "application regression cases",
-      "evidence": "v8.1.1〜v8.1.3の実応答3件を再生し、台本、5コマ、カメラ、台詞、前景人物の保持を確認した。着用、他人の衣装、不在、引用、写真、未来のケースを回帰テストで照合した。",
+      "name": "app regression and real runtime",
+      "evidence": "対象108テスト合格。v8.1.5の実APIでPNGの埋め込み台本と同名JSONが、採用した台本と完全一致した。",
       "result": "passed"
     }
   ]

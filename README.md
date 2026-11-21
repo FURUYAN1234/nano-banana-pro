@@ -977,7 +977,7 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ## 📋 ChangeLog / 更新履歴
 
-### v8.1.5 (2026-11-21)
+### v8.1.5 (2026-11-22)
 - **[Fix & UX]** Accept valid STEP2 camera origins and retain the source script in JSON after page edits / STEP2の撮影起点の判定を修正し、画像修正後のJSONに元の台本を保存
 
 ### v8.1.4 (2026-11-21)
