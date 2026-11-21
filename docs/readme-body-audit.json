@@ -19,7 +19,7 @@
   "readmeSha256": "53d378b628b0931189c9a5444dcb02502fe0413b3000f14667a8f269334e89b0",
   "readmeLanguageGaps": [],
   "sourceTree": "15e2c0da855e0561809751ef72cb7c5261b3a4f3",
-  "publicTree": "828c51ff27c2d5f903b05df4b5814a372f6c9e46",
+  "publicTree": "1edaa27c74e08440666012dd35171ab262bf73e5",
   "packageSha256": "460902fbf897c899b4ebeb5f89ea58edd666a7389244d266c7793dbf011e6f40",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -47,7 +47,7 @@
   "reviewedAt": "2026-11-21T03:12:05.224Z",
   "reviewStage": "local-committed-source",
   "reviewedWorkingTree": false,
-  "findings": "19節の本文と構成を確認。STEP3の左右の編集欄、従来の初期文言、空欄、再構築のタイミング、MCPの作品・ページ単位の上書きをUIとソース、MCPガイドへ照合した。前版から継承する画像API経路とH3配布ZIPは既存の契約・検査の対象。本文と履歴には候補版と料金確認日を反映した。",
+  "findings": "19節の本文と構成を確認。STEP3の左右の編集欄、従来の初期文言、空欄、再構築のタイミング、MCPの作品・ページ単位の上書きをUIとソース、MCPガイドへ照合した。前版から継承する画像API経路とH3配布ZIPは既存の契約・検査の対象。本文と履歴には候補版と料金確認日を反映した。 公開の工程図・思考ルーチン図は、生成済みSVGの版表示のみv8.1.2に更新したことを差分で確認した。",
   "manualFindings": "3冊、全78ページを前版と比較し、全ページのA4寸法・版番号・更新日・本文を確認。本文の変化があるGeminiガイド1ページと全機能マニュアル19・45ページのレンダリングを確認し、文章・表の重なりや切れがないことを確認した。",
   "pricingReview": {
     "version": "8.1.2",
