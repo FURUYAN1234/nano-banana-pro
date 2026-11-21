@@ -1,3 +1,7 @@
+# v8.1.4 release candidate
+
+STEP3 recognizes a named silent foreground guest whose current attire is described in the source panel. STEP2 clarifies when the cast review can use the registered appearance and how to review named guests without reference sheets. See [v8.1.4 release notes](docs/releases/v8.1.4.md).
+
 # v8.1.3 release candidate
 
 STEP3 recognizes a silent guest who climbs or descends stairs, a ramp or a ladder in the source panel. The authored actor stays attached to their own action, including when a different person moves in the same sentence. STEP2's scenario review example includes the required material-loss verdict. The browser used GPT-6 Luna to verify the strict STEP3 case in one OpenAI request and the STEP2 review in the same behavior candidate. See [v8.1.3 release notes](docs/releases/v8.1.3.md).

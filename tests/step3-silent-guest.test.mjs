@@ -69,6 +69,26 @@ test('a silent foreground guest visibly moving on stairs or a ramp is counted in
   assert.match(depiction,/SCRIPTED DEPICTED FIGURES:.*来訪者/);
 });
 
+test('a named guest in a visible outfit is present when the following action omits the subject',()=>{
+  const rule=text=>extractCastLimitRule('状況: '+text,'## 係員',{compact:true,scriptedNames:['来訪者']});
+  for(const text of [
+    '来訪者は案内役として濃紺のパンツスーツ姿。左足に体重を残し、手すりを握りながら、右足を一段下へ慎重に移す瞬間。',
+    '来訪者が黄色いレインコートを着ている。濡れた長靴から水が落ちる。',
+    '廊下が暗い。来訪者は緑の制服姿だ。',
+  ]) assert.deepEqual(names(rule(text)),['来訪者'],text);
+  for(const text of [
+    '来訪者はまだ画面外で濃紺のスーツ姿。',
+    '来訪者は明日は制服姿の予定。右足を一段下へ移すのは係員。',
+    'メモには来訪者は濃紺のスーツ姿と記載されている。',
+    '来訪者は暗い部屋の外にいる。係員は濃紺のスーツ姿。',
+    '来訪者は係員の黄色いコート姿を思い浮かべる。',
+    '来訪者はスケッチの作者、初対面の男性は濃紺のスーツ姿。',
+  ]) assert.ok(!names(rule(text)).includes('来訪者'),text);
+  const depiction=rule('写真の中で来訪者が濃紺のスーツ姿。');
+  assert.ok(!names(depiction).includes('来訪者'));
+  assert.match(depiction,/SCRIPTED DEPICTED FIGURES:.*来訪者/);
+});
+
 test('actual reported STEP3 scenario compiles with a single inferred reference role and unchanged authored data',async()=>{
   const server=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
   try{

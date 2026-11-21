@@ -840,6 +840,12 @@ test('STEP2 harmless review feedback reports why no regeneration runs', async ()
   assert.ok(progress.some(message => /オチの種.*重大欠陥ではないため再生成せず/.test(message)));
 });
 
+test('cast review accepts inherited appearance and checks named guests without inventing a reference', () => {
+  const prompt = buildScenarioPayoffReviewPrompt({ scenario: 'SCENARIO' });
+  assert.match(prompt, /各コマに髪型や肌色を繰り返す必要はない/);
+  assert.match(prompt, /未登録のゲスト.*役割と固有名.*実際に曖昧/);
+});
+
 test('review prompt asks for prediction, outcome, visual payoff, and mode-aware documentary safety', () => {
   const prompt = buildScenarioPayoffReviewPrompt({
     scenario: '[1コマ目: 起]\n状況: 作業を始める。\n[4コマ目: 結]\n状況: 結論を述べる。',

@@ -1,47 +1,47 @@
 {
   "format": 1,
-  "version": "8.1.3",
+  "version": "8.1.4",
   "skillSha256": "e61c478d4ba71560a9f9354ee1e68395ba8f3bc2a23e32c6ba4827c44552c9e0",
-  "reviewedAt": "2026-11-21T07:08:05.049Z",
-  "reviewedSince": "v8.1.2 release and the subsequent horror manga production and STEP3 diagnostic",
+  "reviewedAt": "2026-11-21T09:08:01.036472Z",
+  "reviewedSince": "v8.1.3 release and the following STEP2/STEP3 diagnostic",
   "sources": [
-    "2026-11-21 approved pages of 街が、声を覚える。 and the corresponding editorial and publication corrections",
-    "2026-11-21 diagnostics for STEP3 layout validation and STEP2 scenario review"
+    "2026-11-21 user diagnostic for STEP3 foreground presence and STEP2 cast review",
+    "Current bundled manga production guidance and the user request for a local one-page workflow"
   ],
   "findings": [
     {
-      "observation": "指定した枠越え、足のつながり、最後の吹き出しの意図を完成画像で確認した。",
+      "observation": "衣装に続く無言の動作で主語が省略され、元コマの人物が前景に指定できなかった。",
       "disposition": "already_covered",
-      "rule": "MCP制作資料の全コマ通読、コマを越える一続きの身体、吹き出しの話者と読順の確認を適用する。",
-      "reason": "頒布版の手順は原稿と実画像の両方で確認できる条件をすでに扱う。"
+      "rule": "元コマで人物を特定し、服装と動作が継続しているか確認する。",
+      "reason": "利用者が人物を明記した台本でアプリの判定が止まったため、既存の執筆手順を維持してアプリ側を修正した。"
     },
     {
-      "observation": "無言の階段動作をSTEP3が登場根拠として受理せず、STEP2の例示で品質レビューの項目が不足した。",
+      "observation": "登録済み人物の設定を毎コマへ転載せず、役付きゲストも登場させたい。",
       "disposition": "already_covered",
-      "rule": "台本の人物と動作を具体化し、判定から落ちる場合はアプリ側の人物解釈と検査を調べる。",
-      "reason": "同じ台本の再生でアプリの修正を確認した。頒布版に作品固有の語句を追加する必要はない。"
+      "rule": "人物設定を維持し、登場する人物、話者と動作を台本と完成画像で照合する。",
+      "reason": "STEP2のモデル向け指示はアプリ側で明確化した。既存の制作手順に重複する項目は追加しない。"
     },
     {
-      "observation": "利用者ごとの公開手順に関する指示があった。",
+      "observation": "3アプリを使った1ページ漫画の制作とSNS投稿のローカル連携スキルの依頼があった。",
       "disposition": "not_generalized",
-      "rule": "公開手順は利用者が承認した各自の設定を使う。",
-      "reason": "本人固有の運用として指定された。"
+      "rule": "投稿先や利用者の記名・添付要件は個人設定を使用する。",
+      "reason": "連携は個別の制作依頼として扱い、今回のアプリ配布やボタン追加の対象に含めない。"
     }
   ],
   "checks": [
     {
-      "name": "approved manga readback",
-      "evidence": "扉・本文5ページと同名制作JSON、枠越えと話者を確認した。",
+      "name": "production skill review",
+      "evidence": "既存台本の人物・動作・衣装、コマ順、完成原稿の通読の記載を照合し、追加・削除の必要を確認した。",
       "result": "passed"
     },
     {
       "name": "public skill identity",
-      "evidence": "前版の配布スキルと同じファイル集合と内容ハッシュを照合した。",
+      "evidence": "配布スキルのファイル集合とハッシュは前版と同一。",
       "result": "passed"
     },
     {
       "name": "application regression cases",
-      "evidence": "添付2版の失敗履歴を再生。階段の動作を行った人と、名前だけ言及された人を対象にした回帰テストを実行した。",
+      "evidence": "v8.1.1〜v8.1.3の実応答3件を再生し、台本、5コマ、カメラ、台詞、前景人物の保持を確認した。着用、他人の衣装、不在、引用、写真、未来のケースを回帰テストで照合した。",
       "result": "passed"
     }
   ]

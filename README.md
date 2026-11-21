@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.1.3** / 現在のソース版: **v8.1.3**
+> Current source version: **v8.1.4** / 現在のソース版: **v8.1.4**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -150,7 +150,7 @@ Silent actors and nonhuman opponents remain in the panel cast when their visible
 
 Visible body references also resolve an opponent's qualified short name, including its own forearm, the camera-facing side, or a pause before a body description. A collective such as “the five” or “nearby companions” uses an unambiguous named party explicitly supplied in the input; names mentioned only in speech, depicted groups and offscreen actors do not establish physical presence. Mixed casts are counted as physical bodies rather than as people. A crossing body is counted once in its source scene; an independent later appearance remains part of the receiving scene. Explicit registered names take priority over derived aliases. / 敵の省略名も、自身の前腕、カメラ側の身体、読点を挟む身体描写から照合します。「五人」「周囲の仲間」は入力で名前を列挙した一意な集団へ対応させ、台詞だけの言及・画中の人物・画面外人物を実体へ加えません。人と獣が混在する人数指定は、身体の総数として表します。越境身体は元場面で一度だけ数え、受け側の別時点の再登場は残します。派生した別名より明示登録の正式名を優先します。
 
-Document quotations remain printed source text unless the script explicitly reads them aloud. Silent foreground figures remain part of their scene. When a reference sheet uses a provisional description and the script uses a role name, scene and appearance information guide the casting; a label difference alone does not require a new confirmation screen. / 書類の引用は紙面の文字として保持し、明示した読み上げだけを台詞として扱います。無言の前景人物もその場面に残します。人物シートの仮の呼び名と台本の役名が違っていても、場面と外見の情報から対応を補い、呼び名の違いだけで新たな確認画面を求めません。
+Document quotations remain printed source text unless the script explicitly reads them aloud. STEP3 recognizes silent foreground figures when their attire or visible action is described in the source panel. When a reference sheet uses a provisional description and the script uses a role name, scene and appearance information guide the casting; a label difference alone does not require a new confirmation screen. / 書類の引用は紙面の文字として保持し、明示した読み上げだけを台詞として扱います。STEP3は元コマに着用衣装や目に見える動作が書かれていれば、無言の前景人物も登場として扱います。人物シートの仮の呼び名と台本の役名が違っていても、場面と外見の情報から対応を補い、呼び名の違いだけで新たな確認画面を求めません。
 Costume/material projects can share the current work's save folder. After both projects finish their active jobs, set the work as save owner: all retained PNG/JSON pairs and future saves go under its existing `資料` folder, with links in the whole-work JSON. Existing outside originals remain intact; conflicting destination files are not overwritten. / 衣装・資料を別作品で作る場合も、両作品の処理終了後に保存先の作品を設定できます。保存済みのPNG・同名JSONと以後の保存を現行作品の「資料」へまとめ、作品全体JSONから関連付けます。元の別フォルダーは残し、異なる内容の保存先ファイルは上書きしません。
 
 Selecting a retained image exports that image with its own generation metadata and makes it the sole selected history item. If the save checkpoint fails, the previously displayed image stays selected. A later save must not reuse another candidate's metadata. / 履歴画像を選ぶと、その画像自身の生成情報で保存し、選択状態を対象1件に揃えます。保存の確認に失敗した場合は、それまでの表示・選択を保持し、別候補の生成情報を流用しません。
@@ -840,7 +840,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -904,7 +904,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -974,6 +974,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.1.4 (2026-11-21)
+- **[Fix & UX]** Recognized silent foreground guests described by their attire and preserved inherited cast descriptions in the scenario review. / 元コマで着用衣装を示した無言の前景人物を認識し、台本の品質レビューで既存の人物設定を引き継ぐ。
 
 ### v8.1.3 (2026-11-21)
 - **[Fix & UX]** Fixed foreground recognition for silent characters moving on stairs and added a required field to the scenario review example. / 無言で階段やタラップを上り下りする前景人物の判定を修正し、台本の品質レビューに必須の項目を応答例へ追加。

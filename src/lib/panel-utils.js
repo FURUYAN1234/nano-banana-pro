@@ -1904,6 +1904,15 @@ const scriptedFigurePresence = (panelText, castList, candidates) => {
   if (!castNames.length) return [];
   const actorNames = castNames.sort((a, b) => b.length - a.length).map(escapeRegex).join('|');
   const actorSubject = new RegExp(`(?<![\\p{Script=Han}\\p{Script=Katakana}A-Za-z0-9])(${actorNames})(?:だけ|のみ)?(?:は|が|も)`, 'gu');
+  const wornClothing = /(?:服|衣装|正装|礼服|喪服|羽織|着物|浴衣|作業着|普段着|スーツ|ジャケット|ジャンパー|コート|ドレス|シャツ|ワンピース|ローブ|ポンチョ|鎧|パーカー|帽子)\s*(?:姿(?:だ|である|です)?|を(?:着ている|着用している|羽織っている|まとっている|かぶっている))$/u;
+  const hasNamedOutfit = (clause, name) => {
+    const actor = [...clause.matchAll(actorSubject)][0];
+    if (actor?.[1] !== name || nonVisibleMovement.test(clause)) return false;
+    const prefix = clause.slice(0, actor.index).trim();
+    if (prefix && !/^(?:写真|ポスター|絵|映像)(?:の中で|内で)$/u.test(prefix)) return false;
+    const description = clause.slice(actor.index + actor[0].length).trim();
+    return !/[、，,]|(?:明日|翌日|次回|回想する|想像する)/u.test(description) && wornClothing.test(description);
+  };
   const hasNamedVerticalMovement = (clause, name) => !nonVisibleMovement.test(clause)
     && [...clause.matchAll(verticalMovement)].some(movement => {
       const precedingActors = [...clause.slice(0, movement.index).matchAll(actorSubject)];
@@ -1918,7 +1927,7 @@ const scriptedFigurePresence = (panelText, castList, candidates) => {
     const depiction = new RegExp(`(?:${escaped}の${figure}|(?:再現像|肖像|人物像)の${escaped}|(?:画面(?:の中|内)|映像(?:の中|内)|写真(?:の中|内)|絵(?:の中|内))の${escaped}|(?:写真|ポスター|絵|映像)(?:の中で|内で)${escaped}|${escaped}の(?:大きな|小さな)*(?:上半身|全身|半身|顔|頭部)(?:が|を)(?:写真|ポスター|絵|映像)に[^。！？\\n]{0,8}(?:描|写|映))`, 'u');
     const visible = clauses.filter(clause => (subject.test(clause)||bodySubject.test(clause))
       && (/立[つちっ]|座[るりっ]|歩[くきい]|走[るりっ]|踊|笑|振|見上|見下|頷|うなず|掲|持|傾|下ろ|伸|ひね|見守|待[つっ]|ポーズ|構え|手を|腕を|膝を|腰を|身を|顔を|体を|身体を|見える|映[るしっ]|写[るしっ]|描[くきいか]|見せ|保持|占める/u.test(clause)
-        || hasNamedVerticalMovement(clause, name))
+        || hasNamedVerticalMovement(clause, name) || hasNamedOutfit(clause, name))
       && !/(?:描かない|描かず|描くな|表示しない|映さない|写さない|姿を見せない|姿を見せず|不在|登場しない|消えている)/u.test(clause));
     if (!visible.length) return [];
     return [{name, kind: visible.some(clause => !depiction.test(clause)) ? 'physical' : 'depicted'}];
