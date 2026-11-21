@@ -19,7 +19,7 @@
   "readmeSha256": "e5135cfe9639f8b40c667df7837a4606323c42835a9db25fa705230e9c4a469b",
   "readmeLanguageGaps": [],
   "sourceTree": "125257305fdc2c2ee93df3420600bc19b8f571c9",
-  "publicTree": "7820bb26528a25ffc3515cf96f0eb22dd89be6fe",
+  "publicTree": "e8883c8d4ba390d89cd1c637e7ca54a5ad7446e9",
   "packageSha256": "a36cd1dfac7f222bc2ecb29242804cb260e3f8a814cc2d8ad616776123e4ab60",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -43,11 +43,11 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "5307099bcf51a4b7c04f677582650c0a67e4bf59",
+  "candidateCommit": "cdf6fae75bac2cb9d1e5007b6197fbed69448d2f",
   "reviewedAt": "2026-11-21T23:41:44.685Z",
   "reviewStage": "local-committed-source",
-  "reviewedWorkingTree": true,
-  "findings": "v8.1.4で確認済みの19節を候補差分と照合。STEP2の撮影位置の扱いを演出節、ページ全体の画像修正と元台本の保存を工程節に反映。MCPのシナリオ受け渡し、版と配布先、画像生成・品質検査の既存説明を維持した。",
+  "reviewedWorkingTree": false,
+  "findings": "v8.1.4で確認済みの19節を候補差分と照合。STEP2の撮影位置の扱いを演出節、ページ全体の画像修正と元台本の保存を工程節に反映。MCPのシナリオ受け渡し、版と配布先、画像生成・品質検査の既存説明を維持した。 生成済みの工程図2枚もv8.1.5の版表記に揃えた。",
   "manualFindings": "操作・OpenAI・Geminiの3冊78ページを描画比較。差分のあるGeminiガイド1ページと全機能マニュアル14・19・25ページを目視し、文字切れや重なりがないことを確認。全ページで判型とv8.1.5を照合。",
   "pricingReview": {
     "version": "8.1.5",
