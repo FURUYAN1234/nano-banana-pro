@@ -1898,6 +1898,17 @@ const scriptedFigurePresence = (panelText, castList, candidates) => {
   const absent = readOffscreenCast(action, castList, candidates);
   const clauses = action.split(/[。！？\n]/u);
   const figure = '(?:風刺)?(?:再現像|肖像|人物像|イラスト|姿|像)';
+  const verticalMovement = /(?:タラップ|階段|石段|段差|梯子|はしご|スロープ|坂道|足場)(?:を|から|へ|に)[^が、。！？\n]{0,24}(?:[上下降]り(?:る|て|た|ながら|始め)|[上下登昇](?:る|っ[てた]|り(?:ながら|始め))|上が(?:る|っ[てた]))/gu;
+  const nonVisibleMovement = /(?:画面外|画角外|フレーム外|予定|計画|つもり|と(?:話|説明|語|言))/u;
+  const castNames = [...new Set([...collectCastNames(castList), ...candidates].filter(Boolean))];
+  if (!castNames.length) return [];
+  const actorNames = castNames.sort((a, b) => b.length - a.length).map(escapeRegex).join('|');
+  const actorSubject = new RegExp(`(?<![\\p{Script=Han}\\p{Script=Katakana}A-Za-z0-9])(${actorNames})(?:だけ|のみ)?(?:は|が|も)`, 'gu');
+  const hasNamedVerticalMovement = (clause, name) => !nonVisibleMovement.test(clause)
+    && [...clause.matchAll(verticalMovement)].some(movement => {
+      const precedingActors = [...clause.slice(0, movement.index).matchAll(actorSubject)];
+      return precedingActors.at(-1)?.[1] === name;
+    });
   return [...new Set(candidates)].flatMap(name => {
     if (!name || absent.has(name)) return [];
     const escaped = escapeRegex(name);
@@ -1906,7 +1917,8 @@ const scriptedFigurePresence = (panelText, castList, candidates) => {
     const subject = new RegExp(`${namedSubject}(?:の${figure})?(?:だけ|のみ)?(?:は|が|も|を)`, 'u');
     const depiction = new RegExp(`(?:${escaped}の${figure}|(?:再現像|肖像|人物像)の${escaped}|(?:画面(?:の中|内)|映像(?:の中|内)|写真(?:の中|内)|絵(?:の中|内))の${escaped}|(?:写真|ポスター|絵|映像)(?:の中で|内で)${escaped}|${escaped}の(?:大きな|小さな)*(?:上半身|全身|半身|顔|頭部)(?:が|を)(?:写真|ポスター|絵|映像)に[^。！？\\n]{0,8}(?:描|写|映))`, 'u');
     const visible = clauses.filter(clause => (subject.test(clause)||bodySubject.test(clause))
-      && /立[つちっ]|座[るりっ]|歩[くきい]|走[るりっ]|踊|笑|振|見上|見下|頷|うなず|掲|持|傾|下ろ|伸|ひね|見守|待[つっ]|ポーズ|構え|手を|腕を|膝を|腰を|身を|顔を|体を|身体を|見える|映[るしっ]|写[るしっ]|描[くきいか]|見せ|保持|占める/u.test(clause)
+      && (/立[つちっ]|座[るりっ]|歩[くきい]|走[るりっ]|踊|笑|振|見上|見下|頷|うなず|掲|持|傾|下ろ|伸|ひね|見守|待[つっ]|ポーズ|構え|手を|腕を|膝を|腰を|身を|顔を|体を|身体を|見える|映[るしっ]|写[るしっ]|描[くきいか]|見せ|保持|占める/u.test(clause)
+        || hasNamedVerticalMovement(clause, name))
       && !/(?:描かない|描かず|描くな|表示しない|映さない|写さない|姿を見せない|姿を見せず|不在|登場しない|消えている)/u.test(clause));
     if (!visible.length) return [];
     return [{name, kind: visible.some(clause => !depiction.test(clause)) ? 'physical' : 'depicted'}];

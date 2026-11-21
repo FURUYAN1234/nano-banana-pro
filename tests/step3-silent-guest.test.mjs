@@ -49,6 +49,26 @@ test('silent guest presence requires a visible current body, not just foreground
   assert.deepEqual(names(collision),['元来訪者']);
 });
 
+test('a silent foreground guest visibly moving on stairs or a ramp is counted in the source frame',()=>{
+  const rule=text=>extractCastLimitRule('状況: '+text,'## 観察者',{compact:true,scriptedNames:['来訪者']});
+  for(const text of [
+    '来訪者は濃紺の服で、タラップを一段ずつ慎重に降りる。',
+    '来訪者が階段を二段ずつ上る。',
+    '来訪者はスロープをゆっくり下って入口へ進む。',
+    '観察者が階段を上り、来訪者がタラップを降りる。',
+  ]) assert.ok(names(rule(text)).includes('来訪者'),text);
+  for(const text of [
+    '来訪者は階段を降りる予定だ。',
+    '来訪者は画面外で階段を降りる。',
+    '来訪者の名前だけが階段の案内板に表示される。',
+    '来訪者を放送で呼び出し、観察者が階段を降りる。',
+    '来訪者はスケッチの作者、観察者が階段を降りる。',
+  ]) assert.ok(!names(rule(text)).includes('来訪者'),text);
+  const depiction=rule('写真の中で来訪者がタラップを降りる。');
+  assert.doesNotMatch(depiction,/CAST COUNT:[^\n]*来訪者/);
+  assert.match(depiction,/SCRIPTED DEPICTED FIGURES:.*来訪者/);
+});
+
 test('actual reported STEP3 scenario compiles with a single inferred reference role and unchanged authored data',async()=>{
   const server=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
   try{

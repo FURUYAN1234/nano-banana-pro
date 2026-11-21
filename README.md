@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.1.2** / 現在のソース版: **v8.1.2**
+> Current source version: **v8.1.3** / 現在のソース版: **v8.1.3**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -223,6 +223,8 @@ STEP2 creates the required panels from the start; STEP3 preserves their count, o
 ### Story-led composition / 物語に合わせて配置する
 
 Use the most effective visual moment to organize the page. Large and small panels, foreground/background contrast and intentional overlap should serve the action and reading order. Natural boundary adjustments and small proportional differences do not alone require regeneration. A foreground figure must be grounded in the source scene; a person shown inside a picture is distinct from a person physically present. / 最も効果的な見せ場を中心に、大コマと小コマ、前後の距離、意図した重なりを組みます。動作と読順が成立する自然な境界調整や小さな比率差だけで再生成しません。前景人物は元の場面に登場する人物とし、写真や画面の中の人物と、その場にいる人物を区別します。
+
+A silent character can serve as the dominant foreground figure when the scenario shows them climbing or descending stairs, a ramp, or a ladder. / 階段やスロープ、はしごを上り下りする動作が台本に描かれていれば、無言の人物もページの主役となる前景に指定できます。
 
 Four-to-eight-panel free composition excludes pages made entirely of full-width horizontal strips. This restriction does not prohibit the explicitly requested two-panel book layout. Silent beats may convey action or feeling; they are not added solely to fill a count. More panels also mean less room per scene, so organize dialogue and cast density. / 4～8コマの自由配置では、全コマを横長の帯にして縦積みする構成を除きます。複数ページ用に指定した縦2コマを禁止するものではありません。動作や感情を示す無言コマは使えますが、数合わせのためには追加しません。コマを増やすほど一場面の空間は減るため、台詞と人物の密度も整理します。
 
@@ -838,7 +840,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -902,7 +904,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -972,6 +974,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.1.3 (2026-11-21)
+- **[Fix & UX]** Fixed foreground recognition for silent characters moving on stairs and added a required field to the scenario review example. / 無言で階段やタラップを上り下りする前景人物の判定を修正し、台本の品質レビューに必須の項目を応答例へ追加。
 
 ### v8.1.2 (2026-11-21)
 - **[Fix & UX]** Add independent footer watermark text and full-manuscript reading guidance. / 下部ウォーターマークの左右別編集と作品通読の制作手順を追加。

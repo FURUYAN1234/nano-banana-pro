@@ -994,6 +994,13 @@ test('redundant surface detail cannot trigger a camera-flattening repair even wi
   assert.throws(() => parseScenarioPayoffReview(JSON.stringify(missing)), /incomplete_payoff_review/);
 });
 
+test('the visual feasibility response example includes a material-loss verdict for every panel',()=>{
+  const prompt=buildScenarioPayoffReviewPrompt({scenario:nativeScenario(5),scenarioMode:'experimental-manga'});
+  const example=JSON.parse(prompt.match(/^  "visual_feasibility": (\[.*\]),$/m)[1]);
+  assert.equal(example.length,5);
+  assert.ok(example.every(item=>item.material_loss===false));
+});
+
 test('a subjective minor payoff concern does not regenerate an otherwise drawable scenario', async () => {
   let repairs = 0;
   const result = await runScenarioPayoffGate({
