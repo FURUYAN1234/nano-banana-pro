@@ -40,6 +40,19 @@ test('an actor relative clause can precede the camera origin, but actor peeking 
   assert.equal(classifyCameraElevation('人物が作業台より低い右前方からのぞく。'), 'unspecified');
 });
 
+test('a relative height followed by a comma and an explicit shot is a usable camera origin', () => {
+  const high = '来館者用コメント端末の高さより少し上、左前斜めからの広角。右手前の人物を大きく、左奥の人物と端末を小さく置く。';
+  assert.equal(classifyCameraElevation(high), 'high');
+  assert.doesNotThrow(() => assertGeneratedScenarioCameraContract(scenario(high)));
+  assert.equal(classifyCameraElevation('机の高さよりわずかに下、右後方からの望遠。'), 'low');
+  assert.equal(classifyCameraElevation('目線の高さよりやや上、左前方から撮影する。'), 'high');
+  for (const camera of [
+    '人物の手は端末の高さより少し上、左前斜めから端末へ伸びる。',
+    '端末の高さより少し上、左前斜めからの広角は使わない。正面から捉える。',
+    '端末の高さより少し上、左前斜めからの広角。座った人物のアイレベルで撮る。',
+  ]) assert.throws(() => assertGeneratedScenarioCameraContract(scenario(camera)), {code:'CAMERA_CONTRACT'}, camera);
+});
+
 test('the existing provider retry gate accepts a valid relative origin unchanged after one response', async () => {
   const accepted = scenario('作業台の天面より低い右前方からの広角。成人の作業員と箱を捉える。');
   let requests = 0;

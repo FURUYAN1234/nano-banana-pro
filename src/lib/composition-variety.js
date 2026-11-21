@@ -108,7 +108,8 @@ const FLOOR_CAMERA_RE = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ
 const REAR_CAMERA_RE = /(?:^|[、。;；\s]|の(?:左|右)?|(?:左|右))(?:後方|後ろ|背中側|背後)(?:[左右]?[上下](?:方)?|[左右])?(?=\s*(?:から|より|へ(?:引[くい]|カメラを移|視点を移)|の(?:[高低]い|[高低]めの?)?(?:撮影)?(?:位置|視点)|(?:に|で)(?:カメラ|視点|撮|構え|見上げ|見下ろ)|[、,]|$))|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i;
 const HIGH_CAMERA_RE = /overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|バード(?:ズ)?アイ|(?:天井|天頂)(?:近く|付近)?から(?:真下|鉛直下向き)|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平)))|高め(?:から|より|に(?:撮|捉え))|高く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?高(?:い|め|く)|高所から|上方から|見下ろ[すし]/i;
 const LOW_CAMERA_RE = /low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|下から|見上げ|低(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平))|[、。]|$)|低(?:い|めの?)斜め|低め(?:から|より|に(?:撮|捉え))|低く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?低(?:い|め|く)|低所(?:から|の|に|より)?|(?:[^\s、。]+上|[^\s、。]+面)すれすれ(?:から|より|[、。]|$)/i;
-const RELATIVE_CAMERA_ORIGIN = 'より(?:も)?(高|低)い(?:斜め)?(?:(?:左|右)(?:前(?:方)?|後(?:ろ|方)?|側面)?|前(?:方)?|後(?:ろ|方)?|側面)(?:斜め)?(?:から|より)';
+const CAMERA_AZIMUTH_ORIGIN = '(?:斜め)?(?:(?:左|右)(?:前(?:方)?|後(?:ろ|方)?|側面)?|前(?:方)?|後(?:ろ|方)?|側面)(?:斜め)?(?:から|より)';
+const RELATIVE_CAMERA_ORIGIN = `より(?:も)?(高|低)い${CAMERA_AZIMUTH_ORIGIN}`;
 const RELATIVE_CAMERA_ORIGIN_RE = new RegExp(RELATIVE_CAMERA_ORIGIN);
 
 // Strip only named camera terms under a prohibition, including Japanese lists;
@@ -133,7 +134,9 @@ const NEGATED_ENGLISH_CAMERA_TERMS_RE = new RegExp([
 ].join('|'), 'gi');
 const CONTRASTED_CAMERA_CLAUSE_RE = /(^|[。;；\n、,])([^。;；\n、,]+?)(?:ではなく|でなく)(?=\s*[、,])/g;
 const CAMERA_CLAUSE_END_RE = /(?:俯瞰(?:する)?|アオリ|見下ろす|見上げる|撮る|撮影する)(?:\s*(?:Dominant Low|Innocent High|Epic Wide|Over The Shoulder|Hyper Perspective|Aesthetic Thirds|Cinematic Slant))?(?:\s*の)?\s*$/i;
-const CAMERA_ORIGIN_SUFFIX_RE = new RegExp(`^(?:の(?:${CAMERA_TERM}|${ENGLISH_CAMERA_TERM}|撮影|カメラ|視点|位置|構図|画角|ショット|映像|画面)|撮|捉|カメラ|視点)`, 'i');
+const CAMERA_ORIGIN_SUFFIX = `(?:の(?:${CAMERA_TERM}|${ENGLISH_CAMERA_TERM}|撮影|カメラ|視点|位置|構図|画角|ショット|映像|画面)|撮|捉|カメラ|視点)`;
+const CAMERA_ORIGIN_SUFFIX_RE = new RegExp(`^${CAMERA_ORIGIN_SUFFIX}`, 'i');
+const COMMA_SEPARATED_CAMERA_ORIGIN_RE = new RegExp(`より(?:も)?(?:少し|やや|わずかに)?([上下])(?:の位置)?[、,]\\s*(${CAMERA_AZIMUTH_ORIGIN})(?=\\s*${CAMERA_ORIGIN_SUFFIX})`, 'gi');
 const REFERENCED_JA_SHOT='(?:前|直前|先ほど|先行|次|後続|別|他)(?:の)?(?:コマ|カット|ショット|場面|ページ|頁)';
 const REFERENCED_EN_SHOT='(?:(?:the\\s+)?(?:previous|preceding|prior|earlier|next|following|other)\\s+(?:[a-z-]+\\s+){0,3}?(?:panel|frame|shot|cut|view|camera)\\b)';
 const currentShotText=camera=>String(camera)
@@ -162,7 +165,11 @@ export const isFisheyeCamera = (camera = '') => /fish[ -]?eye|魚眼|フィッ�
 // Classify camera placement, not a tall actor, raised head or low prop. An explicit
 // eye-level viewpoint can be physically near the floor for a seated/chibi subject.
 export const classifyCameraElevation = (camera = '') => {
-  const text = affirmativeCameraText(camera).normalize('NFKC')
+  // The shot or lens after the direction identifies a camera origin even
+  // when the relative height ends at a comma. An actor gesture cannot do so.
+  const positioned = String(camera).replace(COMMA_SEPARATED_CAMERA_ORIGIN_RE,
+    (_, height, direction) => `より${height === '上' ? '高' : '低'}い${direction}`);
+  const text = affirmativeCameraText(positioned).normalize('NFKC')
     .replace(/(?:高(?:い|めの?)|低(?:い|めの?))(?:撮影)?位置(?:ではなく|でなく|ではない|でない)/g, '')
     // A body crop's range start (膝上から…まで) is framing, not an
     // above/below camera origin. Keep separate placement and pitch cues intact.

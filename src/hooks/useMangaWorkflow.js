@@ -2217,6 +2217,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     const sourceImage = generatedImage;
     const sourceHistory = generationHistory.find(item => item.img === sourceImage);
     const sourceSettings = sourceHistory?.metadataContext?.settings;
+    const sourceScenario = sourceHistory?.metadataContext?.scenario
+      || (bookPageContextRef.current?.pageId ? scenario : '');
     let request;
     try { request = buildImageEditRequest(sourceImage, instruction, {colorMode:sourceSettings?.color_mode || colorMode}); }
     catch (error) { showStatus(translateApiError(error)); return false; }
@@ -2272,7 +2274,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           qualityPass: false, selected: true, editInstruction: instruction.trim(),
           workflowSource: sourceHistory?.workflowSource,
           metadataContext: {
-            provider: isOpenAIEngine ? 'openai' : 'gemini', scenario: '', finalPrompt: request.prompt,
+            provider: isOpenAIEngine ? 'openai' : 'gemini', scenario: sourceScenario, finalPrompt: request.prompt,
             inputImages: [{ role: 'edit_source', dataUrl: sourceImage }],
             settings: { manual_image_edit: true, quality_review: 'not_run',
               ...(sourceCount ? { panel_count: sourceCount } : {}),

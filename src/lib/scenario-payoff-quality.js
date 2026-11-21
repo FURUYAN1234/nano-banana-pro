@@ -282,6 +282,14 @@ const hasActionContinuityEvidence = (item) => typeof item?.material_failure === 
   && typeof item.evidence === 'string' && item.evidence.trim()
   && typeof item.correction === 'string' && (!item.material_failure || item.correction.trim());
 
+function removeReviewTrailingCommas(source) {
+  return source.replace(/"(?:[^"\\]|\\.)*"|,\s*(?=[}\]])/gs, (token, offset) => {
+    if (token[0] !== ',') return token;
+    const previous = source.slice(0, offset).trimEnd().at(-1);
+    return typeof previous === 'string' && /["\d}\]el]/u.test(previous) ? token.slice(1) : token;
+  });
+}
+
 export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', panelCount = 4, punchlineType } = {}) => {
   const fail = message => { throw Object.assign(new Error(`incomplete_payoff_review: ${message}`),{
     code:'SCENARIO_PAYOFF_REVIEW_INVALID',diagnosticContext:{stage:'scenario_payoff_review',
@@ -297,7 +305,13 @@ export const parseScenarioPayoffReview = (text, { scenarioMode = 'four-panel', p
   try {
     parsed = JSON.parse(jsonText);
   } catch (error) {
-    fail(error.message);
+    const normalizedJson = removeReviewTrailingCommas(jsonText);
+    if (normalizedJson === jsonText) fail(error.message);
+    try {
+      parsed = JSON.parse(normalizedJson);
+    } catch {
+      fail(error.message);
+    }
   }
 
   if (!parsed || REVIEW_FIELDS.some((field) => !Object.hasOwn(parsed, field))) {

@@ -1,3 +1,7 @@
+# v8.1.5 release candidate
+
+STEP2 accepts explicit relative shot origins. Whole-page image edits retain the source page script in the saved PNG and JSON. See [v8.1.5 release notes](docs/releases/v8.1.5.md).
+
 # v8.1.4 release candidate
 
 STEP3 recognizes a named silent foreground guest whose current attire is described in the source panel. STEP2 clarifies when the cast review can use the registered appearance and how to review named guests without reference sheets. See [v8.1.4 release notes](docs/releases/v8.1.4.md).

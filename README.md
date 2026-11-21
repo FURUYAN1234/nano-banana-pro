@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.1.4** / 現在のソース版: **v8.1.4**
+> Current source version: **v8.1.5** / 現在のソース版: **v8.1.5**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -336,6 +336,8 @@ Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue 
 
 In standard Gemini four-panel mode, quality review compares the image transcription and balloon order against the dialogue in the final prompt, including edits made there before generation. / Geminiの通常4コマでは、画像から転記した台詞と吹き出しの読順を、生成に使った最終プロンプトと照合します。生成前に最終プロンプトで編集した台詞も照合対象です。
 
+STEP2 accepts camera origins relative to a visible subject or object when the direction describes an actual shot. An actor’s height alone or a rejected camera position does not supply a viewpoint. / STEP2は、画面の高さや人物の位置を基準にした表現でも、実際の撮影位置を示していれば受け付けます。人物の背丈だけを示す記述や、否定された撮影位置は採用しません。
+
 Quality review checks visible surfaces for camera elevation and checks the direction of a balloon tail and nearby speakers. It distinguishes an explicitly vertical shot from a diagonal view, using visible cues such as receding edges on a level surface. Missing evidence remains unverified. When a Japanese Camera instruction explicitly rejects one angle and chooses another, projection follows the chosen angle while retaining the original wording. STEP3 accepts an explicit silent beat in the action field. In OpenAI 4–8-panel STEP3, unsupported optional effects are omitted without changing panel order, camera or dialogue. If a returned layout is rejected, the diagnostic export records the response and validation reason under `failureContext` with its usual privacy and size limits. / 画像検査では実画像の上面・下面からカメラの上下角を確認し、吹き出しの尾は向きと周囲の人物を調べます。水平面の平行な辺が奥に向かって狭まっているかなどを手がかりに、真俯瞰と斜め俯瞰を区別します。根拠が足りなければ未確認とします。Cameraで「俯瞰ではなく、床近くから見上げる」と指定されたときは、元の文を保って、選ばれた角度で描画指示を組み立てます。STEP3では「状況」欄に明記した無言も認識します。OpenAIの4～8コマでは、使えない任意演出だけを除き、コマ順・カメラ・台詞は保持します。配置案の検査で止まった場合は、調査JSONの `failureContext` に応答と理由を記録します。秘匿処理と容量上限は従来どおり適用します。
 
 Quoted source text / 出典の引用: Wording identified as an article or document quotation, including a quoted passage followed by "という記述", remains scene text rather than a nearby character's speech. VisualEvidence labels and quoted sign text stay in visual action, never becoming a speaker or extra bubble. Explicit speaking or reading aloud still gets a bubble. Balloon-layout errors identify the panel and mismatch without assuming user error. Rebuild STEP3 for existing scripts. / 「という記述」などで資料の文言を示す引用は状況描写に残し、近くの人物の吹き出しへ入れません。VisualEvidence欄の看板文字も視覚描写として保持し、話者や余分な台詞として数えません。人物が実際に発話・音読する引用は台詞として保持します。配置エラーでは対象コマと不一致の内容を示し、入力の誤りと決めつけません。既存のシナリオへの反映にはSTEP3を作り直してください。
@@ -417,7 +419,7 @@ The application provides one continuous four-step workflow. / アプリは次の
 
 The distributed manga skill uses the work’s author credit, watermark preferences, and accurate AI-production disclosure. Social links are included when the user chooses them for the post. The optional, separately maintained personal preferences file is retained by the skill updater. / 配布スキルは作品ごとの作者表記・製品ウォーターマーク・実際のAI制作工程に従います。SNSには利用者が選んだリンクを添えます。導入先で別途作った個人設定ファイルはスキル更新時に引き継がれます。
 
-The editable final prompt is the single document used by ordinary API generation, full/split copy, TXT and Web companion JSON. STEP3 adds reference and rendering instructions before editing; sending or exporting does not append, trim or rewrite them. API size limits still apply. Image-repair requests separately replace the reference manifest to identify the repair source. / 最終プロンプトは一つの編集欄です。STEP3で参照・描画指示まで組み立て、編集後の全文を通常のAPI生成・全体／分割コピー・TXT・Web版制作情報JSONへそのまま渡します。送信・保存時に自動追記・削除・書き換えをしません。API文字数上限は維持します。画像修正の依頼だけは、修正元画像を識別する参照説明を別途組み立てます。
+The editable final prompt is the single document used by ordinary API generation, full/split copy, TXT and Web companion JSON. STEP3 adds reference and rendering instructions before editing; sending or exporting does not append, trim or rewrite them. API size limits still apply. A whole-page image edit identifies the source image separately and saves its original script with the edited PNG and matching JSON. / 最終プロンプトは一つの編集欄です。STEP3で参照・描画指示まで組み立て、編集後の全文を通常のAPI生成・全体／分割コピー・TXT・Web版制作情報JSONへそのまま渡します。送信・保存時に自動追記・削除・書き換えをしません。API文字数上限は維持します。ページ全体の画像修正では修正元を別途記録し、元の台本を修正版のPNGと同名JSONへ引き継ぎます。
 
 For high-resolution OpenAI file uploads, the 32,000-character limit includes multipart line endings and reference descriptions. Automatic repair compacts only repeated application instructions and checks the outgoing length before sending. The approved camera, acting, dialogue and panel composition stay intact. / OpenAIへ高解像度画像をファイルで添付するときは、改行と参照説明を含めた送信時の文字数を32,000文字の上限と照合します。自動修正では、アプリが付ける重複指示を圧縮し、承認済みのカメラ・演技・台詞・構図を保持します。
 
@@ -840,7 +842,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -904,7 +906,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.5 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.5 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -974,6 +976,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.1.5 (2026-11-21)
+- **[Fix & UX]** Accept valid STEP2 camera origins and retain the source script in JSON after page edits / STEP2の撮影起点の判定を修正し、画像修正後のJSONに元の台本を保存
 
 ### v8.1.4 (2026-11-21)
 - **[Fix & UX]** Recognized silent foreground guests described by their attire and preserved inherited cast descriptions in the scenario review. / 元コマで着用衣装を示した無言の前景人物を認識し、台本の品質レビューで既存の人物設定を引き継ぐ。

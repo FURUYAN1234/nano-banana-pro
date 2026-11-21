@@ -112,6 +112,16 @@ const nativeReview = count => ({ ...structuredClone(STRONG_GAG_REVIEW),
   panel_development: Array.from({ length: count }, (_, i) => ({ panel: i + 1, material_padding: false, evidence: '作業の変化または反応までの必要な間を示している。', correction: '' })),
 });
 
+test('a dangling JSON comma after a review value preserves evidence and verdicts', () => {
+  const review = nativeReview(6);
+  review.camera_rhythm.shots[2].purpose = '端末に「, }」と出る。記号も監査根拠になる。';
+  const json = JSON.stringify(review, null, 2).replace('"purpose": "端末に「, }」と出る。記号も監査根拠になる。"', '"purpose": "端末に「, }」と出る。記号も監査根拠になる。",');
+  const options = { scenarioMode:'experimental-manga', panelCount:6 };
+  assert.deepEqual(parseScenarioPayoffReview(json, options), review);
+  assert.throws(() => parseScenarioPayoffReview(json.replace('"shots": [', '"shots": [,') , options), /incomplete_payoff_review/);
+  assert.throws(() => parseScenarioPayoffReview(json.replace('"purpose": "端末に「, }」と出る。記号も監査根拠になる。",', '"purpose":,'), options), /incomplete_payoff_review/);
+});
+
 test('incomplete review preserves its response without notifying a terminal failure', async t => {
   const errors=[];
   t.after(subscribeDiagnosticErrors(row=>errors.push(row)));

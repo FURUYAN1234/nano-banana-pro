@@ -63,7 +63,7 @@ function setup(overrides = {}) {
   const saves = [];
   const context = { experimentalEnabled:false,
     beginApiWork,
-    readRenderOptions, finalPrompt: '',
+    readRenderOptions, finalPrompt: '', scenario: '', bookPageContextRef: { current: null },
     generatedImage: source, generationHistory: history, isGeneratingImage: false,
     isSearching: false, isAssembling: false, isEnhancing: false, isFullAutoMode: false,
     isFixingPolicy: false, isAnalyzing: false, is360CameraWorking: false,
@@ -157,6 +157,23 @@ test('whole edit normalization follows the source title option rather than the c
   h.calls[0].resolve({ base64Img: 'ZWRpdA==', mimeType: 'image/png', usedModel: 'gpt-test' });
   assert.equal(await pending, true);
   assert.equal(h.normalizations[0].renderOptions.showTitle, false);
+});
+
+test('a whole-page image edit keeps the saved source scenario, or the current approved book scenario', async () => {
+  const cases = [
+    { sourceScenario: '画像生成時の台本', context: { scenario: '別の表示中の台本' }, expected: '画像生成時の台本' },
+    { sourceScenario: '', context: { scenario: '現在の書籍ページ台本', bookPageContextRef: { current: { pageId: 'p1' } } }, expected: '現在の書籍ページ台本' },
+    { sourceScenario: '', context: { scenario: '別の表示中の台本' }, expected: '' },
+  ];
+  for (const {sourceScenario,context,expected} of cases) {
+    const h = setup(context);
+    h.state().history[0].metadataContext = { scenario: sourceScenario };
+    const pending = h.context.edit('画像内の誤字だけ修正');
+    h.calls[0].resolve({base64Img:'ZWRpdA==',mimeType:'image/png',usedModel:'gpt-test'});
+    assert.equal(await pending,true);
+    assert.equal(h.saves[0].metadataContext.scenario,expected);
+    assert.equal(h.saves[0].metadataContext.settings.quality_review,'not_run');
+  }
 });
 
 test('Gemini receives the same source image and failure keeps the image and history', async () => {
