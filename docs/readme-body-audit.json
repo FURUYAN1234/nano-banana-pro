@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-  "manualVersion": "8.1.3",
-  "manualSourceSha256": "1d6e75f7d65d48bcb07c10e6cc8d7c7a142d13e2fac1ca20522193b4276c8b96",
+  "manualVersion": "8.1.4",
+  "manualSourceSha256": "b4887bebc8db6b7bc2cd85cf809c633604f2505bd22edc8d6bad4b6997da2129",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "bdf763151a9011ac17fa004f1d80dfdcd4cc1a6856b7815949d895a1b2e50e9e"
+      "sha256": "45a1e25fd2d2411a4b82d781e8526beca3e6ff7be76eb890162ea2d9c10162c1"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "6db2de043db6063d92b532729cf28ad1bef07d89f39cfed3ecdc5d4d5e0e9863"
+      "sha256": "65165c0face81c6c04ba5f1933ab0ada6d96638d69bf01aeb45f557e12c84b59"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "6aa0f70d5d8c3cc63969dcc638b9fbf0dc3871b5dd0906818c7b032bae74b8a7"
+      "sha256": "f46c33f17e7a8d6e0eb94a13999710ce379623e38207991cc1be375a8259b5a4"
     }
   ],
-  "readmeSha256": "c0be707697b43d1c73bb13b1f7fd16509e830b82849a4f6ca00c118c33cf3c4d",
+  "readmeSha256": "f5bb71a2dc6133165582f6c0663e775287d0e16b3ed5cd91728da2e2794b80e9",
   "readmeLanguageGaps": [],
-  "sourceTree": "915bfddbd61c1dc4a5fd791685e75167332feb33",
-  "publicTree": "1a1d8f63e4824ceebd8e2492633af1841afff2fb",
-  "packageSha256": "d2b9c5d2be0e66b612d8f5f4ca2df9407e6a2ea0e873d88c0dbf43c7960810fe",
+  "sourceTree": "166bdcbfcd12d0d2b12d6f26e44840850c6d6b19",
+  "publicTree": "98e809ba02016cced848fc770bfa5bb9708f2d28",
+  "packageSha256": "fc8c5347020a46d04853092d02fd9cd8ca844666108ab8724c3857971373468b",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -43,16 +43,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "3aef735818925c7b7d5e9e4104ec78fa1ba49301",
-  "reviewedAt": "2026-11-21T07:08:05.049Z",
+  "candidateCommit": "facd334624944b8778e2b803dfbf64d2af1a18b6",
+  "reviewedAt": "2026-11-21T09:10:42.694Z",
   "reviewStage": "local-committed-source",
   "reviewedWorkingTree": false,
-  "findings": "前版で確認した19節と候補の本文を差分照合。コマ数とページ構成の節に、無言の前景人物を元コマの階段動作から判定する説明を追加し、STEP3の検査と照合した。短編の架空台本と添付の失敗履歴で人物、コマ数、台詞、カメラを確認。版表記・同梱ZIPの参照先と更新履歴を候補版へそろえた。生成した2種の工程図は版表記を更新した。",
-  "manualFindings": "3冊、全78ページを前版と描画比較。本文変更があるGeminiガイド1ページ、全機能マニュアル19・20ページを目視し、重なり、切れ、欄外へのはみ出しがないことを確認。全冊の版表記、リンク、PDF寸法と文字境界を検査した。",
+  "findings": "確認済みの19節を候補との差分で照合。実装に合わせ、元コマの衣装と無言の前景指定の説明を本文に反映した。配布リンクの版、更新履歴、工程図の版表記をそろえた。",
+  "manualFindings": "3冊の全78ページを前版と描画比較。本文に差分があるGeminiガイド1ページ、全機能マニュアル16・19・20ページを目視し、重なり、文字切れ、欄外へのはみ出しがないことを確認。版、リンク、PDF寸法と文字境界は生成時検査を通過。",
   "pricingReview": {
-    "version": "8.1.3",
+    "version": "8.1.4",
     "sourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-    "checkedAt": "2026-11-21T07:08:05.049Z",
+    "checkedAt": "2026-11-21T09:10:42.694Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -61,7 +61,7 @@
     "findings": "Compared the published Standard rates for GPT-6 Luna, GPT-6.2, GPT Image 2.6 Sunburst, Gemini 3.8 Flash and Nano Banana 2.1 with the app and manual values. Reviewed separate Batch rates and the scheduled January increase for Gemini 3.8 Flash."
   },
   "apiValidation": {
-    "version": "8.1.3",
-    "scope": "The browser used the normal free-composition STEP3 UI in v8.1.3. GPT-6 Luna answered one OpenAI request with HTTP 200. The final 18,436-character prompt kept five source cameras, three dialogue lines and the silent guest visibly descending in the foreground. The same STEP2 review behavior was live-tested before the version bump. A run with registered characters returned a repaired, accepted four-panel script through GPT-6 Luna. The two original STEP3 failure records were replayed on the final source."
+    "version": "8.1.4",
+    "scope": "Normal browser UI with GPT-6 Luna, fallback disabled. STEP3 received HTTP 200 once, produced a 18,677-character prompt and preserved all five cameras, three spoken lines and the named P3 silent foreground actor. STEP2 generated four panels with two registered actors and a named guest without a sheet. Both requests returned HTTP 200 and cast/payoff review passed without regeneration. Replayed three original STEP3 diagnostic responses on the corrected parser."
   }
 }
