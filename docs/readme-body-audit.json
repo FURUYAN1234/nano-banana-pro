@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "a6e9366d4a4145d4d40a9b829e8093fc5f01257c0b4b3034c63565d4ffa87d67",
-  "manualVersion": "8.1.1",
-  "manualSourceSha256": "40e1d3c82ebca19f7ec88e3871de50c7e80d234ac61805bbdab978b34440393b",
+  "pricingSourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
+  "manualVersion": "8.1.2",
+  "manualSourceSha256": "91c7ffc5f1d60a87b442c108d602f90e3262cf8bf298dbf962edc868a50dcab4",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "1673ca5d5914e191bf78df9a00e740aa53937e4012106d085e206a17b8b83b68"
+      "sha256": "e4abffdbb5c667353b7bfd9efbb606aff69b5b8227372f56f5a823fd0ff3d333"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "59607a121b9e4ad35ccccb9008509917a692cb2f4d8490f21ba81aa7798fdb34"
+      "sha256": "b23653e7b09c8605615bcefdca2d67f9d0a9ff4eb220b2711774530f2957e360"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "fec9b0089ea6914510f1e0c108510839b6f0c070285e6a031388c717d1de6f0f"
+      "sha256": "8025122d1a552d68d889e5c0dfec4983ed35a712f681cbd47710f8d9ca222571"
     }
   ],
-  "readmeSha256": "95583a3b2d789e3e5f901e209c9d1e102c820e54d5684278093d1c54f80db70a",
+  "readmeSha256": "53d378b628b0931189c9a5444dcb02502fe0413b3000f14667a8f269334e89b0",
   "readmeLanguageGaps": [],
-  "sourceTree": "1ac48715384eebdbad70b4572c2177446ffaf234",
-  "publicTree": "7612161fdd717608b579f2afc612552bbc422cda",
-  "packageSha256": "96e158e85373b575e68faf5dc781d043cd18031929c8bb74d67104a2ec3cb05f",
+  "sourceTree": "15e2c0da855e0561809751ef72cb7c5261b3a4f3",
+  "publicTree": "828c51ff27c2d5f903b05df4b5814a372f6c9e46",
+  "packageSha256": "460902fbf897c899b4ebeb5f89ea58edd666a7389244d266c7793dbf011e6f40",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -43,24 +43,24 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "sourceCommit": "32bb6191e4f4846c4041d13db7a6e702a4c1ff2d",
-  "reviewedAt": "2026-11-20T12:11:15.089Z",
+  "candidateCommit": "dec093f65b8dd0efa2af894f2dea49ebc08731a5",
+  "reviewedAt": "2026-11-21T03:12:05.224Z",
   "reviewStage": "local-committed-source",
   "reviewedWorkingTree": false,
-  "findings": "19節の構成を確認し、本編の作者名、役名札とセリフの区別、初回ウォーターマークと手動作画の保存、MCPのページ単位設定をUI・実装・ガイドに照合し、旧初期値の説明を更新した。",
-  "manualFindings": "3冊、全78ページの本文、用紙寸法、現行版番号を前版と比較。版表記以外の差分は全機能マニュアル19・45ページだけで、レンダリングを目視し、各冊の版番号も照合した。",
+  "findings": "19節の本文と構成を確認。STEP3の左右の編集欄、従来の初期文言、空欄、再構築のタイミング、MCPの作品・ページ単位の上書きをUIとソース、MCPガイドへ照合した。前版から継承する画像API経路とH3配布ZIPは既存の契約・検査の対象。本文と履歴には候補版と料金確認日を反映した。",
+  "manualFindings": "3冊、全78ページを前版と比較し、全ページのA4寸法・版番号・更新日・本文を確認。本文の変化があるGeminiガイド1ページと全機能マニュアル19・45ページのレンダリングを確認し、文章・表の重なりや切れがないことを確認した。",
   "pricingReview": {
-    "version": "8.1.1",
-    "sourceSha256": "a6e9366d4a4145d4d40a9b829e8093fc5f01257c0b4b3034c63565d4ffa87d67",
-    "checkedAt": "2026-11-20T12:11:15.089Z",
+    "version": "8.1.2",
+    "sourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
+    "checkedAt": "2026-11-21T03:12:05.224Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Standard text and image rates match the app, README and API guides for GPT-6 Luna and GPT-6.2, GPT Image 2.6 Sunburst, Gemini 3.8 Flash and Nano Banana 2.1. Batch rates were kept separate."
+    "findings": "Compared the official Standard rows for GPT-6 Luna, GPT-6.2 and GPT Image 2.6 Sunburst, and the Google Standard rows for Gemini 3.8 Flash and Nano Banana 2.1. The application and current guides retain the matching Standard rates; the Batch rows are separate. The 3.8 Flash temporary 2026 rate was checked against the scheduled 2027 change."
   },
   "apiValidation": {
-    "version": "8.1.1",
-    "scope": "The normal connected UI used GPT-6 Luna without model fallback for specified and unspecified role labels. Five speech entries and their speakers remained intact. No role-plaque instruction appeared in the ordinary prompt. With the two bundled references, GPT Image 2.6 Sunburst generated a five-panel comic, followed by the existing single bounded repair. The visible page retained scripted plaques and had no product footer. Two text-only generation requests returned unrelated imagery, were rejected by the existing review gate and were not saved. No cause on the provider side was established."
+    "version": "8.1.2",
+    "scope": "The connected browser selected GPT-6 Luna and used the normal STEP3 and STEP4 route against OpenAI on the feature candidate prior to the release version bump. The manually entered original test script returned a saved 2240×3168 image from gpt-image-2.6-sunburst. The footer visibly reads FURU STUDIO at the bottom left with no right-hand mark. Same-named production JSON retained the exact left and empty right instructions. Regression tests cover right-only, both, blank and off variants. No additional Gemini image was requested."
   }
 }
