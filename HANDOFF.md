@@ -1,3 +1,7 @@
+# v8.1.2 release candidate
+
+STEP3 provides separately editable bottom-left and bottom-right footer text, with the existing credits prefilled and one line of up to 80 characters per side. Empty fields omit their respective marks. The MCP setting can inherit project text or override it per page. The real OpenAI smoke test confirmed a left-only credit in the saved 2240×3168 PNG, with the corresponding custom instruction in its JSON. The bundled production skill now gives a whole-manuscript reading procedure and a localized lettering repair procedure. See [v8.1.2 release notes](docs/releases/v8.1.2.md).
+
 # v8.1.1 release candidate
 
 New manual sessions and MCP projects start with product watermarks off. The manual checkbox stores its choice in the current browser. Page-level overrides remain available. The parser keeps role plaques in the artwork and out of speech balloons. The bundled skill describes source verification, gaze, byline placement and full-page redrawing. See [v8.1.1 release notes](docs/releases/v8.1.1.md).
