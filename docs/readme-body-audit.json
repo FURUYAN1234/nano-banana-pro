@@ -18,7 +18,7 @@
   ],
   "readmeSha256": "2a070d4668bef355c908545ad2b1dc8809dd11160458f34037df9636d0452b94",
   "readmeLanguageGaps": [],
-  "sourceTree": "e7b8fe8f813402749a6c3801c534e20529ef1e3d",
+  "sourceTree": "8f9f79c65bf585825887a137f9e35138c4f6ef13",
   "publicTree": "4a7f12fe684276735754f54cbdd3ccc8624da331",
   "packageSha256": "31e812f722550d1aa4a087fc1c2d2efb9dc19506beef96eff2f264c1ba9bb6c1",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
@@ -43,8 +43,8 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "7120869a9acb72bd21837bd6a9803c53fb5dce65",
-  "reviewedAt": "2026-11-22T09:43:49.349Z",
+  "candidateCommit": "d6d23ea37bae7c4da972ab446ea2e7fb3810be83",
+  "reviewedAt": "2026-11-22T10:02:16.350Z",
   "reviewStage": "local-committed-source",
   "reviewedWorkingTree": false,
   "findings": "v8.1.5のREADMEの19節と候補差分を照合。英日ともに、参照画像なしのカラー作画でSTEP1の人物設定とSTEP2の台本を使う手順、通常コマのGペン、題字そばの作者名と製品ウォーターマークの扱いを確認した。配布先、版表示、工程図2枚を候補版と照合した。",
@@ -52,7 +52,7 @@
   "pricingReview": {
     "version": "8.1.6",
     "sourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-    "checkedAt": "2026-11-22T09:43:49.349Z",
+    "checkedAt": "2026-11-22T10:02:16.350Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -62,6 +62,6 @@
   },
   "apiValidation": {
     "version": "8.1.6",
-    "scope": "Local STEP3 and STEP4 used GPT-6 Luna and GPT Image 2.6 Sunburst with zero reference images. The supplied 2240 by 3168 color result was visually checked against the approved dialogue, action, cast, title and byline in all four panels. The final automated reinspection status was not captured. Replaying the observed plan with the new default G-pen direction produced the same full editor input as the paid run."
+    "scope": "Local STEP3 and STEP4 used GPT-6 Luna and GPT Image 2.6 Sunburst with zero reference images. The supplied 2240 by 3168 color result was visually checked against the approved dialogue, action, cast, title and byline in all four panels. The application completed STEP4 in 273 seconds with one targeted repair. Its terminal review status was repaired_unverified; no automated reinspection was performed. Replaying the observed plan with the new default G-pen direction produced the same full editor input as the paid run."
   }
 }
