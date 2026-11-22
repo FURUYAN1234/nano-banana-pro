@@ -1,6 +1,8 @@
 import { HAND_INK_ACCENTS, FOCAL_DEPTH_HIERARCHY, FOCAL_READABILITY, FOCAL_SUBJECT_SEPARATION_FALLBACK, SKIN_LIGHTING, SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality.js';
 import { GEKIGA_FACE_CONSTRUCTION } from './constants.js';
 
+export const TEXT_ONLY_NORMAL_COLOR_INK = '通常のカラーコマは強いGペンタッチ。筆圧で手前の輪郭と重なりを太く、顔・髪・指先の線は細く鋭く抜き、黒い締めと明瞭なカラーを両立する。';
+
 export const normalizeMangaColorMode = (value) => value === 'monochrome' ? 'monochrome' : 'color';
 
 // The same style-scoped direction is shared by normal API and Web output.

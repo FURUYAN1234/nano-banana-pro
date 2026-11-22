@@ -3,12 +3,12 @@ import { EXPERIMENTAL_LAYOUTS, experimentalLayoutOptions, experimentalLayout, pa
 export { EXPERIMENTAL_LAYOUTS, experimentalLayoutOptions, experimentalLayout } from './manga-page-composition.js';
 import { getScenarioPanelBlocks, validateMangaScenario, formatMangaScenarioValidationIssue, getScenarioPanelCountRange } from './scenario-validation.js';
 import { buildBookPresentation } from './book-presentation.js';
-import { collectCastNameEntries, extractActionOnly, extractDialogueOnly, extractEmotionStyle, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix, buildNormalPanelRendering, TEXT_ONLY_NORMAL_COLOR_INK, resolveScriptedReferenceRoles, buildScriptedReferenceRoleInstruction } from './panel-utils.js';
+import { collectCastNameEntries, extractActionOnly, extractDialogueOnly, extractEmotionStyle, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix, buildNormalPanelRendering, resolveScriptedReferenceRoles, buildScriptedReferenceRoleInstruction } from './panel-utils.js';
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
 import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily, buildMonochromePanelInkLock } from './prompt-assembler.js';
 import { translateMonochromeCompilerRules } from './monochrome-compiler-prose.js';
-import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_FOCAL_READABILITY, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
+import { TEXT_ONLY_NORMAL_COLOR_INK, MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_FOCAL_READABILITY, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
 import { buildRenderOptionsContract, buildRenderOptionsQa, readRenderOptions, buildProtectedCastContract, allowsWatermarkOverlap, hasVisibleWatermarks, DEFAULT_LEFT_WATERMARK, readFooterLettering, COPYRIGHT_MOSAIC_TARGET_SCOPE, pageTitleSuppression } from './render-options.js';
 import { createApiError, formatApiErrorDetails, getApiErrorInfo, sanitizeErrorMessage } from './api-errors.js';

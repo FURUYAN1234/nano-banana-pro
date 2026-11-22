@@ -93,7 +93,7 @@ import {
   replaceCinematicSlotWithinBudget,
   selectPageCinematicTechniques
 } from './cinematic-techniques';
-import { MONOCHROME_FOCAL_READABILITY, MONOCHROME_SKIN_LIGHTING, normalizeMangaColorMode, isMonochromePrompt, sanitizeMonochromeSourceDescription, resolveMonochromeRenderIntent, MONOCHROME_RENDERING_LOCK, MONOCHROME_RENDERING_LOCK_COMPACT, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_BACKGROUND_LOCK_COMPACT, MONOCHROME_FINAL_CHROMA_AUDIT, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT } from './manga-render-mode.js';
+import { TEXT_ONLY_NORMAL_COLOR_INK, MONOCHROME_FOCAL_READABILITY, MONOCHROME_SKIN_LIGHTING, normalizeMangaColorMode, isMonochromePrompt, sanitizeMonochromeSourceDescription, resolveMonochromeRenderIntent, MONOCHROME_RENDERING_LOCK, MONOCHROME_RENDERING_LOCK_COMPACT, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_BACKGROUND_LOCK_COMPACT, MONOCHROME_FINAL_CHROMA_AUDIT, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT } from './manga-render-mode.js';
 import { buildReferenceSheetArtStyleLock, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from './ending-mode-policy.js';
 
 /**
@@ -807,6 +807,15 @@ export const buildMangaPromptArtifact = ({
   const eyeLineBase = panelEyeLineRules.some((rule) => rule.startsWith('EYE-LINE LOCK'))
     ? 'CONVERSATIONAL DEPTH BASE: explicit Action gaze targets take priority. Otherwise speakers and listeners address one another, never the lens/front unless the script explicitly says they address an in-story camera or audience. Preserve natural depth with mixed three-quarter, back-three-quarter, and over-the-shoulder views plus foreground/midground/background layers. Do not force every participant into a pure side profile; vary the valid staging and camera position across panels.'
     : '';
+  const panelRendering = (panel, index) => {
+    const rendering = buildEmotionBlock(panel, colorMode, {
+      preserveReferenceStyle, hasCharacterReferences, seriousTone,
+      providerFamily: isChatGPTFamily ? 'chatgpt' : '',
+      resetChibiProportions: !seriousTone && panels.slice(0, index).some(previous => extractEmotionStyle(previous) === 'CHIBI_GAG'),
+    });
+    const textOnlyNormal = !isMonochrome && !hasCharacterReferences && !preserveReferenceStyle && extractEmotionStyle(panel) === 'NORMAL';
+    return source(textOnlyNormal ? rendering + '\n' + TEXT_ONLY_NORMAL_COLOR_INK : rendering);
+  };
   let panelSections = "";
 
   if (isChatGPTFamily) {
@@ -821,7 +830,7 @@ export const buildMangaPromptArtifact = ({
 ${source(`Camera: ${camera}`)}
 ${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? source(buildMonochromePanelInkLock(pt, identityMatrix)) : ''}
-${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, hasCharacterReferences, seriousTone, providerFamily: 'chatgpt', resetChibiProportions: !seriousTone && panels.slice(0, i).some(panel => extractEmotionStyle(panel) === 'CHIBI_GAG') }))}
+${panelRendering(pt, i)}
 ${extractPlacementRule(pt, castList, { compact: true, colorMode }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList, { compact: true, storyText: scenario, colorMode, preserveReferenceStyle }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
@@ -866,7 +875,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
 ${source(`Camera: ${camera}.`)}
 ${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? source(buildMonochromePanelInkLock(pt, identityMatrix)) : ''}
-${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, hasCharacterReferences, seriousTone, resetChibiProportions: !seriousTone && panels.slice(0, i).some(panel => extractEmotionStyle(panel) === 'CHIBI_GAG') }))}
+${panelRendering(pt, i)}
 ${extractPlacementRule(pt, castList, { colorMode })}
 ${extractCastLimitRule(pt, castList, { storyText: scenario, colorMode, preserveReferenceStyle })}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}

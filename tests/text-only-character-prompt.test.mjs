@@ -32,6 +32,9 @@ try {
       const {prompt}=buildMangaPromptArtifact({scenario:scenarioFor(4),castList,colorMode:'color',providerFamily,hasCharacterReferences:false,allowScenarioQualityWarning:true,showWatermarks:false});
       assert.match(prompt,/TEXT-ONLY CAST/);
       assert.ok(prompt.includes('黒髪'));
+      assert.match(prompt,/強いGペンタッチ/);
+      const referenced=buildMangaPromptArtifact({scenario:scenarioFor(4),castList,colorMode:'color',providerFamily,hasCharacterReferences:true,allowScenarioQualityWarning:true,showWatermarks:false});
+      assert.doesNotMatch(referenced.prompt,/通常のカラーコマは強いGペンタッチ/);
       assert.doesNotMatch(prompt,/Character sheets supply|Strictly reproduce reference image designs|Use character refs for/);
     }
   });
