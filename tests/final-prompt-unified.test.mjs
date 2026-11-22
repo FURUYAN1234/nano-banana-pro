@@ -117,6 +117,9 @@ test('five-panel QA derives dialogue, cast and action from the edited final docu
   });
   assert.deepEqual((await inspectLettering(letteringQa)).review.expectedPageText,
     ['編集した題字','編集した左クレジット','編集した右クレジット']);
+  const oneFooter=lettering.replace('Bottom-left EXACTLY "編集した左クレジット".','Bottom-left empty.');
+  assert.deepEqual((await inspectLettering(experimental.buildExperimentalReviewPrompt(review.plan,review.source,{finalPrompt:oneFooter}))).review.expectedPageText,
+    ['編集した題字','編集した右クレジット']);
   const unknownQa=experimental.buildExperimentalReviewPrompt(review.plan,review.source,{finalPrompt:lettering.replace('Top title EXACTLY','Ambiguous title instruction')});
   assert.equal((await inspectLettering(unknownQa)).review.expectedPageText,null,'unreadable edits must not fall back to the old title');
   const backgroundQa = experimental.buildExperimentalReviewPrompt(review.plan,review.source,{finalPrompt:setMangaBackgroundSimplification(edited,true)});

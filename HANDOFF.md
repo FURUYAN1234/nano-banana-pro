@@ -1,3 +1,7 @@
+# v8.1.6 release candidate
+
+The OpenAI color page workflow uses the written cast and original panel actions when the request contains zero reference images. Standard panels receive pressure-varied G-pen directions. The first titled body page places the requested author beside the title. See [v8.1.6 release notes](docs/releases/v8.1.6.md).
+
 # v8.1.5 release candidate
 
 STEP2 accepts explicit relative shot origins. Whole-page image edits retain the source page script in the saved PNG and JSON. See [v8.1.5 release notes](docs/releases/v8.1.5.md).

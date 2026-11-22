@@ -90,6 +90,7 @@ test('all real planner expressions use the same builtin guide with complete atta
   assert.ok(plans.every(plan => guideInputs(plan).length === 1));
   assert.ok(plans.every(plan => guideInputs(plan)[0].image_url === guideInputs(plans[0])[0].image_url));
   assert.ok(plans.every(plan => plan.rolePrompt === plans[0].rolePrompt));
+  h.context.referencePlan=plans[0];
   h.context.repairReferencePlan=plans[4];
   const budgets = calls('getOpenAIPromptBodyBudget').map(node => evaluate(workflow, node, h.context));
   assert.equal(budgets.length, 3);

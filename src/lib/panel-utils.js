@@ -2422,6 +2422,7 @@ export const OPENAI_COLOR_GEKIGA_STYLE = `THIS PANEL ONLY: high-intensity GEKIGA
 
 const OPENAI_MONOCHROME_GEKIGA_STYLE = `THIS PANEL ONLY: redraw GEKIGA faces. ${GEKIGA_FACE_CONSTRUCTION} Fine dense directional crosshatching ON faces/hands is primary; solid black is a local secondary accent, with fine white gaps between strokes. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。`;
 const NORMAL_COLOR_RENDERING = `\nNORMAL PANEL RENDERING: Chic cinematic full-color TV anime style; polished Japanese animation finish. ${OPAQUE_COLOR_RENDERING}`;
+export const TEXT_ONLY_NORMAL_COLOR_INK = '通常のカラーコマは強いGペンタッチ。筆圧で手前の輪郭と重なりを太く、顔・髪・指先の線は細く鋭く抜き、黒い締めと明瞭なカラーを両立する。';
 export const buildNormalPanelRendering = (colorMode='color') => colorMode==='monochrome'
   ? resolveMonochromeRenderIntent({style:'NORMAL'}).lineRule
   : NORMAL_COLOR_RENDERING.trim();
@@ -2450,7 +2451,10 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
   }
   const anatomyReset = resetChibiProportions && ['NORMAL', 'GEKIGA', 'WATERCOLOR', 'POP_ART', 'SKETCH'].includes(emo)
     ? '\nPANEL ANATOMY RESET: ordinary body/head ratio, no inherited chibi; facial anatomy follows THIS medium. Explicit scripted proportions win.' : '';
-  if (emo === 'NORMAL') return (colorMode === 'monochrome' ? '' : NORMAL_COLOR_RENDERING) + anatomyReset;
+  if (emo === 'NORMAL') {
+    const ink = !hasCharacterReferences && colorMode === 'color' ? '\n' + TEXT_ONLY_NORMAL_COLOR_INK : '';
+    return (colorMode === 'monochrome' ? '' : NORMAL_COLOR_RENDERING) + ink + anatomyReset;
+  }
   const actorInstruction = buildActorMediumInstruction(emo, colorMode);
   const actorBlock = actorInstruction ? '\n' + actorInstruction : '';
   if (colorMode === 'monochrome') {

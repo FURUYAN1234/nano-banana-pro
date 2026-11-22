@@ -200,13 +200,14 @@ test('experimental preparation takes current cast and actual scenario model from
     formatOpenAIImageEngineName:()=> 'image model',openAIImageQuality:'max',scenarioModelId:'selected',
     scenarioUsedModelRef:{current:'actual'},OPENAI_SCENARIO_MODEL_OPTIONS:[{id:'selected',label:'selected model'},{id:'actual',label:'actual model'}],
     referenceAssetsRef:{current:[]},imagesRef:{current:[]},bg360Enabled:false,bg360Analysis:null,bg360Image:null,
-    buildReferenceAssetContext:()=>'',buildOpenAIReferencePlan:()=>({rolePrompt:''}),getOpenAIPromptBodyBudget:()=>32000,
+    buildReferenceAssetContext:()=>'',buildOpenAIReferencePlan:()=>({rolePrompt:'',imageInputs:[]}),getOpenAIPromptBodyBudget:()=>32000,
     summarizeExperimentalLayouts:x=>x,generationHistory:[{experimentalPlan:{id:"stale"}}],generationHistoryRef:{current:[{experimentalPlan:{id:"current"}}]}};
   const input=new Function(...Object.keys(scope),`${providerResolver} return (${body})`)(...Object.values(scope))('new scenario');
   assert.deepEqual(input.recentLayouts,[{plan:{id:'current'}}], 'same-run STEP3 reads the selected mode history, not its stale render closure');
   assert.equal(input.scenario,'new scenario');
   assert.equal(input.providerFamily,'chatgpt','the real resolver passes the selected OpenAI family to native preparation');
   assert.equal(input.castList,'current cast');
+  assert.equal(input.imageReferenceCount,0);
   assert.equal(input.scenarioModelLabel,'actual model');
   assert.equal(input.userDirection,scope.manualTopic);
   scope.inputMode='news';
@@ -237,6 +238,7 @@ for (const colorMode of ['color','monochrome']) {
     const input=new Function(...Object.keys(scope),providerResolver+'return ('+body+')();')(...Object.values(scope));
     assert.equal(input.providerFamily,'chatgpt');
     const refs=buildOpenAIReferencePlan({compact:true,characterImages:images,colorMode});
+    assert.equal(input.imageReferenceCount,refs.imageInputs.length);
     assert.equal(input.promptMaxChars,getOpenAIPromptBodyBudget(refs));
     assert.equal(input.referenceContext,buildReferenceAssetContext([],images,{purpose:'image',panorama:null}));
     assert.ok(!input.referenceContext.includes('[IMAGE REFERENCE ROLES]'),'transport appends the authoritative role map for both API and Web');

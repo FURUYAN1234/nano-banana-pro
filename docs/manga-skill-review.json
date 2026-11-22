@@ -1,42 +1,42 @@
 {
   "format": 1,
-  "version": "8.1.5",
+  "version": "8.1.6",
   "skillSha256": "e61c478d4ba71560a9f9354ee1e68395ba8f3bc2a23e32c6ba4827c44552c9e0",
-  "reviewedAt": "2026-11-21T23:41:44.685Z",
-  "reviewedSince": "v8.1.4 release",
+  "reviewedAt": "2026-11-22T09:37:04Z",
+  "reviewedSince": "v8.1.5 release",
   "sources": [
-    "2026-11-21 STEP2 diagnostic and targeted camera regressions",
-    "2026-11-22 five-app production feedback and controlled whole-page edit"
+    "Zero-image STEP3/STEP4 diagnostics and a finished four-panel color verification page",
+    "Bundled manga production skill and public workflow defaults for author credits and last-page footers"
   ],
   "findings": [
     {
-      "observation": "相対位置で書いた正しい撮影起点をSTEP2が拒否した。",
+      "observation": "文章のみで作画すると、人物・台本に無関係な画像を返す例が続いた。",
       "disposition": "already_covered",
-      "rule": "撮影位置と人物・物の位置を区別し、指定の視点で描けるか確認する。",
-      "reason": "今回必要なのはアプリの判定修正で、書き手に表現の縛りを追加する必要はない。"
+      "rule": "STEP1の人物設定とSTEP2の台本を照合し、参考画像のない入力も通常工程で検証する。",
+      "reason": "アプリ側で実際に送る画像数から指示文を選び、物語・人物・各コマの動作を直接渡す。スキルで画像添付を必須にしない。"
     },
     {
-      "observation": "ページ全体を修正した画像の制作JSONで、元の台本が空欄になった。",
+      "observation": "本文の作者名に欄外クレジット用の右下配置が使われていた。",
       "disposition": "already_covered",
-      "rule": "採用PNGと同名JSONの内容を読み戻し、修正前を履歴に残す。",
-      "reason": "書き出し処理で元台本を保持するよう修正した。"
+      "rule": "本文初ページは作者名を題字に添える。製品ウォーターマークは作品・個人設定から別に指定する。",
+      "reason": "既存のスキルにある題字と最終ページの扱いをアプリの指示と検査へ合わせた。"
     },
     {
-      "observation": "5アプリ連携版でも題字・作者名、ページ境界、吹き出しと小道具を確認したい。",
+      "observation": "画像がない通常カラーでも、筆圧のあるGペン線が求められた。",
       "disposition": "not_generalized",
-      "rule": "単体版には既存の通読と作品指定を使い、5アプリ側の工程には配布連携スキルで反映する。",
-      "reason": "単体版に外部4アプリの手順を追加すると発動が曖昧になる。"
+      "rule": "割り当てた描法と利用者の作画指定を尊重する。",
+      "reason": "描線の既定は描画アプリで処理する。脚本スキルや他の媒体へ一律の画風を加えない。"
     }
   ],
   "checks": [
     {
-      "name": "bundled skill review",
-      "evidence": "画像の通読、話者、作画前の承認、PNGと同名JSONの照合を既存手順と照合し、今回は単体版の追加・削除なし。",
+      "name": "Bundled skill and per-page render options",
+      "evidence": "題字と作者名の規則、1ページ作品での最終ページ指定、公開MCPの初期非表示を確認。両側・片側・非表示の描画契約をテストした。",
       "result": "passed"
     },
     {
-      "name": "app regression and real runtime",
-      "evidence": "対象108テスト合格。v8.1.5の実APIでPNGの埋め込み台本と同名JSONが、採用した台本と完全一致した。",
+      "name": "Normal color generation with written cast",
+      "evidence": "通常のSTEP3からSTEP4へ送り、4コマの実画像で題字、作者名、2人の外見、台詞の話者、青い星印の傘の受け渡しと結末を通読した。",
       "result": "passed"
     }
   ]

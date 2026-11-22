@@ -1487,26 +1487,32 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     return context;
   };
 
-  const experimentalInput = (sourceScenario = scenario) => ({
-    enabled:true,scenarioMode:getScenarioMode(),scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,showTitle,
-    watermarkTexts:customFooterTextFor(getCurrentPromptProviderFamily()),
-    ...(bookPageContextRef.current?{bookMetadata:{title:bookPageContextRef.current.projectTitle,location:lockedLocation,outfit:lockedOutfit}}:{}),
-    ...(bookPageContextRef.current?{bookPresentation:{presentation:bookPageContextRef.current.presentation,pageIndex:bookPageContextRef.current.pageIndex,pageNumber:bookPageContextRef.current.pageNumber,displayPageNumber:bookPageContextRef.current.displayPageNumber,showTitle}}:{}),
-    allowScenarioQualityWarning:true,
-    providerFamily:getCurrentPromptProviderFamily(),
-    userDirection:inputMode==='manual'?manualTopic:'',
-    imageEngineLabel:isOpenAIEngine?formatOpenAIImageEngineName(openAIImageQuality):GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana '),
-    scenarioModelLabel:OPENAI_SCENARIO_MODEL_OPTIONS.find(({id})=>id===scenarioUsedModelRef.current)?.label,
-    // The API and Web copy paths append their own attachment-role manifest once.
-    referenceContext:buildReferenceAssetContext(referenceAssetsRef.current,imagesRef.current,{purpose:'image',panorama:bg360Enabled?bg360Analysis:null}),
-    hasCharacterReferences:hasCharacterReferenceImages(imagesRef.current,referenceAssetsRef.current),
-    referenceImages:imagesRef.current,backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,
-    promptMaxChars:isOpenAIEngine?getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({ continuityReferences:bookPageContextRef.current?.continuityReferences||[],compact:true,
-      characterImages:imagesRef.current,referenceAssets:referenceAssetsRef.current,
-      backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,colorMode,
-      mediumReference:getBuiltinPanelMediumReference({scenario:sourceScenario,colorMode,styleJson,punchlineType})})):undefined,
-    recentLayouts:summarizeExperimentalLayouts(generationHistoryRef.current.filter(item=>item.experimentalPlan).map(item=>({plan:item.experimentalPlan})).reverse()),
-  });
+  const experimentalInput = (sourceScenario = scenario) => {
+    const referencePlan = isOpenAIEngine ? buildOpenAIReferencePlan({
+      characterImages:imagesRef.current, referenceAssets:referenceAssetsRef.current,
+      backgroundImage:bg360Image, backgroundEnabled:bg360Enabled, colorMode, compact:true,
+      continuityReferences:bookPageContextRef.current?.continuityReferences || [],
+      mediumReference:getBuiltinPanelMediumReference({scenario:sourceScenario,colorMode,styleJson,punchlineType}),
+    }) : null;
+    return {
+      enabled:true,scenarioMode:getScenarioMode(),scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,showTitle,
+      watermarkTexts:customFooterTextFor(getCurrentPromptProviderFamily()),
+      ...(bookPageContextRef.current?{bookMetadata:{title:bookPageContextRef.current.projectTitle,location:lockedLocation,outfit:lockedOutfit}}:{}),
+      ...(bookPageContextRef.current?{bookPresentation:{presentation:bookPageContextRef.current.presentation,pageIndex:bookPageContextRef.current.pageIndex,pageNumber:bookPageContextRef.current.pageNumber,displayPageNumber:bookPageContextRef.current.displayPageNumber,showTitle}}:{}),
+      allowScenarioQualityWarning:true,
+      providerFamily:getCurrentPromptProviderFamily(),
+      userDirection:inputMode==='manual'?manualTopic:'',
+      imageEngineLabel:isOpenAIEngine?formatOpenAIImageEngineName(openAIImageQuality):GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana '),
+      scenarioModelLabel:OPENAI_SCENARIO_MODEL_OPTIONS.find(({id})=>id===scenarioUsedModelRef.current)?.label,
+      // The API and Web copy paths append their own attachment-role manifest once.
+      referenceContext:buildReferenceAssetContext(referenceAssetsRef.current,imagesRef.current,{purpose:'image',panorama:bg360Enabled?bg360Analysis:null}),
+      hasCharacterReferences:hasCharacterReferenceImages(imagesRef.current,referenceAssetsRef.current),
+      referenceImages:imagesRef.current,backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,
+      imageReferenceCount:referencePlan?.imageInputs.length,
+      promptMaxChars:referencePlan ? getOpenAIPromptBodyBudget(referencePlan) : undefined,
+      recentLayouts:summarizeExperimentalLayouts(generationHistoryRef.current.filter(item=>item.experimentalPlan).map(item=>({plan:item.experimentalPlan})).reverse()),
+    };
+  };
   const changePageMode = (enabled) => {
     if (enabled && getCurrentPromptProviderFamily() === 'gemini') return false;
     if (isApiProcessing) return false;

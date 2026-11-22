@@ -3,7 +3,7 @@ import { EXPERIMENTAL_LAYOUTS, experimentalLayoutOptions, experimentalLayout, pa
 export { EXPERIMENTAL_LAYOUTS, experimentalLayoutOptions, experimentalLayout } from './manga-page-composition.js';
 import { getScenarioPanelBlocks, validateMangaScenario, formatMangaScenarioValidationIssue, getScenarioPanelCountRange } from './scenario-validation.js';
 import { buildBookPresentation } from './book-presentation.js';
-import { collectCastNameEntries, extractActionOnly, extractDialogueOnly, extractEmotionStyle, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix, buildNormalPanelRendering, resolveScriptedReferenceRoles, buildScriptedReferenceRoleInstruction } from './panel-utils.js';
+import { collectCastNameEntries, extractActionOnly, extractDialogueOnly, extractEmotionStyle, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix, buildNormalPanelRendering, TEXT_ONLY_NORMAL_COLOR_INK, resolveScriptedReferenceRoles, buildScriptedReferenceRoleInstruction } from './panel-utils.js';
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
 import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily, buildMonochromePanelInkLock } from './prompt-assembler.js';
@@ -32,7 +32,7 @@ const fail = message => { throw new Error(`実験的コマ割り: ${message}`); 
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 71;
+export const EXPERIMENTAL_PROMPT_REVISION = 72;
 const EXPERIMENTAL_INSPECTION_VERSION = 12;
 const EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS = 15000;
 const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
@@ -653,7 +653,8 @@ export async function reviewExperimentalImage({image,plan,prompt,signal,reviewCo
   try {
     const title=JSON.parse(prompt.match(/Title required EXACTLY (null|"(?:\\.|[^"\\])*")\. Footer expected exact text:/)?.[1]);
     const footer=JSON.parse(prompt.match(/Footer expected exact text: (null|\{[^\n]*?\}) \(null means no footer\)/)?.[1]);
-    expectedPageText=[...(title===null?[]:[title]),...(allowsWatermarkOverlap(prompt)?[]:Object.values(footer||{}))];
+    const footerLabels=allowsWatermarkOverlap(prompt)?[]:Object.values(footer||{}).filter(text=>text!=='');
+    expectedPageText=[...(title===null?[]:[title]),...footerLabels];
     if(expectedPageText.some(text=>typeof text!=='string'||!text.trim())) expectedPageText=null;
     pageTextOptional=expectedPageText?.length===0;
   } catch { /* Unknown legacy contract must stay unverified. */ }
@@ -674,7 +675,7 @@ export function buildExperimentalImagePrompt(plan, source, options={}) {
   assertImagePromptBudget(prompt,maximum);
   return prompt;
 }
-function buildExperimentalImagePromptBase(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks:watermarksEnabled=false, watermarkTexts, showTitle=true, referenceContext='', hasCharacterReferences=true, imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
+function buildExperimentalImagePromptBase(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks:watermarksEnabled=false, watermarkTexts, showTitle=true, referenceContext='', hasCharacterReferences=true, imageReferenceCount, imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
   const effectiveProviderFamily=normalizePromptProviderFamily(providerFamily);
   const showWatermarks=hasVisibleWatermarks(watermarksEnabled,watermarkTexts);
   validateExperimentalPlan(plan,source);
@@ -727,9 +728,59 @@ function buildExperimentalImagePromptBase(plan, source, { colorMode, providerFam
   const styles=[...new Set(plan.panels.map(p=>source.panels[p.sourcePanel-1].style))];
   // Facial construction stays shared; this mode shades it with pen strokes,
   // not the large solid shadow planes used by the previous recipe.
-  const recipes={NORMAL:hasCharacterReferences?'Use the established source/reference character drawing style throughout faces, clothing, props and setting. Preserve the usual eye geometry and clean contours; do not inherit another frame’s special medium or hatch treatment.':buildNormalPanelRendering(colorMode),...(colorMode==='monochrome'?MONOCHROME_EMOTION_STYLES:COMPACT_EMOTION_STYLES),
+  const recipes={NORMAL:hasCharacterReferences && imageReferenceCount!==0?'Use the established source/reference character drawing style throughout faces, clothing, props and setting. Preserve the usual eye geometry and clean contours; do not inherit another frame’s special medium or hatch treatment.':buildNormalPanelRendering(colorMode),...(colorMode==='monochrome'?MONOCHROME_EMOTION_STYLES:COMPACT_EMOTION_STYLES),
     GEKIGA:`In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. ${GEKIGA_FACE_CONSTRUCTION} Primary facial shading is dense fine pen hatching and crossing strokes, retaining narrow light gaps between lines. Solid black is a secondary accent in local occlusion/contact shadows. Keep recognizable identity/age, scripted emotion, gaze, Camera/Action and body acting. ${colorMode==='monochrome'?'BLACK AND WHITE ink on paper.':'FULL COLOR; opaque local color beneath the pen drawing.'}`};
   const effects=[...new Set(plan.panels.flatMap(p=>p.visualEffects??[]))];
+  // With no visual inputs the script is the image model's only scene reference.
+  // Keep each authored beat inside its own reviewable frame, with its own speech.
+  if (colorMode==='color' && effectiveProviderFamily===PROMPT_PROVIDER_FAMILIES.CHATGPT && imageReferenceCount===0) {
+    const composition=plan.composition;
+    const directions=source.userDirection ? source.userDirection.split(/\r?\n/) : [];
+    if (styles.some(style=>!style || style==='NORMAL') && !directions.some(line=>line.trim()===TEXT_ONLY_NORMAL_COLOR_INK)) {
+      directions.push(TEXT_ONLY_NORMAL_COLOR_INK);
+    }
+    const frames=plan.panels.map((panel,index)=>{
+      const original=source.panels[panel.sourcePanel-1];
+      const action=extractActionOnly(original.text.replace(authoredLetteringLine,''),source.castList);
+      const hasAction=action && action!=='Characters interacting dynamically based on dialogue.';
+      const rect=rects[index], number=index+1;
+      const crossover=panel.breakout;
+      return [
+        `[PAGE FRAME P${number} | ${physicalPanelPosition(rect,plan.layout==='free'?rects:null)}${number===plan.count?' | FINAL ENDING':''}]`,
+        `rect=${JSON.stringify(rect)}; source beat=${panel.sourcePanel}; kind=${panel.kind};`,
+        `Camera: ${original.camera}; Style: ${original.style||'NORMAL'}; Action: ${hasAction?action:panel.action}`,
+        panelOutfits[index] && `FRAME OUTFIT: ${panelOutfits[index]}`,
+        ...castRules[index].filter(rule=>!commonCast.has(rule)),
+        `Dialogue: ${panel.dialogueIds.length?compactDialogue[index]:'SILENT'}${frameLettering(original.text)}`,
+        crossover && `${crossover.required?'REQUIRED BREAKOUT':'Optional breakout'}: P${number}.${breakoutEdge(rect,rects[crossover.into-1])} → P${crossover.into}: ${crossover.part}。共有辺を越える部位を元の身体につなげ、枠線は輪郭の後ろで途切れ、先で再開。隣の演技と文字は読めるように。`,
+        `[END PAGE FRAME P${number}]`,
+      ].filter(Boolean).join('\n');
+    });
+    const renderOptions={mosaicCopyrightedCharacters,showWatermarks,watermarkTexts,showTitle,bottomBleed,fullBleed};
+    return [
+      `Create ONE complete Japanese manga page with EXACTLY ${plan.count} framed panels. A4縦のフルカラー漫画。下の物語を日本式に右から左、上から下へ描く。`,
+      source.context,
+      directions.length && `演出の希望（非印字）: ${directions.join('\n')}`,
+      '[TEXT-ONLY CAST]', stripWeightTags(source.castList||''), '[END TEXT-ONLY CAST]',
+      '人物設定に沿って外見と衣装を一貫させ、台本の衣装指定を該当人物に適用。各場面の画風で人物・小道具・背景を描く。',
+      scopedOutfit||panelOutfits.some(Boolean)?OUTFIT_SCOPE_CONTRACT:'',
+      showTitle && `Top title EXACTLY ${JSON.stringify(title)}: 上部の読みやすい位置に大きな極太長体ゴシック。${topBleed?'上タチキリの絵を題字の背後まで続ける。':'第1コマより上の白地に置く。'}`,
+      '台詞は各DialogueのBn本文だけを吹き出しに一度ずつ、漫画明朝の縦書き。B1から右→左、尾を指定話者へ。SILENTは無言。Camera・話者名・枠番号は非印字。',
+      hasScriptedSfx(source.scenario) && MANGA_SFX_LETTERING_LOCK,
+      composition ? pageCompositionRendering(plan) : `PAGE PLAN: ${plan.reason}`,
+      plan.pageIntent && plan.pageIntent!==plan.reason && `演出: ${plan.pageIntent}`,
+      composition?.foregrounds?.length && pageCompositionForeground(plan,source),
+      ...spans, ...readingPairs,
+      ...[...new Set(styles.map(style=>style||'NORMAL'))].map(style=>`画風 ${style}: ${recipes[style]||style}`),
+      ...frames,
+      ...effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>p.visualEffects?.includes(id)?[`P${i+1}`]:[]).join(', ')}: ${EXPERIMENTAL_VISUAL_EFFECTS[id].instruction}`),
+      '各場面で登場人物は一人につき一つの身体。Cameraの高さ・レンズ・向きと人物同士や道具への視線を絵に反映。俯瞰は上面、アオリは下面と背景の遠近で表現。前景と背景の位置を保ち、動作に応じて本人が手の届く距離から道具に触れる。表情と動作の前後を読めるようにする。',
+      buildRenderOptionsContract(renderOptions),
+      !mosaicCopyrightedCharacters && COPYRIGHT_MOSAIC_TARGET_SCOPE,
+      buildProtectedCastContract(collectCastNameEntries(source.castList).map(entry=>entry.displayName)),
+      showWatermarks && !watermarkTexts && `FOOTER ONLY: Bottom-left EXACTLY ${JSON.stringify(DEFAULT_LEFT_WATERMARK)}. Bottom-right EXACTLY ${JSON.stringify(watermark)}. 横書き各1回。`,
+    ].filter(Boolean).join('\n');
+  }
   // Native monochrome is drawn directly, not a color manuscript followed by
   // grayscale conversion. Bind each exact medium recipe once and keep authored
   // facts/dialogue local. The color renderer below deliberately remains intact.
@@ -943,7 +994,7 @@ CORRECTIONS IN THE SAME RESPONSE: Include corrections:[] when no grounded materi
 NATIVE PANEL FIDELITY: exactly ${plan.count} source panels, one-to-one. Preserve count, reading order, action, facts, causal progression, ending and dialogue. No additional frames, inserted beats or unscripted speech are authorized. Purposeful scripted silence remains silent; never demand speech to fill a panel. Allow source-grounded staging within the same moment and harmless coherent acting variation, without merging or splitting source panels, omitting source action, changing the premise or replacing the payoff. Expected speech is withheld here; independent transcription is checked against the original panel-by-panel dialogue manifest afterwards.
 ${plan.panels.some(p=>source.panels[p.sourcePanel-1].style==='GEKIGA')?"GEKIGA OBSERVATION: in assigned GEKIGA frames inspect each visible actor, including calm, smiling and bespectacled faces. Describe actual eye/iris proportions, eyelid thickness, constructed nose/cheek/jaw planes and facial pen shading separately from background/clothing detail. Locate dense intersecting fine strokes, visible gaps and changes in line density following the facial planes; broad flat black or colored shadow patches, smooth gradients, a few thin cheek lines or costume hatching do not establish this strong gekiga recipe. Black may support local occlusions but must not replace the main hatched shading. State which visible face still has enlarged anime eyes or a simplified nose, if any; never replace this check with generic praise such as detailed, realistic or finely shaded. These unchanged face constructions are a style mismatch even when the illustration is attractive or the background is richly inked. A pass requires visible facial construction evidence, not anger, costume texture, one successful actor or a restatement of the prompt. Preserve scripted age and emotion; do not demand anger or wrinkles. If a face is too small/hidden to inspect, report that limit rather than inventing compliance.\n":''}
 ${source.colorMode==='monochrome'?MONOCHROME_RENDERING_LOCK_COMPACT+'\n'+MONOCHROME_REFERENCE_SEPARATION+'\n'+MONOCHROME_QA_RULE+'\n':''}EXPECTED PANEL STYLES: ${JSON.stringify(plan.panels.map((p,i)=>({panel:i+1,style:source.panels[p.sourcePanel-1].style||'REFERENCE'})))}
-${options.hasCharacterReferences===false?`TEXT-ONLY NORMAL STYLE AUTHORITY: NORMAL has no reference-image style to match. Its generation recipe is: ${buildNormalPanelRendering(source.colorMode)} Observe actual faces, clothing and background against that recipe; preserve written identity and explicit local color/material choices. An unreadable or hidden surface is uncertain, not an invented style match.`:''}
+${options.hasCharacterReferences===false || options.imageReferenceCount===0?`TEXT-ONLY NORMAL STYLE AUTHORITY: NORMAL has no reference-image style to match. Its generation recipe is: ${buildNormalPanelRendering(source.colorMode)} ${options.imageReferenceCount===0 && source.colorMode==='color'?TEXT_ONLY_NORMAL_COLOR_INK:''} Observe actual faces, clothing and background against that recipe; preserve written identity and explicit local color/material choices. An unreadable or hidden surface is uncertain, not an invented style match.`:''}
 ${source.colorMode==='monochrome'?'MONOCHROME STYLE AUTHORITY: Judge black ink/paper-white adaptations, never demand colored pigment or literal grey washes. GEKIGA=carved facial planes and fine directional/cross pen hatching; SKETCH=pencil-like broken lines and directional hatching; WATERCOLOR=sparse broken contours, paper-white and dispersed dry-brush/hatch ink; POP_ART=bold contours/black-white shapes and regular Ben-Day screen. Observe actual face and clothing marks; coherent print-dot size or contour-weight variation is not alone a material failure. A clear replacement of the assigned medium remains a defect. Screen figures follow the same panel medium at their visible size.':''}
 ${WARDROBE_CONTINUITY_QA_CONTRACT}
 ${OUTFIT_SCOPE_CONTRACT}
@@ -1586,7 +1637,7 @@ export async function selectExperimentalCandidate(original, next, compareCandida
 function colorLayoutContext(input) {
   // Keep image strings by reference; no duplicate serialized image payloads.
   return {revision:EXPERIMENTAL_PROMPT_REVISION,providerFamily:input.providerFamily??PROMPT_PROVIDER_FAMILIES.GEMINI,scenario:input.scenario,castList:input.castList,
-    scenarioMode:input.scenarioMode,userDirection:input.userDirection,referenceContext:input.referenceContext,hasCharacterReferences:input.hasCharacterReferences,
+    scenarioMode:input.scenarioMode,userDirection:input.userDirection,referenceContext:input.referenceContext,hasCharacterReferences:input.hasCharacterReferences,imageReferenceCount:input.imageReferenceCount,
     mosaicCopyrightedCharacters:input.mosaicCopyrightedCharacters,showWatermarks:input.showWatermarks,watermarkTexts:JSON.stringify(input.watermarkTexts),showTitle:input.showTitle!==false,
     imageEngineLabel:input.imageEngineLabel,scenarioModelLabel:input.scenarioModelLabel,
     referenceImages:input.referenceImages?.slice(),backgroundImage:input.backgroundImage,backgroundEnabled:input.backgroundEnabled};

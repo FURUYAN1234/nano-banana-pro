@@ -60,7 +60,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v8.1.5対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v8.1.6対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -137,7 +137,7 @@ page('関連サイトから人物と台本を受け取る',
  ('body','STEP1の白い「人物情報（画像の認識結果／Story Makerから貼り付け）」は基本6行の共通入力欄です。人物テキストを貼るか、同じ欄へシート画像をドロップします。画像はAPIで解析します。Character Sheet Makerの保存シートは画像としてドロップし、テキストはStory Makerの「STEP1用」か同じ書式の手書き説明（## 1. 名前から連番、外見:、服装:必須）を使います。Character Sheet Makerの「テキストCopy」は画像生成用で、全文を人物設定へ貼りません。人物参照画像なしでも、十分な人物説明を貼り付けて制作できます。名前・外見・服装をAPI指示文とWebコピーの両方へ渡します。空欄や不十分な設定では先へ進めません。背景や描法見本は人物参照画像に数えません。人物画像がある場合は、その人物の同一性を優先します。'),
  ('body','Story Makerでシート画像を実際に取り込み人物登録した場合は台本のみです。漫画にも同じシートを入れ、登場人物全員の資料を用意します。画像は両アプリ間で自動照合しません。未取り込み時だけ最終台本の後にSTEP1人物設定を追加し、全文・台本・人物設定を分けてコピーできます。この追加生成には選択中APIを使います。名前・外見・服装を台本と揃え、同一人物の年齢違いは一つの人物項目内にまとめます。'),
  ('rows',[['貼り付け先','操作'],['STEP1「人物情報」','人物設定だけをコピーして貼り付ける'],['STEP2「生成されたシナリオ」','台本だけをコピーして貼り付ける'],['STEP3','台本から画像指示文を作る'],['STEP4','APIまたはWebで画像化する']]),
- ('box','コピーの区切り','Story Makerの全体コピーはSTEP1用と台本用を区切ります。それぞれの個別コピーボタンを使えば、人物設定と台本を混ぜずに貼れます。台本コピーの経路はSTEP2 → STEP3です。'),refs=('characterapp','storyapp')),
+ ('box','コピーの区切り','Story Makerの全体コピーはSTEP1用と台本用を区切ります。それぞれの個別コピーボタンを使えば、人物設定と台本を混ぜずに貼れます。カラーで送信画像が0枚なら、STEP3はあらすじ・人物設定に続けて各コマの動作、画角、話者、台詞を渡します。通常のカラーコマは輪郭を太く、細部を鋭く抜くGペンで描きます。'),refs=('characterapp','storyapp')),
 page('STEP1  素材を読み込む',
  ('body','STEP1は画像のドロップが基本です。青い破線の枠内すべてがドロップ範囲で、ドラッグ中は全体を強調します。白い人物情報欄の上にも画像をドロップできます。白い欄はいつも同じ位置にあり、画像の認識結果とStory Makerの人物情報を扱う基本6行の共通欄です。解析中は進捗を表示し、未解析素材はコピーできません。'),
  ('body','「素材画像を選択 (STEP 1)」で画像を選ぶか、STEP1の枠内全体へドロップします。「サンプルキャラシート２枚を読み込む」は同梱のJPEG２枚を通常の素材読み込み経路へ渡します。自分の資料を使う場合は不要です。複数枚を後から追加でき、不要なシートは個別に取り除けます。追加・削除後は認識とAI由来の人物設定を組み直します。人物の参照画像をすべて外すと、その人物の手編集も削除します。残した人物と手入力だけの人物の編集は保持し、差し替え画像を新たに解析します。解析には選択中APIの料金がかかる場合があります。'),
@@ -222,7 +222,7 @@ page('STEP3  カラー／白黒の選択',
  ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
 page('タイトル・モザイク・ウオーターマーク',
  ('body','STEP3の出力モード直下に「タイトルを表示」があります。初期状態と全設定クリア後はONです。OFFでは題字と専用の帯を描かず、その領域をコマに配分します。指定タチキリの辺を除き、A4縦の外枠と余白、コマ間隔を保ちます。台本のタイトルは制作情報とファイル名に保持し、台詞や看板などの場面内文字は削除しません。選択は工程移動でも保持し、再読み込み・全設定クリアではONへ戻ります。切替後はSTEP3を作り直します。切替だけではAPIを呼びません。'),
- ('body','初期状態の右フッターには画像生成エンジン名と、判明しているシナリオ生成モデル名が入ります。例：ChatGPT Images 2.6 / GPT-6 Luna / FURU AI 4-koma v8.1.5。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
+ ('body','ウォーターマークを有効にすると、既定の右下表示に画像生成エンジン名と、判明している台本のモデル名が入ります。例：ChatGPT Images 2.6 / GPT-6 Luna / FURU AI 4-koma v8.1.6。MCP作品で最終ページだけに表示する設定なら、1ページ作品はその1枚が対象です。本文1ページ目の作者名は、第1コマの上にある題字の右下へ別に添えます。'),
  ('rows',[['設定','反映する工程'],['タイトルを表示','STEP3から作り直して反映。初期状態ON'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初回はOFF']]),
  ('body','モザイクは台本の動作で描く既存作品の人物への描画指示です。登録したシート人物は自動モザイクから除外し、生成・品質検査へ同じ除外リストを渡します。原文で本人への遮蔽を明示した場合は、その対象・領域だけ例外です。除外リストが現在のキャストと合わない場合は、STEP3から再構築してください。'),
  ('body','ONにすると左下・右下の入力欄が出ます。初期文言はFURUのクレジットと生成情報です。各1行・最大80文字で変更でき、空欄の側は省きます。両側とも空欄なら左右とも表示しません。手動作画の設定はブラウザーに保存します。OFFで左右の描画指示を外します。絵への重なり・全隠れ・見切れは許容します。人物・台詞・題字・タチキリを優先し、注記を見せるための白帯や絵の縮小を求めません。この許容状態だけでは自動修正しません。'),
@@ -435,7 +435,7 @@ SYSTEM.append(page('ページ設定・計画更新・登場人物の確認',
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v8.1.5 / 2026-11-22')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v8.1.6 / 2026-11-22')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -487,7 +487,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v8.1.5対応 | 2026年11月22日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v8.1.6対応 | 2026年11月22日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -527,7 +527,7 @@ def verify_and_render(path,layout,pages):
  assert len(r.pages)==len(pages)
  for page_index,pdf_page in enumerate(r.pages,1):
   assert f'{page_index:02d}/{len(r.pages)}' in re.sub(r'\s+','',pdf_page.extract_text()), 'Incorrect footer page count'
- assert all('v8.1.5対応' in p.extract_text() and '2026年11月22日更新' in p.extract_text() for p in r.pages)
+ assert all('v8.1.6対応' in p.extract_text() and '2026年11月22日更新' in p.extract_text() for p in r.pages)
  validate_manual_scope(path.name,text)
  if 'full-manual' in path.name:
   for required in ['14枚','10枚','1枚に複数人','人数による固定上限','保証','保持','認識できない','小物','pageVersions','history_select','saved_export','旧スキルを退避','gpt-6.2']:
@@ -538,7 +538,7 @@ def verify_and_render(path,layout,pages):
    assert obsolete not in text,obsolete
   for required in ['シリアス：9種類','ギャグ：13種類','怒り・抗議','逆転・反撃','激怒・逆ギレ','自業自得・ブーメラン','立場逆転']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v8.1.5'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v8.1.6'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)

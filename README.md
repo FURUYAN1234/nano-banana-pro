@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.1.5** / 現在のソース版: **v8.1.5**
+> Current source version: **v8.1.6** / 現在のソース版: **v8.1.6**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -30,6 +30,8 @@ Demo URL / デモサイト: [https://furuyan1234.github.io/nano-banana-pro/](htt
 [![Read the note article: features, examples and getting started / note記事で特徴・作例・始め方を読む](docs/assets/note-article-button.png)](https://note.com/happy_duck780/n/ndf063558c1f5)
 
 ### Character text without reference images / 人物参照画像なしの人物設定
+
+For a color manga page made from Story Maker text alone, paste the character profiles into STEP1 and the approved script into STEP2. STEP3 puts the story and written cast first, then supplies the original action, camera, speaker and dialogue for each panel. Standard color panels use pressure-varied G-pen strokes, with thick foreground contours and fine tapered details. Panels assigned a specific medium keep that medium. / Story Makerの文字素材だけでカラー漫画を作るときは、人物設定をSTEP1、台本をSTEP2に貼ります。STEP3はあらすじと人物設定を先に置き、各コマに元の動作・画角・話者・台詞を渡します。通常画風のカラーコマには強いGペンタッチを使い、手前の輪郭を太く、細部を鋭く抜きます。水彩などを指定したコマには、その描法を使います。
 
 Background, prop and panorama images require at least one registered character; valid Story Maker character text counts, and character plus background images may be added together. Ordinary images are checked after recognition; panorama-only input is rejected before an API call. Removing all characters while backgrounds remain blocks the next stage until a character is restored. Style JSON alone is unaffected. / 背景・小物・360°背景の追加には登録人物が1人以上必要です。Story Makerの有効な人物テキストも人物として数え、人物画像と背景は同時追加できます。通常画像は認識後に検査し、360°背景だけの追加はAPI前に拒否します。人物をすべて削除して背景だけが残ると次工程を止め、人物追加で再開します。作風JSON単独は対象外です。
 
@@ -162,7 +164,7 @@ Book-detail authoring may add natural speech while preserving exact supplied lin
 
 Choose ending words such as “END”, “おしまい” or “おわり” to suit the story, preserving an explicitly selected string. Place them inside the final panel at lower-right; if occupied, use lower-center, then lower-left, with lettering matching the title’s mood. Keep faces, necessary actions, dialogue, page numbers and footer marks readable. / 終幕語は漫画に合う「END」「おしまい」「おわり」等を選び、明示した文字列はそのまま保ちます。最終コマの右下を基本に、空きがなければ下中央、次に左下へ置き、タイトルの雰囲気に合う字体を使います。顔・必要な動作・台詞・ページ番号・下端の表示を隠しません。
 
-The skill asks which author name to print on the cover, with an option to omit it; an already supplied name is reused. It prefers clear space at the bottom right without covering the artwork. Files share a basename such as `作品タイトル_001ページ_20261116_164025`, using the saving computer's local date and time down to seconds; covers use `表紙`. Both PNG and JSON must be saved before the pair is reported complete. / スキルは扉に載せる作者名を確認します。表記なしも選べ、指定済みなら聞き直しません。配置は絵を隠さない右下の余白を基本にします。保存名は`作品タイトル_001ページ_20261116_164025`のように、タイトル・ページ番号・保存したパソコンの年月日時分秒を含め、表紙は`表紙`とします。PNGとJSONの両方が揃ってから保存完了として扱います。
+The skill asks which author name to print on the cover, with an option to omit it; an already supplied name is reused. A separate cover uses clear lower-right space. On a titled first story page, the byline appears once beside the lower-right edge of the title, above the first panel. Files share a basename such as `作品タイトル_001ページ_20261116_164025`, using the saving computer's local date and time down to seconds; covers use `表紙`. Both PNG and JSON must be saved before the pair is reported complete. / スキルは扉に載せる作者名を確認します。表記なしも選べ、指定済みなら聞き直しません。独立した扉では絵を隠さない右下の余白を使います。題字のある本文1ページ目では、第1コマより上の題字の右下に作者名を小さく一度だけ添えます。保存名は`作品タイトル_001ページ_20261116_164025`のように、タイトル・ページ番号・保存したパソコンの年月日時分秒を含め、表紙は`表紙`とします。PNGとJSONの両方が揃ってから保存完了として扱います。
 
 One folder named for the book and its start time contains the page pairs, a `資料/` folder of shared materials, and `作品全体.json`. The whole-book JSON links pages, references and available production records; unverified material sources or permissions remain unconfirmed. Keep the folder together for transfer. These records help explain production and do not guarantee a publisher's acceptance or rights. / 作品タイトルと開始日時のフォルダーに、各ページの画像とJSON、共通資料をまとめた`資料/`、`作品全体.json`を保存します。全体JSONはページ・資料・確認できた制作記録を結び付け、素材の出典や許諾が不明な場合は未確認として残します。受け渡しはフォルダー全体で行ってください。制作経緯を説明する資料であり、出版社の受理や権利を保証するものではありません。
 
@@ -842,7 +844,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.5/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.6/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -906,7 +908,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.5 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.5 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.6 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.6 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -976,6 +978,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Codex Usage / Codex 残量 | Windows usage overlay / Windows用の利用枠表示ツール | [GitHub / ソースコード](https://github.com/FURUYAN1234/codex-usage-overlay) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.1.6 (2026-11-22)
+- **[Fix & UX]** Color manga pages with no reference images use the written cast and each panel’s original action. / 参照画像0枚のカラー漫画では、STEP1の人物設定と各コマの原文から作画指示を組み立てます。
 
 ### v8.1.5 (2026-11-22)
 - **[Fix & UX]** Accept valid STEP2 camera origins and retain the source script in JSON after page edits / STEP2の撮影起点の判定を修正し、画像修正後のJSONに元の台本を保存
