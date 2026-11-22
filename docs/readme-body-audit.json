@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-  "manualVersion": "8.1.5",
-  "manualSourceSha256": "d23ea5b7769c77d9a4ad02b7e82ba939b7c7633b8250b92657b368a566338145",
+  "manualVersion": "8.1.6",
+  "manualSourceSha256": "e716ce9e25d2061ea0f24ce016cdf16c64cb269241452493b1285e6806c7d085",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "a400fc6a9d9ea38bffabac5305784184a1b56faca4a809fbf0abdfb1e92e5deb"
+      "sha256": "780277074f0ec61e5507df47ad25e152ceade5ff0c4875241efab642945047a5"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "eef7447b242a76fb69eb8222eb07c617210631b866e9323b29eaea80091fa919"
+      "sha256": "d0096ef4b5b91707f524a92afb40017ef8339ce847b0bf87ea08e06717909554"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "b0d29967aad572a06f45bbf2c496eb07309c56eff5f140e8755214a5623bb5e4"
+      "sha256": "44f9ac3700b7ee1c013578a2d0ca5750590c27ba317ca8c0c35e9bceed126c81"
     }
   ],
-  "readmeSha256": "e5135cfe9639f8b40c667df7837a4606323c42835a9db25fa705230e9c4a469b",
+  "readmeSha256": "2a070d4668bef355c908545ad2b1dc8809dd11160458f34037df9636d0452b94",
   "readmeLanguageGaps": [],
-  "sourceTree": "125257305fdc2c2ee93df3420600bc19b8f571c9",
-  "publicTree": "e8883c8d4ba390d89cd1c637e7ca54a5ad7446e9",
-  "packageSha256": "a36cd1dfac7f222bc2ecb29242804cb260e3f8a814cc2d8ad616776123e4ab60",
+  "sourceTree": "e7b8fe8f813402749a6c3801c534e20529ef1e3d",
+  "publicTree": "4a7f12fe684276735754f54cbdd3ccc8624da331",
+  "packageSha256": "31e812f722550d1aa4a087fc1c2d2efb9dc19506beef96eff2f264c1ba9bb6c1",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -43,25 +43,25 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "cdf6fae75bac2cb9d1e5007b6197fbed69448d2f",
-  "reviewedAt": "2026-11-21T23:41:44.685Z",
+  "candidateCommit": "7120869a9acb72bd21837bd6a9803c53fb5dce65",
+  "reviewedAt": "2026-11-22T09:43:49.349Z",
   "reviewStage": "local-committed-source",
   "reviewedWorkingTree": false,
-  "findings": "v8.1.4で確認済みの19節を候補差分と照合。STEP2の撮影位置の扱いを演出節、ページ全体の画像修正と元台本の保存を工程節に反映。MCPのシナリオ受け渡し、版と配布先、画像生成・品質検査の既存説明を維持した。 生成済みの工程図2枚もv8.1.5の版表記に揃えた。",
-  "manualFindings": "操作・OpenAI・Geminiの3冊78ページを描画比較。差分のあるGeminiガイド1ページと全機能マニュアル14・19・25ページを目視し、文字切れや重なりがないことを確認。全ページで判型とv8.1.5を照合。",
+  "findings": "v8.1.5のREADMEの19節と候補差分を照合。英日ともに、参照画像なしのカラー作画でSTEP1の人物設定とSTEP2の台本を使う手順、通常コマのGペン、題字そばの作者名と製品ウォーターマークの扱いを確認した。配布先、版表示、工程図2枚を候補版と照合した。",
+  "manualFindings": "操作・OpenAI・Geminiの3冊78ページを更新前後で描画比較し、全ページの判型とv8.1.6の表記を照合。フッターを除いて本文が変わったGeminiガイド1ページと全機能マニュアル5・19ページを目視し、文字切れや重なりがないことを確認した。",
   "pricingReview": {
-    "version": "8.1.5",
+    "version": "8.1.6",
     "sourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-    "checkedAt": "2026-11-21T23:41:44.685Z",
+    "checkedAt": "2026-11-22T09:43:49.349Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
       "https://developers.openai.com/api/docs/models/gpt-6-luna"
     ],
-    "findings": "Compared standard OpenAI text/image and Gemini text/image rates used by the app and its manuals with each provider’s official tables. Verified the separately displayed Batch figures and the dated Gemini 3.8 Flash rates."
+    "findings": "Compared official OpenAI text and image Standard rates with separately listed Batch rates. Checked image routes and the dated Gemini 3.8 Flash Standard and Batch entries against the application configuration. The change introduces no new API pricing."
   },
   "apiValidation": {
-    "version": "8.1.5",
-    "scope": "STEP2 used GPT-6 Luna without fallback and preserved an explicit camera origin in six panels in live run c17edb6a-7973-4e90-bc49-a46c2f7b2ada. The final v8.1.5 runtime used gpt-image-2.6-sunburst in MCP image_edit job c509af87-8c10-4096-ae72-1aa4fc4ec310. The edited PNG and sidecar JSON each contained the original 6,965 UTF-8 bytes of the approved script."
+    "version": "8.1.6",
+    "scope": "Local STEP3 and STEP4 used GPT-6 Luna and GPT Image 2.6 Sunburst with zero reference images. The supplied 2240 by 3168 color result was visually checked against the approved dialogue, action, cast, title and byline in all four panels. The final automated reinspection status was not captured. Replaying the observed plan with the new default G-pen direction produced the same full editor input as the paid run."
   }
 }
