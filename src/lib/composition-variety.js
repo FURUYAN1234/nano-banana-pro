@@ -187,7 +187,9 @@ export const classifyCameraElevation = (camera = '') => {
         .replace(/見上げ|見下ろ[すし]/g, '');
     });
   const eyeLevelText = text.replace(/(?:above|below)\s+(?:the\s+)?eye[ -]?level/gi, '');
-  if (/(?:アイレベル|eye[ -]?level|(?:目(?:線)?|視線)(?:の高さ|と同じ高さ))(?!より(?:も)?(?:高|低|上|下))/i.test(eyeLevelText)) return 'eye';
+  // A comparison can include an adverb or a distance before the direction.
+  // The benchmark itself says nothing about an equal-height camera.
+  if (/(?:アイレベル|eye[ -]?level|(?:目(?:線)?|視線)(?:の高さ|と同じ高さ))(?!\s*より)/i.test(eyeLevelText)) return 'eye';
   const placement = text.match(/\bcamera\s+(?:(?:is\s+)?(?:positioned|placed|set)\s+)?(?:is\s+)?(?:slightly\s+)?(above|below)\b/i)?.[1]?.toLowerCase();
   const pitches = new Set([...text.matchAll(/(俯角|仰角)\s*[:：]?\s*(?:約|およそ|おおよそ)?\s*\+?(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)\s*(?:度|°)/g)].map(match=>match[1]));
   const lateralHeight = text.match(RELATIVE_CAMERA_ORIGIN_RE)?.[1];

@@ -53,6 +53,27 @@ test('a relative height followed by a comma and an explicit shot is a usable cam
   ]) assert.throws(() => assertGeneratedScenarioCameraContract(scenario(camera)), {code:'CAMERA_CONTRACT'}, camera);
 });
 
+test('eye height used as a relative benchmark does not make the shot eye-level', () => {
+  for (const [camera, expected] of [
+    ['客席前列、人物の正面で目の高さよりわずかに低い位置から丸眼鏡と口元へ見上げる浅いアオリ、望遠寄り。', 'low'],
+    ['目線の高さよりも少し高い位置から見下ろす浅い俯瞰。', 'high'],
+    ['視線の高さよりやや上の位置から俯瞰する。', 'high'],
+    ['目の高さよりほんの少し下から見上げる。', 'low'],
+  ]) {
+    assert.equal(classifyCameraElevation(camera), expected, camera);
+    assert.doesNotThrow(() => assertGeneratedScenarioCameraContract(scenario(camera)));
+    assert.match(getPanelShotExecution(camera), expected === 'low' ? /look up: chin/ : /look down from/);
+  }
+});
+
+test('an actual eye-level camera remains eye-level even when another clause compares heights', () => {
+  for (const camera of ['目の高さから正面の中景。', '人物と同じ目線の高さで撮影する。',
+    '目の高さよりわずかに低い位置の小道具も入れ、カメラはアイレベルで撮影する。']) {
+    assert.equal(classifyCameraElevation(camera), 'eye', camera);
+    assert.throws(() => assertGeneratedScenarioCameraContract(scenario(camera)), { code: 'CAMERA_CONTRACT' });
+  }
+});
+
 test('the existing provider retry gate accepts a valid relative origin unchanged after one response', async () => {
   const accepted = scenario('作業台の天面より低い右前方からの広角。成人の作業員と箱を捉える。');
   let requests = 0;

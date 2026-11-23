@@ -1,3 +1,7 @@
+# v8.1.7 release candidate
+
+The camera parser recognizes an eye-height benchmark followed by a comparative lower position as a low-angle origin. The revised manga skill checks gaze, the endpoint of a decisive prop action and the order of balloons when the left character speaks first. See [v8.1.7 release notes](docs/releases/v8.1.7.md).
+
 # v8.1.6 release candidate
 
 The OpenAI color page workflow uses the written cast and original panel actions when the request contains zero reference images. Standard panels receive pressure-varied G-pen directions. The first titled body page places the requested author beside the title. See [v8.1.6 release notes](docs/releases/v8.1.6.md).
