@@ -19,7 +19,7 @@
   "readmeSha256": "e09c9349d805ab9521c7d07ffa51dd5701ea68297858c7abc6c5f9fb6b3f1d8d",
   "readmeLanguageGaps": [],
   "sourceTree": "a13b25bcd706f95ab7cd8ec7e4c156188b8c8aa6",
-  "publicTree": "d48d387515a343a2c150870ce4a90a47aa0b78b0",
+  "publicTree": "cef51a2b8d9b4a788ae6ed02bd762cb0f8234ac3",
   "packageSha256": "56eba1c2d07e824f79262006102de8409212cf5d52e4bb5268b85ee76a3ff385",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -43,7 +43,7 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "4fd76b071813883c2329cb95609d2ac3bac94354",
+  "candidateCommit": "ae4eb5fad196657153fc400be5740636039acff8",
   "reviewedAt": "2026-11-23T03:44:06Z",
   "reviewStage": "local-committed-source",
   "reviewedWorkingTree": false,
