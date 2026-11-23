@@ -1,42 +1,48 @@
 {
   "format": 1,
-  "version": "8.1.6",
-  "skillSha256": "e61c478d4ba71560a9f9354ee1e68395ba8f3bc2a23e32c6ba4827c44552c9e0",
-  "reviewedAt": "2026-11-22T09:37:04Z",
-  "reviewedSince": "v8.1.5 release",
+  "version": "8.1.7",
+  "skillSha256": "3d5ceb3b2000d81351f0c77e501e7486d8d1589049f42d638007396f2d03a30f",
+  "reviewedAt": "2026-11-23T03:44:06Z",
+  "reviewedSince": "v8.1.6 release",
   "sources": [
-    "Zero-image STEP3/STEP4 diagnostics and a finished four-panel color verification page",
-    "Bundled manga production skill and public workflow defaults for author credits and last-page footers"
+    "採用された『魔王さま、ハンコください。』『超高速！舞姫』『超高速！指輪物語』の制作レビューと本人の指摘",
+    "目の高さを比較基準にした浅いアオリの実API検証記録"
   ],
   "findings": [
     {
-      "observation": "文章のみで作画すると、人物・台本に無関係な画像を返す例が続いた。",
-      "disposition": "already_covered",
-      "rule": "STEP1の人物設定とSTEP2の台本を照合し、参考画像のない入力も通常工程で検証する。",
-      "reason": "アプリ側で実際に送る画像数から指示文を選び、物語・人物・各コマの動作を直接渡す。スキルで画像添付を必須にしない。"
+      "observation": "同じページで話者や反応する人物の顔が何度も相手と反対を向いた。",
+      "disposition": "updated",
+      "rule": "コマごとの対話・注視点から顔と視線を決める。",
+      "reason": "演技が伝わる背面や意図した視線の外しは許容し、一律に正面へ向けない。"
     },
     {
-      "observation": "本文の作者名に欄外クレジット用の右下配置が使われていた。",
-      "disposition": "already_covered",
-      "rule": "本文初ページは作者名を題字に添える。製品ウォーターマークは作品・個人設定から別に指定する。",
-      "reason": "既存のスキルにある題字と最終ページの扱いをアプリの指示と検査へ合わせた。"
+      "observation": "落下を示す残像があっても、指輪がどうなったかは実画像で判別しにくかった。",
+      "disposition": "updated",
+      "rule": "小道具が決着になるときは動線の終点で受け渡しや状態の変化を描く。",
+      "reason": "既存の動作確認に判読条件を置き、全コマに動きや接触を強制しない。"
     },
     {
-      "observation": "画像がない通常カラーでも、筆圧のあるGペン線が求められた。",
+      "observation": "左側の人物が先に話すコマで右側の返事から読めた。",
+      "disposition": "updated",
+      "rule": "右から左のコマ内で左側の人物が先に話す場合、先の吹き出しを返事より上に置く。",
+      "reason": "実画像で順番と話者を確かめ、顔・役名札を避ける。"
+    },
+    {
+      "observation": "今回の題材に限りコマ内に役名が必要だった。",
       "disposition": "not_generalized",
-      "rule": "割り当てた描法と利用者の作画指定を尊重する。",
-      "reason": "描線の既定は描画アプリで処理する。脚本スキルや他の媒体へ一律の画風を加えない。"
+      "rule": "作品で必要と指定された場合に役名札を使う。",
+      "reason": "既存のルールで対応済み。一般作品には要求せず、新たな確認手順も追加しない。"
     }
   ],
   "checks": [
     {
-      "name": "Bundled skill and per-page render options",
-      "evidence": "題字と作者名の規則、1ページ作品での最終ページ指定、公開MCPの初期非表示を確認。両側・片側・非表示の描画契約をテストした。",
+      "name": "Saved manga pages",
+      "evidence": "指輪物語の採用稿1Pで先の吹き出しと返事、2Pで指輪と溶岩の接点を通読。舞姫の採用稿1Pで顔の向きを確認。",
       "result": "passed"
     },
     {
-      "name": "Normal color generation with written cast",
-      "evidence": "通常のSTEP3からSTEP4へ送り、4コマの実画像で題字、作者名、2人の外見、台詞の話者、青い星印の傘の受け渡しと結末を通読した。",
+      "name": "Skill files and release gate",
+      "evidence": "正本・導入版のスキル構造の検査、対象の読順・動作・視線ルールを照合。スキル検証と撮影位置の対象テスト9件が通過。",
       "result": "passed"
     }
   ]
