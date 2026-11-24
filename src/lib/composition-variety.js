@@ -108,7 +108,10 @@ const FLOOR_CAMERA_RE = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ
 const REAR_CAMERA_RE = /(?:^|[、。;；\s]|の(?:左|右)?|(?:左|右))(?:後方|後ろ|背中側|背後)(?:[左右]?[上下](?:方)?|[左右])?(?=\s*(?:から|より|へ(?:引[くい]|カメラを移|視点を移)|の(?:[高低]い|[高低]めの?)?(?:撮影)?(?:位置|視点)|(?:に|で)(?:カメラ|視点|撮|構え|見上げ|見下ろ)|[、,]|$))|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i;
 const HIGH_CAMERA_RE = /overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|バード(?:ズ)?アイ|(?:天井|天頂)(?:近く|付近)?から(?:真下|鉛直下向き)|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平)))|高め(?:から|より|に(?:撮|捉え))|高く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?高(?:い|め|く)|高所から|上方から|見下ろ[すし]/i;
 const LOW_CAMERA_RE = /low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|下から|見上げ|低(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平))|[、。]|$)|低(?:い|めの?)斜め|低め(?:から|より|に(?:撮|捉え))|低く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?低(?:い|め|く)|低所(?:から|の|に|より)?|(?:[^\s、。]+上|[^\s、。]+面)すれすれ(?:から|より|[、。]|$)/i;
-const CAMERA_AZIMUTH_ORIGIN = '(?:斜め)?(?:(?:左|右)(?:前(?:方)?|後(?:ろ|方)?|側面)?|前(?:方)?|後(?:ろ|方)?|側面)(?:斜め)?(?:から|より)';
+const CAMERA_AZIMUTH = '(?:斜め)?(?:(?:左|右)(?:前(?:方)?|後(?:ろ|方)?|側面)?|前(?:方)?|後(?:ろ|方)?|側面)(?:斜め)?';
+const CAMERA_AZIMUTH_ORIGIN = `${CAMERA_AZIMUTH}(?:から|より)`;
+// Tie the verb to the camera origin. 仰ぐ by itself can describe a character's gaze.
+const NEAR_FLOOR_UPWARD_RE = new RegExp(`(?:床|地面)に近い(?:撮影)?(?:位置|視点)(?:から|より)\\s*(?:${CAMERA_AZIMUTH}(?:へ|に)\\s*)?仰(?:ぐ|ぎ|いで)(?=[、,。．.!！?？\\s]|$)`);
 const RELATIVE_CAMERA_ORIGIN = `より(?:も)?(高|低)い${CAMERA_AZIMUTH_ORIGIN}`;
 const RELATIVE_CAMERA_ORIGIN_RE = new RegExp(RELATIVE_CAMERA_ORIGIN);
 
@@ -184,7 +187,7 @@ export const classifyCameraElevation = (camera = '') => {
             const suffix = clause.slice(offset + origin.length).trim();
             return !suffix || CAMERA_ORIGIN_SUFFIX_RE.test(suffix) ? origin : '';
           }))
-        .replace(/見上げ|見下ろ[すし]/g, '');
+        .replace(/見上げ|見下ろ[すし]|仰(?:ぐ|ぎ|いで)/g, '');
     });
   const eyeLevelText = text.replace(/(?:above|below)\s+(?:the\s+)?eye[ -]?level/gi, '');
   // A comparison can include an adverb or a distance before the direction.
@@ -198,12 +201,13 @@ export const classifyCameraElevation = (camera = '') => {
   // height (が/は/を), an isolated height noun or a negated placement.
   const nounPlacement = text.match(/(?:^|[。;；\n])[^。;；\n、,がはを]*?(高(?:い|めの?))(?:撮影)?位置(?=[、,]\s*(?:正面|左|右|前方|後方|斜め|広角|超広角|望遠|引き|中景|接写|全景|全身))/)?.[1];
   const high=placement === 'above' || pitches.has('俯角') || lateralHeight === '高' || nounPlacement || HIGH_CAMERA_RE.test(text);
-  const low=placement === 'below' || pitches.has('仰角') || lateralHeight === '低' || FLOOR_CAMERA_RE.test(text) || LOW_CAMERA_RE.test(text);
+  const nearFloorUpward = NEAR_FLOOR_UPWARD_RE.test(text);
+  const low=placement === 'below' || pitches.has('仰角') || lateralHeight === '低' || FLOOR_CAMERA_RE.test(text) || LOW_CAMERA_RE.test(text) || nearFloorUpward;
   if(high&&low){
     // Origin height is not optical pitch: a floor camera can look down at a
     // small object. Only conflicting affirmative pitch directions are ambiguous.
     const down=pitches.has('俯角')||/overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|バード(?:ズ)?アイ|俯瞰|見下ろ[すし]/i.test(text);
-    const up=pitches.has('仰角')||/low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|見上げ/i.test(text);
+    const up=nearFloorUpward||pitches.has('仰角')||/low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|見上げ/i.test(text);
     if(down!==up)return down?'high':'low';
     return 'unspecified';
   }
@@ -250,7 +254,7 @@ export const getPanelShotExecution = (camera = '', { compact = false, breakout =
   const full = FULL_BODY_SHOT_RE.test(text);
   // 「全身寄り」等の距離表現で、明示された全身の画角を接写へ変えない。
   const close = !full && CLOSE_SHOT_RE.test(text);
-  const floor = FLOOR_CAMERA_RE.test(text);
+  const floor = FLOOR_CAMERA_RE.test(text) || NEAR_FLOOR_UPWARD_RE.test(text);
   const elevation = classifyCameraElevation(text);
   const fisheye = isFisheyeCamera(text);
   const telephoto = /telephoto|long[ -]lens|望遠|長焦点|長い焦点距離/i.test(text);

@@ -74,6 +74,28 @@ test('an actual eye-level camera remains eye-level even when another clause comp
   }
 });
 
+test('an upward shot can start at a position close to the floor or ground', () => {
+  for (const camera of [
+    '床に近い位置から左前斜めへ仰ぎ、広角で全身を捉える。',
+    '地面に近い撮影位置から斜め右後方に仰いで、荷物を持つ作業員を捉える。',
+  ]) {
+    assert.equal(classifyCameraElevation(camera), 'low', camera);
+    assert.doesNotThrow(() => assertGeneratedScenarioCameraContract(scenario(camera)));
+    assert.match(getPanelShotExecution(camera), /floor-level camera below faces.*look up: chin/);
+  }
+});
+
+test('a near-floor object, gaze, or rejected upward direction does not specify the shot', () => {
+  for (const camera of [
+    '床に近い位置からランプで照らす。正面の広角。',
+    '床に近い位置から人物が左前斜めへ仰ぎ、棚を見る。広角で全身を捉える。',
+    '床に近い位置から左前斜めへ仰がない。正面の中景。',
+  ]) {
+    assert.equal(classifyCameraElevation(camera), 'unspecified', camera);
+    assert.throws(() => assertGeneratedScenarioCameraContract(scenario(camera)), { code: 'CAMERA_CONTRACT' });
+  }
+});
+
 test('the existing provider retry gate accepts a valid relative origin unchanged after one response', async () => {
   const accepted = scenario('作業台の天面より低い右前方からの広角。成人の作業員と箱を捉える。');
   let requests = 0;

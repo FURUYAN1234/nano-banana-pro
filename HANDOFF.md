@@ -1,3 +1,7 @@
+# v8.1.9 release candidate
+
+STEP2 recognizes an upward shot from a camera near the floor or ground. The shared rule also supplies the corresponding low-angle drawing cue. See [v8.1.9 release notes](docs/releases/v8.1.9.md).
+
 # v8.1.8
 
 Ordered book rendering automatically reviews saved pages after page production. Page review and final review share body, scene, garment and prop checks. Product documentation uses configurable publication destinations and local paths.

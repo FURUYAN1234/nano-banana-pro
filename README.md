@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.1.8** / 現在のソース版: **v8.1.8**
+> Current source version: **v8.1.9** / 現在のソース版: **v8.1.9**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -756,6 +756,8 @@ Manual-topic changes use a dedicated input gateway and separate field identifier
 
 ## Prompt and image safeguards / プロンプトと画像の確認
 
+In STEP2, an upward view from a camera positioned close to the floor or ground is accepted as a low-angle shot. Include where the camera sits and where it points to make the view clear. / STEP2は、床や地面に近い位置から上へ向ける撮影指示をアオリとして扱います。画角を明確にするには、撮影位置とレンズの向きを指定してください。
+
 In the 4–8-panel comprehensive review with automatic repair ON, positive visual evidence that an output is not a comic rejects that candidate, stops full-auto/loop processing and prevents its use as an automatic repair source or automatic save. Retry STEP4 from the original drawing prompt. Uncertain panel boundaries alone do not trigger this verdict; automatic repair OFF skips the review. / 自動修正ONの4～8コマ用総合検査で、画像上の根拠から漫画以外と判定した候補は不採用にします。その画像を自動修正元・自動保存に使わず、全自動・連続生成を止めます。STEP4で元の描画指示から再生成してください。境界不明だけではこの判定にせず、自動修正OFFでは検査を行いません。
 
 An authored breakout is composed as one foreground body across its source and receiving panels; the receiving panel's camera and medium apply to its local actors. An incomplete review remains unverified, while a separately grounded failure of the required composition can still enter the same bounded repair. Missing observations or uncertain boundaries alone never authorize a repair. / 指定した枠越えは、元のコマと受け入れるコマをまたぐ一つの身体として配置します。受け入れ側のカメラと描法は、その場面の独立した人物へ適用します。検査の欠落は未確認を維持しつつ、実際の枠境界と指定構図の失敗を独立に確認できた場合は、同じ最大1回の修復へ渡します。観察の不足や境界不明だけでは修復を起動しません。
@@ -846,7 +848,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.8/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.8/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -910,7 +912,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.8 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.8 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -981,6 +983,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Local Handoff MCP / ローカルの作業引き継ぎ | Resume work between Codex and Antigravity in the same project folder / 同じ作業フォルダーでCodexとAntigravityの作業を引き継ぐ | [GitHub](https://github.com/FURUYAN1234/local-handoff-mcp) · [Guide / 解説](https://note.com/happy_duck780/n/n806c7bc6de94) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.1.9 (2026-11-24)
+- **[Fix & UX]** STEP2 recognizes upward shots specified from a position close to the floor or ground, avoiding needless regeneration or interruption. / STEP2で床や地面に近い撮影位置から上向きに捉えるカメラ指定をアオリとして扱い、台本の不要な再生成や停止を防ぎます。
 
 ### v8.1.8 (2026-11-24)
 - **[Fix & UX]** Continuous book rendering after script and character sheet approval, with page and final automated review / 台本・設定画確認後の連続作画、ページ単位と全ページでの自動査読
