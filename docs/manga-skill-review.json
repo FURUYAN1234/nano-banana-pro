@@ -1,53 +1,31 @@
 {
   "format": 1,
-  "version": "8.1.8",
+  "version": "8.1.9",
   "skillSha256": "f710eff84a286fed9de63c06023fb8a291e77b1397495565942ce790af2f7e09",
-  "reviewedAt": "2026-11-24T06:15:52.632Z",
-  "reviewedSince": "v8.1.7 release",
+  "reviewedAt": "2026-11-24T09:41:20.212Z",
+  "reviewedSince": "v8.1.8 release",
   "sources": [
-    "複数ページ作品の採用画像と、四肢の付け根・腕の所有者・封入の奥行き・袖の長さに関する制作レビュー",
-    "ページごとの返答待ちとSNSの個人設定に関する利用者の指摘"
+    "報告されたSTEP2の全件ログ・台本・アプリの判定理由",
+    "通常画面からのGPT-6 Lunaによるカラー5コマの検証"
   ],
   "findings": [
     {
-      "observation": "胴体からずれた脚や、誰の腕か判断できないコマがあった。",
-      "disposition": "updated",
-      "rule": "見える四肢の付け根から指先・足先まで、所有者と動作の相手を確認する。",
-      "reason": "身体の接続と前後・内外の読み違いを一つの査読項目で追い、自然な重なりは許容する。"
-    },
-    {
-      "observation": "同じ衣装の袖丈と破れ方が一コマだけ変わった。",
-      "disposition": "updated",
-      "rule": "左右の袖丈と袖口、装飾品の付く側、小道具の状態と変化を前後から照合する。",
-      "reason": "着替えや動作による変化と素材の不一致を区別する。"
-    },
-    {
-      "observation": "ページ承認待ちが手順資料に重複し、個別のSNS設定を汎用手順から外す必要があった。",
-      "disposition": "updated",
-      "rule": "台本・設定画確認後は連続生成し、保存した全ページを自動査読する。SNSは投稿するかを利用者に尋ねる。",
-      "reason": "利用者が明示した例外だけを適用し、個別の投稿手順を汎用配布へ持ち込まない。"
+      "observation": "明示した低位置・上向き投影をカメラ検査が認識せず停止した。",
+      "disposition": "already_covered",
+      "rule": "撮影位置、向きと人物の視線を区別し、診断JSONと同じ版の判定を照合する。",
+      "reason": "既存手順で原因を調査できる。制作スキルに撮影表現の回避指定を増やさず、アプリの共通判定を修正した。"
     }
   ],
   "checks": [
     {
-      "name": "MCP連続制作の専用回帰",
+      "name": "通常経路と回帰",
       "result": "passed",
-      "evidence": "mcp-render-book.test.mjsの4件。保存後の査読順、既存画像の保持、指摘後の継続、中断および欠落時の停止を確認。"
+      "evidence": "元の失敗台本に対するカメラ検査と、同じ表現を含む通常STEP2の実API台本で受理を確認。人物の視線・否定指定は除外。"
     },
     {
-      "name": "査読とMCPガイドの回帰",
+      "name": "配布スキルの照合",
       "result": "passed",
-      "evidence": "image-quality-qa.test.mjsとmcp/test/stdio.test.mjsの計118件。衣装の根拠と新しい案内の文面を確認。"
-    },
-    {
-      "name": "同梱スキルの照合",
-      "result": "passed",
-      "evidence": "同梱SKILL.md、agents/openai.yaml、制作リファレンス、stdio案内を照合。利用者固有の保存やSNS情報の記載なし。"
-    },
-    {
-      "name": "候補版の実API",
-      "result": "passed",
-      "evidence": "GPT-6 Lunaによる9ページの最終査読と全画像のハッシュ照合。通常の1ページ作画で自動査読・画像修正・PNG／JSON保存を確認。"
+      "evidence": "公開版v8.1.8の配布正本・補助資料ハッシュと一致。"
     }
   ]
 }
