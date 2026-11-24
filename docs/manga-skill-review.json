@@ -43,6 +43,11 @@
       "name": "同梱スキルの照合",
       "result": "passed",
       "evidence": "同梱SKILL.md、agents/openai.yaml、制作リファレンス、stdio案内を照合。利用者固有の保存やSNS情報の記載なし。"
+    },
+    {
+      "name": "候補版の実API",
+      "result": "passed",
+      "evidence": "GPT-6 Lunaによる9ページの最終査読と全画像のハッシュ照合。通常の1ページ作画で自動査読・画像修正・PNG／JSON保存を確認。"
     }
   ]
 }
