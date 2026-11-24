@@ -150,6 +150,8 @@ Production sequence: / 制作の流れは次のとおりです。
 4. Prepare approved shared assets and generate pages in order. / 承認した仕様から共通資料をそろえ、ページ順に生成します。
 5. Save each completed page to Downloads as PNG and matching production JSON. / 完成したページから、PNGと同名の制作情報JSONをダウンロードフォルダーへ保存します。
 
+Once the user confirms the detailed script and character sheets, ordered production reviews and saves each new page, then automatically reviews the saved pages in reading order. Each completed review identifies the image by SHA-256. Outstanding findings leave the saved images intact for correction. / 台本と設定画の確認後は、各ページを自動査読・保存し、最後に採用画像を読順で自動査読します。査読した画像はSHA-256で識別します。指摘が残っても保存済み画像を保持し、修正に使えます。
+
 Before rendering with supplied or generated reference images, the AI applies a page with `manga_run: apply_page`, runs `recognition`, refreshes the project revision and applies the page again. This restores its approved scenario after recognition; STEP2 does not need to be regenerated. `render_book` does not implicitly recognize unparsed materials. / 提供・生成した資料画像を使う場合、AIは描画前に `manga_run` の `apply_page` → `recognition` → 最新revisionの取得 → 再度 `apply_page` を実行します。素材解析後に承認済み台本へ戻すための処理で、STEP2を作り直す必要はありません。`render_book` が未解析資料を自動で認識するわけではありません。
 
 Total pages include the cover. Cover numbering is separate. An approval request alone is not consent; a material plan change needs review, while resuming the same approved plan does not. / 総ページ数には表紙を含めます。表紙のページ番号を出すかどうかは別に指定します。確認を求めただけでは承認になりません。内容が変わる場合は変更後の案を確認し、同じ承認済み案の再開だけなら承認を繰り返し求めません。

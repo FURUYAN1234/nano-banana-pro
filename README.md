@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.1.7** / 現在のソース版: **v8.1.7**
+> Current source version: **v8.1.8** / 現在のソース版: **v8.1.8**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -86,7 +86,7 @@ When image production is also requested, the scenario skill carries conditional 
 
 ### Manga workflow with AI / AIと進める漫画制作の流れ
 
-![AI manga workflow from consultation to saved pages and optional SNS publication / 相談から保存・希望時のSNS投稿までを示すAI漫画制作の流れ](docs/assets/furu-manga-workflow.png)
+The workflow runs from consultation and approval to rendering with automated review, then presents the saved pages. / 相談と確認から、作画・自動査読・保存を経て、完成原稿を提示します。
 
 **Three-page manga: See how a page comes together / 白黒3ページで見る、漫画の制作工程**
 
@@ -98,9 +98,9 @@ In “Super FURU AI 4-koma System — How a Comic Comes Together,” five charac
 
 ![Manga page 3 of 3 / 漫画・全3ページの第3ページ](docs/assets/furu-manga-production/page-3.png)
 
-Scenario and reference preparation may be revisited; rendering follows approval of the detailed plan. Saving is automatic: step 6 checks the saved PNG/JSON and displays all pages. Script-only consultation needs no MCP, and an ordinary single page can be made manually. / シナリオと資料は必要に応じて往復し、詳細案を確認してから画像化します。保存はアプリが自動で行い、⑥でPNG／JSONの保存結果を確認して全ページを再掲します。脚本相談だけならMCPは不要で、通常の1ページはアプリを手動でも制作できます。
+Rendering follows confirmation of the detailed script and character sheets. The app saves PNG and JSON for each page. Script-only consultation needs no MCP, and an ordinary single page can be made manually. / 詳細台本と設定画の確認後に作画し、アプリがページごとにPNGとJSONを保存します。脚本相談だけならMCPは不要で、通常の1ページは手動でも制作できます。
 
-The manga skill presents the script, new character sheets and each saved page before asking for approval to move on. After the final page, it asks about social sharing and shows the proposed post before publishing. / 漫画制作スキルは台本、新しい人物資料、保存済みの各ページを示し、次へ進む前に採否を確認します。最終ページの後はSNS掲載の希望を伺い、具体的な投稿内容を示してから公開します。
+The skill shows the script and character sheets for confirmation. It then renders and reviews each page, saves the images and reviews the saved book in reading order. After showing the finished book, it asks whether to post it and follows the user’s answer. / 台本と設定画を示して確認を得たら、各ページを自動査読しながら作画・保存し、最後に全ページの採用画像を読順で自動査読します。完成原稿を提示した後は、SNSに投稿するかを聞いて利用者の回答に従います。
 
 For action panels, read the drawing with dialogue and sound effects covered, then check the grip, the attachment and the tool from the same viewpoint. For revisions, distinguish the requested change from the details to preserve. Examples record the intended effect and what appears on the accepted page. The skill follows the work’s watermark setting and supports displaying the two product credits only on the final page. / 動作のキメゴマは台詞と擬音を隠して読み、握りから取付部・道具本体まで同じ画角で確認します。修正では変える点と保つ点を明確にし、技法の見本では狙いと採用稿に見える演出を記録します。作品のウォーターマーク設定に従い、指定に応じて左右の製品クレジットを最終ページだけに表示できます。作者名と通し番号は個別に扱います。
 
@@ -846,7 +846,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.7/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.8/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.8/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -910,7 +910,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.7 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.7 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.8 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.8 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -981,6 +981,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Local Handoff MCP / ローカルの作業引き継ぎ | Resume work between Codex and Antigravity in the same project folder / 同じ作業フォルダーでCodexとAntigravityの作業を引き継ぐ | [GitHub](https://github.com/FURUYAN1234/local-handoff-mcp) · [Guide / 解説](https://note.com/happy_duck780/n/n806c7bc6de94) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.1.8 (2026-11-24)
+- **[Fix & UX]** Continuous book rendering after script and character sheet approval, with page and final automated review / 台本・設定画確認後の連続作画、ページ単位と全ページでの自動査読
 
 ### v8.1.7 (2026-11-23)
 - **[Fix & UX]** Fix shallow low-angle camera validation and add manga skill checks for gaze, action payoff, and balloon order. / 浅いアオリの画角判定を修正し、漫画制作スキルに視線・動作の決着・吹き出し順の確認を追加。

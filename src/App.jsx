@@ -37,6 +37,7 @@ import GenerationHistory from './components/GenerationHistory';
 import McpAssetGallery from './components/McpAssetGallery.jsx';
 import McpControlPanel from './components/McpControlPanel.jsx';
 import { assertAppliedMcpPage } from './lib/mcp/contract.js';
+import { renderBookInOrder } from './lib/mcp/render-book.js';
 
 function App() {
   const [mcpControlState,setMcpControlState]=useState(null);
@@ -231,23 +232,11 @@ function App() {
     const operationStartedAt=Date.now();
     context.throwIfCancelled?.();
     if(isApiProcessing&&job.operation!=='read_state')throw Object.assign(new Error('Wait for the current manual/application API operation to finish.'),{code:'APP_BUSY'});
+    if (job.operation === 'review_saved_book_page') return workflow.reviewMcpBookPage(job, job.previousPage);
     context.reportProgress?.({operation:job.operation,pageIndex:job.project.pages.find(page=>page.id===job.pageId)?.index});
-    if(job.operation==='render_book') {
-      const completed=[];
-      for(const page of job.project.pages) {
-        context.throwIfCancelled();
-        const loaded=await context.loadPage(page.id);
-        if(loaded.snapshot?.accepted&&loaded.snapshot.generatedImage){completed.push({pageId:page.id,retained:true});continue;}
-        const subJob={...job,...loaded};
-        await context.invoke({...subJob,operation:'apply_page'});
-        const prompt=await context.invoke({...subJob,operation:'prompt'});
-        if(prompt.success===false)return {success:false,result:{completed},error:prompt.error};
-        context.throwIfCancelled();
-        const image=await context.invoke({...subJob,operation:'image'});
-        if(image.success===false)return {success:false,result:{completed},error:image.error};
-        completed.push({pageId:page.id,retained:false});
-      }
-      return {result:{completed,complete:true}};
+    if (job.operation === 'render_book') {
+      return renderBookInOrder({ job, context, reviewPage: (loaded, previousPage) =>
+        context.invoke({ ...job, ...loaded, operation: 'review_saved_book_page', previousPage }) });
     }
     if (job.operation === 'plan_story') return { result: await workflow.runMcpPlan(job.project, job.input) };
     if (job.operation === 'read_state') return { result: { state: workflow.captureMcpState(), recovery: job.input?.recoverJobId?workflow.readMcpRecovery(job.input.recoverJobId):null, ...(job.input?.includeDiagnostics===true?{diagnostics:await readMcpDiagnostics(readDiagnostics)}:{}) } };

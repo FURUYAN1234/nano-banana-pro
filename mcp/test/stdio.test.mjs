@@ -33,8 +33,8 @@ test('official SDK stdio discovers tools, persists false settings and snapshot a
     assert.match(guide, /background detail for each panel in this story.*new project settings, final prompts and rendered reading order.*space, light and depth.*close-up/s);
     assert.match(guide, /Figures or limbs may naturally cross panel borders.*story readability, speaker, dialogue and action.*Crossing alone does not require a redraw/s);
     assert.match(guide, /completed Japanese dialogue through the last panel of every page.*inside the closing speech quote.*mid-sentence breaks/s);
-    assert.match(guide, /Show all saved pages in reading order.*honor any sharing decision already given.*ask once/s);
-    assert.match(guide, /For drafts only, provide the proposed posts.*Publish only after approval/s);
+    assert.match(guide, /script and sheets are confirmed.*review each page.*final automated review of the saved pages.*only if the user specifically requests/s);
+    assert.match(guide, /Show all saved pages in reading order.*ask once whether to post.*if the user has not decided.*follow the user’s answer/s);
     const cap = await call('manga_capabilities', {}); assert.equal(cap.totalPagesIncludesCover, true);
     const p = await call('manga_project_create', { name: 'Vertical', idempotencyKey: 'create', totalPages: 4, settings: { showTitle: false, showWatermarks: false } });
     const saveStatus = await call('manga_save_status', {projectId:p.id}); assert.equal(saveStatus.enabled,true); assert.equal(saveStatus.verification.status,'not_generated'); assert.equal(saveStatus.browserDownloads.required,false); assert.equal(cap.exports.statusTool,'manga_save_status');

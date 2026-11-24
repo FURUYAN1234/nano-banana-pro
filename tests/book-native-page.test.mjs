@@ -9,6 +9,29 @@ try {
   const {resolveBookPageNumber}=await server.ssrLoadModule('/src/lib/book-presentation.js');
   const { getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js');
   const { buildScenarioPayoffReviewPrompt } = await server.ssrLoadModule('/src/lib/scenario-payoff-quality.js');
+  test('native review traces limb ownership and scene relationships even after a manual prompt edit', () => {
+    const source = native.readExperimentalSource({
+      scenario: '[1コマ目]\n[Camera: 広角で全身]\n[EMOTION: NORMAL]\n状況: 葵が箱の向こうを指す。\nセリフなし',
+      scenarioMode: createBookPageMode(1), castList: '葵', colorMode: 'color',
+    });
+    const plan = native.validateExperimentalPlan({
+      count: 1, layout: 'vertical_page', reason: '箱の向こうを指す',
+      panels: [{sourcePanel: 1, kind: 'anchor', camera: source.panels[0].camera, action: '葵が箱の向こうを指す', dialogueIds: []}],
+    }, source);
+    const finalPrompt = native.buildExperimentalImagePrompt(plan, source);
+    for (const options of [{}, {finalPrompt}]) {
+      const prompt = native.buildExperimentalReviewPrompt(plan, source, options);
+      assert.match(prompt, /shoulder.*elbow.*wrist.*hand/);
+      assert.match(prompt, /pelvis.*hip.*knee.*ankle.*foot/);
+      assert.match(prompt, /foreground.*middle ground.*background/);
+      assert.match(prompt, /left and right sleeve length.*cuff position/);
+      assert.match(prompt, /glasses.*hair accessories.*jewelry.*straps/);
+      assert.match(prompt, /prop.*owner.*handed off/);
+      assert.match(prompt, /inside.*in front of.*behind/);
+      assert.match(prompt, /when adjacent panels are available/);
+      assert.match(prompt, /foreshortening.*occlusion/);
+    }
+  });
   for (const count of [1, 2, 3]) test(`shared native ${count}-panel contract reaches layout, rendering and review without rewriting source`, () => {
     const mode = createBookPageMode(count);
     const scenario = Array.from({ length: count }, (_, i) => `[${i + 1}コマ目]\n[Camera: 強い右上方からの俯瞰、広角で全身を捉える]\n[EMOTION: NORMAL]\n状況: 葵が箱の蓋を持ち上げ中を確認する。\nセリフなし`).join('\n');

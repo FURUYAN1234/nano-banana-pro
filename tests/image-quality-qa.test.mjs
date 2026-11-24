@@ -2303,3 +2303,17 @@ test('single-image QA inspects one scene without imposing a four-panel layout', 
   assert.doesNotMatch(prompt, /OLD FOUR PANEL SCENARIO SENTINEL|OLD FOUR PANEL CAST SENTINEL/);
   assert.match(prompt, /reference sheets.*do not require every reference character/i);
 });
+
+test('spatial review covers joint chains in every mode and continuity only on comic pages', () => {
+  for (const mode of ['four-panel', 'single-image']) {
+    const prompt = buildImageQualityQaPrompt({mode});
+    assert.match(prompt, /shoulder.*elbow.*wrist.*hand/);
+    assert.match(prompt, /pelvis.*hip.*knee.*ankle.*foot/);
+    assert.match(prompt, /foreground.*middle ground.*background/);
+    assert.match(prompt, /left and right sleeve length.*cuff position/);
+    assert.match(prompt, /glasses.*hair accessories.*jewelry.*straps/);
+    assert.match(prompt, /prop.*owner.*handed off/);
+    assert.match(prompt, /foreshortening.*occlusion/);
+    assert.equal(prompt.includes('when adjacent panels are available'), mode === 'four-panel');
+  }
+});

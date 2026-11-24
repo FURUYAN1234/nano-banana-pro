@@ -1,6 +1,6 @@
 interface:
   display_name: "漫画シナリオ構築・完成原稿の通読"
   short_description: "1Pから長編まで、台本づくりと完成原稿の通読・修正判断を支援"
-  default_prompt: "$manga-book-production を使い、指定の尺に合わせた漫画シナリオを作り、人物の動機・導入・因果・見せ場をチェックしてコマ別に提案してください。作画後は完成画像を全コマ通読し、話者・出来事の順序・人物や小道具のつながりを確認してください。"
+  default_prompt: "$manga-book-production を使い、指定の尺に合わせた漫画シナリオを作り、人物の動機・導入・因果・見せ場をチェックしてコマ別に提案してください。台本・設定画の確認後は、ページ単位の自動査読を挟んで順に作画し、保存済みの全ページを最終自動査読してください。"
 policy:
   allow_implicit_invocation: true
