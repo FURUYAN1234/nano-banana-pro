@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-  "manualVersion": "8.1.7",
-  "manualSourceSha256": "5fc3db90d424ad8ab84183e63c557f06aae3571f27622ded32b7fb91e237f391",
+  "manualVersion": "8.1.8",
+  "manualSourceSha256": "df1e8b8203747d120d406b94d0bce4467bbb99d428a6cfc2d29ad08c0e01577f",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "c7ec3629c91030bc22ac7d12184579725d6eb51a156911d280b5377c34aa7158"
+      "sha256": "90d9efcf7e1d586b788da8ee6ecb65538af13192fcd85f2f602fdfc090b3d91e"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "f8dc7a44887525c8dc9f15e0a68d31a71546349c91799df4827126ef5da06ded"
+      "sha256": "670ef812760b473b49e27a454df6da738a5d7719a8e4e030acad2e0159d07266"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "d39faf3974d5c5638da7d5ceac46ab0ec469736e1be9e716cd5e3e06b4462d43"
+      "sha256": "a1306fcbb8ec7d63c6abf0c8bcce571ea93dc63414f76911a8fb0cd01af0f568"
     }
   ],
-  "readmeSha256": "e09c9349d805ab9521c7d07ffa51dd5701ea68297858c7abc6c5f9fb6b3f1d8d",
+  "readmeSha256": "29290aeb9bc7a873eccbf11efc35e5d545b323c94555b49595e84bcb03529144",
   "readmeLanguageGaps": [],
-  "sourceTree": "a13b25bcd706f95ab7cd8ec7e4c156188b8c8aa6",
-  "publicTree": "cef51a2b8d9b4a788ae6ed02bd762cb0f8234ac3",
-  "packageSha256": "56eba1c2d07e824f79262006102de8409212cf5d52e4bb5268b85ee76a3ff385",
+  "sourceTree": "c3a50a64efd8e15e29f43aa4a6292f498bc48b5d",
+  "publicTree": "2fbec77ff45bb492afb53a5c57cea37112cf1861",
+  "packageSha256": "67c0d08342b24c1dd868672040d08ce3442c47ecd8d0cb4621127508e10cf89a",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -43,26 +43,22 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "ae4eb5fad196657153fc400be5740636039acff8",
-  "reviewedAt": "2026-11-23T03:44:06Z",
+  "candidateCommit": "c17cac9524149a3d96364ac79a32a1880d812a15",
+  "reviewedAt": "2026-11-24T06:15:52.632Z",
   "reviewStage": "local-committed-source",
   "reviewedWorkingTree": false,
-  "findings": "READMEの現行19節と変更範囲を照合。Visual directionで撮影高の比較を追記し、MCPの手順に動作の終点、読順と視線を反映した。版・説明・PDF・本体とスキルの配布先・既存FourPanel資産を候補版と照合。作画の自動保証、固定の役名札や画角の追加は記載しない。",
-  "manualFindings": "3冊78ページを旧版と描画比較し、全ページのA4判型とv8.1.7表記を検査した。本文が変わったGeminiガイド1ページ、全機能14・19・23・24ページを目視し、文字・枠の重なりや欠けを確認した。",
+  "findings": "現行19節の構成を維持。MCP節の台本・設定画確認、ページ単位と全ページの自動査読、PNG／JSON、投稿の意向確認を候補の画面・処理・同梱スキルと照合した。旧承認フローの図を現行手順の説明から外し、PDFとFourPanel配布先の版表記をそろえた。",
+  "manualFindings": "3冊78ページを旧版から描画比較。すべての版・日付・A4判型を確認し、本文が変わったGeminiガイド1ページと全機能19・46ページの改行、文字、重なりを目視検証。",
   "pricingReview": {
-    "version": "8.1.7",
+    "version": "8.1.8",
     "sourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-    "checkedAt": "2026-11-23T03:44:06Z",
+    "checkedAt": "2026-11-24T06:15:52.632Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://developers.openai.com/api/docs/models/gpt-6-luna",
       "https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Compared OpenAI Standard text/image rates with Batch and verified Gemini 3.8 Flash dated Standard/Batch prices and Nano Banana 2.1 Standard image/token prices. The existing pricing settings and documented image rates agree with the official tables."
-  },
-  "apiValidation": {
-    "version": "8.1.7",
-    "scope": "The same scoped camera source was tested in a v8.1.6-labelled isolated build. The reported six-panel color STEP3 completed with HTTP 200 and gpt-6-luna, with fallback disabled. The original shallow-low-angle sentence was preserved. The explicit-eye-level control stopped before the API. The v8.1.7 version bump and documentation changes do not modify this logic."
+    "findings": "公式料金表でOpenAI Standardの画像と対象テキストモデルの参照価格、およびGemini 3.8 Flashの現行Standard適用期間を再確認。価格設定のハッシュは前版と一致し、今回の変更に新しい画像モデル、単価または課金経路の追加はない。"
   }
 }
