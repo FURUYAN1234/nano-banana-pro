@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "552d561d6c7dfe477b94c7d84c9b1f79c012f63a9fe297b3bfd7e2c5e756088e",
-  "manualVersion": "8.2.0",
-  "manualSourceSha256": "9d98b42e0ac47ec4e53b14ccb91c079bb5f3b574a161722bd447c49f79927924",
+  "manualVersion": "8.2.1",
+  "manualSourceSha256": "1a35d9fe7e03455290290b3df045a34bd9623609a8f819cbbd8a6e7a590df3df",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "a654519e65d2305dcaed3f4f1fcc4aed847d77e0c8dbbcb2165d490747cb860e"
+      "sha256": "4bc2a8049ecc0d0b3a6eb903ea4020c65b3d61033caa78a6482a39cdbc085aac"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "f0e7d2fcc7584e76aa065b54b89cda0eab83b12da34b9d503a83ce8477467680"
+      "sha256": "fc862a0589fffd5d4d6746520f0279a034c4169fe508887a2046b7987e83e148"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "9ad2573640e1f302ce92d06504c20a0962cb0c8c50cfc12c861458dc9e173bdd"
+      "sha256": "0ddee6f6a73b37d5c93bd68c027af17cc69a173a2d39cfd1630733156bd971be"
     }
   ],
-  "readmeSha256": "a9dfd1030fc4aaad55ff9e79eb81aeb5bcc19a585709275ea533d45c50616b3b",
+  "readmeSha256": "7dab132b4ce7494a3e63e89789c5679cd958b00e60ea9afde6e23d194ec83b66",
   "readmeLanguageGaps": [],
-  "sourceTree": "8fb235b1c3568dd4e44c6caf6aaea112e5f5e715",
-  "publicTree": "8616f4dc2fdddad6abf51e7a4df179d566db88f4",
-  "packageSha256": "eb9e99c22c7405b70f871332a55f7567f0b53b74891b5fe8cda151e03499e1ca",
+  "sourceTree": "ce6f930161c7e862b3cdd00761de94bd8f6aaf1f",
+  "publicTree": "2f98015eaa33f026bb827db81fcd0129cfe4e0ed",
+  "packageSha256": "3b2a4658be77aaa632a0a5c8ec5838035aeb8902e7dadd03333509d10f6847bd",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -43,24 +43,24 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "2678d4ce54c8ebfb0bc977fd50f2c6add997afa8",
-  "reviewedAt": "2026-11-25T00:37:56.307Z",
+  "candidateCommit": "827eb2b886a1d5238068211b79bb99704e7e930e",
+  "reviewedAt": "2026-11-25T14:53:28.000Z",
   "reviewStage": "release-candidate",
   "reviewedWorkingTree": "clean",
-  "findings": "公開v8.1.9のREADME全19節を参照し、台本・本文ページの撮影・作画・査読と枠越えの説明を更新した。版、H3の取得リンク、通常単価の確認日を統一。設定画数や拡張子などに作品固有の条件は追加しない。",
-  "manualFindings": "3冊全78ページのA4判型、版・更新日と本文を描画比較。操作マニュアル14・19・45ページ、Gemini APIガイド1ページの本文差分と3冊の版表記を目視確認。OpenAI APIガイドの操作本文は従来のまま。",
+  "findings": "README全節を公開版と候補版のソース差分で照合。本文のMCP制作、最新版紹介の入口、配布アセット版、変更履歴を更新。既存の旧版の作例は対象版を明記。本文、画面の主要リンク、版の記載を読み直した。",
+  "manualFindings": "3冊78ページの版、寸法、文字とリンクを検査し、旧版と各ページを描画比較。Gemini案内1ページ、全機能19・46ページの本文差を確認。46ページの台本提示と作品フォルダー保存を実画像で確認。",
   "pricingReview": {
-    "version": "8.2.0",
+    "version": "8.2.1",
     "sourceSha256": "552d561d6c7dfe477b94c7d84c9b1f79c012f63a9fe297b3bfd7e2c5e756088e",
-    "checkedAt": "2026-11-25T00:37:56.307Z",
+    "checkedAt": "2026-11-25T14:53:28.000Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "OpenAI Standard短文のGPT-6 Lunaは入力0.10、キャッシュ読取0.01、出力0.50。GPT Image 2.6はStandard画像入出力8.00/30.00、Gemini 3.8 FlashはStandardテキスト0.75/3.75、Nano Banana 2.1の2K画像出力概算0.0504。表示は通常従量としBatch割引を混ぜない。"
+    "findings": "公式Standardの対象モデルと通貨・単位を照合。OpenAI GPT Image 2.6 Sunburstの画像入出力は米ドル8.00/30.00、Gemini 3.8 Flashのテキストは0.75/3.75、Nano Banana 2.1の2K画像出力は概算0.0504。StandardとBatchを区別。"
   },
   "apiValidation": {
-    "version": "8.2.0",
-    "scope": "v8.1.9表記の開発ビルド（今回の製品作画ロジックを含む）の正規MCPから「閉館後のワルツ」の8コマ台本を入力し、候補用コンパイラの出力を手直しせずカラー・白黒各1ページを実APIで作画。生成はGPT Image 2.6 Sunburst High 2240×3168。脚の後ろで枠線と溝が途切れ、読順・台詞・人物を保つことを目視。作画前に失敗した詳細台本は元の入力そのままで新しいカメラ検査を通過させ、未指定・禁止は引き続き拒否を確認。"
+    "version": "8.2.1",
+    "scope": "同一のv8.2.0作画処理で最新版の制作スキルを使い、窓ぎわの一杯と幕に飛ぶ鳥をOpenAI経由の実MCPで各2ページ作画。後者の一部は修正候補を採用して目視し、採用したPNG・制作JSONをWindowsで確認。候補版の作画ロジックは同一で、版と文書を更新。"
   }
 }
