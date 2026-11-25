@@ -1707,9 +1707,9 @@ test('untyped or ungrounded boundary accusations stay unverified rather than for
 test('visual QA explicitly audits clean panel-border breakthroughs', () => {
   const prompt = buildImageQualityQaPrompt({ mode: 'four-panel', panelCropCount: 4 });
   assert.match(prompt, /PANEL EDGE CONTINUITY CHECK/i);
-  assert.match(prompt, /continuous head\/hair silhouette/i);
-  assert.match(prompt, /border line.*stops behind/i);
-  assert.match(prompt, /slicing through face\/hair.*panel_layout defect/i);
+  assert.match(prompt, /continuous silhouette, including any visible crossing limbs, clothes, face and hair/i);
+  assert.match(prompt, /border line and gutter stop behind that silhouette/i);
+  assert.match(prompt, /overprinted frame or gutter.*panel_layout defect/i);
   assert.match(prompt, /Default headroom is not an absolute full-head requirement/);
   assert.match(prompt, /loss_type=crop_only\|broken_contour\|page_clip\|required_extent_hidden\|uncertain/);
   assert.match(prompt, /requirement_quote copied exactly from that panel Camera\/Action/);

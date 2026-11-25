@@ -162,7 +162,7 @@ export const restoreReviewedFoldRendering = value => {
 };
 
 export const restorePreSelectionContracts = (value, context = {}) => {
-  let result = restoreReviewedFoldRendering(restoreReviewedChibiWardrobe(restoreReviewedShotExecution(restoreReviewedActorMedium(value))));
+  let result = restoreReviewedFoldRendering(restoreReviewedChibiWardrobe(restoreReviewedShotExecution(restoreReviewedActorMedium(restorePanelEdgePolicyBefore820(value)))));
   const compact = result.includes('TYPE: title ');
   for (const contract of selectionContracts.entries) {
     if (contract.providerFamily && contract.providerFamily !== context.providerFamily) continue;
@@ -189,7 +189,7 @@ export const restorePreSelectionContracts = (value, context = {}) => {
 // These older snapshots freeze art-style isolation. The user has since changed
 // the shared writing policy and required physical-cast allocation. Normalize ONLY
 // those accepted shared contracts; all other prompt bytes remain frozen.
-export const restorePrePolicyContracts = value => restoreFooterPolicyBefore742(value)
+export const restorePrePolicyContracts = value => restoreFooterPolicyBefore742(restorePanelEdgePolicyBefore820(value))
   // Exact inverse of the separately tested rear-anchor correction. Preserve the
   // media-isolation baseline; unknown cue or authored-content changes still fail.
   .replaceAll('rear view: 後方は基準対象に対して保持。背面指定の人物だけ背面を描く。場所/道具の向きで全員を回さない。距離/切取り保持、肩越し接写を強制しない', 'show back planes of the scripted subject; preserve crop/distance, no forced close OTS')
@@ -231,3 +231,9 @@ export function restoreCastCountWordingBefore804(value) {
 export const restoreHandInkBeforeLocal = value => handInkContracts.mappings.reduce(
   (text, [current, previous]) => text.replaceAll(current, previous),
   restoreCastCountWordingBefore804(value).replaceAll(handInkContracts.cue + ' ', ''));
+
+export const restorePanelEdgePolicyBefore820 = value => String(value)
+  .replaceAll('the frame line and gutter both stop where the continuous silhouette overlaps them, including limbs, clothing, face and hair, and resume only beyond it. Never draw a border through that silhouette, sever it, duplicate an outside fragment, or shift the inside and outside segments. Preserve authored crossings by adjusting nearby open space. An optional crossing may be omitted if it would obscure the story.', 'the border line stops behind the complete head/hair silhouette and resumes after it. Never run a border through the face or hair, sever the silhouette, duplicate an outside fragment, or shift the inside and outside segments. If a clean breakthrough cannot be rendered, keep the complete silhouette inside the panel.')
+  .replaceAll('EDGE breakout: body/clothes hide line/gutter; resume.', 'EDGE breakout: line behind hair; uncut/aligned.')
+  .replaceAll('枠線と溝は腕・脚・衣装・顔・髪を含む越境シルエットの後ろで止まり、輪郭の外で再開。身体や衣装を枠線で貫く', '枠線は頭/髪の全輪郭の後ろで止まり、その後に再開。顔/髪を枠線で貫く')
+  .replaceAll('腕/脚/衣装/頭を含む越境輪郭の後ろで枠/溝を止め、輪郭の外で再開。身体の切断/複製', '輪郭後ろで枠/溝を止め再開。頭の切断/複製');

@@ -1,4 +1,4 @@
-import { restoreHandInkBeforeLocal, restoreFocusBefore756 } from './helpers/prompt-policy-normalization.mjs';
+import { restoreHandInkBeforeLocal, restoreFocusBefore756, restorePanelEdgePolicyBefore820 } from './helpers/prompt-policy-normalization.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
@@ -9,7 +9,7 @@ import { restoreReviewedActorBindings, restoreWritingPolicyBefore729 } from './h
 
 const special = bindingStyles.slice(1, 4);
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/actor-medium-binding-before.json', import.meta.url), 'utf8'));
-const hash = value => createHash('sha256').update(restoreHandInkBeforeLocal(value)).digest('hex');
+const hash = value => createHash('sha256').update(restorePanelEdgePolicyBefore820(restoreHandInkBeforeLocal(value))).digest('hex');
 const namesFrom = text => [...(text.match(/(?:CAST COUNT:|ANTI-CLONE REMINDER:)[^\n]*/)?.[0] || '').matchAll(/\[([^\]]+)\]/g)].map(match => match[1]);
 const bindingsFrom = text => [...(text.match(/(?:CAST COUNT:|ANTI-CLONE REMINDER:)[^\n]*/)?.[0] || '').matchAll(/\[([^\]]+)\]=(POP_ART|WATERCOLOR|GEKIGA)/g)].map(match => ({ name: match[1], style: match[2] }));
 
@@ -67,8 +67,8 @@ try {
       const key = `${kind}/${providerFamily}/${count}`;
       // Measure actor-binding growth against the original lettering policy;
       // the new shared vertical-first rule is checked separately and remains
-      // part of the actual API budget below. Never strip artwork instructions.
-      const originalPolicyPrompt = restoreWritingPolicyBefore729(restoreFocusBefore756(restoreHandInkBeforeLocal(prompt)));
+      // part of the actual API budget below. The edge-occlusion wording is covered by its own tests.
+      const originalPolicyPrompt = restorePanelEdgePolicyBefore820(restoreWritingPolicyBefore729(restoreFocusBefore756(restoreHandInkBeforeLocal(prompt))));
       assert.ok(originalPolicyPrompt.length <= baseline[key].chars, `${key}: actor-binding prompt grew`);
       assert.ok(Buffer.byteLength(originalPolicyPrompt) <= baseline[key].bytes, `${key}: actor-binding UTF-8 grew`);
       if (providerFamily === 'chatgpt') assert.ok(prompt.length <= 32000, `${key}: actual image API budget exceeded`);
