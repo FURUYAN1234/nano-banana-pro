@@ -234,6 +234,6 @@ export const restoreHandInkBeforeLocal = value => handInkContracts.mappings.redu
 
 export const restorePanelEdgePolicyBefore820 = value => String(value)
   .replaceAll('the frame line and gutter both stop where the continuous silhouette overlaps them, including limbs, clothing, face and hair, and resume only beyond it. Never draw a border through that silhouette, sever it, duplicate an outside fragment, or shift the inside and outside segments. Preserve authored crossings by adjusting nearby open space. An optional crossing may be omitted if it would obscure the story.', 'the border line stops behind the complete head/hair silhouette and resumes after it. Never run a border through the face or hair, sever the silhouette, duplicate an outside fragment, or shift the inside and outside segments. If a clean breakthrough cannot be rendered, keep the complete silhouette inside the panel.')
-  .replaceAll('EDGE breakout: body/clothes hide line/gutter; resume.', 'EDGE breakout: line behind hair; uncut/aligned.')
+  .replaceAll('EDGE breakout: uncut body/clothes; gutter/line behind.', 'EDGE breakout: line behind hair; uncut/aligned.')
   .replaceAll('枠線と溝は腕・脚・衣装・顔・髪を含む越境シルエットの後ろで止まり、輪郭の外で再開。身体や衣装を枠線で貫く', '枠線は頭/髪の全輪郭の後ろで止まり、その後に再開。顔/髪を枠線で貫く')
   .replaceAll('腕/脚/衣装/頭を含む越境輪郭の後ろで枠/溝を止め、輪郭の外で再開。身体の切断/複製', '輪郭後ろで枠/溝を止め再開。頭の切断/複製');
