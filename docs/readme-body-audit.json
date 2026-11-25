@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-  "manualVersion": "8.1.9",
-  "manualSourceSha256": "ac99adcadae012115d06d5f6c1dc465e2de4848403fdaa3f8a4b10a548e6e70a",
+  "pricingSourceSha256": "552d561d6c7dfe477b94c7d84c9b1f79c012f63a9fe297b3bfd7e2c5e756088e",
+  "manualVersion": "8.2.0",
+  "manualSourceSha256": "9d98b42e0ac47ec4e53b14ccb91c079bb5f3b574a161722bd447c49f79927924",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "281c914ace3e8946c1510ecb56877ca7c67abefc0792e7aaf5f7fff69a020be6"
+      "sha256": "a654519e65d2305dcaed3f4f1fcc4aed847d77e0c8dbbcb2165d490747cb860e"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "1b6c1fcbcb9c024d681efebb145aabde8cbb733de8716880063682dbe5c9f76b"
+      "sha256": "f0e7d2fcc7584e76aa065b54b89cda0eab83b12da34b9d503a83ce8477467680"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "5394f55fba105cb1a8f724088d5d14097f87b2a181a5fdedc91c08d519b342d6"
+      "sha256": "9ad2573640e1f302ce92d06504c20a0962cb0c8c50cfc12c861458dc9e173bdd"
     }
   ],
-  "readmeSha256": "eca45b10d8dcba6ef721c3572b0f4f1f50f2e58f5f677cefbce4565bd3c68402",
+  "readmeSha256": "a9dfd1030fc4aaad55ff9e79eb81aeb5bcc19a585709275ea533d45c50616b3b",
   "readmeLanguageGaps": [],
-  "sourceTree": "0e6d0739c009efd08befe847e4e5e466d73a6886",
-  "publicTree": "4307a15345e166b814b8ee612cb99c253c3fc241",
-  "packageSha256": "6c5ceee8f859abf643dbfa5335358b18130e273360e561d6d32c2a7cb420bc48",
+  "sourceTree": "29e9899b552235158a347f46c784efc38a28f3db",
+  "publicTree": "8616f4dc2fdddad6abf51e7a4df179d566db88f4",
+  "packageSha256": "eb9e99c22c7405b70f871332a55f7567f0b53b74891b5fe8cda151e03499e1ca",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -43,26 +43,24 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "bbc8b56e9318c072f60a3f7090a8a12f46df76bf",
-  "reviewedAt": "2026-11-24T09:41:20.212Z",
-  "reviewStage": "local-committed-source",
-  "reviewedWorkingTree": false,
-  "findings": "公開版から全19節の差分を照合。撮影位置・向きの説明と変更履歴を追加し、版表記とH3 ZIPリンクを同期。操作経路・モデル・料金の現行仕様を維持。",
-  "manualFindings": "3冊78ページのA4判型・版表記を照合。旧版との描画比較で変わった操作ガイド13・19ページ、Gemini APIガイド1ページと3冊の版情報を目視確認。",
+  "candidateCommit": "2678d4ce54c8ebfb0bc977fd50f2c6add997afa8",
+  "reviewedAt": "2026-11-25T00:37:56.307Z",
+  "reviewStage": "release-candidate",
+  "reviewedWorkingTree": "clean",
+  "findings": "公開v8.1.9のREADME全19節を参照し、台本・本文ページの撮影・作画・査読と枠越えの説明を更新した。版、H3の取得リンク、通常単価の確認日を統一。設定画数や拡張子などに作品固有の条件は追加しない。",
+  "manualFindings": "3冊全78ページのA4判型、版・更新日と本文を描画比較。操作マニュアル14・19・45ページ、Gemini APIガイド1ページの本文差分と3冊の版表記を目視確認。OpenAI APIガイドの操作本文は従来のまま。",
   "pricingReview": {
-    "version": "8.1.9",
-    "sourceSha256": "28334baf808c5f680af266c8581b256e755cb98f6b5db95b88429f502ce246b8",
-    "checkedAt": "2026-11-24T09:41:20.212Z",
+    "version": "8.2.0",
+    "sourceSha256": "552d561d6c7dfe477b94c7d84c9b1f79c012f63a9fe297b3bfd7e2c5e756088e",
+    "checkedAt": "2026-11-25T00:37:56.307Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
-      "https://developers.openai.com/api/docs/models/gpt-6-luna",
-      "https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "両社の公式Standard料金を確認。GPT-6 Lunaは入力$0.10、キャッシュ読取$0.01、出力$0.50/100万トークン。Gemini 3.8 Flashは入力$0.75、出力$3.75、Nano Banana 2.1の1K出力は$0.0336。対象の画像モデル単価も比較し、今回の料金設定は前版から変更なし。"
+    "findings": "OpenAI Standard短文のGPT-6 Lunaは入力0.10、キャッシュ読取0.01、出力0.50。GPT Image 2.6はStandard画像入出力8.00/30.00、Gemini 3.8 FlashはStandardテキスト0.75/3.75、Nano Banana 2.1の2K画像出力概算0.0504。表示は通常従量としBatch割引を混ぜない。"
   },
   "apiValidation": {
-    "version": "8.1.9",
-    "scope": "改修コードの通常ブラウザーSTEP2（画面表示v8.1.8）で、カラー・手動・実験モードの5コマをGPT-6 Lunaで生成。指定した第4コマのカメラ文は最初の候補で通過。v8.1.9の共通検査で同じ実API台本を受理した。別の物語査読で伏線への指摘があり候補を保持した。"
+    "version": "8.2.0",
+    "scope": "v8.1.9表記の開発ビルド（今回の製品作画ロジックを含む）の正規MCPから「閉館後のワルツ」の8コマ台本を入力し、候補用コンパイラの出力を手直しせずカラー・白黒各1ページを実APIで作画。生成はGPT Image 2.6 Sunburst High 2240×3168。脚の後ろで枠線と溝が途切れ、読順・台詞・人物を保つことを目視。作画前に失敗した詳細台本は元の入力そのままで新しいカメラ検査を通過させ、未指定・禁止は引き続き拒否を確認。"
   }
 }
