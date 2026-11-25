@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.2.0** / 現在のソース版: **v8.2.0**
+> Current source version: **v8.2.1** / 現在のソース版: **v8.2.1**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -64,7 +64,7 @@ The API connection dialog shows the usage, OpenAI API and Gemini API manuals in 
 
 ## Introduction video / 紹介動画
 
-[![Watch the Super FURU AI 4-koma System introduction / Super FURU AI 4-koma Systemの紹介動画を見る](https://i.ytimg.com/vi/fqSRLqBuFHg/hqdefault.jpg)](https://youtu.be/fqSRLqBuFHg)
+[Watch the narrated v8.2.1 introduction / v8.2.1のナレーション付き紹介動画を見る（note）](https://note.com/happy_duck780/n/ndf063558c1f5)
 
 ## Application screen and output / 操作画面と生成例
 
@@ -77,6 +77,8 @@ The left image shows previous-release connection and reference controls; current
 https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
 ## Multipage production through MCP / MCPで複数ページを制作
+
+The production skill presents a complete recommended script with direction suited to each scene. When two approaches have meaningfully different effects, it shows both scripts in full, explains the difference and recommends one with a reason. After approval, it carries the intended reveal, pacing and focus into drawing and checks them on the finished pages. / 制作スキルは、場面の狙いに合わせた演出を織り込んだおすすめ台本を提示します。読後の印象が大きく変わる場合だけ、A案・B案の全文、違いとおすすめの理由を示します。承認後は、見せる順番や間、視線の誘導を作画に引き継ぎ、完成ページで確認します。
 
 The production skill also supports a single manga page. When a manga request leaves the method unspecified, Codex offers this MCP workflow first and asks once. An explicitly selected or already accepted method is reused. A one-page request stays one page, without adding a separate cover. / 制作スキルは1P漫画にも対応します。漫画の制作方法が未指定なら、このMCP方式を第一候補として一度確認します。指定済み・了承済みの方法は聞き直しません。1Pの依頼では、別の表紙を勝手に追加せず1ページで制作します。
 
@@ -850,7 +852,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -914,7 +916,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.2.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.2.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.2.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.2.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -986,6 +988,11 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | AI Tracer Nazori-kun / AIトレーサー なぞり君 | Replay inking and original-color fills in a browser / ブラウザーでペン入れと元色の彩色を再生 | [Web app / 公開アプリ](https://furuyan1234.github.io/ai-tracer-nazori-kun/) · [GitHub](https://github.com/FURUYAN1234/ai-tracer-nazori-kun) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.2.1 (2026-11-25)
+
+- Updated the bundled MCP manga production skill to plan direction around each scene, including quiet exchanges, tension and reveals across a page turn. / 同梱のMCP漫画制作スキルを更新し、静かな会話、緊張感、ページをめくった先の見せ場など、場面の狙いに合わせて演出を組み立てます。
+- A complete recommended script is the default. When a choice matters, the skill provides both complete scripts, their differences and a recommendation. / 基本はおすすめ台本一案です。選択で印象が変わる場合は二案の全文、違いとおすすめの理由を示します。
 
 ### v8.2.0 (2026-11-25)
 - **[Fix & UX]** Carry explicitly authored eye-level book cameras into drawing and review, and hide borders and gutters behind crossing bodies and clothing / MCP本文のアイレベル指定を作画と査読へ引き継ぎ、枠越えする身体・衣装の後ろで枠線と溝を止める

@@ -1,3 +1,7 @@
+# v8.2.1 release candidate
+
+The bundled MCP manga production skill now applies scene-specific direction at script review and visual readback. The recommended-script and two-full-script paths were used for the two-page works 窓ぎわの一杯 and 幕に飛ぶ鳥. See [v8.2.1 release notes](docs/releases/v8.2.1.md).
+
 # v8.2.0 release candidate
 
 An explicitly assigned eye-level camera survives scenario validation, book-page drawing and review. Frame lines and gutters stop behind the connected limbs and clothing of a character crossing the panel edge. Both first-pass MCP pages for Waltz After Closing showed the intended leg crossing and occlusion. See [v8.2.0 release notes](docs/releases/v8.2.0.md).
