@@ -1,3 +1,7 @@
+# v8.2.0 release candidate
+
+An explicitly assigned eye-level camera survives scenario validation, book-page drawing and review. Frame lines and gutters stop behind the connected limbs and clothing of a character crossing the panel edge. Both first-pass MCP pages for Waltz After Closing showed the intended leg crossing and occlusion. See [v8.2.0 release notes](docs/releases/v8.2.0.md).
+
 # v8.1.9 release candidate
 
 STEP2 recognizes an upward shot from a camera near the floor or ground. The shared rule also supplies the corresponding low-angle drawing cue. See [v8.1.9 release notes](docs/releases/v8.1.9.md).
