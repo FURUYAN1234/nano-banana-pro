@@ -32,6 +32,27 @@ try {
       assert.match(prompt, /foreshortening.*occlusion/);
     }
   });
+  test('authored book eye-level survives layout, image and review prompts', async () => {
+    const count = 6;
+    const elevation = 'アイレベルで箱を運ぶ全身';
+    const book = { enabled:true, scenarioMode:createBookPageMode(count,{finalPage:true}), castList:'葵', colorMode:'color', providerFamily:'chatgpt',
+      scenario:Array.from({length:count},(_,i)=>'['+(i+1)+'コマ目]\n[Camera: '+(i===0?elevation:'右上方から見下ろす俯瞰')+']\n[EMOTION: NORMAL]\n状況: 葵が箱を運ぶ。\nセリフなし').join('\n') };
+    const layout = { count, layout:'hero_top', reason:'箱を運ぶ', panels:Array.from({length:count},(_,i)=>({ sourcePanel:i+1, kind:'anchor', action:'葵が箱を運ぶ', dialogueIds:[] })) };
+    assert.throws(()=>native.readExperimentalSource({...book,scenarioMode:'experimental-manga'}),/アイレベル/);
+    const prepared=await native.prepareExperimentalManga(book, async prompt=>{
+      assert.doesNotMatch(prompt,/No eye-level shots/);
+      assert.match(prompt,/Eye-level is required only for P1/);
+      return JSON.stringify(layout);
+    });
+    assert.equal(prepared.plan.panels[0].camera,elevation);
+    assert.match(prepared.prompt,/Eye-level is required only for P1/);
+    const review=native.buildExperimentalReviewPrompt(prepared.plan,prepared.source);
+    assert.match(review,/Eye-level is required only for P1/);
+    const swapped=structuredClone(prepared.plan);
+    swapped.panels[1].camera=elevation;
+    assert.throws(()=>native.validateExperimentalPlan(swapped,prepared.source),/Camera/);
+  });
+
   for (const count of [1, 2, 3]) test(`shared native ${count}-panel contract reaches layout, rendering and review without rewriting source`, () => {
     const mode = createBookPageMode(count);
     const scenario = Array.from({ length: count }, (_, i) => `[${i + 1}コマ目]\n[Camera: 強い右上方からの俯瞰、広角で全身を捉える]\n[EMOTION: NORMAL]\n状況: 葵が箱の蓋を持ち上げ中を確認する。\nセリフなし`).join('\n');

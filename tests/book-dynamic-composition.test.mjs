@@ -94,3 +94,19 @@ test('book foreground selection preserves a dominant body through normal and com
   }
 });
 const extractAction=text=>text.match(/状況: ([^\n]+)/)?.[1]||text;
+
+test('an authored leg or garment crossing hides the shared frame line and gutter in both media', async()=>{
+  for(const [colorMode,part] of [['color','ユウの右脚と靴'],['monochrome','ユウのコートを着た肩と腕']]) {
+    const c=layoutFor(2);
+    c.breakouts[0].part=part;
+    const input={enabled:true,scenarioMode:'book-page-2-continue',castList:'## ユウ',colorMode,scenario:scenarioFor(2,c)};
+    const source=native.readExperimentalSource(input);
+    const result=await native.prepareExperimentalManga(input,async()=>JSON.stringify({count:2,layout:'free',reason:'境界を越える動勢',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',action:extractAction(p.text),dialogueIds:p.dialogueIds}))}));
+    assert.match(result.prompt,/P1 crosses into (?:adjacent )?P2/);
+    assert.match(result.prompt,/Hide BOTH the frame line and gutter wherever the crossing silhouette covers them/);
+    assert.match(native.buildExperimentalReviewPrompt(result.plan,source),/locate any frame line or gutter visibly drawn over the crossing anatomy or clothing/i);
+    const contained=native.readExperimentalSource({...input,scenario:scenarioFor(2,{...c,breakouts:[]})});
+    const noCrossing=await native.prepareExperimentalManga({...input,scenario:contained.scenario},async()=>JSON.stringify({count:2,layout:'free',reason:'読みやすい通常配置',panels:contained.panels.map(p=>({sourcePanel:p.id,kind:'anchor',action:extractAction(p.text),dialogueIds:p.dialogueIds}))}));
+    assert.doesNotMatch(noCrossing.prompt,/REQUIRED BREAKOUT:|Hide BOTH the frame line/);
+  }
+});

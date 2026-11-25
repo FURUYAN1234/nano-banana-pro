@@ -113,13 +113,25 @@ const userRequestsEyeLevel = (userTopic, panelNumber) => {
   const userPanel = getScenarioPanelBlocks(source).find(panel => panel.num === panelNumber && panel.found);
   const explicitCamera = userPanel?.text.match(/\[Camera\s*[:：]\s*([^\]]+)\]/i)?.[1];
   if (explicitCamera && !negated.test(explicitCamera) && classifyCameraElevation(explicitCamera) === 'eye') return true;
-  return source.split(/[。！？、，,;；\n]/u).some(sentence => {
-    if (!/(?:アイレベル(?:で|に|の)|eye[ -]level\s+(?:shot|view|camera))/i.test(sentence)
-      || negated.test(sentence)) return false;
-    const panels = [...sentence.matchAll(/([1-8一二三四五六七八])\s*コマ目/gu)]
-      .map(match => normalizePanelNumber(match[1]));
-    return panels.length ? panels.includes(panelNumber)
-      : /全コマ|各コマ|カメラ(?:は|を)|\b(?:all|every) panels?\b/i.test(sentence);
+  const panelNumbers = sentence => [...sentence.matchAll(/([1-8一二三四五六七八])\s*コマ目/gu)]
+    .map(match => normalizePanelNumber(match[1]));
+  return source.split('\n').some(line => {
+    const sentences = line.split(/[。！？、，,;；]/u).map(sentence => sentence.trim()).filter(Boolean);
+    return sentences.some((sentence, index) => {
+      if (!/(?:アイレベル(?:で|に|の)|eye[ -]level\s+(?:shot|view|camera))/i.test(sentence)
+        || negated.test(sentence)) return false;
+      const panels = panelNumbers(sentence);
+      if (panels.length) return panels.includes(panelNumber);
+      if (/全コマ|各コマ|\b(?:all|every) panels?\b/i.test(sentence)) return true;
+      // A page outline can put the medium and Camera in neighboring sentences.
+      // Bind that Camera only to the immediately preceding numbered panel on the same line.
+      const prior = sentences[index - 1] || '';
+      if (/^(?:第\s*)?[1-8一二三四五六七八]\s*コマ目/u.test(prior)) {
+        const assigned = panelNumbers(prior);
+        return assigned.length === 1 && assigned[0] === panelNumber && !negated.test(prior);
+      }
+      return /カメラ(?:は|を)/u.test(sentence);
+    });
   });
 };
 

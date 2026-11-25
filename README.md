@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.1.9** / 現在のソース版: **v8.1.9**
+> Current source version: **v8.2.0** / 現在のソース版: **v8.2.0**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -287,7 +287,9 @@ STEP3 matches annotated character names to a unique registered alias before chec
 
 A connected page foreground retains its source scene’s medium across another panel. When independently observed body ownership supports this overlap, the receiver’s mixed-media observation is checked per body rather than rejected merely for being mixed; unknown ownership or a wrong actor medium remains rejected. / 一続きのページ前景は、別コマへ重なっても元の場面の画風を保持します。独立した身体観測で所属を確認できる場合は、受入枠の混在画風を人物別に照合し、混在だけで違反にしません。所属不明や人物の誤った媒体は引き続き検出します。
 
-Camera validation accepts an elevated placement followed by a comma and a shot direction, such as a high position followed by a front or side view. Actor or prop height alone and explicitly negated high/low camera positions do not establish a camera angle; a real camera origin before an actor description remains valid. The existing eye-level and fisheye restrictions remain. / カメラ検査では「高い位置、正面から…」のように撮影位置を読点で区切って方位を続けた記述も認識します。人物や小道具の高さだけの記述、否定された高低の撮影位置は撮影角度とみなしません。人物の説明より前にある実際の撮影起点は保持し、アイレベルと魚眼の既存制限も維持します。
+Camera validation accepts an elevated placement followed by a comma and a shot direction, such as a high position followed by a front or side view. Actor or prop height alone and explicitly negated high/low camera positions do not establish a camera angle; a real camera origin before an actor description remains valid. The existing rules on unassigned eye-level shots and fisheye remain. / カメラ検査では「高い位置、正面から…」のように撮影位置を読点で区切って方位を続けた記述も認識します。人物や小道具の高さだけの記述、否定された高低の撮影位置は撮影角度とみなしません。人物の説明より前にある実際の撮影起点は保持し、未指定のアイレベルや魚眼には既存の制限が適用されます。
+
+On book pages, an explicitly assigned eye-level shot stays attached to its panel through STEP2, layout, rendering and review. In the same outline entry, the camera may follow the panel's medium in the next sentence. Automatic shots still use an identifiable high or low camera position. / 本文ページで明示したアイレベルは、台本・構成・作画・査読を通じてそのコマに引き継ぎます。同じ構成欄で画風の次の文にカメラを書いても指定が届きます。自動で決めるカメラには、俯瞰かアオリの撮影位置が必要です。
 
 STEP3 reserves room for reference-image instructions. On monochrome overflow, compiler-owned drawing rules use equivalent Japanese wording. The source scenario and planned Action both remain verbatim, including dialogue, cameras, media and layout. Inputs still above the limit stop before the image API request; the failure log retains the assembled candidate. / STEP3は参照画像の説明用の文字数も予約します。白黒で上限を超える場合は、アプリ側の共通描画ルールを同じ条件の日本語で記載します。元台本とActionの全文、台詞・カメラ・描法・コマ割りは保持します。それでも超過する入力は画像APIの送信前に停止し、失敗ログへ組立後の候補全文を残します。
 
@@ -502,7 +504,7 @@ OpenAI STEP1, STEP2 and STEP3 each start at `gpt-6-luna` and can be selected ind
 
 GPT-6.2 Astra and GPT-6.2 Sol can be selected in STEP1–3. Astra 6.2 can fall back to Sol 6.2, followed by the existing Sol 6.1 route. Sol 6.2 starts its fallback at Sol 6.1. Existing selections and automatic routes keep their original order. / STEP1〜3でGPT-6.2 AstraとSolを選べます。6.2 Astraを選ぶと、失敗時は6.2 Sol、次に6.1 Solの経路へ進みます。6.2 Solの次は6.1 Solです。既存の選択と自動経路は従来の順序を保ちます。
 
-| Standard short context, USD per 1M tokens / 短文・100万トークン当たり（2026-11-21） | Input / 入力 | Cached read / キャッシュ読取 | Output / 出力 |
+| Standard short context, USD per 1M tokens / 短文・100万トークン当たり（2026-11-25） | Input / 入力 | Cached read / キャッシュ読取 | Output / 出力 |
 | --- | ---: | ---: | ---: |
 | `gpt-6.2-astra` | $8 | $0.40 | $40 |
 | `gpt-6.2-sol` | $2 | $0.10 | $10 |
@@ -760,7 +762,7 @@ In STEP2, an upward view from a camera positioned close to the floor or ground i
 
 In the 4–8-panel comprehensive review with automatic repair ON, positive visual evidence that an output is not a comic rejects that candidate, stops full-auto/loop processing and prevents its use as an automatic repair source or automatic save. Retry STEP4 from the original drawing prompt. Uncertain panel boundaries alone do not trigger this verdict; automatic repair OFF skips the review. / 自動修正ONの4～8コマ用総合検査で、画像上の根拠から漫画以外と判定した候補は不採用にします。その画像を自動修正元・自動保存に使わず、全自動・連続生成を止めます。STEP4で元の描画指示から再生成してください。境界不明だけではこの判定にせず、自動修正OFFでは検査を行いません。
 
-An authored breakout is composed as one foreground body across its source and receiving panels; the receiving panel's camera and medium apply to its local actors. An incomplete review remains unverified, while a separately grounded failure of the required composition can still enter the same bounded repair. Missing observations or uncertain boundaries alone never authorize a repair. / 指定した枠越えは、元のコマと受け入れるコマをまたぐ一つの身体として配置します。受け入れ側のカメラと描法は、その場面の独立した人物へ適用します。検査の欠落は未確認を維持しつつ、実際の枠境界と指定構図の失敗を独立に確認できた場合は、同じ最大1回の修復へ渡します。観察の不足や境界不明だけでは修復を起動しません。
+An authored breakout is composed as one foreground body across its source and receiving panels; the receiving panel's camera and medium apply to its local actors. An incomplete review remains unverified, while a separately grounded failure of the required composition can still enter the same bounded repair. Missing observations or uncertain boundaries alone never authorize a repair. / 指定した枠越えは、元のコマと受け入れるコマをまたぐ一つの身体として配置します。受け入れ側のカメラと描法は、その場面の独立した人物へ適用します。検査の欠落は未確認を維持しつつ、実際の枠境界と指定構図の失敗を独立に確認できた場合は、同じ最大1回の修復へ渡します。観察の不足や境界不明だけでは修復を起動しません。 A visible crossing silhouette can cover the line and gutter with an arm, leg, garment or any other authored body part. The line resumes outside the silhouette. / 腕・脚・衣装などが枠を越える箇所では、見えている輪郭の内側で枠線と溝を止め、外側で再開します。
 
 Visual QA requests ordinary JSON objects and arrays, retaining actors, hands, text, coordinates and checks instead of imposing a second positional table format. Compatible older table responses are still validated and expanded; malformed reports and output-limit termination remain unverified and cannot authorize image repair. Required evidence takes priority over a fixed brevity target. QA reads cast contracts from both compact and full provider prompts. This does not guarantee that every API review fits its output limit. / 画像QAは通常のJSON形式で回答を求め、人物・手・文字・座標・検査項目を保持します。位置依存の表形式への変換を追加要求しません。以前の表形式の回答も検証・展開できますが、不正な回答や出力上限での終了は未確認として扱い、画像修正の根拠にはしません。固定の短文化目標より必須の根拠を優先し、短縮版・通常版のプロンプト双方から人物一覧を読み取ります。すべてのAPI検査が上限内に収まる保証ではありません。
 
@@ -848,7 +850,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.1.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -912,7 +914,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.1.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.1.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.2.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.2.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -983,6 +985,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Local Handoff MCP / ローカルの作業引き継ぎ | Resume work between Codex and Antigravity in the same project folder / 同じ作業フォルダーでCodexとAntigravityの作業を引き継ぐ | [GitHub](https://github.com/FURUYAN1234/local-handoff-mcp) · [Guide / 解説](https://note.com/happy_duck780/n/n806c7bc6de94) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.2.0 (2026-11-25)
+- **[Fix & UX]** Carry explicitly authored eye-level book cameras into drawing and review, and hide borders and gutters behind crossing bodies and clothing / MCP本文のアイレベル指定を作画と査読へ引き継ぎ、枠越えする身体・衣装の後ろで枠線と溝を止める
 
 ### v8.1.9 (2026-11-24)
 - **[Fix & UX]** STEP2 recognizes upward shots specified from a position close to the floor or ground, avoiding needless regeneration or interruption. / STEP2で床や地面に近い撮影位置から上向きに捉えるカメラ指定をアオリとして扱い、台本の不要な再生成や停止を防ぎます。

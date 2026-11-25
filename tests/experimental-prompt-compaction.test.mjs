@@ -339,7 +339,7 @@ try {
       for(const p of source.panels) {assert.ok(prompt.includes('これは行動'+p.id+'。'));assert.ok(prompt.includes(p.camera));}
       for(const d of source.dialogue) assert.ok(prompt.includes(JSON.stringify(d.text)),d.text);
       assert.ok(prompt.includes(options.referenceContext));
-      if(colorMode==='color') for(const condition of ['外枠の四辺/四隅を余白付きで画布内','明示の枠なし/裁切り指定は優先','内部の枠越えは外周裁切りの許可ではない','隣場面への流出は明示時のみ','枠線は頭/髪の全輪郭の後ろで止まり','外側断片の複製','枠内外の位置ずれは禁止','全輪郭を枠内に保持','可視・自然な遮蔽・画面外に分類','本人の肩','本人の腰','隠れた部分も自然につなぐ','理由のない欠落','家具や他人の体から出る手足は禁止','隠れた四肢の露出や全身画角を強制しない','動作や構図を変えない']) assert.ok(prompt.includes(condition),condition);
+      if(colorMode==='color') for(const condition of ['外枠の四辺/四隅を余白付きで画布内','明示の枠なし/裁切り指定は優先','内部の枠越えは外周裁切りの許可ではない','隣場面への流出は明示時のみ','枠線と溝は腕・脚・衣装・顔・髪を含む越境シルエットの後ろで止まり','外側断片の複製','枠内外の位置ずれは禁止','全輪郭を枠内に保持','可視・自然な遮蔽・画面外に分類','本人の肩','本人の腰','隠れた部分も自然につなぐ','理由のない欠落','家具や他人の体から出る手足は禁止','隠れた四肢の露出や全身画角を強制しない','動作や構図を変えない']) assert.ok(prompt.includes(condition),condition);
       const quality=colorMode==='monochrome'?mono.MONOCHROME_IMAGE_QUALITY_CONTRACT:shared.buildImageQualityContract({panelMedia:true});
       const translated=[shared.FUNCTIONAL_SURFACE_ORIENTATION_LOCK,shared.OBJECT_GEOMETRY_LOCK,shared.BODY_ACTING_BASELINE,shared.EXPRESSIVE_DIRECTION,shared.FUNCTIONAL_SURFACE_PROJECTION_RULE,shared.HEAD_VOLUME_LOCK];
       const translatedPrefixes=/^- (?:Preserve the user's|Render a rich physical|Establish one primary focal subject or action and|FOCAL READABILITY: preserve|Keep lighting and color|SKIN LIGHT: colored|Keep coherent anatomy|Model clothing folds|Do not duplicate, merge|Keep focal surfaces)/;

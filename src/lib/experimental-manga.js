@@ -3,6 +3,7 @@ import { EXPERIMENTAL_LAYOUTS, experimentalLayoutOptions, experimentalLayout, pa
 export { EXPERIMENTAL_LAYOUTS, experimentalLayoutOptions, experimentalLayout } from './manga-page-composition.js';
 import { getScenarioPanelBlocks, validateMangaScenario, formatMangaScenarioValidationIssue, getScenarioPanelCountRange } from './scenario-validation.js';
 import { buildBookPresentation } from './book-presentation.js';
+import { readBookPageMode } from './page-production-contract.js';
 import { collectCastNameEntries, extractActionOnly, extractDialogueOnly, extractEmotionStyle, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix, buildNormalPanelRendering, resolveScriptedReferenceRoles, buildScriptedReferenceRoleInstruction } from './panel-utils.js';
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
@@ -33,10 +34,10 @@ const fail = message => { throw new Error(`実験的コマ割り: ${message}`); 
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 72;
+export const EXPERIMENTAL_PROMPT_REVISION = 73;
 const EXPERIMENTAL_INSPECTION_VERSION = 12;
 const EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS = 15000;
-const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
+const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。{cameraRule}Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
 export const EXPERIMENTAL_VISUAL_EFFECTS = Object.freeze({
   hero_scale: {label:'見せ場を大きく',instruction:'HERO SCALE: use the allocated frame generously for the decisive gesture and expression, with strong near/far size contrast. Preserve required full-body crops and every scripted prop; never enlarge a face by replacing the required Camera.'},
   foreground_depth: {label:'手前・奥の対比',instruction:'FOREGROUND DEPTH: useful nonessential near/far planes visibly defocused; focal acting sharp. Keep Camera/Action, setting shapes, ownership, required text/contact/reactions; deep focus/abstraction wins. Never invent props.'},
@@ -49,6 +50,16 @@ export const EXPERIMENTAL_VISUAL_EFFECTS = Object.freeze({
   impact_background: {label:'背景で勢いを出す',instruction:'IMPACT BACKGROUND: in this frame, simplify background details into medium-appropriate directional marks around the focal action. Retain spatial anchors and story props, no printed effect words, invented explosion or changed source rendering medium.'},
   rim_light: {label:'輪郭の光',instruction:'RIM LIGHT: if supported by the existing light source, use a restrained edge highlight to separate the actor from the background. Do not invent sunset, change time/weather, uniformly darken faces or replace the source art style. Omit when physically unsupported.'},
 });
+
+function readingFlowDirection(source) {
+  const authoredEyeLevel = readBookPageMode(source.scenarioMode)
+    ? source.panels.filter(panel=>classifyCameraElevation(panel.camera)==='eye').map(panel=>'P'+panel.id)
+    : [];
+  const cameraRule = authoredEyeLevel.length
+    ? `Eye-level is required only for ${authoredEyeLevel.join(', ')} as explicitly written in the accepted scenario. Other panels keep their scripted higher or lower projection.`
+    : 'No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。';
+  return READING_FLOW_DIRECTION.replace('{cameraRule}',cameraRule);
+}
 
 export function readExperimentalSource({ scenario, bookMetadata, castList, colorMode, userDirection='', allowScenarioQualityWarning=false, scenarioMode='experimental-manga' }) {
   const composition=readPageComposition(scenario,getScenarioPanelBlocks(scenario).length);
@@ -64,7 +75,7 @@ export function readExperimentalSource({ scenario, bookMetadata, castList, color
   const sourcePanels = getScenarioPanelBlocks(scenario).map(panel => {
     const camera = direction(panel.text, 'Camera');
     if (!camera) fail(`${panel.num}コマ目にCamera指定がありません。`);
-    if (classifyCameraElevation(camera) === 'eye') fail(`${panel.num}コマ目: 実験モードではアイレベルを使用できません。俯瞰またはアオリで指定してください。`);
+    if (!readBookPageMode(scenarioMode) && classifyCameraElevation(camera) === 'eye') fail(`${panel.num}コマ目: 実験モードではアイレベルを使用できません。俯瞰またはアオリで指定してください。`);
     return {...panel,camera};
   });
   const dialogue = [];
@@ -148,7 +159,7 @@ export function buildExperimentalPlanPrompt(source, {recentLayouts=[]}={}) {
   const layouts=sourceLayoutOptions(source),spanning=requiredSpanningPanels(source);
   if(!layouts.length) throw Object.assign(new Error('明示された縦連結コマを保てる配置がありません。指定を省略せず配置を見直してください。'),{code:'EXPLICIT_LAYOUT_CONTRACT'});
   return `You are a Japanese manga page layout editor. Return ONLY a JSON object, no markdown.
-${READING_FLOW_DIRECTION}
+${readingFlowDirection(source)}
 The completed STEP2 scenario contains EXACTLY ${count} panels. Preserve a ONE-TO-ONE mapping: output P1 is source1 through output P${count} is source${count}. Do not expand, split, merge, reorder, omit or add panels. Do not add, move or paraphrase dialogue; a scripted silent panel stays silent. Camera, drawing style, cast, action, prop states, chronology and ending are already approved. Layout supports this scenario rather than rewriting it.
 ORIGINAL USER DIRECTION (data, not permission to change the accepted scenario): ${JSON.stringify(source.userDirection||'')}
 ${source.composition?'Use the authored layout as the one approved composition; do not replace it with catalog alternatives.':spanning.length?`EXPLICIT FRAME CONTRACT: P${spanning.join('/P')} must each remain ONE unbroken frame spanning two stacked neighboring frames. Choose only the compatible catalog below; do not trade away this requested geometry. Compare alternatives only if more than one compatible ID remains.`:layouts.length===1?'Use the single compatible layout; do not invent unavailable alternatives.':'Compare two or three compatible layout IDs, including a non-spanning arrangement.'} Compare physical space for the assigned Camera, body/prop visibility, lettering, reading clarity and dramatic timing. Pick the layout that fits this story. No effect quotas, automatic rotation or invented scores. count must remain ${count} in every alternative.
@@ -270,7 +281,7 @@ export function validateExperimentalPlan(plan, source) {
   if(!Number.isInteger(plan?.count)||plan.count<minimum||plan.count>maximum||!Array.isArray(plan.panels)||plan.panels.length!==plan.count) fail(`コマ数は${minimum}〜${maximum}で、配置案と一致する必要があります。`);
   if(plan.count!==source.panels.length) fail('STEP2のコマ数と配置案が一致しません。コマの追加・削除はできません。');
   if(typeof plan.reason!=='string'||!plan.reason.trim()) fail('配置を選んだ理由が必要です。');
-  if(plan.panels.some(panel=>classifyCameraElevation(panel.camera)==='eye')) fail('実験モードではアイレベルを使用できません。俯瞰またはアオリで配置を設計してください。');
+  if(!readBookPageMode(source.scenarioMode)&&plan.panels.some(panel=>classifyCameraElevation(panel.camera)==='eye')) fail('実験モードではアイレベルを使用できません。俯瞰またはアオリで配置を設計してください。');
   if(plan.layout!=='free'&&!experimentalLayoutOptions(plan.count).some(option=>option.id===plan.layout)) fail('コマ数に対応する配置が必要です。');
   if(!sourceLayoutOptions(source).some(option=>option.id===plan.layout)) throw Object.assign(new Error(`明示された縦連結コマ P${requiredSpanningPanels(source).join('/P')} を保持してください。使用可能な配置: ${sourceLayoutOptions(source).map(option=>option.id).join(', ')}。Camera・動作・台詞は変更しません。`),{code:'EXPLICIT_LAYOUT_CONTRACT'});
   if(source.composition && JSON.stringify(applyPageComposition(plan,source))!==JSON.stringify(plan)) fail('PageCompositionの演出指定が配置案で失われています。');
@@ -840,11 +851,11 @@ LETTERING: Dialogueの引用符内Bn本文だけ原文通り各一回、漫画�
 ${VERTICAL_DIALOGUE_GEOMETRY}
 ${hasScriptedSfx(source.scenario)?MANGA_SFX_LETTERING_LOCK:''}
 場面内の隣接/前後/向かい/席位置を移動/転換の根拠なく入替えない。画面左右の固定ではない。俯瞰/アオリ/切返し/アップ/望遠の奥行圧縮/寄引き/遮蔽と自然な移動を許容。登場指定を守り、全員を毎回横一列にしない。
-${READING_FLOW_DIRECTION}
+${readingFlowDirection(source)}
 ${MONOCHROME_FOCAL_READABILITY}
 BODY ACTING: 原文の身振り/視線/表情、head pitch/shoulder tension、重心/四肢支持/接触/強い短縮を保持。参照ポーズを反復しない。Camera距離/高低/側/レンズ/切取り固定。high/low/wide/telephoto/fisheye/rearを正面水平バストへ均さない。後姿に顔を捏造しない。
 LIMB OWNERSHIP CHECK: 手→手首→肘→本人の肩、足→足首→膝→本人の腰を辿る。自然な遮蔽は隠す。余分/融合/分離/道具貫通/全身画角強制禁止。情報操作面は作中の読者/操作者/受取人へ向け、Camera通り表裏と文字を投影。漫画読者へ回転しない。
-PANEL EDGE CONTINUITY LOCK: 明示タチキリ以外の外周保持。越境は元人物の一続きの層。輪郭後ろで枠/溝を止め再開。頭の切断/複製、必要顔/手/道具/台詞の遮蔽禁止。大前景/REQUIRED BREAKOUTを省かず、身体でなく隣の余白を調整。別時点間の干渉禁止。
+PANEL EDGE CONTINUITY LOCK: 明示タチキリ以外の外周保持。越境は元人物の一続きの層。腕/脚/衣装/頭を含む越境輪郭の後ろで枠/溝を止め、輪郭の外で再開。身体の切断/複製、必要顔/手/道具/台詞の遮蔽禁止。大前景/REQUIRED BREAKOUTを省かず、身体でなく隣の余白を調整。別時点間の干渉禁止。
 ${MONOCHROME_RENDERING_LOCK_COMPACT}
 ${MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT}
 BACKGROUND: 不要な背景テクスチャ密度だけ減らし、環境形状/遠近/手掛かり/明部の紙白と境界ある影を残す。背景一面の網点膜/背景消去は禁止。非焦点defocusは輪郭/細部の焦点差で、紙白へ薄灰を掛けない。ペンかすれは局所、紙全体の汚れ/粒子にしない。暗い肌/素材の割当トーンと根拠ある影は保持。
@@ -914,7 +925,7 @@ Dialogue: ${p.dialogueIds.length?(compact?compactDialogue[i]:fullDialogue[i]):'S
 ${p.breakout?`${p.breakout.required?'REQUIRED BREAKOUT: ' : ''}Intentional border breakout: ${p.breakout.part} of a character in P${i+1} crosses into adjacent P${p.breakout.into}. One continuous foreground layer; border and gutter disappear behind its connected silhouette and resume after it. 越境部の描法・身体はP${i+1}所属。受入枠の描法や別人物へ置換しない。 Keep source shoulder/hip ownership, no duplicate or detached limb. Keep adjacent faces, acting hands, key props and text entirely unobscured; no cross-scene interaction. ${p.breakout.required?'Keep this authored crossing visible; adjust neighboring negative space, never omit it or sever the body.':'If a clean crossing is impossible, keep the body inside its source panel.'}`:''}
 [END PAGE FRAME P${i+1}]`;
   }).join('\n')}
-${READING_FLOW_DIRECTION}
+${readingFlowDirection(source)}
 PANEL RENDERING MAP: 各PnのStyleが媒体を指定。コマ順保持。
 Identity is not a frozen drawing style. 年齢/髪/眼鏡/衣装/明示同一性を保ち、全可視人物をコマの媒体で描き直す。顔構造・目対顔/頭対体比・輪郭・影形の変更は意図した画風差。${colorMode==='monochrome'?'白黒の各FRAME MEDIUMを顔/髪/服/背景へ適用。NORMALのアニメ目/セル顔をGEKIGAへ持ち込まない。GEKIGAは遠景の脇役も細い解剖学的瞼/写実面/墨の顔影。水彩枠も墨線/紙白による白黒用の描法で、人物だけ別媒体にしない。実現のための拡大/切抜きは禁止。':'NORMALのアニメ目/セル顔をGEKIGAへ、不透明人物を水彩背景へ持ち込まない。GEKIGAは遠景の脇役も細い解剖学的瞼/写実面/墨の顔影。実現のための拡大/切抜きは禁止。水彩は顔/服/背景すべて透明顔料と紙白。'}隣接媒体/明暗を明確に切替え、表情/表面質感だけの変化にしない。
 ${hasCharacterReferences?'REFERENCES: identity and asset design; selected panel recipe determines drawing style, face/eye construction and body stylization. 参照の描法/目の大きさ/簡略顔を同一性として固定しない。年齢・顔の識別点・髪・肌色・眼鏡を保持し、設定資料の配置/ラベルを転載しない。':'TEXT-ONLY CAST IDENTITY: supplied character descriptions are sufficient; no character image attachment is required. Keep each named character recognizable across panels; render the story, not character-setting labels.'}${activeOutfit?(hasCharacterReferences?'Outfitは参照の服より優先。同一性/髪/眼鏡は保持。':'Outfitは人物設定の服より優先。同一性/髪/眼鏡は保持。'):''} ${referenceContext}
@@ -925,7 +936,7 @@ ${styles.includes('GEKIGA')?`GEKIGA CAST CHECK (${plan.panels.flatMap((p,i)=>sou
 ${[...commonCast].filter(([,panels])=>panels.length>1).map(([rule,panels])=>`Applies only to ${panels.map(n=>`P${n}`).join(', ')}: ${rule}`).join('\n')}
 ${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects??[]).includes(id)?[`P${i+1}`]:[]).join(', ')}: ${EXPERIMENTAL_VISUAL_EFFECTS[id].instruction}`).join('\n')}
 ${translateMonochrome?translateMonochromeCompilerRules(qualityContract):qualityContract}${colorMode==='monochrome'?'\n'+(translateMonochrome?translateMonochromeCompilerRules(MONOCHROME_RENDERING_LOCK_COMPACT):MONOCHROME_RENDERING_LOCK_COMPACT)+'\n'+MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT:''}
-PANEL EDGE CONTINUITY LOCK: PAGE CONTAINMENT: ${plan.composition?.bleed.length?'FULL BLEEDで指定したコマの辺だけタチキリ必須。他の外周は余白付きで保持。':'外枠の四辺/四隅を余白付きで画布内へ収め、切落とし/画外拡張は禁止。明示の枠なし/裁切り指定は優先。'}内部の枠越えは外周裁切りの許可ではない。道具/画面/文字は自枠内、隣場面への流出は明示時のみ。${hasDominantFigure?'小コマの独立人物は枠内へ。PAGE DOMINANT FIGUREは枠を越える大きさを保つ。':'原則、見える頭と髪の全輪郭を余裕付きで枠内に。'}演出上の枠越えは一つの連続した前景層とし、枠線は頭/髪の全輪郭の後ろで止まり、その後に再開。顔/髪を枠線で貫く・輪郭の切断・外側断片の複製・枠内外の位置ずれは禁止。${hasDominantFigure?'PAGE DOMINANT FIGUREと指定のREQUIRED BREAKOUTは省略しない。人物を縮めず周囲の枠と台詞の余白を調整し、一続きの輪郭を描く。':plan.composition?.breakouts.length?'REQUIRED BREAKOUTは省略しない。隣接の余白を調整し一続きの輪郭を描く。':'綺麗に越えられなければ全輪郭を枠内に保持。'}
+PANEL EDGE CONTINUITY LOCK: PAGE CONTAINMENT: ${plan.composition?.bleed.length?'FULL BLEEDで指定したコマの辺だけタチキリ必須。他の外周は余白付きで保持。':'外枠の四辺/四隅を余白付きで画布内へ収め、切落とし/画外拡張は禁止。明示の枠なし/裁切り指定は優先。'}内部の枠越えは外周裁切りの許可ではない。道具/画面/文字は自枠内、隣場面への流出は明示時のみ。${hasDominantFigure?'小コマの独立人物は枠内へ。PAGE DOMINANT FIGUREは枠を越える大きさを保つ。':'原則、見える頭と髪の全輪郭を余裕付きで枠内に。'}演出上の枠越えは一つの連続した前景層とし、枠線と溝は腕・脚・衣装・顔・髪を含む越境シルエットの後ろで止まり、輪郭の外で再開。身体や衣装を枠線で貫く・輪郭の切断・外側断片の複製・枠内外の位置ずれは禁止。${hasDominantFigure?'PAGE DOMINANT FIGUREと指定のREQUIRED BREAKOUTは省略しない。人物を縮めず周囲の枠と台詞の余白を調整し、一続きの輪郭を描く。':plan.composition?.breakouts.length?'REQUIRED BREAKOUTは省略しない。隣接の余白を調整し一続きの輪郭を描く。':'綺麗に越えられなければ全輪郭を枠内に保持。'}
 LIMB OWNERSHIP CHECK (internal; never print): 全コマの各人物の左右の腕/手/脚/足を可視・自然な遮蔽・画面外に分類。見える手→手首→肘→本人の肩、足→足首→膝→本人の腰を辿り、隠れた部分も自然につなぐ。所有者不明/余分/融合/分離/理由のない欠落、家具や他人の体から出る手足は禁止。指定の解剖/ポーズ/接触/Camera/切取り/短縮を保持し、隠れた四肢の露出や全身画角を強制しない。仕上げ前に所有/接続の曖昧さだけを直し、動作や構図を変えない。
 ${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks,showTitle,bottomBleed,fullBleed,watermarkTexts})}
 ${mosaicCopyrightedCharacters?'':COPYRIGHT_MOSAIC_TARGET_SCOPE}
@@ -987,7 +998,7 @@ function buildExperimentalReviewPromptBase(plan, source, options={}) {
     right:buildMangaWatermark({imageEngineLabel:options.imageEngineLabel||'Gemini',scenarioModelLabel:options.scenarioModelLabel,systemVersion:SYSTEM_VERSION,isChatGPTFamily:/^ChatGPT/.test(options.imageEngineLabel||'')})
   }):null;
   return `Read the actual attached generated manga. Return ONLY JSON with pageContent (kind comic|non_comic|uncertain, category sequential_art|single_photograph|unrelated_image|blank_or_error_screen|uncertain, evidence of actual visible format/content; lack of borders alone is not non_comic), status (pass|warning|unverified), observedCount (integer or null), readingOrder/camera/style/story/anatomy/pageText (pass|fail|uncertain), breakout (pass|fail|uncertain|not_requested), issues (array of Japanese observed problems, empty when none), pageEvidence (STRING: transcribe actual title/footer lettering seen, including missing/unreadable text), evidence (one item for EVERY panel, with panel number, Japanese view.evidence/style_observation.evidence/story/anatomy observations, and breakout observation when requested). ${buildExperimentalReadingReviewContract(plan)} Never copy example text, source descriptions, or Camera labels as observed evidence. Defaults for anything not observable are uncertain/null, never pass. ${pageCompositionReview(plan)} Optional border breakouts and visualEffects may be omitted if needed for a clean coherent composition; their absence alone is not a material failure or a reason for regeneration. Distinguish translucent prop motion trails from solid duplicate props or extra limbs. Observe slanted borders as borders, not a change to the physical Camera.
-${READING_FLOW_DIRECTION}
+${readingFlowDirection(source)}
 Inspect exact panel count/reading order, ALL required camera elevations/projections/crops and style differences, original action/facts/ending/dialogue ownership and connected anatomy; adjacent faces/text remain legible. Locate each observation in the actual page, describe visible body extent and occlusion; never infer hidden/cropped feet or a breakout from the plan. Cropped feet alone are advisory, never a camera failure or a regeneration reason. Camera observations describe visible head/shoulder planes, horizon and perspective; style observations describe actor faces/bodies and background pigment/ink separately, not tag names. Keep each observation concise.
 ${LIMB_AND_SCENE_QA}
 ${WARDROBE_AND_PROP_QA}
@@ -1064,7 +1075,7 @@ function independentlyObservedCompositionIssues(review,plan) {
     return [{type:'page_composition',panel:check.panel,subject:check.id,materialImpact:'material',
       impactReason:check.impactReason,
       reason:`Observed: ${check.observed}`,
-      correction:`${expected} 指定した一身体と共有辺のみを修正し、別の頭・手足を貼り足さない。元Camera・描法・人物・主動作・全台詞を保持。`}];
+      correction:`${expected} 指定した一身体と共有辺のみを修正し、別の頭・手足を貼り足さない。${b||f?'越境した身体に重なる枠線と溝だけを、輪郭の内側で消し、輪郭の外で元の線を再開する。':''}元Camera・描法・人物・主動作・全台詞を保持。`}];
   });
 }
 
@@ -1290,15 +1301,22 @@ export function validateExperimentalReview(review, plan) {
       const view=observed[0].view;
       if(!view||!['high','low','eye_level','uncertain'].includes(view.elevation)||!['in_scene','at_viewer','no_visible_eyes','uncertain'].includes(view.gaze)||!text(view.evidence)) {
         validationErrors.push(`evidence[${i+1}].view: missing or invalid projection/gaze evidence`);
-      } else if(view.elevation==='eye_level'||(review.inspectionVersion<6&&view.gaze==='at_viewer')) {
-        review.camera='fail';
-        review.issues=[...(Array.isArray(review.issues)?review.issues:[]),`${i+1}コマ: ${view.elevation==='eye_level'?'アイレベル':'カメラ目線'}を観察。${view.evidence}`];
-      } else if((view.elevation==='uncertain'||(review.inspectionVersion<6&&view.gaze==='uncertain'))&&review.camera!=='fail') review.camera='uncertain';
-      const expectedElevation=classifyCameraElevation(plan.panels[i]?.camera||'');
-      if(['high','low'].includes(expectedElevation)&&['high','low'].includes(view?.elevation)
-        &&expectedElevation!==view.elevation&&text(view.evidence)) {
-        review.camera='fail';
-        review.issues=[...new Set([...(Array.isArray(review.issues)?review.issues:[]),`${i+1}コマ: 指定は${expectedElevation==='high'?'俯瞰':'アオリ'}ですが、実画像の投影は${view.elevation==='high'?'俯瞰':'アオリ'}です。${view.evidence}`])];
+      } else {
+        const expected=classifyCameraElevation(p.camera);
+        const actual=view.elevation==='eye_level'?'eye':view.elevation;
+        const labels={high:'俯瞰',low:'アオリ',eye:'アイレベル'};
+        if((actual==='eye'&&expected!=='eye')||(labels[expected]&&labels[actual]&&expected!==actual)) {
+          review.camera='fail';
+          const mismatch=labels[expected]
+            ? `指定は${labels[expected]}ですが、実画像の投影は${labels[actual]}です。`
+            : 'アイレベルを観察。';
+          review.issues=[...new Set([...(Array.isArray(review.issues)?review.issues:[]),`${i+1}コマ: ${mismatch}${view.evidence}`])];
+        }
+        if(review.inspectionVersion<6&&view.gaze==='at_viewer') {
+          review.camera='fail';
+          review.issues=[...(Array.isArray(review.issues)?review.issues:[]),`${i+1}コマ: カメラ目線を観察。${view.evidence}`];
+        }
+        if((actual==='uncertain'||(review.inspectionVersion<6&&view.gaze==='uncertain'))&&review.camera!=='fail') review.camera='uncertain';
       }
     }
     if(review.inspectionVersion>=3) {

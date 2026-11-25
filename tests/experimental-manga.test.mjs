@@ -102,7 +102,7 @@ try {
     // the reviewed v7.5.6 focus clause and equivalent readability compaction
     // change only one quality-contract line (private focus-snapshot-review.json).
     assert.match(color, /Top title EXACTLY "無題"/);
-    let colorWithoutLayoutAddition=restoreActionProjectionBefore737(restoreHandInkBeforeLocal(color).replace(/^SPANNING FRAMES（非印字）: .*\n/m,''));
+    let colorWithoutLayoutAddition=restoreActionProjectionBefore737(restoreHandInkBeforeLocal(color.replace('枠線と溝は腕・脚・衣装・顔・髪を含む越境シルエットの後ろで止まり、輪郭の外で再開。身体や衣装を枠線で貫く','枠線は頭/髪の全輪郭の後ろで止まり、その後に再開。顔/髪を枠線で貫く')).replace(/^SPANNING FRAMES（非印字）: .*\n/m,''));
     const sharedOrder='人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定なら対象に応じた自然な頭向きを補う（明示の横目/目だけの移動/顔上げ/背面を優先、顔/対象の遮蔽保持）、可視瞳を指定先へ（対象未指定/閉眼/明示の読者目線保持）→独立Cameraで立体投影→画風';
     if(colorWithoutLayoutAddition.includes(`SHOT P1/P2/P3/P4/P5/P6 ONLY: ${sharedOrder}.\n`)) {
       colorWithoutLayoutAddition=colorWithoutLayoutAddition.replace(`SHOT P1/P2/P3/P4/P5/P6 ONLY: ${sharedOrder}.\n`,'')
@@ -247,6 +247,12 @@ try {
       const forbidden=structuredClone(staged);Object.assign(forbidden.evidence[0].view,view);
       assert.equal(m.validateExperimentalReview(forbidden,plan).camera,'fail');
     }
+    const eyePlan=structuredClone(plan);
+    eyePlan.panels[0].camera='アイレベルで相手を見る';
+    const eye=structuredClone(staged);
+    eye.evidence[0].view={elevation:'eye_level',gaze:'in_scene',evidence:'向かい合う目と地平線が同じ高さ'};
+    assert.equal(m.validateExperimentalReview(eye,eyePlan).camera,'pass');
+    assert.equal(m.validateExperimentalReview(staged,eyePlan).camera,'fail');
     const uncertain=structuredClone(staged);delete uncertain.evidence[0].view;
     assert.equal(m.validateExperimentalReview(uncertain,plan).status,'unverified');
     const hiddenEyes=structuredClone(staged);hiddenEyes.evidence[0].view.gaze='no_visible_eyes';

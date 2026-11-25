@@ -166,7 +166,7 @@ Total pages include the cover. Cover numbering is separate. An approval request 
 | Author credit / 作者名 | The skill asks for a name or no credit. Set `presentation.authorName` on the cover page; prefer clear space at bottom right. / スキルが作者名または表記なしを確認し、扉ページの`presentation.authorName`へ保存します。右下の余白を基本に、人物や題字を避けて配置します。 |
 | Presentation / 表示 | Title, watermark and page numbers are independent. / タイトル、ウォーターマーク、ページ番号は独立した指定です。 |
 | Ending / 最終コマ | Choose ending words such as “END”, “おしまい” or “おわり” to suit the story, preserving an explicitly selected string. Place them inside the final panel at lower-right; if occupied, use lower-center, then lower-left, with lettering matching the title’s mood. Keep faces, necessary actions, dialogue, page numbers and footer marks readable. Ending lettering may overlap the artwork. / 終幕語は漫画に合う「END」「おしまい」「おわり」等を選び、明示した文字列はそのまま保ちます。最終コマの右下を基本に、空きがなければ下中央、次に左下へ置き、タイトルの雰囲気に合う字体を使います。顔・必要な動作・台詞・ページ番号・下端の表示を隠しません。 絵への重なりも指定できます。 |
-| Composition / ページ演出 | Book pages retain full bleed, connected foreground figures and panel breakouts, including pages with 1–3 panels. / 複数ページでもタチキリ、コマをまたぐ前景人物、枠からのはみ出しを使えます。1～3コマでも、物語の見せ場に合わせて選びます。 |
+| Composition / ページ演出 | Book pages retain full bleed, connected foreground figures and panel breakouts, including pages with 1–3 panels. / 複数ページでもタチキリ、コマをまたぐ前景人物、枠からのはみ出しを使えます。1～3コマでも、物語の見せ場に合わせて選びます。 When a person crosses a frame, the border and gutter are hidden behind the visible body or clothing. / 人物が枠を越えるときは、見える身体や衣装の後ろで枠線と溝を止めます。 |
 | Shared assets / 共通資料 | Reuse canonical character, prop and setting assets. / 人物シート、小道具、背景を同じ資料として引き継ぎます。 |
 | Previous page / 前ページ | An auxiliary continuity reference, not a replacement cast sheet. / 連続性の補助資料です。人物シートを置き換えず、新しい人物一覧として再解析しません。 |
 

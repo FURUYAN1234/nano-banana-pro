@@ -56,6 +56,8 @@ test('full and compact page contracts keep all frame corners inside the canvas b
     assert.match(rule, /margin/i);
     assert.match(rule, /explicit.*bleed/i);
     assert.match(rule, /breakout/i);
+    assert.match(rule, /frame line and gutter both stop|frame line and gutter stop/);
+    assert.match(rule, /limbs, cloth/);
   }
 });
 

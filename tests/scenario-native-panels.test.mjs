@@ -69,6 +69,13 @@ test('late native panels receive camera, style and dialogue validation', () => {
  const badCamera = eight.replace('[8コマ目: 展開]\n[EMOTION: NORMAL]\n[Camera: 左上から俯瞰の中景]', '[8コマ目: 展開]\n[EMOTION: NORMAL]\n[Camera: アイレベル]');
  assert.throws(() => validation.assertGeneratedScenarioCameraContract(badCamera, '', mode), { code: 'CAMERA_CONTRACT' });
  assert.equal(validation.assertGeneratedScenarioCameraContract(badCamera, '8コマ目はアイレベルで撮る。', mode), true);
+ const scoped = '七コマ目は水彩。高い位置から俯瞰。八コマ目は通常画風。アイレベルのカメラで引いて撮る。';
+ assert.equal(validation.assertGeneratedScenarioCameraContract(badCamera, scoped, mode), true);
+ for (const otherScope of ['七コマ目は通常画風。アイレベルのカメラで撮る。', '八コマ目は通常画風。\nアイレベルのカメラで撮る。',
+   '八コマ目は通常画風。アイレベルのカメラは使わない。', '八コマ目は通常画風。七コマ目は細線。アイレベルのカメラで撮る。']) {
+  assert.throws(()=>validation.assertGeneratedScenarioCameraContract(badCamera,otherScope,mode),{code:'CAMERA_CONTRACT'});
+ }
+
  assert.throws(() => validation.assertGeneratedScenarioStyleContract(eight.replace('[8コマ目: 展開]\n[EMOTION: NORMAL]', '[8コマ目: 展開]\n[EMOTION: PASTEL]'), mode), { code: 'STYLE_CONTRACT' });
  assert.throws(() => provider.assertMangaScenarioDialogueContract(eight.replace('A「8枚目です。」', ''), 'A', mode));
 });
