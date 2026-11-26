@@ -1121,3 +1121,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 ### v7.4.9 (2026-11-12)
 - **[Fix]** Separate screen figures from physical cast, require visible harm for composition repair, and losslessly share repeated edit instructions. / 画面内人物の欠員誤検出、構図の微差を重大扱いする判定、長い自動修正指示の上限超過を修正。
 - **[Fix & UX]** Use equivalent Japanese compiler rules on monochrome prompt overflow and retain failed candidates in diagnostics. / 白黒の自由コマ割りで、台本とAction全文を保持したまま共通規則を日本語化し、上限超過の失敗候補を診断JSONへ保持。
+
+## CLIP Drop / 習作・ベータ版
+
+クリスタの .clip を SVG・PSD・PNG に変換するWindows用の習作です。 / An experimental Windows converter for Clip Studio Paint files.
+
+- [GitHub](https://github.com/FURUYAN1234/clip-drop) · [note](https://note.com/happy_duck780/n/n8a38199a75db)
