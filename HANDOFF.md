@@ -1,3 +1,9 @@
+# v8.2.2 release candidate
+
+The bundled manga skill ties visible character cues to the speaker or action when identification is difficult. Disconnecting MCP releases the manual controls even when restoring the previous view fails. Panel edits remove new matching blank bands without changing pixels outside the selected region. The operation manual and both API setup guides have been regenerated. See [v8.2.2 release notes](docs/releases/v8.2.2.md).
+
+The previous local real-API production supplied a four-page manuscript, matching initial STEP3 and STEP4 prompt text in all three body pages. The adopted panel correction preserved all pixels outside the selected panel. Candidate build and release verification are recorded separately from the earlier production.
+
 # v8.2.1 release candidate
 
 The bundled MCP manga production skill now applies scene-specific direction at script review and visual readback. The recommended-script and two-full-script paths were used for the two-page works 窓ぎわの一杯 and 幕に飛ぶ鳥. See [v8.2.1 release notes](docs/releases/v8.2.1.md).
