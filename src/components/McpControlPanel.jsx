@@ -19,7 +19,27 @@ export default function McpControlPanel({ execute, cancel, operations, capture, 
   const disconnect=useCallback(()=>{
     if(disconnecting.current)return disconnecting.current;
     disconnecting.current=(async()=>{
-      try {const disconnected=await client.current?.disconnect();await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));if(backup.current){handlers.current.restore(backup.current);backup.current=null;}setClaimed(false);if(disconnected?.warning)setStatus({connected:false,error:disconnected.warning});onConnectionChange?.({connected:false,claimed:false,...(disconnected?.warning?{error:disconnected.warning}:{})});}
+      try {
+        const disconnected = await client.current?.disconnect();
+        const warnings = disconnected?.warning ? [disconnected.warning] : [];
+        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+
+        const snapshot = backup.current;
+        backup.current = null;
+        client.current = null;
+        if (snapshot) {
+          try {
+            handlers.current.restore(snapshot);
+          } catch (error) {
+            warnings.push(`切断前の画面を復元できませんでした: ${error.message}`);
+          }
+        }
+
+        const nextStatus = { connected: false, ...(warnings.length ? { error: warnings.join(' ') } : {}) };
+        setClaimed(false);
+        setStatus(nextStatus);
+        onConnectionChange?.({ ...nextStatus, claimed: false });
+      }
       catch(error){setStatus({connected:true,error:error.message});throw error;}
       finally{disconnecting.current=null;}
     })();

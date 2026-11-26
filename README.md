@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.2.1** / 現在のソース版: **v8.2.1**
+> Current source version: **v8.2.2** / 現在のソース版: **v8.2.2**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -506,7 +506,7 @@ OpenAI STEP1, STEP2 and STEP3 each start at `gpt-6-luna` and can be selected ind
 
 GPT-6.2 Astra and GPT-6.2 Sol can be selected in STEP1–3. Astra 6.2 can fall back to Sol 6.2, followed by the existing Sol 6.1 route. Sol 6.2 starts its fallback at Sol 6.1. Existing selections and automatic routes keep their original order. / STEP1〜3でGPT-6.2 AstraとSolを選べます。6.2 Astraを選ぶと、失敗時は6.2 Sol、次に6.1 Solの経路へ進みます。6.2 Solの次は6.1 Solです。既存の選択と自動経路は従来の順序を保ちます。
 
-| Standard short context, USD per 1M tokens / 短文・100万トークン当たり（2026-11-25） | Input / 入力 | Cached read / キャッシュ読取 | Output / 出力 |
+| Standard short context, USD per 1M tokens / 短文・100万トークン当たり（2026-11-26） | Input / 入力 | Cached read / キャッシュ読取 | Output / 出力 |
 | --- | ---: | ---: | ---: |
 | `gpt-6.2-astra` | $8 | $0.40 | $40 |
 | `gpt-6.2-sol` | $2 | $0.10 | $10 |
@@ -549,7 +549,7 @@ With these settings, final API images can be downloaded without pressing Save ea
 
 **Edit the displayed image:** Open the collapsed “ページ全体／コマを選んで修正” button and choose a panel or the whole page. Current API output and images selected from history are used directly. Whole-page editing sends the displayed image and a free instruction to the connected provider; it can affect other panels. Failed edits keep the source and instruction, while successful edits retain the source in history. Manual editing does not regenerate the scenario or invoke automatic AI inspection/repair. / **表示中の画像を修正:** 折り畳みボタン「ページ全体／コマを選んで修正」を開き、「コマごと／絵全体」を選びます。API生成画像や履歴で選んだ画像をそのまま使えます。絵全体では自由入力の指示を接続中のAPIへ送り、ページ全体を修正します。他のコマも変わる場合があります。失敗時は元画像と指示を保持し、成功時も元画像を履歴に残します。手動修正で台本の再生成や自動AI再検査・再修正は行わず、結果は目視で確認します。
 
-**Panel editing (OpenAI / Gemini image API):** OpenAI supports 4–8 panels; Gemini supports four-panel color and monochrome pages. The current image's frames appear automatically. Thumbnails follow Japanese right-to-left, top-to-bottom reading order; stored layout is checked against actual frame geometry. Ambiguous order is labelled unconfirmed rather than assigned a definite panel number. Select a thumbnail, choose Style or Free instruction, and send with the button naming the selected panel. The style options are Normal, POP, Watercolor, Gekiga, Sketch and Chibi. The complete native panel is sent without page padding. The whole returned image is fitted proportionally into exactly the original panel coordinates, width and height; a different aspect ratio adds white margins inside that box rather than cropping or stretching. Pixels outside it remain exactly equal. Compare and directly choose Adopt or Discard without an extra checkbox. Adoption automatically downloads a separate production-metadata PNG while preserving the original; the source remains selected until adoption and is retained in history afterwards. Changing the displayed image clears stale selections and candidates and rebuilds the panel list for that image. / **コマ別修正（OpenAI／Gemini画像API）:** OpenAIは4〜8コマ、Geminiはカラー・白黒の4コマに対応します。現在の画像からコマを自動で読み取り、右から左・上から下の読順でサムネイルを表示します。保存された配置も実際の枠と照合します。順番を確定できない場合は未確認と表示します。コマを選んだら「絵柄／自由入力」を選び、内容を指定して「○コマ目を修正」で送信します。絵柄は通常・POP・水彩・劇画・線画・ちびから選べます。余白を加えず元のコマ全体をAPIへ送り、返却画像も全体を保って、元コマと同じ座標・幅・高さの範囲へ縦横比を保って収めます。比率が違う場合はコマ内に白い余白を加え、拡大して中央を切り抜いたり引き伸ばしたりしません。他コマ・題字・フッターの画素が同一であることを検査します。Geminiはコマに近い対応縦横比と、コマの大きさに応じた1K／2K／4Kを使います。API料金はサイズによって異なります。元コマと候補を比較し、追加の確認チェックなしで採用または破棄を選びます。採用までは元画像を表示し、採用後も元画像を履歴に残します。採用した修正画像は制作情報入りPNGとして別名で自動ダウンロードし、プレビューや破棄では保存しません。表示画像の更新や履歴切替時には古い選択・未採用候補を破棄し、その画像のコマ一覧を読み直します。
+**Panel editing (OpenAI / Gemini image API):** OpenAI supports 4–8 panels; Gemini supports four-panel color and monochrome pages. The current image's frames appear automatically. Thumbnails follow Japanese right-to-left, top-to-bottom reading order; stored layout is checked against actual frame geometry. Ambiguous order is labelled unconfirmed rather than assigned a definite panel number. Select a thumbnail, choose Style or Free instruction, and send with the button naming the selected panel. The style options are Normal, POP, Watercolor, Gekiga, Sketch and Chibi. The complete native panel is sent without page padding. The returned image is fitted proportionally into the original panel rectangle. If four new, symmetric blank bands form an inset matching the original panel aspect ratio, the app removes those bands and checks the result before offering adoption. Existing borders and genuine aspect-ratio differences retain the proportional fit, without cropping or stretching the artwork. Pixels outside it remain exactly equal. Compare and directly choose Adopt or Discard without an extra checkbox. Adoption automatically downloads a separate production-metadata PNG while preserving the original; the source remains selected until adoption and is retained in history afterwards. Changing the displayed image clears stale selections and candidates and rebuilds the panel list for that image. / **コマ別修正（OpenAI／Gemini画像API）:** OpenAIは4〜8コマ、Geminiはカラー・白黒の4コマに対応します。現在の画像からコマを自動で読み取り、右から左・上から下の読順でサムネイルを表示します。保存された配置も実際の枠と照合します。順番を確定できない場合は未確認と表示します。コマを選んだら「絵柄／自由入力」を選び、内容を指定して「○コマ目を修正」で送信します。絵柄は通常・POP・水彩・劇画・線画・ちびから選べます。余白を加えず元のコマ全体をAPIへ送り、返却画像を元の枠に縦横比を保って収めます。四辺に対称な空白帯が増え、その内側が元のコマと同じ縦横比なら、追加された帯を除き、採用候補に出す前に検査します。元からある枠や縦横比が異なる絵は、切り抜きや引き伸ばしをせずに収めます。他コマ・題字・フッターの画素が同一であることを検査します。Geminiはコマに近い対応縦横比と、コマの大きさに応じた1K／2K／4Kを使います。API料金はサイズによって異なります。元コマと候補を比較し、追加の確認チェックなしで採用または破棄を選びます。採用までは元画像を表示し、採用後も元画像を履歴に残します。採用した修正画像は制作情報入りPNGとして別名で自動ダウンロードし、プレビューや破棄では保存しません。表示画像の更新や履歴切替時には古い選択・未採用候補を破棄し、その画像のコマ一覧を読み直します。
 
 Each edit submission incurs API usage, as indicated on its button. There is no automatic paid retry. Both free-instruction fields provide six lines and can be resized vertically. Editable text fields throughout the app, including location and outfit, use square white backgrounds and black text. Buttons and dropdowns share rounded corners. The navigation dropdown describes each STEP1–4 destination without resetting inputs, images or history. / 送信ボタンに表示されるとおり、修正の送信にはAPI利用料がかかります。自動再試行は行いません。自由入力欄は6行分あり、縦に広げられます。指定場所・指定服装を含む編集可能な入力欄は、角丸なしの白地・黒文字です。ボタンとプルダウンの角丸は統一しています。下部のプルダウンには各STEPの説明を表示し、入力・画像・履歴を保持したままSTEP1〜4へ移動できます。
 
@@ -852,7 +852,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -916,7 +916,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.2.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.2.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.2.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.2.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -988,6 +988,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | AI Tracer Nazori-kun / AIトレーサー なぞり君 | Replay inking and original-color fills in a browser / ブラウザーでペン入れと元色の彩色を再生 | [Web app / 公開アプリ](https://furuyan1234.github.io/ai-tracer-nazori-kun/) · [GitHub](https://github.com/FURUYAN1234/ai-tracer-nazori-kun) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.2.2 (2026-11-26)
+- **[Fix & UX]** Improved cast identification in the manga skill, restored manual controls after MCP disconnect, and removed newly introduced blank bands in panel edit candidates / 漫画制作スキルの人物識別を改善し、MCP切断後の操作ロックとコマ修正候補に増えた余白を修正
 
 ### v8.2.1 (2026-11-25)
 

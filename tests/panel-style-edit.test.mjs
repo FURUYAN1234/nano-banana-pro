@@ -455,3 +455,35 @@ test('different-resolution and different-aspect returns keep every corner in the
     assert.deepEqual(env.registry.get(source),pixels);
   }
 }));
+
+const panelInk = (x, y) => [60 + x % 90, 85 + y % 80, 130, 255];
+const framedArtwork = (width, height, xMargin, yMargin) => image(width, height, (x, y) => {
+  if (x < xMargin || x >= width - xMargin) return [255, 255, 255, 255];
+  if (y < yMargin || y >= height - yMargin) return [0, 0, 0, 255];
+  return panelInk(x - xMargin, y - yMargin);
+});
+
+test('new centered black bands and white margins are removed before the corrected panel is fitted', async () => withCanvas(async env => {
+  const source = image(200, 240, panelInk);
+  const returned = framedArtwork(100, 80, 10, 10);
+  const result = await composePanelStyleEdit(env.add(source), env.add(returned), createPanelStyleEditPlan(source, region));
+  const expected = image(80, 60, panelInk);
+  assert.deepEqual(env.registry.get(result.after), expected);
+  assert.deepEqual(env.registry.get(result.dataUrl), composePanelPixels(source, expected, region));
+}));
+
+test('uniform borders already present in the source and a one-sided drawn edge are preserved', async () => withCanvas(async env => {
+  const framed = framedArtwork(80, 60, 4, 3);
+  const original = composePanelPixels(image(200, 240, panelInk), framed, region);
+  const originalUrl = env.add(original);
+  const existing = await composePanelStyleEdit(originalUrl, env.add(framed), createPanelStyleEditPlan(original, region));
+  assert.deepEqual(env.registry.get(existing.after), framed);
+
+  const oneEdge = image(80, 60, (x, y) => y < 8 ? [0, 0, 0, 255] : panelInk(x, y));
+  const newEdge = await composePanelStyleEdit(originalUrl, env.add(oneEdge), createPanelStyleEditPlan(original, region));
+  assert.deepEqual(env.registry.get(newEdge.after), oneEdge);
+  const blackBars = framedArtwork(80, 60, 0, 5);
+  const fullSource = image(200, 240, panelInk);
+  const styled = await composePanelStyleEdit(env.add(fullSource), env.add(blackBars), createPanelStyleEditPlan(fullSource, region));
+  assert.deepEqual(env.registry.get(styled.after), blackBars);
+}));

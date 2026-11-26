@@ -32,6 +32,8 @@
 - Writing Excuses, [12.37: Subplots](https://writingexcuses.com/12-37-subplots/)（公式掲載の解説・文字起こし）。副筋が全体へどう作用するかと、脇へそれすぎる問題を参照。全脇役に副筋を必須にしない。
 - Writing Excuses / Peng Shepherd, [17.40: Questions & Answers About Structure](https://writingexcuses.com/17-40-questions-answers-about-structure-with-special-guest-peng-shepherd/)（公式掲載の解説・文字起こし）。複数巻の区切り、筋の優先順位、人物の動機と構成の結び付きに関する要旨を確認。story-scale.mdの記録表はこのスキル独自の整理で、原資料の図表ではない。
 
+- gaoren7716-lab, [awesome-anime-prompt-as-code の人物一貫性資料](https://github.com/gaoren7716-lab/awesome-anime-prompt-as-code/blob/main/docs/character-consistency.md) と [画風の競合資料](https://github.com/gaoren7716-lab/awesome-anime-prompt-as-code/blob/main/docs/style-conflicts.md)。複数人を見分ける手掛かりと指示同士の干渉を見る着想を参照。コマごとの動作・発話との対応、切り返し、掲載寸法での確認、作業台の作例はこのスキル向けに書き起こした。
+
 ## 独自に構築した部分
 
 本スキルの設計メモ、漫画のコマと章への受け渡し、検査の二段階、台本だけで読む検証課題、オリジナル作例は、実制作の失敗と複数の一般原理を踏まえた編集。原資料を見なくても使えるよう記述する。調査したこと、指示へ取り込んだこと、実際の脚本が良くなったことは別々に評価する。

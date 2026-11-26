@@ -2147,6 +2147,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       const result = await composePanelStyleEdit(sourceImage, `data:${finished.mimeType};base64,${finished.base64Img}`, edit.plan);
       if (!isCurrent()) return null;
       if (result.outsidePixelsUnchanged !== true) throw new Error('対象コマ以外の画素を保持できませんでした。');
+      if (result.removedMargins) log('[コマ修正] 生成画像で追加された帯と余白を除き、元の枠に収まることを確認しました。');
       const candidate = {
         sourceImage, sourceHistory, panelIndex, panelNumber: frame.panelNumber, panelCount: prepared.panelCount,
         region: { ...region }, mode, style, instruction: editInstruction,
@@ -3579,7 +3580,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     if (isApiProcessing) throw Object.assign(new Error('Wait for the active operation before changing pages.'), { code: 'APP_BUSY' });
     assertNoSecrets({ project, page, snapshot, assets, continuityReferences });
     const settings = validatePageSettings({ ...project.settings, ...page.settings });
-    if(settings.engine&&settings.engine!==effectiveEngine)throw Object.assign(new Error('Connect the requested provider in the normal API connection UI first.'),{code:'ENGINE_CONNECTION_REQUIRED'});
+    // A manual snapshot restores drafts. Authentication remains with the current provider.
+    if(!restoreNormal&&settings.engine&&settings.engine!==effectiveEngine)throw Object.assign(new Error('Connect the requested provider in the normal API connection UI first.'),{code:'ENGINE_CONNECTION_REQUIRED'});
     if (!isOpenAIEngine && page.panelCount !== 4) throw Object.assign(new Error('Gemini supports four-panel pages only.'), { code: 'PROVIDER_PANEL_COUNT_UNSUPPORTED' });
     const context = { applicationToken:crypto.randomUUID(),projectId: project.id,projectTitle:project.plan?.outline?.title||project.name||'', pageId: page.id, pageIndex: page.index, kind: page.kind,panelCount:page.panelCount,appliedEngine:effectiveEngine,
       scenarioMode: createBookPageMode(page.panelCount, { finalPage: page.index === project.pages.length }),

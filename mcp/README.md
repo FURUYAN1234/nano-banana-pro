@@ -132,7 +132,7 @@ After a restart, verify the application and API connection before resuming. Pers
 
 Keep the local app open and connected during production. The server alone cannot generate pages. The app shows connection and operation state. After closing it, inspect the existing job before resuming. Ordinary production remains available on the hosted demo without MCP. / 制作中は、このローカル画面を開いたまま接続を保ちます。MCPサーバーだけでは生成処理は動きません。画面にはMCPの接続状態と実行状態を表示します。画面を閉じた場合は実行状態を確認して再開し、未確認の有料処理を自動で繰り返しません。MCPを使わない通常の制作は、公開デモサイトでも引き続き利用できます。
 
-Scrolling and viewing results remain available while connected. Inputs, settings, generation, editing and history changes are locked. The single **Stop and return to manual** button stops local work, disconnects MCP and restores manual controls. The ordinary Emergency Stop button appears only outside MCP control. / MCP接続中もスクロールと結果の閲覧はできます。入力・設定変更・生成・編集・履歴の切り替えはロックします。操作ボタンは右上の**「停止して手動に戻る」**1つです。ローカルの処理を止め、MCPを切断してから手動操作へ戻ります。通常制作の「緊急停止」はMCP操作中には表示しません。
+Scrolling and viewing results remain available while connected. Inputs, settings, generation, editing and history changes are locked. The single **Stop and return to manual** button stops local work, disconnects MCP and restores manual controls. If the connection closes but the previous view cannot be restored, the app warns and unlocks manual controls. The ordinary Emergency Stop button appears only outside MCP control. / MCP接続中もスクロールと結果の閲覧はできます。入力・設定変更・生成・編集・履歴の切り替えはロックします。操作ボタンは右上の**「停止して手動に戻る」**1つです。ローカルの処理を止め、MCPを切断してから手動操作へ戻ります。切断後に元の画面を復元できない場合は、警告を出して操作ロックを解除します。通常制作の「緊急停止」はMCP操作中には表示しません。
 
 Skill download, setup guide and manual share the top utility row. The four production steps have a separate row. / スキル取得・導入ガイド・マニュアルはMCP状態と同じ上段に置き、STEP1～4の進捗は独立した行に表示します。
 

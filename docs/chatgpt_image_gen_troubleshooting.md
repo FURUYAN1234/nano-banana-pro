@@ -234,7 +234,7 @@ ChatGPTが提案した `[CRITICAL MASTER CONTROL BLOCK — ABSOLUTE TOP PRIORITY
 
 ChatGPTの画像生成は、Gemini/Imagen APIとは根本的に異なる内部処理パイプラインを持つ。
 
-FURUさんのプロンプトが「プロ仕様で制御項目が多い」ことは強みだが、ChatGPTでは
+制御項目の多いプロンプトは制作意図を明示しやすい一方、ChatGPTでは
 **「詳細すぎて逆に解像度が下がる」ゾーンに入っている**（ChatGPT側の分析）。
 
 **対策の核心:**

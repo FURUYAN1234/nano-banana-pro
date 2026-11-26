@@ -215,15 +215,70 @@ export async function preparePanelStyleEdit(sourceDataUrl, region, options = {})
     request: buildPanelStyleEditRequest(before, plan, options) };
 }
 
+function uniformEdgeStrip({ data, width }, bounds, axis, reverse) {
+  const horizontal = axis === 'x';
+  const depth = horizontal ? bounds.width : bounds.height;
+  const cross = horizontal ? bounds.height : bounds.width;
+  const samples = Math.min(96, Math.floor(cross * .9));
+  let tone;
+  for (let offset = 0; offset <= Math.floor(depth * .24); offset++) {
+    const position = reverse ? depth - 1 - offset : offset;
+    let white = 0, black = 0;
+    for (let sample = 0; sample < samples; sample++) {
+      const along = Math.floor(cross * (.05 + .9 * (sample + .5) / samples));
+      const x = bounds.x + (horizontal ? position : along);
+      const y = bounds.y + (horizontal ? along : position);
+      const index = (y * width + x) * 4;
+      if (data[index + 3] < 248) continue;
+      const r = data[index], g = data[index + 1], b = data[index + 2];
+      if (r >= 248 && g >= 248 && b >= 248) white++;
+      if (r <= 18 && g <= 18 && b <= 18) black++;
+    }
+    const line = white / samples >= .98 ? 'white' : black / samples >= .98 ? 'black' : null;
+    if (offset === 0) tone = line;
+    if (!tone) return null;
+    if (line !== tone) return { size: offset, tone };
+  }
+  return null;
+}
+
+function pairedEdgeStrips(image, bounds, axis) {
+  const length = axis === 'x' ? bounds.width : bounds.height;
+  const near = uniformEdgeStrip(image, bounds, axis, false);
+  const far = uniformEdgeStrip(image, bounds, axis, true);
+  const minimum = Math.max(3, length * .025);
+  if (!near || !far || near.tone !== far.tone || Math.min(near.size, far.size) < minimum
+    || Math.abs(near.size - far.size) > Math.max(2, Math.max(near.size, far.size) * .18)) return [0, 0];
+  return [near.size, far.size];
+}
+
+function insetArtwork(image, bounds) {
+  const [left, right] = pairedEdgeStrips(image, bounds, 'x');
+  const horizontal = { ...bounds, x: bounds.x + left, width: bounds.width - left - right };
+  const [top, bottom] = pairedEdgeStrips(image, horizontal, 'y');
+  return left && top ? { ...horizontal, y: bounds.y + top, height: bounds.height - top - bottom } : null;
+}
+
+export function findPanelEditArtwork(original, region, returned) {
+  const returnedBounds = { x: 0, y: 0, width: returned.width, height: returned.height };
+  const inset = insetArtwork(returned, returnedBounds);
+  const targetRatio = region.width / region.height;
+  // 既存の黒ベタや構図上の余白は保持。四辺の対称な無地帯で、内側が元の縦横比に合う場合だけ外す。
+  return inset && Math.abs(Math.log(inset.width / inset.height / targetRatio)) <= .025
+    && !insetArtwork(original, region) ? inset : returnedBounds;
+}
+
 export async function composePanelStyleEdit(sourceDataUrl, returnedDataUrl, plan) {
   validatePlan(plan);
   const { pixels: original } = await readPixels(sourceDataUrl);
   if (original.width !== plan.page.width || original.height !== plan.page.height) throw new RangeError('元画像の寸法が修正開始時と一致しません。');
   const { image: returnedImage, pixels: returned } = await readPixels(returnedDataUrl);
   const { canvas: patchCanvas, context: patchContext } = canvasFor(plan.region.width, plan.region.height);
-  const scale = Math.min(plan.region.width / returned.width, plan.region.height / returned.height);
-  const fittedWidth = Math.max(1, Math.min(plan.region.width, Math.round(returned.width * scale)));
-  const fittedHeight = Math.max(1, Math.min(plan.region.height, Math.round(returned.height * scale)));
+  const art = findPanelEditArtwork(original, plan.region, returned);
+  const removedMargins = art.x > 0 && art.y > 0;
+  const scale = Math.min(plan.region.width / art.width, plan.region.height / art.height);
+  const fittedWidth = Math.max(1, Math.min(plan.region.width, Math.round(art.width * scale)));
+  const fittedHeight = Math.max(1, Math.min(plan.region.height, Math.round(art.height * scale)));
   const left = Math.floor((plan.region.width - fittedWidth) / 2);
   const top = Math.floor((plan.region.height - fittedHeight) / 2);
   if (fittedWidth !== plan.region.width || fittedHeight !== plan.region.height) {
@@ -231,9 +286,12 @@ export async function composePanelStyleEdit(sourceDataUrl, returnedDataUrl, plan
   }
   patchContext.imageSmoothingEnabled = true;
   patchContext.imageSmoothingQuality = 'high';
-  patchContext.drawImage(returnedImage, 0, 0, returned.width, returned.height, left, top, fittedWidth, fittedHeight);
+  patchContext.drawImage(returnedImage, art.x, art.y, art.width, art.height, left, top, fittedWidth, fittedHeight);
   const after = patchCanvas.toDataURL('image/png');
   const { pixels: patch } = await readPixels(after);
+  if (removedMargins && insetArtwork(patch, { x: 0, y: 0, width: patch.width, height: patch.height })) {
+    throw new Error('コマの内側に追加された余白が残っています。元画像は変更していません。');
+  }
   const result = composePanelPixels(original, patch, plan.region);
   const { canvas, context } = canvasFor(result.width, result.height);
   const output = context.createImageData(result.width, result.height);
@@ -250,5 +308,5 @@ export async function composePanelStyleEdit(sourceDataUrl, returnedDataUrl, plan
       if (original.data[offset + channel] !== verified.data[offset + channel]) throw new Error('コマ外の画素一致を確認できません。元画像は変更していません。');
     }
   }
-  return { dataUrl, width: result.width, height: result.height, after, outsidePixelsUnchanged: true };
+  return { dataUrl, width: result.width, height: result.height, after, outsidePixelsUnchanged: true, removedMargins };
 }
