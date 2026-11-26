@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "552d561d6c7dfe477b94c7d84c9b1f79c012f63a9fe297b3bfd7e2c5e756088e",
-  "manualVersion": "8.2.1",
-  "manualSourceSha256": "1a35d9fe7e03455290290b3df045a34bd9623609a8f819cbbd8a6e7a590df3df",
+  "pricingSourceSha256": "a0bdf8a6699f6e166403deef3c476409b22a7bf9d4925e8049855d12f62e618a",
+  "manualVersion": "8.2.2",
+  "manualSourceSha256": "058d91dfd6c88fb5bfb501728f9cd0e6c0ee23dfa05b19ad8a9f2b77cdd72e47",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "4bc2a8049ecc0d0b3a6eb903ea4020c65b3d61033caa78a6482a39cdbc085aac"
+      "sha256": "2a1d97956f7233609ebb95d0d0ea3577f8cc89c40a3cf33ff2909f8b2be2402c"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "fc862a0589fffd5d4d6746520f0279a034c4169fe508887a2046b7987e83e148"
+      "sha256": "43e26cf7d00da58e1bcc85dab42ca61fd06d545f47996cac0e599bf98e611753"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "0ddee6f6a73b37d5c93bd68c027af17cc69a173a2d39cfd1630733156bd971be"
+      "sha256": "89723cee5f790594ec24677d5c325ac5e7a986b3f21a3aa6e30a451a42ddb14a"
     }
   ],
-  "readmeSha256": "7dab132b4ce7494a3e63e89789c5679cd958b00e60ea9afde6e23d194ec83b66",
+  "readmeSha256": "cf6d2fa1266642d990cfa402ab8695e052bca3d7a231bb069e58f68decc5606a",
   "readmeLanguageGaps": [],
-  "sourceTree": "ce6f930161c7e862b3cdd00761de94bd8f6aaf1f",
-  "publicTree": "2f98015eaa33f026bb827db81fcd0129cfe4e0ed",
-  "packageSha256": "3b2a4658be77aaa632a0a5c8ec5838035aeb8902e7dadd03333509d10f6847bd",
+  "sourceTree": "442b7474cac34f4134a59c0532d9f5705fe4e87f",
+  "publicTree": "d2eda046905dea980ce1f72d0ec833f8db43cb22",
+  "packageSha256": "a81c92c1d682f5d68f6c269c85aaa912c17d1b0d4d6acce67e5ee5ff08274b37",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -43,24 +43,20 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "candidateCommit": "827eb2b886a1d5238068211b79bb99704e7e930e",
-  "reviewedAt": "2026-11-25T14:53:28.000Z",
-  "reviewStage": "release-candidate",
-  "reviewedWorkingTree": "clean",
-  "findings": "README全節を公開版と候補版のソース差分で照合。本文のMCP制作、最新版紹介の入口、配布アセット版、変更履歴を更新。既存の旧版の作例は対象版を明記。本文、画面の主要リンク、版の記載を読み直した。",
-  "manualFindings": "3冊78ページの版、寸法、文字とリンクを検査し、旧版と各ページを描画比較。Gemini案内1ページ、全機能19・46ページの本文差を確認。46ページの台本提示と作品フォルダー保存を実画像で確認。",
+  "manualFindings": "Reviewed purposes and current version of all 78 pages across operation, OpenAI and Gemini guides. Re-rendered all three PDFs. Inspected changes to selective panel correction, general watermark default, visible character cues and manual recovery, including operation pp.25, 38, 45 and 46. Verified both setup guides retain account, key and connection scope.",
+  "findings": "Reviewed the 19 README sections in order. Confirmed app links, MCP setup and Windows distribution, supported page layouts and style options, PDF links, provider/model tables, edit flow and changelog against current sources and the package. The existing v8.2.1 video is listed by its actual version pending the new video.",
   "pricingReview": {
-    "version": "8.2.1",
-    "sourceSha256": "552d561d6c7dfe477b94c7d84c9b1f79c012f63a9fe297b3bfd7e2c5e756088e",
-    "checkedAt": "2026-11-25T14:53:28.000Z",
+    "version": "8.2.2",
+    "sourceSha256": "a0bdf8a6699f6e166403deef3c476409b22a7bf9d4925e8049855d12f62e618a",
+    "checkedAt": "2026-11-26T02:25:00.465Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "公式Standardの対象モデルと通貨・単位を照合。OpenAI GPT Image 2.6 Sunburstの画像入出力は米ドル8.00/30.00、Gemini 3.8 Flashのテキストは0.75/3.75、Nano Banana 2.1の2K画像出力は概算0.0504。StandardとBatchを区別。"
+    "findings": "Rechecked Standard USD rates. GPT-6.2 Astra/Sol text input/cache/output $8/$0.40/$40 and $2/$0.10/$10 per million, GPT Image 2.6 Sunburst image input/output $8/$30 per million and Gemini Nano Banana 2.1 estimated $0.0504 per 2K image. Gemini 3.8 Flash text $0.75 input/$3.75 output. Batch and Standard not combined. No rate changes found in the reviewed settings."
   },
   "apiValidation": {
-    "version": "8.2.1",
-    "scope": "同一のv8.2.0作画処理で最新版の制作スキルを使い、窓ぎわの一杯と幕に飛ぶ鳥をOpenAI経由の実MCPで各2ページ作画。後者の一部は修正候補を採用して目視し、採用したPNG・制作JSONをWindowsで確認。候補版の作画ロジックは同一で、版と文書を更新。"
+    "version": "8.2.2",
+    "scope": "Prior real local MCP run: GPT-6 Luna script, GPT Image 2.6 Sunburst drawing and selected-panel edit. The three body pages passed initial STEP3 to STEP4 prompt equality; the accepted single-panel edit preserved all outside pixels in its 1076×849 target. Existing evidence was checked separately from the current local release build and PDF verification."
   }
 }
