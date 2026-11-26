@@ -16,7 +16,7 @@
       "sha256": "89723cee5f790594ec24677d5c325ac5e7a986b3f21a3aa6e30a451a42ddb14a"
     }
   ],
-  "readmeSha256": "cf6d2fa1266642d990cfa402ab8695e052bca3d7a231bb069e58f68decc5606a",
+  "readmeSha256": "4b749cfd5c4c18810f9e77c984b4bccc1b0de59a6bb6107ffa9094ac6b77062a",
   "readmeLanguageGaps": [],
   "sourceTree": "442b7474cac34f4134a59c0532d9f5705fe4e87f",
   "publicTree": "d2eda046905dea980ce1f72d0ec833f8db43cb22",
@@ -44,7 +44,7 @@
     "📋 ChangeLog / 更新履歴"
   ],
   "manualFindings": "Reviewed purposes and current version of all 78 pages across operation, OpenAI and Gemini guides. Re-rendered all three PDFs. Inspected changes to selective panel correction, general watermark default, visible character cues and manual recovery, including operation pp.25, 38, 45 and 46. Verified both setup guides retain account, key and connection scope.",
-  "findings": "Reviewed the 19 README sections in order. Confirmed app links, MCP setup and Windows distribution, supported page layouts and style options, PDF links, provider/model tables, edit flow and changelog against current sources and the package. The existing v8.2.1 video is listed by its actual version pending the new video.",
+  "findings": "Reviewed the 19 README sections in order. Confirmed app links, MCP setup and Windows distribution, supported page layouts and style options, PDF links, provider/model tables, edit flow and changelog against current sources and the package. The existing v8.2.1 video is listed by its actual version pending the new video. 2026-11-26 follow-up: replaced the v8.2.1 introduction reference with the full v8.2.2 GitHub video and HD playback link. The technical sections and the earlier example clips were compared and retained.",
   "pricingReview": {
     "version": "8.2.2",
     "sourceSha256": "a0bdf8a6699f6e166403deef3c476409b22a7bf9d4925e8049855d12f62e618a",

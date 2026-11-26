@@ -64,7 +64,11 @@ The API connection dialog shows the usage, OpenAI API and Gemini API manuals in 
 
 ## Introduction video / 紹介動画
 
-[Watch the narrated v8.2.1 introduction / v8.2.1のナレーション付き紹介動画を見る（note）](https://note.com/happy_duck780/n/ndf063558c1f5)
+**v8.2.2 full introduction / v8.2.2 全体紹介**
+
+https://github.com/user-attachments/assets/34a671b6-45c4-45b7-82fe-f94191a786a4
+
+[Watch in HD on YouTube / YouTubeで高画質版を再生](https://www.youtube.com/watch?v=rZRBy1C6wQ4) / [Read the guide on note / noteで使い方を読む](https://note.com/happy_duck780/n/ndf063558c1f5)
 
 ## Application screen and output / 操作画面と生成例
 
