@@ -57,6 +57,66 @@ try {
     assert.throws(()=>c.readPageComposition(scenarioFor(impossible),4),/前景/);
   });
 
+  const flexibleComposition = {
+    ...composition,
+    reason: '斜めの境界で開く窓の動きをつなぎ、大コマの中の小コマで鍵に気付く。',
+    frames: [
+      {x:.42,y:0,w:.58,h:.38,corners:[[.21,0],[1,0],[1,1],[0,1]]},
+      {x:0,y:0,w:.5418,h:.38,corners:[[0,0],[1,0],[.42/.5418,1],[0,1]]},
+      {x:0,y:.38,w:1,h:.62},
+      {x:.68,y:.68,w:.26,h:.23,insetOf:3},
+    ],
+    heroPanels:[3],
+    foregrounds:[],
+    breakouts:[{panel:1,part:'ユウの右腕と手',into:2}],
+    bleed:[],
+  };
+
+  test('diagonal neighbors can share an edge and an inset is a separate beat through normal STEP3',async()=>{
+    const authored={...input,scenario:scenarioFor(flexibleComposition)};
+    const source=m.readExperimentalSource(authored);
+    const result=await m.prepareExperimentalManga(authored,async()=>JSON.stringify({count:4,layout:'two_columns',
+      reason:'preserve approved composition',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',
+        action:p.text,dialogueIds:p.dialogueIds,breakout:null,visualEffects:[]}))}));
+    assert.deepEqual(result.plan.composition.frames,flexibleComposition.frames);
+    assert.deepEqual(result.plan.expectedDialogue,source.dialogue);
+    assert.match(result.prompt,/SLANTED FRAME P1/);
+    assert.match(result.prompt,/INSET P4 within P3/);
+    assert.match(result.prompt,/P1\.left.*\[0\.5418,0\].*\[0\.42,0\.38\]/);
+    const review=m.buildExperimentalReviewPrompt(result.plan,result.source);
+    assert.match(review,/slant:P1/);
+    assert.match(review,/inset:P4/);
+    const textOnly=m.buildExperimentalImagePrompt(result.plan,result.source,
+      {colorMode:'color',providerFamily:'chatgpt',imageReferenceCount:0});
+    assert.match(textOnly,/P1\.left.*\[0\.5418,0\].*\[0\.42,0\.38\]/);
+    assert.match(textOnly,/INSET P4 within P3/);
+  });
+
+  test('whole-page QA binds measured diagonal panels and inset to their separate story beats',()=>{
+    const plan={count:4,layout:'free',composition:flexibleComposition};
+    const observedFrames=flexibleComposition.frames.map(({x,y,w,h,corners,insetOf},i)=>({
+      panel:i+1,bounds:[x,y,w,h],corners:corners??null,insetOf:insetOf??null,
+      edgeEvidence:'コマ枠の上下と隣の紙の溝が見える。',
+    }));
+    const assess=frames=>m.validateExperimentalReview({inspectionKind:'whole-page-geometry',complete:true,observedFrames:frames},plan);
+    assert.deepEqual(assess([observedFrames[3],...observedFrames.slice(0,3)]).observedFrames,observedFrames);
+    assert.equal(assess(observedFrames.map(f=>({...f,corners:null}))).observedCount,null);
+    assert.equal(assess(observedFrames.map(f=>({...f,insetOf:null}))).observedCount,null);
+    assert.equal(assess(observedFrames.map(f=>f.panel===4?{...f,insetOf:1}:f)).observedCount,null);
+  });
+
+  test('invalid corners, accidental overlap and invalid inset parents are rejected',()=>{
+    const read=change=>{
+      const candidate=structuredClone(flexibleComposition);
+      change(candidate.frames);
+      return c.readPageComposition(scenarioFor(candidate),4);
+    };
+    assert.throws(()=>read(frames=>delete frames[3].insetOf),/重な/);
+    assert.throws(()=>read(frames=>{frames[3].y=.1;}),/小コマ/);
+    assert.throws(()=>read(frames=>{frames[3].insetOf=4;}),/小コマ/);
+    assert.throws(()=>read(frames=>{frames[0].corners=[[0,0],[1,1],[1,0],[0,1]];}),/角|四角/);
+  });
+
   test('a distinct later appearance of the page figure remains a local story actor',async()=>{
     const later={...input,scenario:input.scenario.replace('状況: ミオが窓辺を調べる。\nミオ「確認3」','状況: ユウが窓の鍵を指さす。\nユウ「確認3」')};
     const source=m.readExperimentalSource(later);

@@ -3,22 +3,73 @@ import { readBookPageMode } from './page-production-contract.js';
 const fail = message => { throw new Error(`実験的コマ割り: ${message}`); };
 const compositionError = message => { throw Object.assign(new Error(`PageComposition: ${message}`), {code:'PAGE_COMPOSITION_CONTRACT'}); };
 
+const BOX_CORNERS=[[0,0],[1,0],[1,1],[0,1]];
+const FRAME_SIDES=['top','right','bottom','left'];
+const cross=([ax,ay],[bx,by],[cx,cy])=>(bx-ax)*(cy-ay)-(by-ay)*(cx-ax);
+const polygon=({x,y,w,h,corners=BOX_CORNERS})=>corners.map(([a,b])=>[x+a*w,y+b*h]);
+const edges=points=>points.map((point,i)=>[point,points[(i+1)%points.length]]);
+const hasSlantedSide=corners=>edges(corners).some(([[x,y],[u,v]])=>Math.abs(x-u)>.02&&Math.abs(y-v)>.02);
+
+function validCorners(corners) {
+  if(!Array.isArray(corners)||corners.length!==4||corners.some(p=>!Array.isArray(p)||p.length!==2
+    ||p.some(n=>!Number.isFinite(n)||n<0||n>1)))return false;
+  if([0,1].some(axis=>!corners.some(p=>p[axis]===0)||!corners.some(p=>p[axis]===1)))return false;
+  const [tl,tr,br,bl]=corners;
+  return tl[0]<tr[0]&&bl[0]<br[0]&&tl[1]<bl[1]&&tr[1]<br[1]
+    &&corners.every((p,i)=>cross(p,corners[(i+1)%4],corners[(i+2)%4])>1e-6);
+}
+
+function polygonsOverlap(a,b,tolerance) {
+  return [...edges(a),...edges(b)].every(([[x,y],[u,v]])=>{
+    const length=Math.hypot(u-x,v-y);
+    const project=([px,py])=>((u-x)*py-(v-y)*px)/length;
+    const p=a.map(project),q=b.map(project);
+    return Math.min(Math.max(...p),Math.max(...q))-Math.max(Math.min(...p),Math.min(...q))>tolerance;
+  });
+}
+
+export function hasStructuredFrames(plan) {
+  return plan.composition?.frames?.some(f=>f.corners||f.insetOf)??false;
+}
+
+export function orderPageFrames(frames,{tolerance=.001}={}) {
+  const polygons=frames.map(frame=>{
+    if(frame.corners!==undefined&&!validCorners(frame.corners))compositionError('cornersは左上から時計回りに並べた、外接矩形内の凸四角形で指定してください。');
+    return polygon(frame);
+  });
+  const children=new Map();
+  frames.forEach((frame,i)=>{
+    if(frame.insetOf===undefined)return;
+    const parent=frame.insetOf-1;
+    if(!Number.isInteger(frame.insetOf)||parent<0||parent>=frames.length||parent===i||frames[parent].insetOf!==undefined
+      ||!edges(polygons[parent]).every(([a,b])=>polygons[i].every(p=>cross(a,b,p)>1e-7))) {
+      compositionError('差し込み小コマは別の主コマの内側に収め、insetOfにそのコマ番号を指定してください。');
+    }
+    children.set(parent,[...(children.get(parent)||[]),i]);
+  });
+  for(let i=0;i<frames.length;i++)for(let j=i+1;j<frames.length;j++) {
+    if(frames[j].insetOf===i+1||frames[i].insetOf===j+1)continue;
+    if(polygonsOverlap(polygons[i],polygons[j],tolerance))compositionError('物語のコマが重なっています。差し込み小コマはinsetOf、人物の重なりはforegroundsで指定してください。');
+  }
+  const byReadingOrder=indices=>{
+    const pending=[...indices].sort((a,b)=>frames[a].y-frames[b].y),ordered=[];
+    while(pending.length) {
+      const top=frames[pending[0]].y,row=[];
+      while(pending.length&&frames[pending[0]].y-top<.02)row.push(pending.shift());
+      ordered.push(...row.sort((a,b)=>frames[b].x-frames[a].x));
+    }
+    return ordered;
+  };
+  const roots=frames.flatMap((frame,i)=>frame.insetOf===undefined?[i]:[]);
+  return byReadingOrder(roots).flatMap(i=>[i,...byReadingOrder(children.get(i)||[])]);
+}
+
 // These coordinates describe the storyboard, not a pixel-matching acceptance test.
 function freeFrames(frames,count) {
   if(!Array.isArray(frames)||frames.length!==count)compositionError('自由配置は各コマの矩形を読順で一つずつ指定してください。');
   if(frames.some(r=>!r||!['x','y','w','h'].every(k=>Number.isFinite(r[k]))||r.x<0||r.y<0||r.w<.06||r.h<.06||r.x+r.w>1.001||r.y+r.h>1.001))compositionError('自由配置の矩形はページ内に収め、読める幅と高さを確保してください。');
-  for(let i=0;i<count;i++)for(let j=i+1;j<count;j++) {
-    const a=frames[i],b=frames[j];
-    if(Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x)>.001&&Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y)>.001)compositionError('物語のコマ同士を重ねず、人物の重なりはforegroundsで設計してください。');
-  }
-  const pending=frames.map((r,i)=>({...r,i})).sort((a,b)=>a.y-b.y),ordered=[];
-  while(pending.length) {
-    const top=pending[0].y,row=[];
-    while(pending.length&&pending[0].y-top<.02)row.push(pending.shift());
-    ordered.push(...row.sort((a,b)=>b.x-a.x));
-  }
-  if(ordered.some((r,i)=>r.i!==i))compositionError('自由配置の矩形は右から左、上から下の読順で指定してください。');
-  return frames.map(({x,y,w,h})=>({x,y,w,h}));
+  if(orderPageFrames(frames).some((index,i)=>index!==i))compositionError('自由配置は右から左、上から下の読順で、差し込み小コマは親コマの直後に指定してください。');
+  return frames.map(({x,y,w,h,corners,insetOf})=>({x,y,w,h,...(corners?{corners}:{}),...(insetOf?{insetOf}:{})}));
 }
 
 export function pageCompositionRects(plan) {
@@ -44,10 +95,7 @@ export function readPageComposition(scenario, count) {
     if(!validPanel(b?.panel))compositionError(`${field}.panelには枠越え元のコマ番号を1〜${count}の整数で指定してください。`);
     if(!validPanel(b.into)||b.panel===b.into)compositionError(`${field}.intoには辺を共有する別のコマ番号を1〜${count}の整数一つで指定してください。配列ではありません。`);
     if(typeof b.part!=='string'||!b.part.trim())compositionError(`${field}.partには枠を越える人物と身体部位を空でない文字列で指定してください。`);
-    const a=rects[b.panel-1],t=rects[b.into-1],near=(x,y)=>Math.abs(x-y)<1e-6;
-    const adjacent=((near(a.x+a.w,t.x)||near(t.x+t.w,a.x))&&Math.min(a.y+a.h,t.y+t.h)>Math.max(a.y,t.y)+.001)
-      ||((near(a.y+a.h,t.y)||near(t.y+t.h,a.y))&&Math.min(a.x+a.w,t.x+t.w)>Math.max(a.x,t.x)+.001);
-    if(!adjacent)compositionError('枠越え先は辺を共有する隣接コマに限ります。');
+    if(!sharedFrameEdge(rects[b.panel-1],rects[b.into-1]))compositionError('枠越え先は辺を共有する隣接コマに限ります。');
   }
   if(c.foregrounds!==undefined) {
     if(!Array.isArray(c.foregrounds)||c.foregrounds.length>1)compositionError('ページ大の前景人物は主焦点となる一人を指定してください。');
@@ -60,8 +108,12 @@ export function readPageComposition(scenario, count) {
   }
   for(const b of c.bleed) {
     if(!validPanel(b?.panel)||!Array.isArray(b.edges)||!b.edges.length||new Set(b.edges).size!==b.edges.length)compositionError('タチキリのコマと辺が不正です。');
-    const r=rects[b.panel-1],edges={left:r.x,right:1-r.x-r.w,top:r.y,bottom:1-r.y-r.h};
-    if(b.edges.some(e=>!Object.hasOwn(edges,e)||Math.abs(edges[e])>1e-6))compositionError('タチキリはページ外周に接する辺だけに指定できます。');
+    const r=rects[b.panel-1],outer={left:[0,0],right:[0,1],top:[1,0],bottom:[1,1]};
+    if(b.edges.some(e=>{
+      if(!Object.hasOwn(outer,e))return true;
+      const [axis,limit]=outer[e];
+      return edges(polygon(r))[FRAME_SIDES.indexOf(e)].some(p=>Math.abs(p[axis]-limit)>1e-6);
+    }))compositionError('タチキリはページ外周に接する辺だけに指定できます。');
   }
   if(c.restraintReason!==undefined&&(typeof c.restraintReason!=='string'||c.restraintReason.trim().length<12))compositionError('restraintReasonには演出を控える具体的な原入力・物語上の理由が必要です。');
   return {layout:c.layout,...(c.layout==='free'?{frames:rects}:{}),reason:c.reason,heroPanels:c.heroPanels,breakouts:c.breakouts,...(c.foregrounds?{foregrounds:c.foregrounds}:{}),bleed:c.bleed,...(c.restraintReason?{restraintReason:c.restraintReason.trim()}:{})};
@@ -125,14 +177,24 @@ export function applyPageComposition(plan, source) {
   })};
 }
 
-// Call only for the shared-edge pairs already validated by the composition contract.
+export function sharedFrameEdge(source,target,tolerance=1e-6) {
+  for(const [i,[a,b]] of edges(polygon(source)).entries()) {
+    const dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy);
+    const position=p=>((p[0]-a[0])*dx+(p[1]-a[1])*dy)/length;
+    const point=offset=>[a[0]+dx*offset/length,a[1]+dy*offset/length].map(n=>Number(n.toFixed(6)));
+    for(const [c,d] of edges(polygon(target))) {
+      if([c,d].some(p=>Math.abs(cross(a,b,p))/length>tolerance)||position(c)<=position(d))continue;
+      const start=Math.max(0,position(d)),end=Math.min(length,position(c));
+      if(end-start>.001)return {edge:FRAME_SIDES[i],points:[point(start),point(end)].sort((p,q)=>p[1]-q[1]||p[0]-q[0])};
+    }
+  }
+  return null;
+}
+
 export function breakoutEdge(source, target) {
-  const near=(a,b)=>Math.abs(a-b)<1e-6;
-  if(near(source.y,target.y+target.h))return 'top';
-  if(near(source.y+source.h,target.y))return 'bottom';
-  if(near(source.x,target.x+target.w))return 'left';
-  if(near(source.x+source.w,target.x))return 'right';
-  compositionError('枠越えの共有辺を決定できません。');
+  const shared=sharedFrameEdge(source,target);
+  if(!shared)compositionError('枠越えの共有辺を決定できません。');
+  return shared.edge;
 }
 
 export function pageCompositionRendering(plan) {
@@ -142,7 +204,11 @@ export function pageCompositionRendering(plan) {
   // the entire JSON here wastes the image API budget and competes with the prose.
   return `AUTHORED PAGE COMPOSITION: layout=${c.layout}; hero scenes=${c.heroPanels.map(p=>`P${p}`).join(', ')||'none'}. Story emphasis: ${c.reason}${c.restraintReason?` Restraint: ${c.restraintReason}`:''}. Production metadata, NEVER printed. Draw the PAGE AS A WHOLE: one dominant character/action, smaller story beats, clear reading path and lettering. Coordinates guide space allocation; adapt boundaries and silhouette naturally while preserving panel count, order, visual hierarchy, camera, story and legibility. Never shrink the dominant figure to make every rectangle an isolated box.\n`
     +(c.bleed.length?`FULL BLEED RULE: 指定辺の絵を実際の画布端まで連続させ、白余白と外枠線を除く。他の辺の余白は保持。内部の読順と区切りは明確にし、主役の輪郭に合わせ境界を調整。顔・必要な手/道具・台詞・題字は安全域で読めるようにし、背景や非重要の輪郭は端へ続けてよい。Footer credits may overlay artwork or remain hidden/clipped; 絵を縮める理由にしない。Title/footer zonesは文字の安全域で、コマ境界ではない。top/bottom artworkは文字の背後まで連続。No full-width blank band. ページ全体の拡大・裁切りは禁止。\n`: '')
-    +c.bleed.map(b=>`FULL BLEED P${b.panel}: on ${b.edges.join(', ')} ONLY; apply the shared rule.`).join('\n');
+    +c.bleed.map(b=>`FULL BLEED P${b.panel}: on ${b.edges.join(', ')} ONLY; apply the shared rule.\n`).join('')
+    +(c.frames||[]).flatMap((f,i)=>[
+      ...(f.corners?[`SLANTED FRAME P${i+1}: follow the four comic-area vertices (top-left, top-right, bottom-right, bottom-left): ${JSON.stringify(polygon(f).map(p=>p.map(n=>Number(n.toFixed(4)))))}. Keep the visibly diagonal sides and adjoining gutter; preserve the authored camera inside the frame.`]:[]),
+      ...(f.insetOf?[`INSET P${i+1} within P${f.insetOf}: draw this bordered small frame over the large scene as its own distinct story beat, at comic-area bounds ${JSON.stringify([f.x,f.y,f.w,f.h])}. Read it immediately after its parent scene. Keep the parent art visible around it, and protect both scenes' faces, essential action and lettering.`]:[]),
+    ]).join('\n');
 }
 
 export function pageCompositionForeground(plan,source) {
@@ -150,8 +216,8 @@ export function pageCompositionForeground(plan,source) {
   const rects=pageCompositionRects(plan);
   const dominant=(plan.composition.foregrounds||[]).map((f,i)=>`PAGE DOMINANT FIGURE F${i+1}: ${f.character}, source=P${f.panel}, overlapping ${f.over.map(n=>`P${n}`).join(', ')}. ${f.placement} ページの主役となる大きな一続きの身体を最初に配置し、周囲に小コマと台詞を収める。元場面のCamera・姿勢・道具とSOURCE MEDIUM ${source.panels[f.panel-1].style||'reference style'}を保持。身体と表情を大きく見せ、小コマと明確な大小差を作る。同じ人物の追加立ち絵や分離した頭を貼らない。枠線と溝は身体の背後で止め、その先で再開。越境部分もP${f.panel}の身体で、受入場面の新たな人物ではない。脚本上の別時点の再登場は独立した場面として残す。小コマの動作・顔・必要な道具・吹き出しを読めるように保つ。前景の台詞は元場面の発話一回だけ。境界や重なり量は自然に調整してよく、大きく一続きの人物と読みやすい物語を優先する。`);
   return [...dominant,...plan.composition.breakouts.map((b,i)=>{
-    const a=rects[b.panel-1],t=rects[b.into-1],edge=breakoutEdge(a,t);
-    const seam=['left','right'].includes(edge)
+    const a=rects[b.panel-1],t=rects[b.into-1],{edge,points}=sharedFrameEdge(a,t);
+    const seam=a.corners||t.corners?`segment ${JSON.stringify(points[0])} to ${JSON.stringify(points[1])}`:['left','right'].includes(edge)
       ?`x=${edge==='left'?a.x:a.x+a.w}, y=${Math.max(a.y,t.y)}..${Math.min(a.y+a.h,t.y+t.h)}`
       :`y=${edge==='top'?a.y:a.y+a.h}, x=${Math.max(a.x,t.x)}..${Math.min(a.x+a.w,t.x+t.w)}`;
     return `PAGE FOREGROUND F${i+1}: ${b.part}, owned by P${b.panel}, extends into P${b.into} across P${b.panel}.${edge} (${seam} in comic-area coordinates). Draw this actor as ONE physical body with ONE head across this pair, not a complete body inside P${b.panel} plus a second head/limb in P${b.into}. Lay out this connected silhouette FIRST across the shared edge; then draw both panels behind it. Hide BOTH the frame line and gutter wherever the crossing silhouette covers them, including skin, sleeves, legs and shoes. Resume them only outside its contour. Put the named part itself beyond the edge and keep its neck/shoulder/torso connection visibly continuous to the SAME source body. SOURCE MEDIUM: ${source.panels[b.panel-1].style||'source/reference style'}; source Camera and pose remain authoritative. The receiving-panel Camera and medium do not reproject or redraw F${i+1}. Panel-local positions, cast counts and balloon tails must accommodate this one body, never create a second face as a tail target. Receiving story actors/props/text keep clear; unrelated story appearances remain in their own panels.`;
@@ -164,6 +230,10 @@ export function requiredCompositionChecks(plan) {
   return [...c.heroPanels.map(panel=>({id:`hero:P${panel}`,panel})),
     ...(c.foregrounds||[]).map(f=>({id:`foreground:P${f.panel}`,panel:f.panel})),
     ...c.breakouts.map(b=>({id:`breakout:P${b.panel}`,panel:b.panel})),
+    ...(c.frames||[]).flatMap((f,i)=>[
+      ...(f.corners?[{id:`slant:P${i+1}`,panel:i+1}]:[]),
+      ...(f.insetOf?[{id:`inset:P${i+1}`,panel:i+1}]:[]),
+    ]),
     ...c.bleed.flatMap(b=>b.edges.map(edge=>({id:`bleed:P${b.panel}:${edge}`,panel:b.panel})))];
 }
 
@@ -173,7 +243,12 @@ export function inspectCompositionChecks(review, plan) {
   const checks=required.map(expected=>{
     const matches=(Array.isArray(review?.compositionChecks)?review.compositionChecks:[]).filter(c=>c?.id===expected.id);
     const c=matches[0];
-    return {...expected,status:matches.length===1&&['pass','fail'].includes(c.status)&&typeof c.observed==='string'&&c.observed.trim().length>=8?c.status:'uncertain',observed:c?.observed||'',
+    const observedFrame=review?.observedFrames?.[expected.panel-1];
+    const shapeObserved=expected.id.startsWith('slant:')
+      ?validCorners(observedFrame?.corners)&&hasSlantedSide(observedFrame.corners)
+      :expected.id.startsWith('inset:')?observedFrame?.insetOf===plan.composition.frames[expected.panel-1].insetOf:true;
+    return {...expected,status:matches.length===1&&['pass','fail'].includes(c.status)&&typeof c.observed==='string'&&c.observed.trim().length>=8
+      &&(c.status!=='pass'||shapeObserved)?c.status:'uncertain',observed:c?.observed||'',
       materialImpact:c?.materialImpact,impactReason:c?.impactReason};
   });
   return {status:checks.some(c=>c.status==='fail')?'fail':checks.every(c=>c.status==='pass')?'pass':'uncertain',checks};
@@ -216,7 +291,7 @@ export function pageCompositionReview(plan) {
 }
 
 function pageCompositionReviewContract(plan) {
-  return `${pageCompositionRendering(plan)}\nThese authored effects are REQUIRED; optional-effect waivers do not apply. Return compositionChecks with one {id,status:pass|fail|uncertain,observed:concrete Japanese visual evidence,materialImpact:material|minor_variation|none|uncertain,impactReason:concrete visible effect on readability/story or creative hierarchy} for EACH of ${JSON.stringify(requiredCompositionChecks(plan))}. Observe actual artwork, not this metadata. Judge the whole page before local details: readable story, strong large/small contrast, one coherent dominant body. Foreground checks need a visibly dominant connected figure spanning the intended group of small frames; a small character contained in one box fails, while natural shifts in silhouette or overlap amount are allowed. Never demand exact coordinates or overlap percentages. Hero checks need the character/action's visible size and contrast with smaller neighboring frames, not merely a large empty background. Breakout checks need a visible connected silhouette crossing the assigned internal edge: describe which of the authored parts actually cross and which remain inside. A hair tip or one raised hand does not satisfy an authored whole head/shoulder crossing; assess the requested extent, never infer hidden connections. The crossing keeps its source panel's medium and body owner. For required breakouts and page foregrounds, locate any frame line or gutter visibly drawn over the crossing anatomy or clothing. Pass only if the covered line and gutter disappear behind the body and resume outside its contour. Describe the actual intersection and its impact; distinguish the panel edge from seams, hatching and ordinary crops. Bleed checks need artwork reaching that actual canvas edge without white margin/outer frame, including through any title/footer zone on the specified edge. Authorized bleed is NOT an accidental page crop; missing faces, essential props, dialogue or a required title still fail their own checks; footer visibility follows the allowed overlap/occlusion policy. Report effect compliance separately from material impact. A missing required effect is repairable ONLY when the failed check also has materialImpact=material with concrete harm: missing dominant hierarchy, disconnected body, hidden speech/necessary action, or broken story flow. Harmless margin/bleed differences, a natural change of crossing body part or edge, and coherent overlap shifts remain minor_variation while their compliance status stays honest; do not fabricate harm from metadata or demand another paid edit. Optional unrequested effects may be absent without failure. Do not infer compliance from a layout ID.`;
+  return `${pageCompositionRendering(plan)}\nThese authored effects are REQUIRED; optional-effect waivers do not apply. Return compositionChecks with one {id,status:pass|fail|uncertain,observed:concrete Japanese visual evidence,materialImpact:material|minor_variation|none|uncertain,impactReason:concrete visible effect on readability/story or creative hierarchy} for EACH of ${JSON.stringify(requiredCompositionChecks(plan))}. Observe actual artwork, not this metadata. Judge the whole page before local details: readable story, strong large/small contrast, one coherent dominant body. Foreground checks need a visibly dominant connected figure spanning the intended group of small frames; a small character contained in one box fails, while natural shifts in silhouette or overlap amount are allowed. Never demand exact coordinates or overlap percentages. Hero checks need the character/action's visible size and contrast with smaller neighboring frames, not merely a large empty background. Breakout checks need a visible connected silhouette crossing the assigned internal edge: describe which of the authored parts actually cross and which remain inside. A hair tip or one raised hand does not satisfy an authored whole head/shoulder crossing; assess the requested extent, never infer hidden connections. The crossing keeps its source panel's medium and body owner. For required breakouts and page foregrounds, locate any frame line or gutter visibly drawn over the crossing anatomy or clothing. Pass only if the covered line and gutter disappear behind the body and resume outside its contour. Describe the actual intersection and its impact; distinguish the panel edge from seams, hatching and ordinary crops. Slant checks need a visible diagonal FRAME edge distinct from an in-panel perspective line. Inset checks need an independently visible bordered small story beat inside the parent, read directly after it, with separate intact story and lettering; report the observed parent number. Treat natural shifts in angle, size and placement as minor when both scenes and their order read cleanly. Bleed checks need artwork reaching that actual canvas edge without white margin/outer frame, including through any title/footer zone on the specified edge. Authorized bleed is NOT an accidental page crop; missing faces, essential props, dialogue or a required title still fail their own checks; footer visibility follows the allowed overlap/occlusion policy. Report effect compliance separately from material impact. A missing required effect is repairable ONLY when the failed check also has materialImpact=material with concrete harm: missing dominant hierarchy, disconnected body, hidden speech/necessary action, or broken story flow. Harmless margin/bleed differences, a natural change of crossing body part or edge, and coherent overlap shifts remain minor_variation while their compliance status stays honest; do not fabricate harm from metadata or demand another paid edit. Optional unrequested effects may be absent without failure. Do not infer compliance from a layout ID.`;
 }
 
 
@@ -270,8 +345,8 @@ export function experimentalLayout(count, layout=[4,8].includes(count)?'two_colu
 export const SCENARIO_PAGE_COMPOSITION = `【ページ全体から設計する4〜8コマ】台詞を書く前に、一ページで最も大きく見せたい人物の表情・登場・動作と、小コマで伝える準備・発見・反応・オチを決める。通常入力でもページを支配する一人の大きな姿と小さな場面の明確な対比を設計する。人物が小さい均等な枠を並べ、最後に髪先だけを出す設計にしない。穏やかな笑顔や読書、食事の表情も大きな見せ場になる。大胆さを無関係な戦闘・事故・大げさな感情に置き換えない。元の物語、同一性、Camera、画風、台詞、読順を保持する。
 【主役と小コマを同時に配置】見せ場の動作・表情と、その前後を読む流れに合わせて人物の大きな全身や半身を置く。横へ伸びる動作や複数人の関係は幅のある大コマ、上下の動作や立ち姿は縦長、溜めからの解放は中段や下段の大きな領域など、物語から形と位置を選ぶ。大コマの位置も小コマの並びも毎回同じ型へ固定しない。横長の見せ場でも小コマとの明確な面積差を取り、身体や表情を大胆に大きく描く。一人の大きな身体を複数の小コマや溝の手前へ重ねてよい。重なる相手は一コマに限定しない。小コマの重要な人物・道具・台詞を隠さず、大きな人物の身体を各小コマへ別々に描き足さない。見せ場の後に小コマでオチを回収してよい。見せ場を枠へ縮めて押し込まず、周囲の枠と台詞の空間を先に設計する。外周へ接する主役や背景にはタチキリを合わせ、絵を実際の画布端まで続ける。下部ウォーターマークは絵の上・一部隠れ・切れを許容し、人物を縮める理由にしない。タイトルと物語の文字は読める位置に保つ。
 【形式】Scenario:直後、最初のコマ見出しより前に PageComposition: の1行JSONを置く。特定の配置を基本形にしない。必須キーは layout（通常は"free"）、frames（各コマの{x,y,w,h}の配列）、reason（今回の山場と読順を支える理由）、heroPanels（大きく見せるコマ番号の配列）、foregrounds、breakouts、bleed。foregroundsの要素は{panel,character,over,placement}、breakoutsの要素は{panel,part,into}、bleedの要素は{panel,edges}。番号・座標は数値で記す。heroPanelsには山場のコマ番号を必ず入れ、foregroundsかbreakoutsの少なくとも一方を具体的な要素で満たす。状況・reasonに「はみ出す」と書くだけで両配列を[]にしてはいけない。使用しない側と不要なbleedだけを[]にする（原文の明示制約によるrestraintReasonがある場合を除く）。配置・コマ比率・見せ場番号・重なる先は今回の物語から設計する。
-framesは漫画領域内の0〜1座標（x左、y上、w幅、h高さ）をコマ数だけ右→左、上→下の読順で指定する。矩形同士は重ねない。大きな人物の重なりはforegroundsで表す。縦長の大コマに小コマを沿わせる場合も、上下の広い大コマに小コマの段を組み合わせる場合も、場面の先後が自然に読める配置にする。細い溝・軽い斜辺・境界の自然な調整は描画時に許容し、数値一致は目的にしない。foregroundsは主焦点の一人だけ、panelはその人物が演技する元コマ、characterは人物設定の正式名、overは重なる別コマ番号、placementは全身または大きな半身と受入余白を具体的に書く。元コマ内にも同じ身体を重ねて描く別の立ち絵ではない。元コマのCamera・描法・姿勢を一続きに保つ。受入コマの状況にはその場面自身の人物・行動だけを書く。前景の重なりを理由に同じ人物を新たな登場人物として列挙しない。別時点としてその人物が再登場する小コマは、その独立した動作を明記してよい。
-【別の構図】ページ大の前景より一つの動作の枠越えが物語に適する場合はforegroundsを[]にして、breakouts:[{"panel":番号,"part":"人物名と頭・肩・腕など","into":辺を共有する隣接コマ番号}]を用いる。framesは溝を除いた設計座標なので、隣接する辺は同じ座標にする（上コマのy+h=下コマのy、または左コマのx+w=右コマのx）。実際の白い溝は描画時に加える。角だけで接するコマや離れたコマへbreakoutsを指定しない。複数の小コマに一続きの人物を重ねる演出はforegroundsのover配列で表す。胸→首→頭、肩→腕→手が接続するポーズと受入空間を状況にも書く。直立した全身の肩を下辺から出すなど、身体と共有辺が逆の配置は不可。受入側に同じ人物の肩越しや別ポーズを足して越境に見せかけない。頭・肩の指定を髪先や手だけで代用しない。ただし絵として自然な接続・強い見せ場・読みやすさが成立すれば位置や越境量の微差は許容する。
+framesは漫画領域内の0〜1座標（x左、y上、w幅、h高さ）をコマ数だけ右→左、上→下の読順で指定する。主コマ同士の絵の領域は重ねない。斜め枠には任意のcorners:[[x,y],[x,y],[x,y],[x,y]]を足し、外接矩形の内側を0〜1として左上→右上→右下→左下の凸四角形を指定する。大ゴマの内側に独立した小コマを重ねる場合は、小コマのinsetOfに親コマの番号を指定し、親の枠内に四辺を収め、読順では親の直後に置く。複数の差し込みは右→左、上→下で並べる。差し込みの中へさらに差し込まない。人物の重なりはforegroundsで表す。縦長の大コマに小コマを沿わせる場合も、上下の広い大コマに小コマの段を組み合わせる場合も、場面の先後が自然に読める配置にする。細い溝・軽い斜辺・境界の自然な調整は描画時に許容し、数値一致は目的にしない。foregroundsは主焦点の一人だけ、panelはその人物が演技する元コマ、characterは人物設定の正式名、overは重なる別コマ番号、placementは全身または大きな半身と受入余白を具体的に書く。元コマ内にも同じ身体を重ねて描く別の立ち絵ではない。元コマのCamera・描法・姿勢を一続きに保つ。受入コマの状況にはその場面自身の人物・行動だけを書く。前景の重なりを理由に同じ人物を新たな登場人物として列挙しない。別時点としてその人物が再登場する小コマは、その独立した動作を明記してよい。
+【別の構図】ページ大の前景より一つの動作の枠越えが物語に適する場合はforegroundsを[]にして、breakouts:[{"panel":番号,"part":"人物名と頭・肩・腕など","into":辺を共有する隣接コマ番号}]を用いる。framesは溝を除いた設計座標なので、隣接する辺は同じ座標にする（矩形では上コマのy+h=下コマのy、または左コマのx+w=右コマのx。斜め枠では共有する直線の区間をページ座標で一致させる）。実際の白い溝は描画時に加える。角だけで接するコマや離れたコマへbreakoutsを指定しない。複数の小コマに一続きの人物を重ねる演出はforegroundsのover配列で表す。胸→首→頭、肩→腕→手が接続するポーズと受入空間を状況にも書く。直立した全身の肩を下辺から出すなど、身体と共有辺が逆の配置は不可。受入側に同じ人物の肩越しや別ポーズを足して越境に見せかけない。頭・肩の指定を髪先や手だけで代用しない。ただし絵として自然な接続・強い見せ場・読みやすさが成立すれば位置や越境量の微差は許容する。
 既存配置も使える: ${JSON.stringify(Object.fromEntries(Object.entries(EXPERIMENTAL_LAYOUTS).filter(([id])=>id!=='strips')))}。既存IDならframesは不要。候補へ収めるために見せ場を縮めず、合わなければfreeを使う。heroPanelsは見せ場の番号。bleedは必要なコマと実際に接する外周のleft/right/top/bottomを指定し、不要なら[]。通常は大コマとforegroundsまたはbreakoutsを設計する。明示された均等配置・越境禁止・原文への忠実性と衝突するときだけ、具体的なrestraintReasonを記して抑える。未指定や静かな題材という理由だけで弱めない。制作メタデータや構図の説明を作中の台詞にしない。`;
 
 // Book authoring chooses the physical silhouette before reducing the design to a limb crossing.

@@ -4,7 +4,7 @@ import { normalizeImageDataUrl } from './openai-image-references.js';
 import { OPENAI_IMAGE_SIZE_OPTIONS, DEFAULT_OPENAI_IMAGE_SIZE } from './openai-image-settings.js';
 import { buildEmotionBlock } from './panel-utils.js';
 import { orderObservedFrames } from './experimental-manga.js';
-import { pageCompositionRects } from './manga-page-composition.js';
+import { hasStructuredFrames, pageCompositionRects } from './manga-page-composition.js';
 
 const EDIT_STYLES = new Set(['NORMAL', 'POP_ART', 'WATERCOLOR', 'GEKIGA', 'SKETCH', 'CHIBI_GAG']);
 
@@ -173,6 +173,9 @@ export function orderPanelStyleEditFrames(regions, page, { plan } = {}) {
 
 export async function readPanelStyleEditFrames(sourceDataUrl, count, options = {}) {
   if (!Number.isInteger(count) || count < 1 || count > 8) throw new RangeError('コマ数は1〜8で指定してください。');
+  if (options.plan && hasStructuredFrames(options.plan)) {
+    throw new Error('斜め枠・差し込み小コマのページは、隣の絵も矩形に入るためコマ修正で切り出せません。「自由入力」で対象のコマと変更内容を指定してください。');
+  }
   const { pixels } = await readPixels(sourceDataUrl);
   let ordered;
   const lineage = options.editLineage;

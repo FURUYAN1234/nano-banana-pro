@@ -1,7 +1,7 @@
 {
   "pricingSourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",
   "manualVersion": "8.2.5",
-  "manualSourceSha256": "ca26970960680a928437bef39ffed9723b7e207246ee98c5ad1926dfeccf9197",
+  "manualSourceSha256": "538039cfdcccc126270aaeec751514102e50fb7e7993460be6a362d70c0d1e1d",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
@@ -13,13 +13,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "c28933276485d6bc2d67efb2c1f1976249cf667d4c68abeee8a0cf54b6d9a257"
+      "sha256": "daca6a8ed433b7feaa9f20626b399dc17c550b62446bbaae7c1e97aadb26e825"
     }
   ],
-  "readmeSha256": "7aa47bfb8f6fd460762c08ef31b413f1316d2bcee1a861eabb63a60ce4eaa70d",
+  "readmeSha256": "7ad768a643f076bf3f82787b2a2a28774f7f7dedfb11ebc0ad43784add21ca5d",
   "readmeLanguageGaps": [],
-  "sourceTree": "71ea148b0f45d9174629719e4d02c17b8f98cfc9",
-  "publicTree": "93e0174a1ff6de4566f9047a8644159f4d6ce307",
+  "sourceTree": "088388a7f44920203413f4d6c8434a34a509d203",
+  "publicTree": "c4fcf7a5158d22a8223539acde0c7b18b8305e52",
   "packageSha256": "286618dfdc25f4cc7bc28c4d5ac7607f3baea2046fa508ce8b56ecc493067625",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -44,8 +44,8 @@
     "📋 ChangeLog / 更新履歴",
     "CLIP Drop / 習作・ベータ版"
   ],
-  "manualFindings": "Read all 78 pages and compared the body renders with the published manuals. Reviewed the 25 changed pages. Removed development verification results, coverage notes and screenshot-session commentary. Kept user-facing procedures, expected statuses and recovery steps.",
-  "findings": "Compared the previously audited 20 README sections with the candidate changes. Updated the model-route explanation, version, dated public pricing references and current FourPanel asset links. Historical labels remain in the changelog. Verified that the distribution diagrams and three manual files carry v8.2.5.",
+  "manualFindings": "Compared with the reviewed v8.2.5 candidate manuals. Reviewed the updated Japanese operation manual page 15 visually. Kept user-facing setup and operating procedures without development verification results.",
+  "findings": "Compared all audited sections with the candidate. The free-layout and MCP instructions describe diagonal bounds, inset reading order, crossing and the edit workflow. The changelog identifies both changes in v8.2.5.",
   "pricingReview": {
     "version": "8.2.5",
     "sourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",

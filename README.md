@@ -223,6 +223,10 @@ The achievable cast size and detail depend on panel space, dialogue volume and t
 
 Normal OpenAI page creation uses free composition with four to eight panels. Gemini's ordinary workflow uses four panels in color or monochrome. The legacy four-strip selector and slide switch are no longer shown. The legacy implementation remains internally for existing data and possible future use. / 通常のOpenAI制作は自由配置の4～8コマです。Geminiの通常制作はカラー・白黒とも4コマです。レガシー横長4段の選択肢とスライドスイッチは画面から外し、既存データと将来の利用に備えて内部処理を残しています。
 
+In OpenAI free layout, ask for diagonal borders or a distinct inset panel in STEP2. For direct control, edit the `PageComposition` line before the first panel. Use `layout:"free"` and give each frame its page position and size (`x,y,w,h`). Add `corners` as four local 0–1 points clockwise from top left for a slanted frame. Add `insetOf` with the enclosing panel number for a fully contained inset, then place it immediately after its parent in the reading order. A character can cross a shared diagonal border. Rebuild STEP3 before generating in STEP4. / OpenAIの自由配置では、STEP2で斜め枠や独立した差し込み小コマを希望できます。直接指定する場合は、最初のコマの前にある `PageComposition` を編集します。`layout:"free"` とし、各コマの位置と大きさを `x,y,w,h` で指定します。斜め枠は `corners` にコマ内の0〜1座標を左上から時計回りに4点指定します。差し込みは枠全体を親コマの内側に置き、`insetOf` に親番号を入れて読順で親の直後に並べます。斜めの共有辺にも人物の枠越えを指定できます。編集後はSTEP3を作り直してからSTEP4で生成します。
+
+For MCP production, use the same line in the page script and read back the saved script and drawing prompt before generation. For a local change on a page with diagonal borders or insets, use the free-text editor and identify the panel and change. / MCP制作でもページ台本に同じ行を記し、作画前に保存済み台本と描画指示を読み戻します。斜め枠や差し込みのある完成ページを部分修正するときは「自由入力」で対象コマと変更内容を指定します。
+
 STEP2 creates the required panels from the start; STEP3 preserves their count, order, dialogue, styles and camera directions while assembling the image instructions. Four panels can still use large panels, vertical panels, full bleed and a continuous foreground figure extending across boundaries. / STEP2から必要なコマ数で台本を作り、STEP3でコマ数・順番・台詞・画風・カメラを保って画像指示文を組み立てます。4コマでも大コマ・縦長コマ・タチキリ・境界を越える一続きの前景人物を使えます。
 
 | Request / 指定 | Behavior / 扱い |
@@ -1000,6 +1004,7 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 ## 📋 ChangeLog / 更新履歴
 
 ### v8.2.5 (2026-11-28)
+- **[Layout]** Added authored diagonal panel borders and distinct insets to OpenAI free page layouts, including character crossings over shared diagonal borders. / OpenAI自由配置で斜め枠と独立した差し込み小コマを指定できます。斜めの共有辺にも人物をまたがせられます。
 - **[Fix & UX]** Retry the first OpenAI text model once if the network fails before an HTTP response. / OpenAIの文章処理でHTTP応答前に通信が切れた場合、最初のモデルで1回だけ再試行します。
 
 ### v8.2.4 (2026-11-27)

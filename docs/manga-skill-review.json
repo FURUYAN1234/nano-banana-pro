@@ -1,12 +1,13 @@
 {
   "format": 1,
   "version": "8.2.5",
-  "skillSha256": "18fb775a51d334fdc849e8d3a7874d505cdbd180e02b42d90d52640df0b289c3",
-  "reviewedAt": "2026-11-27T22:04:30.819Z",
+  "skillSha256": "72e986cf20bd711f1e188405d7a8de354353cfc521870a9ee73a8ed75d850f24",
+  "reviewedAt": "2026-11-27T22:40:25.291Z",
   "reviewedSince": "v8.2.4 manga skill and production diagnostics review",
   "sources": [
     "The v8.2.4 public-browser diagnostic export and the terminal STEP3 response for the affected run.",
-    "The bundled one-page and multi-page production skill, including the diagnostic and recovery reference."
+    "The bundled one-page and multi-page production skill, including the diagnostic and recovery reference.",
+    "User requests for more flexible frames, preservation of camera and cross-frame acting, and real image acceptance."
   ],
   "findings": [
     {
@@ -20,6 +21,12 @@
       "observation": "The source run used a specific five-panel script and several active browser tabs.",
       "rule": "Keep camera, staging and frame breakout decisions under the existing production guidance.",
       "reason": "A network transition does not establish a need to change visual decisions or add a duplicate production rule."
+    },
+    {
+      "disposition": "updated",
+      "observation": "The free-layout contract adds diagonal edges and one-level story insets.",
+      "rule": "Author geometry in PageComposition and verify its transport, rendering, reading order and actor continuity before accepting a page.",
+      "reason": "The same accepted script and readback work for both single-page and book workflows."
     }
   ],
   "checks": [
@@ -27,6 +34,11 @@
       "name": "Bundled diagnostic and recovery procedure",
       "result": "passed",
       "evidence": "Read the complete run history, matched OpenAI request and response model IDs and confirmed the existing rules cover diagnostic collection and recovery."
+    },
+    {
+      "name": "Authored layout and MCP seam coverage",
+      "result": "passed",
+      "evidence": "The page-composition and MCP regression run passed 123 tests, including diagonal adjacency, inset containment, picture prompt generation and measured whole-page QA geometry."
     }
   ]
 }
