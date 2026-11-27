@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "a0bdf8a6699f6e166403deef3c476409b22a7bf9d4925e8049855d12f62e618a",
-  "manualVersion": "8.2.2",
-  "manualSourceSha256": "058d91dfd6c88fb5bfb501728f9cd0e6c0ee23dfa05b19ad8a9f2b77cdd72e47",
+  "manualVersion": "8.2.3",
+  "manualSourceSha256": "866fa4e35f0a8b4ade560b2f4fb9c69d38de3b99f6fcd71d612b1109b0f5cbf7",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "2a1d97956f7233609ebb95d0d0ea3577f8cc89c40a3cf33ff2909f8b2be2402c"
+      "sha256": "12044274749e3b22a016fd83ed38793d7d0011030e3b2fa3fdc86863126076df"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "43e26cf7d00da58e1bcc85dab42ca61fd06d545f47996cac0e599bf98e611753"
+      "sha256": "2a1943861ade4b632e4853a3c40ebae450a05d5be733c8cf30862e8dc8209154"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "89723cee5f790594ec24677d5c325ac5e7a986b3f21a3aa6e30a451a42ddb14a"
+      "sha256": "2b8b5b7b3c5e56501f5bdcc8af4931f6ff881480bfb13d3ee6b3c9a61eb244c8"
     }
   ],
-  "readmeSha256": "4b749cfd5c4c18810f9e77c984b4bccc1b0de59a6bb6107ffa9094ac6b77062a",
+  "readmeSha256": "80f7310d33c27591a5e57d0db55f4530a5f1bf54b39079f7c45f64bea851d5ae",
   "readmeLanguageGaps": [],
-  "sourceTree": "442b7474cac34f4134a59c0532d9f5705fe4e87f",
-  "publicTree": "d2eda046905dea980ce1f72d0ec833f8db43cb22",
-  "packageSha256": "a81c92c1d682f5d68f6c269c85aaa912c17d1b0d4d6acce67e5ee5ff08274b37",
+  "sourceTree": "b2dcc01d60e197320c9de501334111601b23760d",
+  "publicTree": "7b806f3b2409e55d5566dfa8666f03726e74640d",
+  "packageSha256": "2b057bd34704c21f20f007f817318ff50dfd77ce4e3fa9f34a37e7c5ab501fb1",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -41,22 +41,23 @@
     "FAQ / よくある質問",
     "Terms & Output Rights / 利用条件・作品の権利",
     "AI Manga Creative Suite / AIまんが制作エコシステム",
-    "📋 ChangeLog / 更新履歴"
+    "📋 ChangeLog / 更新履歴",
+    "CLIP Drop / 習作・ベータ版"
   ],
-  "manualFindings": "Reviewed purposes and current version of all 78 pages across operation, OpenAI and Gemini guides. Re-rendered all three PDFs. Inspected changes to selective panel correction, general watermark default, visible character cues and manual recovery, including operation pp.25, 38, 45 and 46. Verified both setup guides retain account, key and connection scope.",
-  "findings": "Reviewed the 19 README sections in order. Confirmed app links, MCP setup and Windows distribution, supported page layouts and style options, PDF links, provider/model tables, edit flow and changelog against current sources and the package. The existing v8.2.1 video is listed by its actual version pending the new video. 2026-11-26 follow-up: replaced the v8.2.1 introduction reference with the full v8.2.2 GitHub video and HD playback link. The technical sections and the earlier example clips were compared and retained.",
+  "manualFindings": "All 78 pages passed the manual builders’ text bounds, current edition and link checks and were rendered. Previous-edition body comparison found pixel changes on Gemini p.1 and operation pp.19, 24, 25 and 44 only. These five renders were visually inspected. OpenAI setup content matches the preceding edition. The changed MCP procedure, eyeline and localized edit descriptions fit their pages.",
+  "findings": "Reviewed README headings against the v8.2.2 documentation baseline, current package and application source with the v8.2.3 display version. Matched the new approval, eyeline and localized edit explanations to the bundled instructions. Download links target the two latest assets, FourPanel links point to this edition, and the introduction video retains its actual v8.2.2 label. Added a Japanese label to the upstream CLIP Drop article link. Regenerated the two workflow SVGs and verified that only their current edition labels changed.",
   "pricingReview": {
-    "version": "8.2.2",
+    "version": "8.2.3",
     "sourceSha256": "a0bdf8a6699f6e166403deef3c476409b22a7bf9d4925e8049855d12f62e618a",
-    "checkedAt": "2026-11-26T02:25:00.465Z",
+    "checkedAt": "2026-11-27T09:24:30.931Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Rechecked Standard USD rates. GPT-6.2 Astra/Sol text input/cache/output $8/$0.40/$40 and $2/$0.10/$10 per million, GPT Image 2.6 Sunburst image input/output $8/$30 per million and Gemini Nano Banana 2.1 estimated $0.0504 per 2K image. Gemini 3.8 Flash text $0.75 input/$3.75 output. Batch and Standard not combined. No rate changes found in the reviewed settings."
+    "findings": "Checked provider Standard USD rates separately from Batch. GPT-6.2 Astra/Sol short text input, cached input and output are $8/$0.40/$40 and $2/$0.10/$10 per million. GPT Image 2.6 Sunburst image input/output is $8/$30 per million. Gemini Nano Banana 2.1 lists $0.0504 per 2K image output. Gemini 3.8 Flash input/output rates are $0.75/$3.75 per million through December 31, 2026. No current-rate change in these settings."
   },
   "apiValidation": {
-    "version": "8.2.2",
-    "scope": "Prior real local MCP run: GPT-6 Luna script, GPT Image 2.6 Sunburst drawing and selected-panel edit. The three body pages passed initial STEP3 to STEP4 prompt equality; the accepted single-panel edit preserved all outside pixels in its 1076×849 target. Existing evidence was checked separately from the current local release build and PDF verification."
+    "version": "8.2.3",
+    "scope": "The application display version is the only source change. MCP runtime and generation behavior are unchanged. Recent real local MCP production informed the skill review. Current verification is scoped to the revised documentation and release distribution."
   }
 }

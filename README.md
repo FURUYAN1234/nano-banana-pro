@@ -3,7 +3,7 @@
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
 
 
-> Current source version: **v8.2.2** / 現在のソース版: **v8.2.2**
+> Current source version: **v8.2.3** / 現在のソース版: **v8.2.3**
 
 MCP-compatible production AI can use this same manga engine to create multipage works in color or monochrome, carry character/prop/background references across pages, and save PNG + JSON. / MCP対応の制作AIから同じ漫画エンジンを使い、人物・小道具・背景を引き継いだカラー／白黒の複数ページ作品を作り、PNG＋JSONで保存できます。
 
@@ -131,6 +131,8 @@ On Windows, `start_app.bat` and the Desktop shortcut synchronize the installed m
 The complete skill is also included in `mcp/skills/manga-book-production` inside the application ZIP. Codex is the primary skill client. Install the whole folder in its skill location; see the [setup guide](mcp/README.md) for the MCP connection. Other MCP-capable AIs can be instructed to read and follow the bundled SKILL.md. Manual use of the app does not require this skill. / アプリZIP内の `mcp/skills/manga-book-production` にも一式を同梱しています。基本はCodex用スキルとしてフォルダーごと導入し、MCP接続は[導入ガイド](mcp/README.md)に従ってください。他のMCP対応AIには、同梱のSKILL.mdを読んで制作するよう言葉で指示できます。アプリを手動で使う場合は、このスキルの導入は不要です。
 
 On Windows, the bundled `Launch-Manga.cmd` checks and installs the official release, starts the local service and creates a Desktop shortcut. The skill uses the same launcher. Active MCP production is preserved; `-Update` updates only after disconnection and job completion. / Windowsでは同梱の `Launch-Manga.cmd` が公式版の確認・導入・サービス起動を行い、デスクトップにショートカットを作ります。スキルも同じ起動処理を使います。MCP制作中は現在の接続を保ち、`-Update`による更新は切断・処理完了後に行います。
+
+For an outfit change, approve the character sheet showing the outfit and assign it to the relevant pages before drawing. In dialogue, check who speaks and where the speaker is looking. Before accepting a localized edit, compare the original and edited panel at full size and on the page, checking the border, panel size and new bands inside the frame. / 作品用に着替える場合は、その衣装の設定画を確認・採用し、対象ページに割り当ててから作画します。対話コマでは話者と視線の先を別々に確認します。部分修正は、採用前に原寸とページ全体で元の絵と比べ、枠の位置と寸法、内側に新しい帯ができていないかを見ます。
 
 When app production is requested, the skill handoff handles installation when absent and checks for updates before a new service starts. If the API is disconnected, it asks you to enter the key in the visible app now. It then enables **Allow AI control** when browser control is available, or explains the button to press, and verifies the connection before producing pages. / アプリでの制作も依頼された場合、未導入なら取得し、停止中なら最新版を確認・更新してから起動します。API未接続なら画面を提示して、その場でキー入力を案内します。ブラウザーを操作できる場合は「AI操作を許可」を押し、できない場合はボタンを説明して、接続を確認してから制作します。
 
@@ -510,7 +512,7 @@ OpenAI STEP1, STEP2 and STEP3 each start at `gpt-6-luna` and can be selected ind
 
 GPT-6.2 Astra and GPT-6.2 Sol can be selected in STEP1–3. Astra 6.2 can fall back to Sol 6.2, followed by the existing Sol 6.1 route. Sol 6.2 starts its fallback at Sol 6.1. Existing selections and automatic routes keep their original order. / STEP1〜3でGPT-6.2 AstraとSolを選べます。6.2 Astraを選ぶと、失敗時は6.2 Sol、次に6.1 Solの経路へ進みます。6.2 Solの次は6.1 Solです。既存の選択と自動経路は従来の順序を保ちます。
 
-| Standard short context, USD per 1M tokens / 短文・100万トークン当たり（2026-11-26） | Input / 入力 | Cached read / キャッシュ読取 | Output / 出力 |
+| Standard short context, USD per 1M tokens / 短文・100万トークン当たり（2026-11-27） | Input / 入力 | Cached read / キャッシュ読取 | Output / 出力 |
 | --- | ---: | ---: | ---: |
 | `gpt-6.2-astra` | $8 | $0.40 | $40 |
 | `gpt-6.2-sol` | $2 | $0.10 | $10 |
@@ -856,7 +858,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.2/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download the FourPanel custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [FourPanelのカスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v8.2.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -920,7 +922,7 @@ The log records settings, execution/request IDs, HTTP results, observed response
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.2.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.2.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v8.2.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと、対応するv8.2.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -992,6 +994,10 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | AI Tracer Nazori-kun / AIトレーサー なぞり君 | Replay inking and original-color fills in a browser / ブラウザーでペン入れと元色の彩色を再生 | [Web app / 公開アプリ](https://furuyan1234.github.io/ai-tracer-nazori-kun/) · [GitHub](https://github.com/FURUYAN1234/ai-tracer-nazori-kun) · [Guide / 解説](https://note.com/happy_duck780/n/n75301de9493a) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v8.2.3 (2026-11-27)
+
+- Updated the bundled manga production skill to confirm and assign changed-outfit sheets before drawing, check dialogue eyelines, and compare panel borders and artwork size after localized edits. / 同梱の漫画制作スキルを更新。作画前に着替え後の設定画を採用して割り当て、対話コマで視線の先を確認し、部分修正後は枠とコマ内の絵の大きさを見比べます。
 
 ### v8.2.2 (2026-11-26)
 - **[Fix & UX]** Improved cast identification in the manga skill, restored manual controls after MCP disconnect, and removed newly introduced blank bands in panel edit candidates / 漫画制作スキルの人物識別を改善し、MCP切断後の操作ロックとコマ修正候補に増えた余白を修正
@@ -1126,4 +1132,4 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 クリスタの .clip を SVG・PSD・PNG に変換するWindows用の習作です。 / An experimental Windows converter for Clip Studio Paint files.
 
-- [GitHub](https://github.com/FURUYAN1234/clip-drop) · [note](https://note.com/happy_duck780/n/n8a38199a75db)
+- [GitHub](https://github.com/FURUYAN1234/clip-drop) · [Article / 紹介記事](https://note.com/happy_duck780/n/n8a38199a75db)

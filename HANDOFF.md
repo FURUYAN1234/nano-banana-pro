@@ -1,3 +1,7 @@
+# v8.2.3 release candidate
+
+The bundled manga production skill checks and assigns approved story-specific outfit sheets before drawing, checks the intended listener separately from balloon attribution, and compares panel borders and inset artwork before accepting localized edits. Release version labels and the three PDF manuals were refreshed. See [v8.2.3 release notes](docs/releases/v8.2.3.md).
+
 # v8.2.2 release candidate
 
 The bundled manga skill ties visible character cues to the speaker or action when identification is difficult. Disconnecting MCP releases the manual controls even when restoring the previous view fails. Panel edits remove new matching blank bands without changing pixels outside the selected region. The operation manual and both API setup guides have been regenerated. See [v8.2.2 release notes](docs/releases/v8.2.2.md).

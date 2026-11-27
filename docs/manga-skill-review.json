@@ -1,38 +1,55 @@
 {
   "format": 1,
-  "version": "8.2.2",
-  "skillSha256": "2606807faf03f6223b9cf56c42cab36f9d61b97cedc1f9e3c8695305c56dd3e3",
-  "reviewedAt": "2026-11-26T02:25:00.465Z",
-  "reviewedSince": "v8.2.1 deployment",
+  "version": "8.2.3",
+  "skillSha256": "18fb775a51d334fdc849e8d3a7874d505cdbd180e02b42d90d52640df0b289c3",
+  "reviewedAt": "2026-11-27T09:21:35.693Z",
+  "reviewedSince": "v8.2.2 production review",
   "sources": [
-    "Local MCP production of a four-page original, including approved scenario and element recognition",
-    "User feedback on making people and their actions distinguishable in finished pages",
-    "Comparison of nine preceding one-page works with the local MCP manuscript"
+    "Two-page local MCP production records and author feedback on the adopted manuscript, story-specific outfit sheets and review of targeted edits.",
+    "Comparison of the release baseline, the two changed skill files, the existing agent metadata, and recent one- and multipage feedback."
   ],
   "findings": [
     {
       "disposition": "updated",
-      "observation": "Shared costumes and a rear or obstructed view made the reader work to identify the actor or speaker.",
-      "rule": "Use visible distinguishing features for that panel and tie each cue to the correct action or speech; review at reading size.",
-      "reason": "This helps when cues determine story comprehension without adding a pose or uniform to every scene."
+      "observation": "The story required different costumes and the initial production lacked the matching sheet.",
+      "rule": "Approve and assign the actual outfit sheet before drawing affected story pages.",
+      "reason": "A costume description cannot serve as the adopted visual reference. Reuse a matching approved sheet when available."
+    },
+    {
+      "disposition": "updated",
+      "observation": "A correctly attributed balloon did not establish that the character looked at the intended listener.",
+      "rule": "Specify the target in the drawing instructions and review the face and visible eyeline separately from balloon attribution.",
+      "reason": "Speech attribution and direction of attention express different parts of dialogue."
+    },
+    {
+      "disposition": "updated",
+      "observation": "A local edit can preserve the panel rectangle while the art within it shrinks.",
+      "rule": "Compare the border and artwork at original scale and page size, including unintended interior bands and double frames.",
+      "reason": "The check preserves intended borders and negative space without forcing whole-page rerenders."
+    },
+    {
+      "disposition": "already_covered",
+      "observation": "A visible shoulder connection attracted author feedback.",
+      "rule": "Follow the existing visible shoulder, sleeve and arm review and compare the adopted correction.",
+      "reason": "The anatomy check already addresses the observation and permits natural occlusion."
     },
     {
       "disposition": "not_generalized",
-      "observation": "The release task also included user-specific publishing destinations, author and watermark preferences.",
-      "rule": "Keep these choices in local private preferences or in explicit work settings.",
-      "reason": "They are independent of the operation and default behavior of the distribution."
+      "observation": "A specific scene needed to keep the speaker outside the pictured area.",
+      "rule": "Retain each scene’s framing and put any general rule change through separate review.",
+      "reason": "The approved release scope consists of the three previously reviewed skill changes."
     }
   ],
   "checks": [
     {
-      "name": "Production script and MCP handoff",
+      "name": "Linked production instructions and agent metadata",
       "result": "passed",
-      "evidence": "Retained the real four-page local MCP production evidence: STEP3 and initial STEP4 prompt equality on all 3 body pages and adopted exports for all 4 pages."
+      "evidence": "Verified both new cross-reference targets, eyeline wording, adopted-sheet reuse and the existing user approval order and local production operations."
     },
     {
-      "name": "Package boundary",
+      "name": "Application behavior boundary",
       "result": "passed",
-      "evidence": "CURRENT_MANGA_RELEASE_ASSETS_VERIFIED for the candidate commit and same source in standalone and bundled skill packages."
+      "evidence": "The application source differs from v8.2.2 only by the release display version. MCP runtime and generation behavior are unchanged."
     }
   ]
 }
