@@ -14,7 +14,7 @@ import {prepareVisionImageBatch} from './vision-image-input.js';
 
 import { getOpenAIApiKey } from './openai';
 import { openAISources } from './sns-explanation.js';
-import {createApiError, readApiJson, aggregateApiErrors, formatApiErrorDetails, shouldStopApiFallback, sanitizeErrorMessage} from './api-errors.js';
+import {createApiError, readApiJson, aggregateApiErrors, formatApiErrorDetails, getApiErrorInfo, shouldStopApiFallback, sanitizeErrorMessage} from './api-errors.js';
 import {
     OPENAI_TEXT_MODEL_IDS,
     getOpenAIVisionModelRoute,
@@ -23,6 +23,7 @@ import {
 } from './openai-model-routes.js';
 
 const OPENAI_TEXT_TIMEOUT_MS = 600_000;
+const OPENAI_NETWORK_RETRY_DELAY_MS = 400;
 const usesReasoningModel = modelId => /^gpt-(?:6(?:\.\d+)?|5\.6)-/.test(modelId);
 // 推論と本文は同じ上限を消費する。旧モデルの本文用8K枠を推論モデルへ流用しない。
 // https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning
@@ -175,7 +176,7 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
     }
 };
 
-export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate, outputTokenLimit = getTextOutputTokenLimit(modelId), responseFormat, outputProfile}) => {
+export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate, outputTokenLimit = getTextOutputTokenLimit(modelId), responseFormat, outputProfile, retryNetwork = false}) => {
     const responseFormatConfig = getChatResponseFormat(responseFormat);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -187,8 +188,8 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
         // or fallback is used when this documented Luna setting is unavailable.
         const reasoningEffort = outputProfile === 'image-quality-review' && modelId === 'gpt-6-luna' ? 'high' : null;
         if (reasoningEffort) onThinkingUpdate?.(`> [API] 画像品質検査: reasoning_effort=${reasoningEffort}`);
-        reportTiming('送信開始');
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const requestSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+        const send = () => fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`},
             body: JSON.stringify({
@@ -200,8 +201,21 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
                     ? {max_completion_tokens: outputTokenLimit}
                     : {temperature: 0.7, max_tokens: outputTokenLimit}),
             }),
-            signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
+            signal: requestSignal,
         });
+        reportTiming('送信開始');
+        let response;
+        try {
+            response = await send();
+        } catch (error) {
+            if (!retryNetwork || requestSignal.aborted || error?.name !== 'TypeError'
+                || getApiErrorInfo(error).kind !== 'network') throw error;
+            onThinkingUpdate?.('> [API] HTTP応答前に通信が途切れました。同じモデルで1回再試行します。');
+            await new Promise(resolve => setTimeout(resolve, OPENAI_NETWORK_RETRY_DELAY_MS));
+            requestSignal.throwIfAborted();
+            reportTiming('再送信開始');
+            response = await send();
+        }
         reportTiming('HTTP応答受信', 'receiving_body');
         const data = await readApiJson(response, {provider:'openai', model:modelId});
         reportTiming('本文受信完了', 'completed');
@@ -351,7 +365,11 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate, outputTokenLimit, responseFormat:options.responseFormat, outputProfile:options.outputProfile});
+            const {data} = await requestOpenAIChatCompletion({
+                modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate,
+                outputTokenLimit, responseFormat:options.responseFormat, outputProfile:options.outputProfile,
+                retryNetwork: attemptIndex === 1 && options.outputProfile === undefined,
+            });
 
             const choice = data.choices?.[0];
 

@@ -1,32 +1,32 @@
 {
   "format": 1,
-  "version": "8.2.4",
+  "version": "8.2.5",
   "skillSha256": "18fb775a51d334fdc849e8d3a7874d505cdbd180e02b42d90d52640df0b289c3",
-  "reviewedAt": "2026-11-27T11:54:38.450Z",
-  "reviewedSince": "v8.2.3 production and skill review",
+  "reviewedAt": "2026-11-27T22:04:30.819Z",
+  "reviewedSince": "v8.2.4 manga skill and production diagnostics review",
   "sources": [
-    "v8.2.2 STEP2 failure diagnostics and v8.2.4 real GPT-6 Luna validation of the equivalent camera direction.",
-    "The current one-page and multi-page manga production skill, including its division of responsibility for the app camera and protocol."
+    "The v8.2.4 public-browser diagnostic export and the terminal STEP3 response for the affected run.",
+    "The bundled one-page and multi-page production skill, including the diagnostic and recovery reference."
   ],
   "findings": [
     {
       "disposition": "already_covered",
-      "observation": "The camera validator rejected a negative lens direction in a valid script.",
-      "rule": "Check the failed stage, current scenario and diagnostic reason first. Correct the parser in the application.",
-      "reason": "The existing skill already preserves approved camera directions and distinguishes app defects from production decisions. No creation rule is needed for a parser defect."
+      "observation": "A STEP3 transport failure was followed by a different model and a successful terminal response.",
+      "rule": "Trace the exact run and request IDs to their final response and preserve approved work.",
+      "reason": "The skill already describes terminal-event checks and preventing duplicate paid runs. Recovery of the first API request belongs in the app client."
     },
     {
       "disposition": "not_generalized",
-      "observation": "The production notes retained a scene-specific decision to have a speaker outside the picture.",
-      "rule": "Keep the current scene-specific staging judgement.",
-      "reason": "No additional production evidence in this patch supports changing the general flow or adding a parallel camera rule."
+      "observation": "The source run used a specific five-panel script and several active browser tabs.",
+      "rule": "Keep camera, staging and frame breakout decisions under the existing production guidance.",
+      "reason": "A network transition does not establish a need to change visual decisions or add a duplicate production rule."
     }
   ],
   "checks": [
     {
-      "name": "Current production directives and camera responsibility",
+      "name": "Bundled diagnostic and recovery procedure",
       "result": "passed",
-      "evidence": "Reviewed unchanged one-page and multi-page production checks and skill metadata. Camera negation corrected only in app logic and verified through the normal STEP2/STEP3 route."
+      "evidence": "Read the complete run history, matched OpenAI request and response model IDs and confirmed the existing rules cover diagnostic collection and recovery."
     }
   ]
 }

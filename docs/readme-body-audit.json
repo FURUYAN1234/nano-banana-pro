@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "4d1204fd550048a5f718413d200df2971e8797c43568a15d786ec259bd610044",
-  "manualVersion": "8.2.4",
-  "manualSourceSha256": "9672d880bf48bca9773a83eb72ecb44a16ac854ba0f2c7bcbeb6db35ee909521",
+  "pricingSourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",
+  "manualVersion": "8.2.5",
+  "manualSourceSha256": "ca26970960680a928437bef39ffed9723b7e207246ee98c5ad1926dfeccf9197",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "58dcdfd3dd660cc8312cbcf6a51e1562dad289e16677cd8d8af98be87bab914f"
+      "sha256": "bbb784450b7872050555e62282508854adbc1677885924a4050847bc00d36a9e"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "bd8bb460dae40b63ed7f3e7bbb499bd6baeaf45b6aa2ae9c918e5c36eeb2661e"
+      "sha256": "e0feaa7ea7ef92007c0218551f5b92020caca0443922245075272ffc84855eee"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "b2fcfc85dc0f855c36e9b558918c44f8ad762aee98dd4dcab6977457da513ed3"
+      "sha256": "c28933276485d6bc2d67efb2c1f1976249cf667d4c68abeee8a0cf54b6d9a257"
     }
   ],
-  "readmeSha256": "3e75e866f74f301ba7907911f44214a8dfeedc2d290e35634e5f0d9f2a002965",
+  "readmeSha256": "7aa47bfb8f6fd460762c08ef31b413f1316d2bcee1a861eabb63a60ce4eaa70d",
   "readmeLanguageGaps": [],
-  "sourceTree": "5eefd9d3e973d055a1a6746a6544405d81008e44",
-  "publicTree": "a03a2664a1f0c168dc4cf780db959e2f6e993431",
-  "packageSha256": "d9c75b4f56a6f173c6c04a515aef4d7d235be7019f35ac9d56f5392736ecdbc5",
+  "sourceTree": "71ea148b0f45d9174629719e4d02c17b8f98cfc9",
+  "publicTree": "93e0174a1ff6de4566f9047a8644159f4d6ce307",
+  "packageSha256": "286618dfdc25f4cc7bc28c4d5ac7607f3baea2046fa508ce8b56ecc493067625",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -44,20 +44,16 @@
     "📋 ChangeLog / 更新履歴",
     "CLIP Drop / 習作・ベータ版"
   ],
-  "manualFindings": "All three manuals (12 Gemini, 19 OpenAI, 47 operation pages) passed their text, dimensions, links, bounds and privacy checks. All 78 pages rendered. Pixel comparison against v8.2.3 located three above-footer changes. Reviewed Gemini p.1 and operation pp.14 and 19 at full page. STEP2 negation guidance is on p.14. The OpenAI setup pages match above the edition footer.",
-  "findings": "Reviewed the previous release baseline and the current README sections against the code and distribution paths. Updated the STEP2 camera explanation, current version, change history, official pricing reference dates and FourPanel links. The older introduction video retains its actual edition label. The two generated diagrams carry the candidate version; the manuals match the current filename, edition and app paths.",
+  "manualFindings": "Read all 78 pages and compared the body renders with the published manuals. Reviewed the 25 changed pages. Removed development verification results, coverage notes and screenshot-session commentary. Kept user-facing procedures, expected statuses and recovery steps.",
+  "findings": "Compared the previously audited 20 README sections with the candidate changes. Updated the model-route explanation, version, dated public pricing references and current FourPanel asset links. Historical labels remain in the changelog. Verified that the distribution diagrams and three manual files carry v8.2.5.",
   "pricingReview": {
-    "version": "8.2.4",
-    "sourceSha256": "4d1204fd550048a5f718413d200df2971e8797c43568a15d786ec259bd610044",
-    "checkedAt": "2026-11-27T11:51:30Z",
+    "version": "8.2.5",
+    "sourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",
+    "checkedAt": "2026-11-27T22:04:54.900Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Checked provider Standard USD rates separately from Batch. GPT-6 Luna is $0.10 input, $0.01 cached read, $0.50 output per million short-context tokens. GPT-6.2 Astra/Sol input and output are $8/$40 and $2/$10 per million. GPT Image 2.6 Sunburst image input/output is $8/$30 per million. Gemini Nano Banana 2.1 is $0.0336 per 1K image; Gemini 3.8 Flash is $0.75/$3.75 per million text input/output through December 31, 2026. Reference dates updated with no rate change."
-  },
-  "apiValidation": {
-    "version": "8.2.4",
-    "scope": "Local production preview, manual OpenAI 4–8 panel path, GPT-6 Luna with model fallback disabled. STEP2 adopted the first five-panel candidate containing the reported Japanese fisheye negation and passed review; STEP3 kept the 25-degree rectilinear wide shot without adding a fisheye cue. Three HTTP 200 responses reported gpt-6-luna. The original diagnostic script was replayed through the corrected camera and page checks; positive fisheye remains rejected in automated tests."
+    "findings": "Compared Standard rates on both official tables. GPT-6 Luna is $0.10 input, $0.01 cached and $0.50 output per million short-context tokens. Listed GPT-6.2 and GPT-5.6 route prices match. GPT Image 2.6 Sunburst image input/output is $8/$30 per million. Gemini 3.8 Flash is $0.75/$3.75 per million through December 31, 2026 and Nano Banana 2.1 is $0.0336 per 1K image. Updated reference dates. Standard and Batch are distinct."
   }
 }

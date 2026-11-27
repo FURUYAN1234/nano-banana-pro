@@ -9,7 +9,7 @@ const OPENAI_IMAGE_25_SUNBURST = 'gpt-image-2.5-sunburst';
 const LEGACY_SUNBURST_QUALITY = 'sunburst-max';
 export const DEFAULT_OPENAI_IMAGE_QUALITY = 'sunburst-26-max';
 export const DEFAULT_OPENAI_IMAGE_SIZE = MANGA_MANUSCRIPT_LARGE.value;
-export const OPENAI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-11-27';
+export const OPENAI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-11-28';
 const OPENAI_IMAGE_PRICING_USD_PER_M = Object.freeze({
   [OPENAI_IMAGE_26_SUNBURST]: Object.freeze({
     imageInput: 8,

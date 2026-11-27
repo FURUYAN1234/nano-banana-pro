@@ -1,3 +1,7 @@
+# v8.2.5 release candidate
+
+OpenAI STEP1–3 Chat Completions retry the first model once after a pre-response network interruption. The application keeps its camera, scene and frame breakout instructions in the original request. The PDF manuals describe operation and setup, including the retry behavior. See [v8.2.5 release notes](docs/releases/v8.2.5.md).
+
 # v8.2.4 release candidate
 
 STEP2 recognizes explicit Japanese fisheye negation and preserves the rectilinear wide shot. The original diagnostic script passes the corrected camera and page composition checks. Local OpenAI validation used GPT-6 Luna with model fallback disabled. STEP2 accepted the first five-panel candidate with the reported wording, and STEP3 retained it in the drawing prompt. See [v8.2.4 release notes](docs/releases/v8.2.4.md).

@@ -26,6 +26,56 @@ const payload = (web, { text = '', limited = false, refusal = false } = {}) => w
   usage: { prompt_tokens: 20000, completion_tokens: 32768, completion_tokens_details: { reasoning_tokens: 32000 } },
 };
 
+test('STEP3 retries the selected model once when fetch fails before the first HTTP response', async () => {
+  const bodies = [], logs = [];
+  globalThis.fetch = async (_url, init) => {
+    bodies.push(JSON.parse(init.body));
+    if (bodies.length === 1) throw new TypeError('Failed to fetch');
+    return Response.json(payload(false, { text: 'recovered drawing prompt' }));
+  };
+  const result = await run(false, logs);
+  assert.deepEqual(bodies.map(body => body.model), ['gpt-6-luna', 'gpt-6-luna']);
+  assert.deepEqual(bodies[1], bodies[0]);
+  assert.equal(result.model, 'gpt-6-luna');
+  assert.equal(result.text, 'recovered drawing prompt');
+  assert.ok(logs.some(line => line.includes('同じモデルで1回再試行')));
+});
+
+test('a persistent pre-response network failure retries once before the existing model fallback', async () => {
+  const models = [];
+  globalThis.fetch = async (_url, init) => {
+    models.push(JSON.parse(init.body).model);
+    throw new TypeError('Failed to fetch');
+  };
+  await assert.rejects(run(false, [], 'gpt-6-sol'), error =>
+    error.code === 'API_MODELS_FAILED' && error.failures.every(item => getApiErrorInfo(item).kind === 'network'));
+  const { getOpenAIScenarioModelRoute } = await server.ssrLoadModule('/src/lib/openai-model-routes.js');
+  assert.deepEqual(models, ['gpt-6-sol', ...getOpenAIScenarioModelRoute('gpt-6-sol')]);
+});
+
+test('cancelling during a transport failure prevents both a same-model retry and fallback', async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; throw new TypeError('Failed to fetch'); };
+  const result = client.callOpenAIText('assemble', null, null, line => {
+    if (line.includes('同じモデルで1回再試行')) controller.abort();
+  }, { modelRoute:'scenario', scenarioModelId:'gpt-6-sol', signal:controller.signal });
+  await assert.rejects(result, error => error.code === 'CANCELLED');
+  assert.equal(calls, 1);
+});
+
+test('a failure reading a received response keeps the existing fallback behavior', async () => {
+  const models = [];
+  globalThis.fetch = async (_url, init) => {
+    models.push(JSON.parse(init.body).model);
+    return models.length === 1 ? new Response('{', { status:200 }) :
+      Response.json(payload(false, { text:'complete fallback' }));
+  };
+  const result = await run(false, [], 'gpt-6-sol');
+  assert.equal(result.model, 'gpt-5.6-sol');
+  assert.deepEqual(models, ['gpt-6-sol', 'gpt-5.6-sol']);
+});
+
 test('independent STEP1 and STEP3 selections reach the matching OpenAI requests', async () => {
   const bodies = [];
   globalThis.fetch = async (_url, init) => {
