@@ -119,7 +119,7 @@ const RELATIVE_CAMERA_ORIGIN_RE = new RegExp(RELATIVE_CAMERA_ORIGIN);
 // keep affirmative directions in the same sentence for every camera consumer.
 const CAMERA_TERM = '(?:魚眼|フィッシュアイ|樽型(?:の)?(?:歪み|ひずみ)|バレル(?:ディストーション|歪み)|超広角|広角|望遠|長焦点|長い焦点距離|アイレベル|目線の高さ|目の高さ|俯瞰|バード(?:ズ)?アイ|アオリ|煽り|ローアングル|ハイアングル|ダッチ(?:アングル)?|ズームイン|ズームアウト|アップ|接写|全身|全景|遠景|ワイドショット)(?:レンズ)?(?:の歪み)?';
 const CAMERA_PROHIBITION = '(?:なし|無し|使わない|使わず|使用しない|使用せず|用いない|用いず|追加しない|追加せず|描かない|描かず|描写しない|描写せず|禁止|避ける|避け|不可)';
-const CAMERA_NEGATION = `(?:(?:は|を|も)?${CAMERA_PROHIBITION}|にしない|ではなく|ではない|でなく|でない)`;
+const CAMERA_NEGATION = `(?:(?:は|を|も)?${CAMERA_PROHIBITION}|に(?:は|も)?(?:しない|しません|せず)|ではなく|ではない|でなく|でない)`;
 const NEGATED_RELATIVE_CAMERA_ORIGIN_RE = new RegExp(`${RELATIVE_CAMERA_ORIGIN}(?:の(?:広角|望遠|中景|全景|引き|視点|位置))?\\s*(?:(?:は|を)?(?:撮らない|撮らず|撮影しない|撮影せず)|${CAMERA_NEGATION})`, 'g');
 const NEGATED_CAMERA_TERMS_RE = new RegExp([
   `非${CAMERA_TERM}`,

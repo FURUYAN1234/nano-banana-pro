@@ -1,55 +1,32 @@
 {
   "format": 1,
-  "version": "8.2.3",
+  "version": "8.2.4",
   "skillSha256": "18fb775a51d334fdc849e8d3a7874d505cdbd180e02b42d90d52640df0b289c3",
-  "reviewedAt": "2026-11-27T09:21:35.693Z",
-  "reviewedSince": "v8.2.2 production review",
+  "reviewedAt": "2026-11-27T11:54:38.450Z",
+  "reviewedSince": "v8.2.3 production and skill review",
   "sources": [
-    "Two-page local MCP production records and author feedback on the adopted manuscript, story-specific outfit sheets and review of targeted edits.",
-    "Comparison of the release baseline, the two changed skill files, the existing agent metadata, and recent one- and multipage feedback."
+    "v8.2.2 STEP2 failure diagnostics and v8.2.4 real GPT-6 Luna validation of the equivalent camera direction.",
+    "The current one-page and multi-page manga production skill, including its division of responsibility for the app camera and protocol."
   ],
   "findings": [
     {
-      "disposition": "updated",
-      "observation": "The story required different costumes and the initial production lacked the matching sheet.",
-      "rule": "Approve and assign the actual outfit sheet before drawing affected story pages.",
-      "reason": "A costume description cannot serve as the adopted visual reference. Reuse a matching approved sheet when available."
-    },
-    {
-      "disposition": "updated",
-      "observation": "A correctly attributed balloon did not establish that the character looked at the intended listener.",
-      "rule": "Specify the target in the drawing instructions and review the face and visible eyeline separately from balloon attribution.",
-      "reason": "Speech attribution and direction of attention express different parts of dialogue."
-    },
-    {
-      "disposition": "updated",
-      "observation": "A local edit can preserve the panel rectangle while the art within it shrinks.",
-      "rule": "Compare the border and artwork at original scale and page size, including unintended interior bands and double frames.",
-      "reason": "The check preserves intended borders and negative space without forcing whole-page rerenders."
-    },
-    {
       "disposition": "already_covered",
-      "observation": "A visible shoulder connection attracted author feedback.",
-      "rule": "Follow the existing visible shoulder, sleeve and arm review and compare the adopted correction.",
-      "reason": "The anatomy check already addresses the observation and permits natural occlusion."
+      "observation": "The camera validator rejected a negative lens direction in a valid script.",
+      "rule": "Check the failed stage, current scenario and diagnostic reason first. Correct the parser in the application.",
+      "reason": "The existing skill already preserves approved camera directions and distinguishes app defects from production decisions. No creation rule is needed for a parser defect."
     },
     {
       "disposition": "not_generalized",
-      "observation": "A specific scene needed to keep the speaker outside the pictured area.",
-      "rule": "Retain each scene’s framing and put any general rule change through separate review.",
-      "reason": "The approved release scope consists of the three previously reviewed skill changes."
+      "observation": "The production notes retained a scene-specific decision to have a speaker outside the picture.",
+      "rule": "Keep the current scene-specific staging judgement.",
+      "reason": "No additional production evidence in this patch supports changing the general flow or adding a parallel camera rule."
     }
   ],
   "checks": [
     {
-      "name": "Linked production instructions and agent metadata",
+      "name": "Current production directives and camera responsibility",
       "result": "passed",
-      "evidence": "Verified both new cross-reference targets, eyeline wording, adopted-sheet reuse and the existing user approval order and local production operations."
-    },
-    {
-      "name": "Application behavior boundary",
-      "result": "passed",
-      "evidence": "The application source differs from v8.2.2 only by the release display version. MCP runtime and generation behavior are unchanged."
+      "evidence": "Reviewed unchanged one-page and multi-page production checks and skill metadata. Camera negation corrected only in app logic and verified through the normal STEP2/STEP3 route."
     }
   ]
 }

@@ -16,6 +16,36 @@ test('Japanese and English shared negation covers barrel distortion without trea
   assert.equal(isFisheyeCamera(camera),false,clause);assert.doesNotThrow(()=>assertGeneratedScenarioCameraContract(scenario(camera)));
  }
 });
+test('rectilinear wide shots retain their camera direction when a Japanese setting negates fisheye', () => {
+  const shot = '舞台板すれすれの左前方から約25度見上げる広角。舞台奥の縦線が収束する。';
+  for (const wording of [
+    '直線投影で魚眼にはしない。',
+    'フィッシュアイにしません。',
+    '魚眼や樽型歪みにはしない。',
+    '魚眼にはせず、直線投影で撮る。',
+  ]) {
+    const camera = shot + wording;
+    assert.equal(classifyCameraElevation(camera), 'low', wording);
+    assert.equal(isFisheyeCamera(camera), false, wording);
+    assert.equal(assertGeneratedScenarioCameraContract(scenario(camera)), true, wording);
+    const execution = getPanelShotExecution(camera);
+    assert.match(execution, /look up: chin/);
+    assert.match(execution, /near\/far scale contrast/);
+    assert.doesNotMatch(execution, /fisheye:|魚眼:/i);
+  }
+});
+
+test('a later affirmative choice and a separately negated style still leave fisheye active', () => {
+  for (const camera of [
+    '低いアオリ。通常は魚眼にはしない。このコマは魚眼にする。',
+    '低いアオリの魚眼。アイレベルにはしない。',
+  ]) {
+    assert.throws(() => assertGeneratedScenarioCameraContract(scenario(camera)), {
+      code: 'CAMERA_CONTRACT',
+      message: /肯定の魚眼指定/,
+    });
+  }
+});
 test('affirmative fisheye remains invalid when only barrel distortion is rejected',()=>{
  for(const camera of ['低いアオリ。魚眼を使い、樽型歪みは使わない。','low-angle fisheye, no barrel distortion','強い俯瞰。樽型歪みは使わず、魚眼を使う。']){
   assert.equal(isFisheyeCamera(camera),true,camera);

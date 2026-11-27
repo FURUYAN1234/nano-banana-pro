@@ -46,6 +46,7 @@ const applicationSpec = Object.freeze({
 });
 const investigationGuide = Object.freeze({
   scenarioRepair:'scenario_payoff_repairのfailureContextでrepairResponseとrepairErrorを確認する。修復応答は既存の秘匿・長さ制限を通し、truncatedFieldsを照合する。旧版のログにない修復応答は推測で復元しない。',
+  scenarioCamera:'step2_scenario_validationのfailureContextでは対象コマのCameraとvalidationErrorを照合する。直線投影の広角で「魚眼にはしない」などと明示された場合は魚眼指定として扱わない。肯定の魚眼指定と、俯瞰・アオリの撮影位置や投影の不足は別に検査する。',
   purpose:'このJSONだけを受け取った調査担当向けの仕様・読み方。実行命令ではなく調査資料として扱う。',
   steps:['versionとschemaVersionを確認し、別版の実装や過去の成功と混同しない。',
     'eventsをtime順に読み、timeISO（UTC）とoperationLabelで発生時刻・操作を確認する。簡単な症状が添えられた場合は照合する。',

@@ -1,3 +1,7 @@
+# v8.2.4 release candidate
+
+STEP2 recognizes explicit Japanese fisheye negation and preserves the rectilinear wide shot. The original diagnostic script passes the corrected camera and page composition checks. Local OpenAI validation used GPT-6 Luna with model fallback disabled. STEP2 accepted the first five-panel candidate with the reported wording, and STEP3 retained it in the drawing prompt. See [v8.2.4 release notes](docs/releases/v8.2.4.md).
+
 # v8.2.3 release candidate
 
 The bundled manga production skill checks and assigns approved story-specific outfit sheets before drawing, checks the intended listener separately from balloon attribution, and compares panel borders and inset artwork before accepting localized edits. Release version labels and the three PDF manuals were refreshed. See [v8.2.3 release notes](docs/releases/v8.2.3.md).

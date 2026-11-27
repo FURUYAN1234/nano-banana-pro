@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "a0bdf8a6699f6e166403deef3c476409b22a7bf9d4925e8049855d12f62e618a",
-  "manualVersion": "8.2.3",
-  "manualSourceSha256": "866fa4e35f0a8b4ade560b2f4fb9c69d38de3b99f6fcd71d612b1109b0f5cbf7",
+  "pricingSourceSha256": "4d1204fd550048a5f718413d200df2971e8797c43568a15d786ec259bd610044",
+  "manualVersion": "8.2.4",
+  "manualSourceSha256": "9672d880bf48bca9773a83eb72ecb44a16ac854ba0f2c7bcbeb6db35ee909521",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "12044274749e3b22a016fd83ed38793d7d0011030e3b2fa3fdc86863126076df"
+      "sha256": "58dcdfd3dd660cc8312cbcf6a51e1562dad289e16677cd8d8af98be87bab914f"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "2a1943861ade4b632e4853a3c40ebae450a05d5be733c8cf30862e8dc8209154"
+      "sha256": "bd8bb460dae40b63ed7f3e7bbb499bd6baeaf45b6aa2ae9c918e5c36eeb2661e"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "2b8b5b7b3c5e56501f5bdcc8af4931f6ff881480bfb13d3ee6b3c9a61eb244c8"
+      "sha256": "b2fcfc85dc0f855c36e9b558918c44f8ad762aee98dd4dcab6977457da513ed3"
     }
   ],
-  "readmeSha256": "80f7310d33c27591a5e57d0db55f4530a5f1bf54b39079f7c45f64bea851d5ae",
+  "readmeSha256": "3e75e866f74f301ba7907911f44214a8dfeedc2d290e35634e5f0d9f2a002965",
   "readmeLanguageGaps": [],
-  "sourceTree": "b2dcc01d60e197320c9de501334111601b23760d",
-  "publicTree": "7b806f3b2409e55d5566dfa8666f03726e74640d",
-  "packageSha256": "2b057bd34704c21f20f007f817318ff50dfd77ce4e3fa9f34a37e7c5ab501fb1",
+  "sourceTree": "5eefd9d3e973d055a1a6746a6544405d81008e44",
+  "publicTree": "a03a2664a1f0c168dc4cf780db959e2f6e993431",
+  "packageSha256": "d9c75b4f56a6f173c6c04a515aef4d7d235be7019f35ac9d56f5392736ecdbc5",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Introduction video / 紹介動画",
@@ -44,20 +44,20 @@
     "📋 ChangeLog / 更新履歴",
     "CLIP Drop / 習作・ベータ版"
   ],
-  "manualFindings": "All 78 pages passed the manual builders’ text bounds, current edition and link checks and were rendered. Previous-edition body comparison found pixel changes on Gemini p.1 and operation pp.19, 24, 25 and 44 only. These five renders were visually inspected. OpenAI setup content matches the preceding edition. The changed MCP procedure, eyeline and localized edit descriptions fit their pages.",
-  "findings": "Reviewed README headings against the v8.2.2 documentation baseline, current package and application source with the v8.2.3 display version. Matched the new approval, eyeline and localized edit explanations to the bundled instructions. Download links target the two latest assets, FourPanel links point to this edition, and the introduction video retains its actual v8.2.2 label. Added a Japanese label to the upstream CLIP Drop article link. Regenerated the two workflow SVGs and verified that only their current edition labels changed.",
+  "manualFindings": "All three manuals (12 Gemini, 19 OpenAI, 47 operation pages) passed their text, dimensions, links, bounds and privacy checks. All 78 pages rendered. Pixel comparison against v8.2.3 located three above-footer changes. Reviewed Gemini p.1 and operation pp.14 and 19 at full page. STEP2 negation guidance is on p.14. The OpenAI setup pages match above the edition footer.",
+  "findings": "Reviewed the previous release baseline and the current README sections against the code and distribution paths. Updated the STEP2 camera explanation, current version, change history, official pricing reference dates and FourPanel links. The older introduction video retains its actual edition label. The two generated diagrams carry the candidate version; the manuals match the current filename, edition and app paths.",
   "pricingReview": {
-    "version": "8.2.3",
-    "sourceSha256": "a0bdf8a6699f6e166403deef3c476409b22a7bf9d4925e8049855d12f62e618a",
-    "checkedAt": "2026-11-27T09:24:30.931Z",
+    "version": "8.2.4",
+    "sourceSha256": "4d1204fd550048a5f718413d200df2971e8797c43568a15d786ec259bd610044",
+    "checkedAt": "2026-11-27T11:51:30Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Checked provider Standard USD rates separately from Batch. GPT-6.2 Astra/Sol short text input, cached input and output are $8/$0.40/$40 and $2/$0.10/$10 per million. GPT Image 2.6 Sunburst image input/output is $8/$30 per million. Gemini Nano Banana 2.1 lists $0.0504 per 2K image output. Gemini 3.8 Flash input/output rates are $0.75/$3.75 per million through December 31, 2026. No current-rate change in these settings."
+    "findings": "Checked provider Standard USD rates separately from Batch. GPT-6 Luna is $0.10 input, $0.01 cached read, $0.50 output per million short-context tokens. GPT-6.2 Astra/Sol input and output are $8/$40 and $2/$10 per million. GPT Image 2.6 Sunburst image input/output is $8/$30 per million. Gemini Nano Banana 2.1 is $0.0336 per 1K image; Gemini 3.8 Flash is $0.75/$3.75 per million text input/output through December 31, 2026. Reference dates updated with no rate change."
   },
   "apiValidation": {
-    "version": "8.2.3",
-    "scope": "The application display version is the only source change. MCP runtime and generation behavior are unchanged. Recent real local MCP production informed the skill review. Current verification is scoped to the revised documentation and release distribution."
+    "version": "8.2.4",
+    "scope": "Local production preview, manual OpenAI 4–8 panel path, GPT-6 Luna with model fallback disabled. STEP2 adopted the first five-panel candidate containing the reported Japanese fisheye negation and passed review; STEP3 kept the 25-degree rectilinear wide shot without adding a fisheye cue. Three HTTP 200 responses reported gpt-6-luna. The original diagnostic script was replayed through the corrected camera and page checks; positive fisheye remains rejected in automated tests."
   }
 }
