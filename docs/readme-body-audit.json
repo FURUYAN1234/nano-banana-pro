@@ -16,7 +16,7 @@
       "sha256": "392d2bf9b5a173093a2c9c2fb296de94b85929eae30f9975f44b23f447c78a34"
     }
   ],
-  "readmeSha256": "66a4e2c9c839ddb28274d4c36e04f958d4d7bb73c1fe255b79843ee9141ee17a",
+  "readmeSha256": "4be2692264a720285a6697ab0541abfc35cad214cec3dcf44b6a33e2813422b5",
   "readmeLanguageGaps": [],
   "sourceTree": "71ad6074b19c9ebded93fd1b5a5cce4e3a40859a",
   "publicTree": "8d73d6deb2c0b4bb64db7523a8e0d57d513c660a",
@@ -45,7 +45,7 @@
     "CLIP Drop / 習作・ベータ版"
   ],
   "manualFindings": "Reviewed the v8.2.5 operation manual pages 15, 26, 40 and 41. The history and download instructions now describe a single PNG for the ordinary screen and project folders for MCP. Development verification results are excluded. Visually checked page 43 of the 47-page manual after updating the pairing and session renewal instructions. The ten-minute and eight-hour guidance matches the runtime.",
-  "findings": "Reviewed the changed history, ordinary download, restoration, and release instructions against the running app. Compared the unchanged sections with the previously audited candidate. Both languages distinguish ordinary single-PNG downloads and the MCP project export, and the changelog includes flexible panels and the one-time network retry. Compared the new Japanese and English MCP recovery instructions with the heartbeat client, service expiry and real loopback results.",
+  "findings": "Reviewed the changed history, ordinary download, restoration, and release instructions against the running app. Compared the unchanged sections with the previously audited candidate. Both languages distinguish ordinary single-PNG downloads and the MCP project export, and the changelog includes flexible panels and the one-time network retry. Compared the new Japanese and English MCP recovery instructions with the heartbeat client, service expiry and real loopback results. v8.2.5 manual PNG wording was checked against Step4Panel and saveImageToChosenLocation: a supported file picker chooses the file; other browsers download a second copy. The automatic single-page download remains independent.",
   "pricingReview": {
     "version": "8.2.5",
     "sourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",
