@@ -41,7 +41,7 @@ test('reference recognition snapshot follows current material order, preserves e
 
 test('STEP4 Web JSON saves the same prepared prompt as the Web copy path',async()=>{
   const source=await readFile(new URL('../src/components/Step4Panel.jsx',import.meta.url),'utf8');
-  const expression=source.split('const buildCurrentWebGenerationMetadata = ')[1].split('const prepareCurrentImageSave')[0].trim().replace(/;$/,'');
+  const expression=source.split('const buildCurrentWebGenerationMetadata = ')[1].split('const webSupportControls')[0].trim().replace(/;$/,'');
   const ctx={buildWebGenerationMetadata,SYSTEM_VERSION:'test',isOpenAIImageMode:true,enableChatGPTMode:true,
     scenario:'scenario',finalPrompt:'base prompt',getCurrentMetadataInputImages:()=>[],getCurrentMetadataSettings:()=>({}),
     prepareWebCopyPrompt:prompt=>prompt+'\nImage 1: MATERIAL M1. Edited handle.',
@@ -210,7 +210,8 @@ test('API image history snapshots the actual request and export reads that snaps
   assert.match(workflow, /metadataPrompt = apiPrompt/);
   assert.match(workflow, /metadataContext: \{[\s\S]*finalPrompt: metadataPrompt, inputImages: metadataInputImages/);
   assert.match(workflow, /metadataContext: qualityOutcome\.candidate\.metadataContext/);
-  assert.match(step4, /prepareGeneratedImageSave\(\{ \.\.\.displayedHistory, img: generatedImage \}, SYSTEM_VERSION\)/);
+  assert.match(step4, /const item = \{ \.\.\.displayedHistory, img: generatedImage \}/);
+  assert.match(step4, /prepareGeneratedImageSave\(item, SYSTEM_VERSION, names\)/);
   assert.match(workflow, /const referenceContext = await buildReferenceRecognitionMetadata\(/);
   assert.match(workflow, /settings: metadataSettings, referenceContext/);
 });

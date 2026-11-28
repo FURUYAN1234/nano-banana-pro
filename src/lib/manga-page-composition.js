@@ -49,7 +49,7 @@ export function orderPageFrames(frames,{tolerance=.001}={}) {
   });
   for(let i=0;i<frames.length;i++)for(let j=i+1;j<frames.length;j++) {
     if(frames[j].insetOf===i+1||frames[i].insetOf===j+1)continue;
-    if(polygonsOverlap(polygons[i],polygons[j],tolerance))compositionError('物語のコマが重なっています。差し込み小コマはinsetOf、人物の重なりはforegroundsで指定してください。');
+    if(polygonsOverlap(polygons[i],polygons[j],tolerance))compositionError('物語のコマ同士を重ねず、差し込み小コマはinsetOf、人物の重なりはforegroundsで指定してください。');
   }
   const byReadingOrder=indices=>{
     const pending=[...indices].sort((a,b)=>frames[a].y-frames[b].y),ordered=[];

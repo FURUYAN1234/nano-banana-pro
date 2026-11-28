@@ -21,7 +21,7 @@ test('generated image output never duplicates the top-level save settings guide'
     generatedImage:'data:image/png;base64,fixture',finalPrompt:'four-panel fixture',genLog:[],webCopyPartLengths:[],generationHistory:[]}));
   assert.equal(nodes.filter(n=>n.type===AutoSaveGuide||n.type===AutoSaveSettingsButton).length,0,
     'The settings guide belongs only to the existing top-level dialog, never below generated images');
-  assert.ok(nodes.some(n=>n.type==='button'&&JSON.stringify(n.props.children).includes('保存先を選んで保存')));
+  assert.ok(nodes.some(n=>n.type==='button'&&JSON.stringify(n.props.children).includes('PNGを保存')));
   const app=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8');
   assert.ok(app.indexOf('<AutoSaveSettingsButton ')<app.indexOf('<main '),'settings remain before STEP1');
   assert.match(app,/<AutoSaveSettingsButton autoSaveVerified=\{autoSaveVerified\}/);
@@ -67,9 +67,10 @@ test('mode buttons display their current state rather than the action they would
   }
 });
 
-test('shared guide explains prior folder permission, paired writes and one-archive fallback truthfully', () => {
+test('shared guide describes ordinary PNG downloads and the manual recovery action', () => {
   const html = renderToStaticMarkup(React.createElement(AutoSaveGuide));
-  for(const text of ['親フォルダーを一度選択','再読み込み後は再選択','生成完了時に選択画面を突然開くことはありません','保存先を選んで保存','ZIPを1件','展開して保管','API不使用'])assert.ok(html.includes(text),text);
+  for(const text of ['制作情報付きのPNG','ブラウザーのダウンロード先','PNGを保存','API不使用'])assert.ok(html.includes(text),text);
+  assert.doesNotMatch(html,/親フォルダー|ZIP/);
   assert.doesNotMatch(html,/2枚|6秒|JSONは通常ダウンロード先/);
 });
 
@@ -79,15 +80,15 @@ test('required save settings stand out while the free test is white', () => {
   assert.match(settings, /class="save-guide-button save-guide-required"/);
   assert.ok(settings.includes('自動保存の設定・動作確認'));
   assert.ok(!settings.includes('自動保存の設定・無料テスト'));
-  assert.match(guide, /class="save-guide-button"[^>]*>作品フォルダーのPNG＋JSON保存をテスト/);
-  assert.ok(guide.includes('アプリ内ブラウザーなどフォルダー保存が使えない場合'));
+  assert.match(guide, /class="save-guide-button"[^>]*>PNGの自動保存をテスト/);
+  assert.ok(guide.includes('保存先を選べます'));
 });
 
 test('save setup reminder is noninteractive text above the free test with spacing and reduced motion', () => {
   const html = renderToStaticMarkup(React.createElement(AutoSaveGuide));
   const reminder = html.match(/<p class="save-setup-reminder">([^<]+)<\/p>/);
-  assert.equal(reminder?.[1], '下の無料テストで、作品フォルダーのPNGとJSONを確認してください。');
-  assert.ok(html.indexOf(reminder[0]) < html.indexOf('>作品フォルダーのPNG＋JSON保存をテスト'));
+  assert.equal(reminder?.[1], '無料テストでPNGの保存先を確認してください。');
+  assert.ok(html.indexOf(reminder[0]) < html.indexOf('>PNGの自動保存をテスト'));
   assert.doesNotMatch(reminder[0], /button|tabindex|onclick|role=/i);
   const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
   assert.match(css, /\.auto-save-guide \.save-setup-reminder\s*\{[^}]*margin:\s*12px 0 8px;[^}]*color:\s*#fbbf24;[^}]*animation:\s*save-reminder-pulse 1\.6s/);
@@ -172,20 +173,22 @@ test('completed test then close confirms without an extra checkbox; incomplete t
   guide(AutoSaveStartDialog({ ...props, mode: 'settings' })).props.onTestComplete(true);
   AutoSaveStartDialog({ ...props, mode: 'settings' }).props.onCancel();
   AutoSaveStartDialog({ ...props, mode: 'endless' }).props.onCancel();
-  assert.deepEqual(calls, ['confirm', 'cancel', 'confirm', 'cancel']);
+  assert.deepEqual(calls, ['confirm', 'cancel', 'cancel', 'cancel']);
+  descendants(AutoSaveStartDialog({ ...props, mode: 'settings' })).find(n=>n.type==='button' && n.props.children==='閉じる').props.onClick();
+  assert.equal(calls.at(-1),'confirm');
   guide(AutoSaveStartDialog(props)).props.onTestComplete(false);
   assert.equal(startButton(AutoSaveStartDialog(props)).props.disabled, true);
 });
 
-test('free test uses the same pair archive, never opens a picker, and failure/early close stay unverified',async t=>{
+test('free test requests one PNG and requires an explicit file receipt',async t=>{
  const timeout=globalThis.setTimeout;t.mock.method(globalThis,'setTimeout',(fn,ms,...args)=>{const timer=timeout(fn,ms,...args);if(ms===60000)timer.unref?.();return timer;});
  t.mock.method(React,'useState',()=>[false,()=>{}]);let cleanup;t.mock.method(React,'useEffect',effect=>{cleanup=effect();});t.mock.method(React,'useRef',()=>({current:0}));
  const oldDocument=globalThis.document,oldWindow=globalThis.window;t.after(()=>{if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;if(oldWindow===undefined)delete globalThis.window;else globalThis.window=oldWindow;});
  let fail=false;const downloads=[],outcomes=[],png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nKsAAAAASUVORK5CYII=';
  globalThis.window={showDirectoryPicker(){assert.fail('free test must not open a picker');}};globalThis.document={createElement:tag=>tag==='canvas'?{getContext:()=>fail?null:{fillRect(){},fillText(){}},toDataURL:()=>png}:{click(){downloads.push(this.download);},remove(){}},body:{appendChild(){}}};
  const start=()=>descendants(AutoSaveGuide({onTestComplete:v=>outcomes.push(v)})).find(n=>n.type==='button').props.onClick();
- await start();assert.equal(downloads.length,1);assert.match(downloads[0],/保存テスト.*\.zip$/);assert.deepEqual(outcomes,[false,true]);
- fail=true;await start();assert.deepEqual(outcomes,[false,true,false]);fail=false;const cancelled=start();cleanup();await cancelled;assert.equal(downloads.length,1);assert.deepEqual(outcomes,[false,true,false,false]);
+ await start();assert.equal(downloads.length,1);assert.match(downloads[0],/保存テスト.*\.png$/);assert.deepEqual(outcomes,[false]);
+ fail=true;await start();assert.deepEqual(outcomes,[false,false]);fail=false;const cancelled=start();cleanup();await cancelled;assert.equal(downloads.length,1);assert.deepEqual(outcomes,[false,false,false]);
 });
 
 test('required-save pulse uses distinct colors and has a reduced-motion opt-out', () => {

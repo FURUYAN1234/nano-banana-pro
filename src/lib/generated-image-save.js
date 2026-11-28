@@ -1,4 +1,4 @@
-import { selectGenerationMetadataContext } from './generation-history.js';
+import { downloadImageDataUrl, selectGenerationMetadataContext } from './generation-history.js';
 import { buildGeneratedImageMetadata, embedGeneratedImageMetadata, serializeGeneratedImageMetadata, getImageContentHash } from './generated-image-metadata.js';
 import { extractScenarioTitle } from './scenario-title.js';
 
@@ -8,7 +8,7 @@ export const downloadGeneratedImageJson = (text,filename,documentObject=document
   try{documentObject.body.appendChild(anchor);anchor.click();}
   finally{if(anchor.parentNode)anchor.parentNode.removeChild(anchor);setTimeout(()=>URL.revokeObjectURL(url),60_000);}
 };
-const requestDownload=async(download,...args)=>{if(await download(...args)===false)throw new Error('ブラウザーがダウンロード要求を受け付けませんでした。複数ファイルの許可を確認してください。');};
+const requestDownload=async(download,...args)=>{if(await download(...args)===false)throw new Error('ブラウザーがダウンロード要求を受け付けませんでした。');};
 
 export const convertImageDataUrlToPng = (dataUrl) => {
   if (/^data:image\/png;base64,/i.test(dataUrl || '')) return Promise.resolve(dataUrl);
@@ -28,7 +28,17 @@ export const convertImageDataUrlToPng = (dataUrl) => {
   });
 };
 
-export const prepareGeneratedImageSave = async (item, appVersion) => {
+export function createGeneratedImageNames(item) {
+  const context = selectGenerationMetadataContext(item);
+  const title = safeSaveName(context.workTitle || item?.saveWorkTitle || extractScenarioTitle(context.scenario), 48);
+  const now = new Date();
+  const pad = value => String(value).padStart(2, '0');
+  const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const suffix = `${timestamp}_${crypto.randomUUID().slice(0, 8)}`;
+  return { title, folderName: `${title}_${suffix}`, filename: `${title}_001ページ_${suffix}.png` };
+}
+
+export const prepareGeneratedImageSave = async (item, appVersion, names = createGeneratedImageNames(item)) => {
   if (!item?.img) throw new Error('保存する生成画像がありません。');
   const original=selectGenerationMetadataContext(item);
   // Capture editable records before PNG conversion/hashing yields. Immutable
@@ -45,10 +55,7 @@ export const prepareGeneratedImageSave = async (item, appVersion) => {
     fallbackOccurred: generation.fallbackOccurred, inputImages: context.inputImages,
     outputImage: png, settings: context.settings, referenceContext: context.referenceContext,
   });
-  const title = safeSaveName(context.workTitle||generation.saveWorkTitle||extractScenarioTitle(context.scenario),48);
-  const now=new Date(),pad=n=>String(n).padStart(2,'0');
-  const timestamp=`${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-  const suffix=crypto.randomUUID().slice(0,8),folderName=`${title}_${timestamp}_${suffix}`,filename=`${title}_001ページ_${timestamp}_${suffix}.png`;
+  const { title, folderName, filename } = names;
   const dataUrl=embedGeneratedImageMetadata(png,metadata);
   return {dataUrl,filename,folderName,title,savedPngSha256:await getImageContentHash(dataUrl),
     jsonText:serializeGeneratedImageMetadata(metadata),jsonFilename:filename.replace(/\.png$/i,'.json')};
@@ -109,8 +116,14 @@ export const saveGeneratedImagePair=async(saved,options={})=>{
  if(!handle)return savePair(saved,options);
  const work=(directoryQueues.get(handle)||Promise.resolve()).catch(()=>{}).then(()=>savePair(saved,{...options,directoryHandle:handle}));directoryQueues.set(handle,work);try{return await work;}finally{if(directoryQueues.get(handle)===work)directoryQueues.delete(handle);}
 };
+export async function requestGeneratedPng(saved, { download = downloadImageDataUrl, isCurrent = () => true } = {}) {
+  if (!isCurrent()) return 'stale';
+  await requestDownload(download, saved.dataUrl, saved.filename);
+  return 'requested';
+}
+
 // Only explicit final selection calls this; showing/history selection never saves.
-export const createFinalImageSaver=({prepare=prepareGeneratedImageSave,write=saveGeneratedImagePair,download=downloadGeneratedImageArchive}={})=>{
+export const createFinalImageSaver=({prepare=prepareGeneratedImageSave,write=requestGeneratedPng,download=downloadImageDataUrl}={})=>{
  const pending=new Map(),retained=new Map(),completed=new Set(),identities=new Map();
  return async(item,version,isCurrent)=>{
   if(!isCurrent())return 'stale';let key=identities.get(item.id);if(!key||key.img!==item.img){key={id:item.id,img:item.img};identities.set(item.id,key);}
@@ -119,6 +132,45 @@ export const createFinalImageSaver=({prepare=prepareGeneratedImageSave,write=sav
   pending.set(key,operation);try{return await operation;}finally{pending.delete(key);if(identities.size>30)for(const [id,value] of identities){if(!pending.has(value)&&!retained.has(value))identities.delete(id);if(identities.size<=30)break;}}
  };
 };
-export const saveImageToChosenLocation=async({prepare,source,picker=typeof window!=='undefined'&&window.showDirectoryPicker?window.showDirectoryPicker.bind(window):null,download=downloadGeneratedImageArchive})=>{
- let saved;try{const handle=picker?await picker({id:'super-furu-manga-output',mode:'readwrite'}):null;if(handle)configuredDirectory=handle;saved=failedSnapshots.get(source)||await prepare();const result=await saveGeneratedImagePair(saved,{directoryHandle:handle,download});if(result==='saved'||result==='requested')failedSnapshots.delete(source);return result;}catch(error){if(saved)retainFailed(source,saved);if(error?.name==='AbortError')return 'cancelled';throw error;}
-};
+export async function saveImageToChosenLocation({
+  prepare, source, filename, picker = globalThis.window?.showSaveFilePicker?.bind(window), download = downloadImageDataUrl,
+}) {
+  let saved = failedSnapshots.get(source);
+  let handle;
+  if (picker) {
+    try {
+      // Open the picker during the click. Preparing a full-size PNG can consume user activation.
+      handle = await picker({
+        id: 'super-furu-manga-png', startIn: 'downloads', suggestedName: saved?.filename || filename || '漫画.png',
+        types: [{ description: 'PNG画像', accept: { 'image/png': ['.png'] } }],
+      });
+    } catch (error) {
+      if (error?.name === 'AbortError') return 'cancelled';
+      throw error;
+    }
+  }
+  saved ||= await prepare();
+  try {
+    if (handle) {
+      const bytes = bytesOf(saved.dataUrl);
+      const stream = await handle.createWritable();
+      try {
+        await stream.write(new Blob([bytes], { type: 'image/png' }));
+        await stream.close();
+      } catch (error) {
+        await stream.abort().catch(() => {});
+        throw error;
+      }
+      if (!equalBytes(new Uint8Array(await (await handle.getFile()).arrayBuffer()), bytes)) {
+        throw new Error('保存したPNGの内容が一致しません。もう一度保存してください。');
+      }
+    } else {
+      await requestGeneratedPng(saved, { download });
+    }
+    failedSnapshots.delete(source);
+    return handle ? 'saved' : 'requested';
+  } catch (error) {
+    retainFailed(source, saved);
+    throw error;
+  }
+}

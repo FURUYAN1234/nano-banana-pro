@@ -5,7 +5,23 @@ import {extractScenarioTitle} from '../src/lib/scenario-title.js';
 const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nKsAAAAASUVORK5CYII=';
 const source=(scenario='Topic: 風まかせ便')=>({id:1,img:png,modelId:'fixture',metadataContext:{provider:'openai',scenario,finalPrompt:'Generation-time prompt',inputImages:[],settings:{show_title:false}}});
 const prepared=()=>({dataUrl:png,filename:'作品_001ページ.png',jsonFilename:'作品_001ページ.json',jsonText:'{"original":true}',folderName:'作品_20261116_120000'});
-test('actual manual retry retains its prepared snapshot and recognizes the same parent picked again',async()=>{let once=true,prepares=0;const fixture=await directoryFixture({failWrite:async name=>{if(name.endsWith('.json')&&once){once=false;throw Error('half-write');}}}),item=source(),prepare=async()=>{prepares++;return prepared();};await assert.rejects(saveImageToChosenLocation({prepare,source:item,picker:async()=>fixture.handle}),/half-write/);assert.equal(await saveImageToChosenLocation({prepare,source:item,picker:async()=>({...fixture.handle})}),'saved');assert.equal(prepares,1);assert.equal((await fs.readdir(fixture.root)).length,1);assert.equal(await saveImageToChosenLocation({prepare,source:item,picker:async()=>fixture.handle}),'saved');assert.equal(prepares,2);assert.equal((await fs.readdir(fixture.root)).length,2);});
+test('manual single-file retry reuses the immutable PNG after a write failure', async () => {
+  let writes = 0, preparations = 0;
+  const {root, handle} = await directoryFixture({failWrite: async () => {
+    if (++writes === 1) throw Error('disk full');
+  }});
+  const item = source(), saved = prepared();
+  const options = {
+    source: item, filename: saved.filename,
+    picker: opts => handle.getFileHandle(opts.suggestedName, {create:true}),
+    prepare: async () => { preparations++; return saved; },
+  };
+  await assert.rejects(saveImageToChosenLocation(options), /disk full/);
+  assert.equal(await saveImageToChosenLocation(options), 'saved');
+  assert.equal(preparations, 1);
+  assert.deepEqual(await fs.readdir(root), [saved.filename]);
+  assert.deepEqual(await fs.readFile(path.join(root, saved.filename)), Buffer.from(png.split(',')[1], 'base64'));
+});
 test('long unsafe Unicode titles keep timestamp and collision suffix in folder and ZIP names',async()=>{const saved=await prepareGeneratedImageSave(source('Topic: <>:/\\?*'+ '絵😀'.repeat(90)),'test');assert.match(saved.folderName,/_\d{8}_\d{6}_[a-f0-9]{8}$/);assert.doesNotMatch(saved.folderName,/[<>:"/\\|?*]/);assert.equal(buildGeneratedImageArchive(saved).filename,saved.folderName+'.zip');const {root,handle}=await directoryFixture();assert.equal(await saveGeneratedImagePair(saved,{directoryHandle:handle}),'saved');assert.deepEqual(await fs.readdir(root),[saved.folderName]);assert.equal((await fs.readdir(path.join(root,saved.folderName))).length,2);});
 test('owned book titles name title-less body history without inventing generation metadata',async()=>{const scenario='PageComposition: {"layout":"free"}\n1コマ目',item=source(scenario),before=structuredClone(item.metadataContext);item.saveWorkTitle='風まかせ便';const saved=await prepareGeneratedImageSave(item,'test');assert.match(saved.filename,/風まかせ便_001ページ_/);assert.deepEqual(item.metadataContext,before);const contextItem=source(scenario);contextItem.metadataContext.workTitle='生成時の作品名';const pending=prepareGeneratedImageSave(contextItem,'test');contextItem.metadataContext.workTitle='後から変更';assert.match((await pending).filename,/生成時の作品名_001ページ_/);});
 test('all shared title formats produce generation-time work names even when printed titles are off',async()=>{for(const text of ['Topic: 風まかせ便','Title: 風まかせ便','## タイトル：風まかせ便','風まかせ便\n1コマ目']){const item=source(text),pending=prepareGeneratedImageSave(item,'test');item.metadataContext.scenario='Topic: Later edit';const saved=await pending;assert.equal(saved.title,extractScenarioTitle(text));assert.match(saved.filename,/風まかせ便_001ページ_/);assert.equal(saved.savedPngSha256,createHash('sha256').update(Buffer.from(saved.dataUrl.split(',')[1],'base64')).digest('hex'));}});

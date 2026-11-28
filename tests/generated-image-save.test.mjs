@@ -1,12 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { prepareGeneratedImageSave, saveImageToChosenLocation, createFinalImageSaver as createSaver, saveGeneratedImagePair } from '../src/lib/generated-image-save.js';
+import { prepareGeneratedImageSave, saveImageToChosenLocation, createFinalImageSaver } from '../src/lib/generated-image-save.js';
 import { extractGeneratedImageMetadata } from '../src/lib/generated-image-metadata.js';
 import { readFile } from 'node:fs/promises';
 import {directoryFixture} from './fixtures/generated-image-directory.mjs';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-const createFinalImageSaver=options=>createSaver({...options,write:(saved,config)=>saveGeneratedImagePair(saved,{...config,directoryHandle:null})});
 
 import { addGenerationHistoryItem } from '../src/lib/generation-history.js';
 
@@ -54,16 +53,23 @@ test('final save waits for preparation, rejects stale completion and deduplicate
   assert.equal(await next, 'requested');
   assert.equal(await saver(item, 'test', () => current), 'duplicate');
   assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], [png, 'a.png']);
 });
 
 test('save picker opens before asynchronous preparation; cancellation never downloads', async () => {
   const order = [];
   const prepare = async () => { order.push('prepare'); return { dataUrl: png, filename: 'a.png', jsonText: '{}', jsonFilename: 'a.json' }; };
   const {root,handle}=await directoryFixture();
-  const picker=async()=>{order.push('picker');return handle;};
-  assert.equal(await saveImageToChosenLocation({prepare,picker}),'saved');
+  const picker=async options=>{
+    order.push('picker');
+    assert.equal(options.startIn, 'downloads');
+    assert.equal(options.suggestedName, 'a.png');
+    return handle.getFileHandle(options.suggestedName, {create:true});
+  };
+  assert.equal(await saveImageToChosenLocation({prepare,picker,filename:'a.png'}),'saved');
   assert.deepEqual(order,['picker','prepare']);
-  const folders=await fs.readdir(root);assert.equal(folders.length,1);assert.equal((await fs.readdir(path.join(root,folders[0]))).length,2);
+  assert.deepEqual(await fs.readdir(root), ['a.png']);
+  assert.deepEqual(await fs.readFile(path.join(root, 'a.png')), Buffer.from(png.split(',')[1], 'base64'));
   let downloaded = false;
   assert.equal(await saveImageToChosenLocation({ prepare, picker: () => Promise.reject(new DOMException('cancel', 'AbortError')), download: () => { downloaded = true; } }), 'cancelled');
   assert.equal(downloaded, false);
@@ -75,6 +81,7 @@ test('unsupported picker uses download; preparation failure preserves error with
   const saver = createFinalImageSaver({ prepare: async () => { throw new Error('encode failed'); }, download: () => calls.push('bad') });
   await assert.rejects(saver(item, 'test', () => true), /encode failed/);
   assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], [png, 'a.png']);
 });
 
 test('production final-selection block saves accepted snapshot before continuing, never stopped or unchanged review images', async () => {
@@ -88,7 +95,7 @@ test('production final-selection block saves accepted snapshot before continuing
     let release;
     const current = { value: true };
     const save = createFinalImageSaver({ prepare: () => new Promise(resolve => { release = resolve; }), download: (...args) => downloaded.push(args) });
-    const candidate = { base64Img: png.split(',')[1], mimeType: 'image/png', modelId: 'gpt-test', metadataContext: item.metadataContext };
+    const candidate = { base64Img: png.split(',')[1], mimeType: 'image/png', modelId: 'gpt-test', generatedAt: item.generatedAt, metadataContext: item.metadataContext };
     const repaired = mode.endsWith('repaired');
     const originalCandidate = repaired ? { ...candidate, base64Img: 'b3JpZ2luYWw=', modelId: 'gpt-original' } : candidate;
     const finalImageStr = `data:image/png;base64,${originalCandidate.base64Img}`;
@@ -123,6 +130,7 @@ test('production final-selection block saves accepted snapshot before continuing
     assert.equal(downloaded.length, ['manual', 'full-auto', 'endless', 'review-timeout', 'repaired', 'experimental-repaired'].includes(mode) ? 1 : 0, mode);
     assert.equal(result, !['stopped', 'stale', 'save-failed', 'review-timeout'].includes(mode), mode);
     assert.equal(history[0].metadataContext, item.metadataContext);
+    assert.equal(history[0].generatedAt, item.generatedAt, 'review must preserve the time recorded when the image was generated');
     assert.equal(history.length, repaired ? 2 : 1, mode);
     if (repaired) {
       const retained = history.find(entry => entry.img === finalImageStr);

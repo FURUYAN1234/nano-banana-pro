@@ -19,7 +19,7 @@ import {
 import Panorama360Viewer from './Panorama360Viewer';
 import ImageEditForm, { ImageEditSection } from './ImageEditForm';
 import PanelStyleEditForm from './PanelStyleEditForm';
-import { prepareGeneratedImageSave, saveImageToChosenLocation } from '../lib/generated-image-save.js';
+import { createGeneratedImageNames, prepareGeneratedImageSave, saveImageToChosenLocation } from '../lib/generated-image-save.js';
 import { getReferenceAsset, getReferenceMetadataRole } from '../lib/reference-assets.js';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
@@ -447,7 +447,6 @@ export default function Step4Panel({
       backgroundImage: bg360Image, backgroundEnabled: bg360Enabled, backgroundAnalysis: bg360Analysis }),
   });
 
-  const prepareCurrentImageSave = () => prepareGeneratedImageSave({ ...displayedHistory, img: generatedImage }, SYSTEM_VERSION);
 
   const webSupportControls = (
     <>
@@ -1518,20 +1517,26 @@ No explanations. No partial results.`;
                 <button
                   onClick={async () => {
                     try {
-                      setImageMetadataError('');
-                      const result = await saveImageToChosenLocation({ prepare: prepareCurrentImageSave,source:displayedHistory||generatedImage });
-                      if (result === 'requested') setImageMetadataError('作品フォルダー入りZIPを1件ダウンロード要求しました。展開してPNGと同名JSONをフォルダーごと保管してください。');
-                      if (result === 'saved') setImageMetadataError('選択した親フォルダー内に作品フォルダーを作成し、PNGと同名JSONの保存内容を照合しました。');
+                      const item = { ...displayedHistory, img: generatedImage };
+                      const names = createGeneratedImageNames(item);
+                      setImageMetadataError('PNGを準備しています…');
+                      const result = await saveImageToChosenLocation({
+                        filename: names.filename, source: displayedHistory || generatedImage,
+                        prepare: () => prepareGeneratedImageSave(item, SYSTEM_VERSION, names),
+                      });
+                      setImageMetadataError(result === 'saved' ? '選択したファイルにPNGを保存し、内容を確認しました。'
+                        : result === 'requested' ? 'PNGのダウンロードを要求しました。ブラウザーのダウンロード一覧で確認できます。'
+                        : '保存をキャンセルしました。');
                     } catch (error) {
                       setImageMetadataError(error instanceof Error ? error.message : '制作情報を画像へ保存できませんでした。');
                     }
                   }}
                   className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
                 >
-                  <Download size={20} /> 保存先を選んで保存（作品フォルダー・PNG＋JSON）
+                  <Download size={20} /> PNGを保存
                 </button>
-                <p className="mt-1 text-[10px] text-slate-400">対応ブラウザーでは親フォルダーを選び、その下の作品フォルダーへPNGとJSONを一緒に保存します。非対応環境は同じ構成のZIPを1件保存し、展開して保管してください。生成完了時に選択画面は開きません。</p>
-                {imageMetadataError && <p role="status" className="mt-1 text-[10px] text-red-400">{imageMetadataError}</p>}
+                <p className="mt-1 text-xs text-slate-300">制作情報を埋め込んだPNGを1枚保存します。ダウンロードフォルダー直下にも保存できます。</p>
+                {imageMetadataError && <p role="status" className="mt-2 text-sm text-white">{imageMetadataError}</p>}
 
                 {isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage && <button type="button" disabled={isGeneratingImage} className="w-full mt-2 text-slate-300 underline disabled:opacity-50" onClick={normalizeDisplayedPage}>ページ比率を揃える（追加課金なし）</button>}
 

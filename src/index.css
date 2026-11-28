@@ -647,6 +647,7 @@ body {
 /* Shared PNG save help and mode-start dialog. */
 .auto-save-guide { font-size: 12px; line-height: 1.5; text-align: left; overflow-wrap: anywhere; color: #cbd5e1; }
 .auto-save-guide p { margin: 6px 0; }
+.auto-save-guide .save-test-result { padding: 10px 12px; border-left: 3px solid #7dd3fc; background: #1e293b; color: #f8fafc; font-size: 15px; line-height: 1.5; }
 .auto-save-guide ol { padding-left: 22px; margin: 6px 0; }
 .auto-save-guide .save-setup-steps { color: #fca5a5; }
 .auto-save-guide .save-setup-steps code { color: inherit; }
@@ -669,7 +670,7 @@ body {
   .save-guide-required { animation: none; }
   .auto-save-guide .save-setup-reminder { animation: none; }
 }
-.save-start-dialog { background: #0f1115; color: #fff; border: 1px solid #94a3b8; padding: 18px; width: min(620px, calc(100vw - 32px)); max-height: 85vh; overflow-y: auto; }
+.save-start-dialog { box-sizing: border-box; background: #0f1115; color: #fff; border: 1px solid #94a3b8; padding: 18px; width: min(658px, calc(100% - 32px)); max-height: 85vh; overflow-y: auto; }
 .save-start-dialog::backdrop { background: #000a; }
 
 /* Actual workflow stages; no elapsed-time percentage. */

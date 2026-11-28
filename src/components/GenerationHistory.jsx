@@ -48,7 +48,7 @@ export default function GenerationHistory({
         </button>
       </div>
       <p style={{ fontSize: '11px', lineHeight: 1.6, marginBottom: '12px' }} className="text-slate-400">
-        履歴の画像をクリックすると、選んだ画像をSTEP4に表示します。「保存先を選んで保存」で作品フォルダーのPNGとJSONを保存できます。
+        履歴の画像を選ぶとSTEP4に表示されます。「PNGを保存」を押すと、その画像を制作情報付きのPNGで保存できます。
         <br />履歴は直近10件までです。11件目を追加すると最も古い画像が履歴から外れます。残したい画像は先にダウンロードしてください。
       </p>
       <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1">

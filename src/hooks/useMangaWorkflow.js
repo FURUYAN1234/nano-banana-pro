@@ -460,15 +460,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       const result = await finalImageSaverRef.current(item, SYSTEM_VERSION, isCurrent);
       if (result === 'stale') return false;
       if (result === 'requested') setGenLog(lines => [...lines,
-        '[自動保存] 作品フォルダー入りZIPを1件ダウンロード要求しました。展開すると同名のPNGとJSONが揃います。']);
-      if (result === 'saved') setGenLog(lines => [...lines,
-        '[自動保存] 選択済みの親フォルダー内へ、作品フォルダーのPNGとJSONを保存し内容を照合しました。']);
+        '[自動保存] 制作情報付きPNGを1枚ダウンロード要求しました。ブラウザーのダウンロード一覧で確認できます。']);
       return true;
     } catch (error) {
       if (!isCurrent()) return false;
       fullAutoAbortRef.current = true;
       setIsGenerationError(true);
-      setGenLog(lines => [...lines, `[保存エラー] ${error.message} 生成画像は保持しています。「保存先を選んで保存」から保存してください。`]);
+      setGenLog(lines => [...lines, `[保存エラー] ${error.message} 生成画像は保持しています。「PNGを保存」からもう一度保存できます。`]);
       showStatus('自動保存の準備に失敗したため、自動進行を停止しました。生成画像は保持しています。');
       return false;
     }
@@ -2524,6 +2522,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         if (!normalizedImage) throw new Error('Image response did not include usable image data.');
         let candidate = {
           base64Img: normalizedImage, mimeType: response.mimeType || 'image/png', modelId: response.usedModel,
+          generatedAt: new Date().toISOString(),
           workflowSource,
           metadataContext: {
             provider: isOpenAIEngine ? 'openai' : 'gemini', scenario:generationScenario,
@@ -2699,6 +2698,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       const originalCandidate = retainedImage
         ? {
           mimeType: retainedImage[1], base64Img: retainedImage[2], modelId: retainedHistory?.modelId || null,
+          generatedAt: retainedHistory?.generatedAt || new Date(typeof retainedHistory?.id === 'number' ? retainedHistory.id : Date.now()).toISOString(),
           originalImage: retainedHistory?.originalImage,
           pageLayout: retainedHistory?.pageLayout,
           metadataContext: retainedHistory?.metadataContext,
@@ -2713,13 +2713,12 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
       const finalImageStr = `data:${generatedMimeType};base64,${originalCandidate.base64Img}`;
       setGeneratedImage(finalImageStr);
-      // The image is intentionally displayed before QA finishes. Publish its
-      // layout metadata at the same time so the download UI never briefly
-      // mislabels an already-normalized page as the raw source.
-      if (originalCandidate.pageLayout || experimentalPrepared) {
+      // A download during QA must carry the same generation record as the accepted image.
+      if (!retainedHistory) {
         setGenerationHistory(items => addGenerationHistoryItem(items, {
           id: Date.now(), img: finalImageStr,
           modelId:originalCandidate.modelId,mimeType:originalCandidate.mimeType,
+          generatedAt: originalCandidate.generatedAt,
           ...(experimentalPrepared?{experimentalPlan:experimentalPrepared.plan,experimentalGroupId:experimentalPrepared.groupId}:{}),
           originalImage: originalCandidate.originalImage,
           pageLayout: originalCandidate.pageLayout,
@@ -2736,7 +2735,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       const previousExperimental=experimentalPrepared&&generationHistory.find(item=>item.experimentalGroupId===experimentalPrepared.groupId&&item.selected);
       const previousMatch=previousExperimental?.img.match(/^data:([^;]+);base64,([\s\S]+)$/);
       const originalExperimental=previousMatch?{
-        image:{mimeType:previousMatch[1],base64Img:previousMatch[2],modelId:previousExperimental.modelId,metadataContext:previousExperimental.metadataContext,workflowSource:previousExperimental.workflowSource,experimentalReview:previousExperimental.experimentalReview},
+        image:{mimeType:previousMatch[1],base64Img:previousMatch[2],modelId:previousExperimental.modelId,generatedAt:previousExperimental.generatedAt,metadataContext:previousExperimental.metadataContext,workflowSource:previousExperimental.workflowSource,experimentalReview:previousExperimental.experimentalReview},
         review:previousExperimental.experimentalReview,plan:experimentalPrepared.plan,prompt:currentPrompt,groupId:experimentalPrepared.groupId,
       }:null;
       const repairReferencePlan = isOpenAIEngine ? buildOpenAIReferencePlan({ continuityReferences:bookPageContextRef.current?.continuityReferences||[], compact: true,
@@ -2845,7 +2844,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           experimentalReview:qualityOutcome.candidate.experimentalReview,qualityIssues:qualityResult.issues}:{}),
         modelId: qualityOutcome.candidate.modelId,
         mimeType: qualityOutcome.candidate.mimeType || 'image/png',
-        generatedAt: new Date(timestamp).toISOString(),
+        generatedAt: qualityOutcome.candidate.generatedAt || new Date(timestamp).toISOString(),
         originalImage: qualityOutcome.candidate.originalImage,
         pageLayout: qualityOutcome.candidate.pageLayout,
         metadataContext: qualityOutcome.candidate.metadataContext,
@@ -2860,7 +2859,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           let retained=prev.filter(item=>item.img!==finalImageStr).map(item=>item.experimentalGroupId===experimentalPrepared.groupId?{...item,selected:false,
             ...(item.img===previousExperimental?.img?{experimentalReview:originalExperimental.review,qualityPass:originalExperimental.review?.status==='pass'}:{})}:item);
           if(qualityOutcome.candidate!==originalCandidate) retained=addGenerationHistoryItem(retained,{...acceptedHistoryItem,id:timestamp-1,
-            img:finalImageStr,modelId:originalCandidate.modelId,metadataContext:originalCandidate.metadataContext,
+            img:finalImageStr,modelId:originalCandidate.modelId,generatedAt:originalCandidate.generatedAt,metadataContext:originalCandidate.metadataContext,
             experimentalReview:originalCandidate.experimentalReview,qualityPass:qualityOutcome.originalReview.pass,selected:false});
           return addGenerationHistoryItem(retained,acceptedHistoryItem,{removeImages:new Set([acceptedImageStr])});
         }
@@ -2868,6 +2867,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           : addGenerationHistoryItem(prev, {
             ...acceptedHistoryItem, id: timestamp - 1, img: finalImageStr,
             modelId: originalCandidate.modelId, mimeType: originalCandidate.mimeType,
+            generatedAt: originalCandidate.generatedAt,
             originalImage: originalCandidate.originalImage, pageLayout: originalCandidate.pageLayout,
             metadataContext: originalCandidate.metadataContext, workflowSource: originalCandidate.workflowSource,
             qualityPass: qualityOutcome.originalReview.pass === true, selected: false,
