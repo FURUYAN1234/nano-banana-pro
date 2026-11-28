@@ -42,18 +42,22 @@ export function createMangaMcpServer(store, { jobs, bridge } = {}) {
       }
     });
   };
-  const capabilities = () => ({ contractVersion: MCP_CONTRACT_VERSION, totalPagesIncludesCover: true,
-    bookPanelCountsByProvider: { openai: [1, 2, 3, 4, 5, 6, 7, 8], gemini: [4] }, ordinaryPageCountsUnchanged: true,
-    operations: MCP_OPERATION_COVERAGE, settings: PAGE_SETTING_TYPES, settingChoices: getMcpSettingCatalog(),
-    stateEditActions:MCP_STATE_EDIT_ACTIONS, diagnostics:{read:'manga_run(read_state, input:{includeDiagnostics:true})',failedJob:'manga_job_get.error.failureContext',scope:'this-browser-origin',bounded:true},
-    historyAccess:{read:'manga_snapshot',select:'manga_edit(history_select)',clear:'manga_edit(history_clear, confirm:true)'},
-    advancedEdits:{inspect:'panel_inspect',generate:'panel_generate',adopt:'panel_adopt',discard:'panel_discard',modes:['style','free'],regions:'Use the exact inspected frame rectangle; free means a free-form instruction, not an arbitrary crop.'},
-    exports:{statusTool:'manga_save_status',automatic:Boolean(jobs),method:'mcp_server_filesystem',browserDownloadPermission:'unknown_and_independent',finishedPages:'PNG + same-stem JSON + portable asset folder and project manifest',text:'manga_snapshot provides the editable final prompt, scenario and explanation for copy/TXT equivalents; image metadata is retained on generation history items'},
-    manualBoundaries:{providerCredentials:'normal application UI only',microphone:'AI client transcript -> typed topic edit; no remote microphone control',legacyNormalization:'retained four-panel artifacts only; never reshape a native page'},
-    connection: { status: jobs?.client ? 'connected' : 'not_connected', browserBridge: bridge ? 'enabled' : 'start_server_with_--bridge', operations: jobs?.client?.operations ?? [], availableFeatures:['asset-refs-v1'], negotiatedFeatures:jobs?.client?.features??[] },
-    approval: 'request does not approve; record_user_response requires an explicit decision and exact current plan hash/revision',
-    credentials: 'Only the normal application accepts session-only provider keys. Never pass keys through MCP.',
-  });
+  const capabilities = () => {
+    const client = jobs?.connectedClient;
+    return {
+      contractVersion: MCP_CONTRACT_VERSION, totalPagesIncludesCover: true,
+      bookPanelCountsByProvider: { openai: [1, 2, 3, 4, 5, 6, 7, 8], gemini: [4] }, ordinaryPageCountsUnchanged: true,
+      operations: MCP_OPERATION_COVERAGE, settings: PAGE_SETTING_TYPES, settingChoices: getMcpSettingCatalog(),
+      stateEditActions:MCP_STATE_EDIT_ACTIONS, diagnostics:{read:'manga_run(read_state, input:{includeDiagnostics:true})',failedJob:'manga_job_get.error.failureContext',scope:'this-browser-origin',bounded:true},
+      historyAccess:{read:'manga_snapshot',select:'manga_edit(history_select)',clear:'manga_edit(history_clear, confirm:true)'},
+      advancedEdits:{inspect:'panel_inspect',generate:'panel_generate',adopt:'panel_adopt',discard:'panel_discard',modes:['style','free'],regions:'Use the exact inspected frame rectangle; free means a free-form instruction, not an arbitrary crop.'},
+      exports:{statusTool:'manga_save_status',automatic:Boolean(jobs),method:'mcp_server_filesystem',browserDownloadPermission:'unknown_and_independent',finishedPages:'PNG + same-stem JSON + portable asset folder and project manifest',text:'manga_snapshot provides the editable final prompt, scenario and explanation for copy/TXT equivalents; image metadata is retained on generation history items'},
+      manualBoundaries:{providerCredentials:'normal application UI only',microphone:'AI client transcript -> typed topic edit; no remote microphone control',legacyNormalization:'retained four-panel artifacts only; never reshape a native page'},
+      connection: { status: client ? 'connected' : 'not_connected', browserBridge: bridge ? 'enabled' : 'start_server_with_--bridge', operations: client?.operations ?? [], availableFeatures:['asset-refs-v1'], negotiatedFeatures:client?.features??[] },
+      approval: 'request does not approve; record_user_response requires an explicit decision and exact current plan hash/revision',
+      credentials: 'Only the normal application accepts session-only provider keys. Never pass keys through MCP.',
+    };
+  };
   register('manga_capabilities', 'Read supported operations, settings and current implementation/connection status. Planned operations are not runnable.', z.object({}).strict(), capabilities, true);
   register('manga_save_status', 'Inspect MCP automatic saving configuration and actual latest PNG/JSON, material hashes and manifest readback without writing files or opening a picker. Browser download permission remains unknown and independent.', z.object({projectId:id}).strict(), async ({projectId}) => readMcpSaveStatus(store,await store.get(projectId),{jobs,downloadsDirectory:jobs?.downloadsDirectory}), true);
   register('manga_connection', 'Obtain a short-lived local pairing URL for the current built application. Use replaceIdle only after the user authorizes switching a waiting application. Never log or persist the pairing fragment.', z.object({replaceIdle:z.boolean().optional()}).strict(), async options => bridge ? bridge.connection(options) : { connected: false, requiresRestart: true, option: '--bridge', note: 'Start this server with --bridge to serve the current application and its same-origin control endpoint.' });

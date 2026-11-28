@@ -2,6 +2,9 @@ import {mcpDiagnosticError} from './diagnostics.js';
 import {hydrateMcpAssetTransfer,ASSET_REFS_FEATURE} from './asset-transfer.js';
 import { assertNoSecrets, MangaControlError } from './contract.js';
 
+const HEARTBEAT_RETRY_DELAY_MS = 250;
+class RetryableHeartbeatError extends Error {}
+
 // This client only talks to the opt-in, same-origin loopback sidecar.
 export function createMangaBridgeClient({ origin, fetcher = fetch, execute, cancel, onStatus = () => {}, ackTimeoutMs = 5000 }) {
   const parsed = new URL(origin);
@@ -24,20 +27,53 @@ export function createMangaBridgeClient({ origin, fetcher = fetch, execute, canc
     return value;
   }
   async function request(route, body, auth = token) {
-    if(!['complete','disconnect'].includes(route))return requestBody(route,body,auth);
-    const controller=new AbortController();let timeout;
-    try{return await Promise.race([requestBody(route,body,auth,controller.signal),new Promise((_,reject)=>{timeout=setTimeout(()=>{controller.abort();reject(new MangaControlError('ACK_TIMEOUT','Local service acknowledgement timed out; completion remains unconfirmed.'));},ackTimeoutMs);})]);}
-    finally{clearTimeout(timeout);}
+    if (!['heartbeat', 'complete', 'disconnect'].includes(route)) return requestBody(route, body, auth);
+    try {
+      return await requestWithDeadline(route, body, auth);
+    } catch (error) {
+      // Heartbeat reports liveness and pending cancellation. Even GET next can dispatch work.
+      if (route !== 'heartbeat' || !(error instanceof RetryableHeartbeatError) || stopped) throw error;
+      await sleep(HEARTBEAT_RETRY_DELAY_MS);
+      if (stopped) throw error;
+      return requestWithDeadline(route, body, auth);
+    }
   }
-  async function requestBody(route, body, auth = token, signal) {
+  async function requestWithDeadline(route, body, auth) {
+    const controller = new AbortController();
+    let timeout, receivedHttpError = false;
+    const pending = requestBody(route, body, auth, controller.signal, response => { receivedHttpError = !response.ok; });
+    const deadline = new Promise((_, reject) => {
+      timeout = setTimeout(() => {
+        controller.abort();
+        const message = route === 'heartbeat'
+          ? 'Local bridge heartbeat timed out.'
+          : 'Local service acknowledgement timed out; completion remains unconfirmed.';
+        reject(route === 'heartbeat' && !receivedHttpError
+          ? new RetryableHeartbeatError(message)
+          : new MangaControlError('ACK_TIMEOUT', message));
+      }, ackTimeoutMs);
+    });
+    try { return await Promise.race([pending, deadline]); }
+    finally { clearTimeout(timeout); }
+  }
+  async function requestBody(route, body, auth = token, signal, onResponse) {
     if (body) assertNoSecrets(body);
     if(body&&!['connect','assets'].includes(route))body=await encode(body);
     if(signal?.aborted)throw new MangaControlError('ACK_TIMEOUT','Local service acknowledgement timed out.');
-    const response = await fetcher(`${origin}/mcp-bridge/${route}`, {
-      ...(signal?{signal}:{}), method: body ? 'POST' : 'GET', credentials: 'omit', cache: 'no-store',
-      headers: { Authorization: `Bearer ${auth}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    });
+    let response;
+    try {
+      response = await fetcher(`${origin}/mcp-bridge/${route}`, {
+        ...(signal ? { signal } : {}), method: body ? 'POST' : 'GET', credentials: 'omit', cache: 'no-store',
+        headers: { Authorization: `Bearer ${auth}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      });
+    } catch (error) {
+      if (route === 'heartbeat' && error instanceof TypeError && !signal?.aborted) {
+        throw new RetryableHeartbeatError(error.message, { cause: error });
+      }
+      throw error;
+    }
+    onResponse?.(response);
     const value = await response.json();
     if (!response.ok) throw new MangaControlError(value.error?.code ?? 'BRIDGE_FAILED', value.error?.message ?? 'Local bridge request failed.');
     if(['checkpoint-page','checkpoint-assets','complete'].includes(route))uploaded.clear();
@@ -49,6 +85,9 @@ export function createMangaBridgeClient({ origin, fetcher = fetch, execute, canc
       try {
         const beat = await request('heartbeat', {});
         if(stopped)break;
+        if (!Array.isArray(beat?.cancelJobIds) || beat.cancelJobIds.some(id => typeof id !== 'string')) {
+          throw new MangaControlError('CONTRACT_MISMATCH', 'Local bridge returned an invalid heartbeat response.');
+        }
         if (active && beat.cancelJobIds.includes(active.id)) {active.cancelRequested=true;transferController?.abort();cancel();}
         if (!active) {
           const { job } = await request('next');
@@ -76,7 +115,12 @@ export function createMangaBridgeClient({ origin, fetcher = fetch, execute, canc
             })();
           }
         }
-      } catch (error) { onStatus({ connected: false, error: error.message }); stopped = true; }
+      } catch (error) {
+        if (!stopped) {
+          stopped = true;
+          onStatus({ connected: false, error: error.message });
+        }
+      }
       if (!stopped) await sleep(1000);
     }
   }

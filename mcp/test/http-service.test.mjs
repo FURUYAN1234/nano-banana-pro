@@ -119,3 +119,81 @@ test('the default Windows production workspace requires its verified installed r
   assert.equal((await run(installed)).stdout.trim(),'8.0.8');
  }finally{await fs.rm(fixture,{recursive:true,force:true});}
 });
+
+test('health and capabilities agree at the browser heartbeat deadline, after recovery and on disconnect', async t => {
+  const root = process.env.MANGA_MCP_TEST_ROOT || os.tmpdir();
+  await fs.mkdir(root, { recursive: true });
+  const workspace = await fs.mkdtemp(path.join(root, 'manga-heartbeat-status-'));
+  let service, client;
+  try {
+    service = await startMangaService({ workspace, port: 0 });
+    const { origin, token } = service.record;
+    const clientHeaders = { Authorization: 'Bearer ' + token };
+    client = new Client({ name: 'heartbeat-status-regression', version: '1.0.0' });
+    await client.connect(new StreamableHTTPClientTransport(new URL('/mcp', origin), { requestInit: { headers: clientHeaders } }));
+    let now = Date.now();
+    t.mock.method(Date, 'now', () => now);
+
+    const observe = async (connected, activeJobs=0) => {
+      const health = await fetch(new URL('/health', origin), { headers: clientHeaders });
+      assert.equal(health.status, 200);
+      const status = await health.json();
+      assert.equal(status.connected, connected);
+      assert.equal(status.activeJobs, activeJobs);
+      const result = await client.callTool({ name: 'manga_capabilities', arguments: {} });
+      assert.notEqual(result.isError, true);
+      const { connection } = result.structuredContent;
+      assert.equal(connection.status, connected ? 'connected' : 'not_connected');
+      assert.deepEqual(connection.operations, connected ? ['read_state'] : []);
+      assert.deepEqual(connection.negotiatedFeatures, connected ? ['asset-refs-v1'] : []);
+    };
+
+    await observe(false);
+    const offer = await client.callTool({ name: 'manga_connection', arguments: {} });
+    const pairing = new URLSearchParams(new URL(offer.structuredContent.url).hash.slice(1)).get('mcp');
+    const bridge = (route, key, body) => fetch(new URL('/mcp-bridge/' + route, origin), {
+      method: body ? 'POST' : 'GET',
+      headers: { Origin: origin, Authorization: 'Bearer ' + key, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const connect = await bridge('connect', pairing, {
+      contractVersion: 1, clientId: 'heartbeat-client', operations: ['read_state'], features: ['asset-refs-v1'],
+    });
+    assert.equal(connect.status, 200);
+    const { token: session } = await connect.json();
+    const project = await service.store.create({ name: 'Heartbeat fixture' }, 'heartbeat-project');
+    const active = await service.jobs.submit({ projectId: project.id, expectedRevision: 1, operation: 'read_state', idempotencyKey: 'active-read' });
+    const pending = await service.jobs.submit({ projectId: project.id, expectedRevision: 1, operation: 'read_state', idempotencyKey: 'queued-read' });
+    const { job } = await (await bridge('next', session)).json();
+    assert.equal(job.id, active.id);
+    assert.equal((await bridge('start', session, { jobId: job.id, attemptId: job.attemptId })).status, 200);
+
+    now += 179999;
+    await observe(true, 1);
+    now += 1;
+    await observe(false, 1);
+    now += 1;
+    await observe(false, 1);
+    assert.equal(service.jobs.get(job.id).state, 'running');
+    assert.equal(service.jobs.get(pending.id).state, 'queued');
+
+    const renewed = await bridge('heartbeat', session, {});
+    assert.equal(renewed.status, 200);
+    assert.deepEqual(await renewed.json(), { cancelJobIds: [] });
+    await observe(true, 1);
+    assert.equal(service.jobs.get(job.id).attemptId, job.attemptId);
+    assert.equal(service.jobs.get(pending.id).state, 'queued');
+    assert.equal((await bridge('complete', session, {
+      jobId: job.id, attemptId: job.attemptId, success: true, result: { status: 'verified' },
+    })).status, 200);
+
+    assert.equal((await bridge('disconnect', session, {})).status, 200);
+    await observe(false);
+    assert.equal((await bridge('heartbeat', session, {})).status, 401);
+    await observe(false);
+  } finally {
+    await client?.close();
+    await service?.close();
+    await fs.rm(workspace, { recursive: true, force: true });
+  }
+});

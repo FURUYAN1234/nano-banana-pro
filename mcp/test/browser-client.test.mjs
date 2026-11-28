@@ -81,3 +81,197 @@ test('pending completion and disconnect ACKs time out only after the local actio
  await new Promise(r=>setTimeout(r,40));assert.equal(unlocked,false);
  finish();const result=await stop;assert.match(result.warning,/timed out/);assert.equal(unlocked,true);
 });
+
+const browserTurn = () => new Promise(resolve => setImmediate(resolve));
+const bridgeResponse = (value, status=200) => ({ ok: status>=200 && status<300, status, json: async () => value });
+
+function pollingFixture(t, { replies={}, execute=async () => ({ result: {} }), cancel=() => {} }={}) {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const requests = [];
+  const statuses = [];
+  const client = createMangaBridgeClient({
+    origin: 'http://127.0.0.1:45931', execute, cancel, onStatus: status => statuses.push(status),
+    fetcher: async (url, options) => {
+      const route = url.split('/').at(-1);
+      const request = {
+        route, authorization: options.headers.Authorization, signal: options.signal,
+        body: options.body && JSON.parse(options.body),
+      };
+      requests.push(request);
+      if (replies[route]) return replies[route](request);
+      if (route === 'connect') return bridgeResponse({ token: 'paired-test-session' });
+      if (route === 'heartbeat') return bridgeResponse({ cancelJobIds: [] });
+      if (route === 'next') return bridgeResponse({ job: null });
+      return bridgeResponse({});
+    },
+  });
+  t.after(() => client.disconnect());
+  return {
+    client, requests, statuses,
+    routes: () => requests.map(request => request.route),
+    connect: async () => { await client.connect('pairing-test-token', ['read_state', 'image']); await browserTurn(); },
+    tick: async ms => { t.mock.timers.tick(ms); await browserTurn(); },
+  };
+}
+
+test('one failed idle heartbeat retries with the same session and resumes regular polling', async t => {
+  let beats = 0;
+  const fixture = pollingFixture(t, { replies: {
+    heartbeat: () => {
+      if (++beats === 2) throw new TypeError('Network unavailable');
+      return bridgeResponse({ cancelJobIds: [] });
+    },
+  } });
+  await fixture.connect();
+  assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'next']);
+  await fixture.tick(1000);
+  assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'next', 'heartbeat']);
+  assert.equal(fixture.statuses.at(-1).connected, true);
+
+  await fixture.tick(1000);
+  await fixture.tick(1000);
+  assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'next', 'heartbeat', 'heartbeat', 'next', 'heartbeat', 'next']);
+  assert.ok(fixture.statuses.every(status => status.connected));
+  assert.ok(fixture.requests.slice(1).every(request => request.authorization === 'Bearer paired-test-session'));
+});
+
+test('a continued heartbeat transport failure stops after one retry without requesting a job', async t => {
+  const fixture = pollingFixture(t, { replies: {
+    heartbeat: () => { throw new TypeError('Network unavailable'); },
+  } });
+  await fixture.connect();
+  await fixture.tick(1000);
+  await fixture.tick(10000);
+  assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'heartbeat']);
+  assert.deepEqual(fixture.statuses.at(-1), { connected: false, error: 'Network unavailable' });
+});
+
+for (const recovered of [true, false]) {
+  test('an unanswered heartbeat has a deadline and one fresh attempt (' + (recovered ? 'recovered' : 'stopped') + ')', async t => {
+    const signals = [];
+    const fixture = pollingFixture(t, { replies: {
+      heartbeat: ({ signal }) => {
+        signals.push(signal);
+        if (signals.length === 2 && recovered) return bridgeResponse({ cancelJobIds: [] });
+        return new Promise(() => {});
+      },
+    } });
+    await fixture.connect();
+    await fixture.tick(4999);
+    assert.deepEqual(fixture.routes(), ['connect', 'heartbeat']);
+    await fixture.tick(1);
+    assert.equal(signals[0].aborted, true);
+    assert.equal(fixture.statuses.at(-1).connected, true);
+
+    await fixture.tick(250);
+    assert.notEqual(signals[0], signals[1]);
+    assert.equal(signals[1].aborted, false);
+    if (recovered) {
+      assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'heartbeat', 'next']);
+      assert.equal(fixture.statuses.at(-1).connected, true);
+    } else {
+      await fixture.tick(5000);
+      await fixture.tick(10000);
+      assert.equal(signals[1].aborted, true);
+      assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'heartbeat']);
+      assert.deepEqual(fixture.statuses.at(-1), { connected: false, error: 'Local bridge heartbeat timed out.' });
+    }
+    assert.ok(fixture.requests.slice(1).every(request => request.authorization === 'Bearer paired-test-session'));
+  });
+}
+
+for (const [description, heartbeat] of [
+  ['401 expired session', () => bridgeResponse({ error: { code: 'PAIRING_REQUIRED', message: 'Pairing expired' } }, 401)],
+  ['403 access denied', () => bridgeResponse({ error: { code: 'ACCESS_DENIED', message: 'Access denied' } }, 403)],
+  ['a stalled 401 response body', () => ({ ok: false, status: 401, json: () => new Promise(() => {}) })],
+  ['cancelled fetch', () => { throw new DOMException('Fetch cancelled', 'AbortError'); }],
+  ['unreadable response body', () => ({ ok: true, json: async () => { throw new TypeError('Unreadable response'); } })],
+  ['invalid heartbeat response', () => bridgeResponse({ cancelJobIds: 'wrong shape' })],
+]) {
+  test('heartbeat stops without retry after ' + description, async t => {
+    const fixture = pollingFixture(t, { replies: { heartbeat } });
+    await fixture.connect();
+    await fixture.tick(10000);
+    assert.deepEqual(fixture.routes(), ['connect', 'heartbeat']);
+    assert.equal(fixture.statuses.at(-1).connected, false);
+  });
+}
+
+test('manual stop during the retry wait suppresses the retry and preserves the final status', async t => {
+  const fixture = pollingFixture(t, { replies: {
+    heartbeat: () => { throw new TypeError('Network unavailable'); },
+  } });
+  await fixture.connect();
+  assert.equal(fixture.statuses.at(-1).connected, true);
+  await fixture.client.disconnect();
+  await fixture.tick(10000);
+  assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'disconnect']);
+  assert.deepEqual(fixture.statuses.at(-1), { connected: false });
+  assert.equal(fixture.statuses.filter(status => !status.connected).length, 1);
+});
+
+test('an active action is never repeated and receives cancellation after the retry', async t => {
+  const job = { id: 'active-job', attemptId: 'single-attempt', operation: 'image' };
+  let beats = 0, executions = 0, cancellations = 0, unblockAction;
+  const cancelled = new Promise(resolve => { unblockAction = resolve; });
+  const fixture = pollingFixture(t, {
+    replies: {
+      heartbeat: () => {
+        if (++beats === 2) throw new TypeError('Network unavailable');
+        return bridgeResponse({ cancelJobIds: beats > 2 ? [job.id] : [] });
+      },
+      next: () => bridgeResponse({ job }),
+    },
+    execute: async (_job, context) => {
+      executions++;
+      await cancelled;
+      context.throwIfCancelled();
+      return { result: {} };
+    },
+    cancel: () => { cancellations++; unblockAction(); },
+  });
+  try {
+    await fixture.connect();
+    await fixture.tick(1000);
+    assert.equal(executions, 1);
+    assert.equal(cancellations, 0);
+    assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'next', 'start', 'heartbeat']);
+    await fixture.tick(1000);
+    assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'next', 'start', 'heartbeat', 'heartbeat', 'complete']);
+    assert.equal(executions, 1);
+    assert.equal(cancellations, 1);
+    assert.deepEqual(fixture.requests.at(-1).body, {
+      jobId: job.id, attemptId: job.attemptId, success: false,
+      error: { code: 'CANCELLED', message: 'The book operation was stopped.' },
+    });
+  } finally {
+    unblockAction();
+  }
+});
+
+test('a lost next response is not requested again because the server may have dispatched the job', async t => {
+  const fixture = pollingFixture(t, {
+    replies: { next: () => { throw new TypeError('Network unavailable'); } },
+    execute: () => assert.fail('An unconfirmed dispatch cannot execute'),
+  });
+  await fixture.connect();
+  await fixture.tick(10000);
+  assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'next']);
+  assert.equal(fixture.statuses.at(-1).connected, false);
+});
+
+test('a lost completion response is not sent again and never starts another action', async t => {
+  let executions = 0;
+  const fixture = pollingFixture(t, {
+    replies: {
+      next: () => bridgeResponse({ job: { id: 'active-job', attemptId: 'single-attempt', operation: 'image' } }),
+      complete: () => { throw new TypeError('Network unavailable'); },
+    },
+    execute: async () => { executions++; return { result: {} }; },
+  });
+  await fixture.connect();
+  await fixture.tick(10000);
+  assert.deepEqual(fixture.routes(), ['connect', 'heartbeat', 'next', 'start', 'complete']);
+  assert.equal(executions, 1);
+  assert.equal(fixture.statuses.at(-1).connected, false);
+});

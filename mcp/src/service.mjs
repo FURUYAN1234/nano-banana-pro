@@ -26,10 +26,9 @@ export async function startMangaService({workspace,port=45931,downloadsDirectory
   const token=randomBytes(32).toString('base64url'),instanceId=randomUUID();
   const handle=toNodeHandler(createMcpHandler(()=>createMangaMcpServer(store,{jobs,bridge})),{maxRequestBodySize:72_000_000});
   const identity={format:1,instanceId,workspace:store.root,appVersion:version,contractVersion:1,pid:process.pid};
-  const connected=()=>Boolean(jobs.client&&Date.now()-jobs.client.seenAt<180000);
   const activeJobs=()=>[...jobs.jobs.values()].filter(j=>['running','cancelling'].includes(j.state)).length;
   bridge=await startBridge({store,jobs,appRoot,distDirectory:path.join(appRoot,'dist'),port,mcpHttp:{token,handle,
-   health:()=>({...identity,connected:connected(),activeJobs:activeJobs()}),
+   health:()=>({...identity,connected:Boolean(jobs.connectedClient),activeJobs:activeJobs()}),
    assertCanStop:()=>jobs.prepareShutdown(),
    stop:()=>closeService()}});
   const record={...identity,origin:bridge.origin,token};

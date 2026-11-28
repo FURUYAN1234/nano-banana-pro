@@ -10,9 +10,14 @@ import {AssetTransfer,ASSET_REFS_FEATURE} from './asset-transfer.mjs';
 import {pageContentHash,pageGenerationMetadata,generationMetadataHash} from './store.mjs';
 
 const semanticEdits = new Set(['topic','scenario','prompt','cast','recognition','reference_item','background','style_json','enhance_revert','history_select','panel_adopt']);
+const BROWSER_HEARTBEAT_MAX_AGE_MS = 180_000;
 const terminal = new Set(['completed', 'failed', 'cancelled', 'interrupted']);
 export class JobQueue {
   constructor(store,{downloadsDirectory}={}) { this.store = store; this.downloadsDirectory=downloadsDirectory;this.jobs = new Map(); this.tail = Promise.resolve(); this.client = null; }
+  get connectedClient() {
+    const client = this.client;
+    return client && Date.now() - client.seenAt < BROWSER_HEARTBEAT_MAX_AGE_MS ? client : null;
+  }
   exclusive(fn) { const p = this.tail.then(fn); this.tail = p.catch(() => {}); return p; }
   async init() {
     this.directory = await this.store.safeDirectory(path.join(this.store.root, 'jobs'));
@@ -59,7 +64,7 @@ export class JobQueue {
       if (this.client && this.client.id !== replaceIdleClientId) throw new MangaControlError('HANDOVER_CLIENT_CHANGED', 'The paired application changed. Obtain a new pairing URL before switching.');
       const pending = [...this.jobs.values()].some(job => !terminal.has(job.state) || (job.state === 'interrupted' && !job.recoveryAcknowledged));
       if (pending) throw new MangaControlError('HANDOVER_BUSY', 'Finish pending work and resolve unknown results before switching applications.');
-    } else if (this.client && this.client.id !== clientId && Date.now() - this.client.seenAt < 180000) {
+    } else if (this.connectedClient && this.client.id !== clientId) {
       throw new MangaControlError('BROWSER_ALREADY_CONNECTED', 'Disconnect the currently paired application or request an explicit idle handover.');
     }
     if (this.client && this.client.id !== clientId) {
@@ -264,7 +269,7 @@ export class JobQueue {
     });
   }
   async prepareShutdown(){return this.exclusive(async()=>{
-    if(this.client&&Date.now()-this.client.seenAt<180000||[...this.jobs.values()].some(j=>['running','cancelling'].includes(j.state)))throw new MangaControlError('SERVICE_BUSY','Disconnect the application and wait for active jobs before stopping/updating this service.');
+    if(this.connectedClient||[...this.jobs.values()].some(j=>['running','cancelling'].includes(j.state)))throw new MangaControlError('SERVICE_BUSY','Disconnect the application and wait for active jobs before stopping/updating this service.');
     this.closing=true;
   });}
   async cancel(jobId) { return this.exclusive(async () => { const job = this.get(jobId); if (terminal.has(job.state)) return this.summary(job); job.cancelRequested = true; job.state = ['running', 'cancelling'].includes(job.state) ? 'cancelling' : 'cancelled'; job.updatedAt = new Date().toISOString(); await this.save(job); return this.summary(job); }); }
