@@ -997,6 +997,8 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 ## 📋 ChangeLog / 更新履歴
 
 ### v8.2.5 (2026-11-28)
+
+- If an MCP heartbeat is briefly interrupted, the app checks the existing connection again. / 一時的にMCPの接続確認が途切れたときは、同じ接続で確認をやり直します。
 - **[Save]** Single-page generation downloads a PNG with embedded production details. The save button also lets you choose the file location. MCP keeps each work’s pages and JSON together in its project folder. / 通常画面では、1ページ漫画を生成すると制作情報付きPNGをダウンロードします。「PNGを保存」から保存先も選べます。MCPで制作した作品は、各ページのPNGとJSONを作品フォルダーにまとめます。
 - **[Layout]** Added authored diagonal panel borders and distinct insets to OpenAI free page layouts, including character crossings over shared diagonal borders. / OpenAI自由配置で斜め枠と独立した差し込み小コマを指定できます。斜めの共有辺にも人物をまたがせられます。
 - **[Fix & UX]** Retry the first OpenAI text model once if the network fails before an HTTP response. / OpenAIの文章処理でHTTP応答前に通信が切れた場合、最初のモデルで1回だけ再試行します。

@@ -272,6 +272,8 @@ Save-status checks distinguish assets required by the current manifest/latest pa
 
 If an earlier application is still paired but cannot be opened, confirm that the user wants to switch from that idle connection. Request `manga_connection({replaceIdle:true})`, open the resulting URL in the current chat, and select **Allow AI control**. The server checks that the earlier connection is still the one selected and refuses queued, running, or unresolved work. The earlier session is invalidated only after the new application connects. / 前の画面を開けないままMCP接続だけ残った場合は、待機中の接続を切り替える本人の指示を確認し、`manga_connection({replaceIdle:true})` のURLを作業中のチャットで開いて「AI操作を許可」を押します。旧接続が変わった場合や、待機キュー・実行中・結果不明の処理がある場合は接続を切り替えません。新しい画面の接続が成立したときだけ前のセッションが失効します。
 
+The pairing link is valid for 10 minutes from issue. Once paired, the session lasts eight hours from connection. The app periodically checks the connection while the tab is open. If the session expires, obtain a fresh link, open it in the same tab and select **Allow AI control**. / 接続用URLの有効期限は発行後10分、接続済みのセッションは接続後8時間です。タブを開いている間、アプリは定期的に接続を確認します。セッションの期限が切れたら、新しい接続用URLを同じタブで開き、「AI操作を許可」を押してください。
+
 If the short-lived pairing URL expires while waiting for API entry, obtain a fresh URL with `manga_connection` and update only the existing tab’s URL fragment, then allow AI control. Keep the connected API session; no reload or key re-entry is needed. This recovery does not authorize automatic reconnection after the user presses Stop. / API入力待ちで接続URLの期限が切れた場合は、`manga_connection` でURLを更新し、既存タブのhashだけを変更してAI操作を許可します。API接続を保ったまま復旧でき、再読込やキー再入力は不要です。利用者が停止ボタンを押した後の自動再接続は行いません。
 
 ## Material project save ownership / 衣装・資料作品の保存先
