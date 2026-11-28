@@ -1,7 +1,7 @@
 {
   "pricingSourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",
   "manualVersion": "8.2.5",
-  "manualSourceSha256": "abd76a79c79e95bebf21b7e91875d2bff496b7a20998dd0e597d53f5bc83c7bf",
+  "manualSourceSha256": "fbfd5ac0d30d74dd6e5e77c325dcf55b126d46a559c2b0c8251a8d6692ddbc21",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
@@ -13,13 +13,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "d455b739853de4c81a19a167f0adbde277ea98d645ae5aab3abbe5960b1fe84d"
+      "sha256": "392d2bf9b5a173093a2c9c2fb296de94b85929eae30f9975f44b23f447c78a34"
     }
   ],
-  "readmeSha256": "7bf43db987e880865d16d33491d83bf70c9eac840f9ce679d5da5b9464a9b013",
+  "readmeSha256": "66a4e2c9c839ddb28274d4c36e04f958d4d7bb73c1fe255b79843ee9141ee17a",
   "readmeLanguageGaps": [],
-  "sourceTree": "2709928cfd5f7b95fb9685bc85746a08dd463b9d",
-  "publicTree": "1a9b63f0c802e76fcfdd152d561f935c1b165f47",
+  "sourceTree": "71ad6074b19c9ebded93fd1b5a5cce4e3a40859a",
+  "publicTree": "8d73d6deb2c0b4bb64db7523a8e0d57d513c660a",
   "packageSha256": "286618dfdc25f4cc7bc28c4d5ac7607f3baea2046fa508ce8b56ecc493067625",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -44,8 +44,8 @@
     "📋 ChangeLog / 更新履歴",
     "CLIP Drop / 習作・ベータ版"
   ],
-  "manualFindings": "Reviewed the v8.2.5 operation manual pages 15, 26, 40 and 41. The history and download instructions now describe a single PNG for the ordinary screen and project folders for MCP. Development verification results are excluded.",
-  "findings": "Reviewed the changed history, ordinary download, restoration, and release instructions against the running app. Compared the unchanged sections with the previously audited candidate. Both languages distinguish ordinary single-PNG downloads and the MCP project export, and the changelog includes flexible panels and the one-time network retry.",
+  "manualFindings": "Reviewed the v8.2.5 operation manual pages 15, 26, 40 and 41. The history and download instructions now describe a single PNG for the ordinary screen and project folders for MCP. Development verification results are excluded. Visually checked page 43 of the 47-page manual after updating the pairing and session renewal instructions. The ten-minute and eight-hour guidance matches the runtime.",
+  "findings": "Reviewed the changed history, ordinary download, restoration, and release instructions against the running app. Compared the unchanged sections with the previously audited candidate. Both languages distinguish ordinary single-PNG downloads and the MCP project export, and the changelog includes flexible panels and the one-time network retry. Compared the new Japanese and English MCP recovery instructions with the heartbeat client, service expiry and real loopback results.",
   "pricingReview": {
     "version": "8.2.5",
     "sourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",
