@@ -1,7 +1,7 @@
 {
   "pricingSourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",
   "manualVersion": "8.2.5",
-  "manualSourceSha256": "538039cfdcccc126270aaeec751514102e50fb7e7993460be6a362d70c0d1e1d",
+  "manualSourceSha256": "abd76a79c79e95bebf21b7e91875d2bff496b7a20998dd0e597d53f5bc83c7bf",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
@@ -13,13 +13,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "daca6a8ed433b7feaa9f20626b399dc17c550b62446bbaae7c1e97aadb26e825"
+      "sha256": "d455b739853de4c81a19a167f0adbde277ea98d645ae5aab3abbe5960b1fe84d"
     }
   ],
-  "readmeSha256": "7ad768a643f076bf3f82787b2a2a28774f7f7dedfb11ebc0ad43784add21ca5d",
+  "readmeSha256": "7bf43db987e880865d16d33491d83bf70c9eac840f9ce679d5da5b9464a9b013",
   "readmeLanguageGaps": [],
-  "sourceTree": "088388a7f44920203413f4d6c8434a34a509d203",
-  "publicTree": "c4fcf7a5158d22a8223539acde0c7b18b8305e52",
+  "sourceTree": "2709928cfd5f7b95fb9685bc85746a08dd463b9d",
+  "publicTree": "1a9b63f0c802e76fcfdd152d561f935c1b165f47",
   "packageSha256": "286618dfdc25f4cc7bc28c4d5ac7607f3baea2046fa508ce8b56ecc493067625",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -44,8 +44,8 @@
     "📋 ChangeLog / 更新履歴",
     "CLIP Drop / 習作・ベータ版"
   ],
-  "manualFindings": "Compared with the reviewed v8.2.5 candidate manuals. Reviewed the updated Japanese operation manual page 15 visually. Kept user-facing setup and operating procedures without development verification results.",
-  "findings": "Compared all audited sections with the candidate. The free-layout and MCP instructions describe diagonal bounds, inset reading order, crossing and the edit workflow. The changelog identifies both changes in v8.2.5.",
+  "manualFindings": "Reviewed the v8.2.5 operation manual pages 15, 26, 40 and 41. The history and download instructions now describe a single PNG for the ordinary screen and project folders for MCP. Development verification results are excluded.",
+  "findings": "Reviewed the changed history, ordinary download, restoration, and release instructions against the running app. Compared the unchanged sections with the previously audited candidate. Both languages distinguish ordinary single-PNG downloads and the MCP project export, and the changelog includes flexible panels and the one-time network retry.",
   "pricingReview": {
     "version": "8.2.5",
     "sourceSha256": "dd4d7a8b34363797e6b72fb135e1851da44f706ed10e7487141d3da142845647",
